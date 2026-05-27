@@ -16,6 +16,16 @@
   --r:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
+#passcode-screen{position:fixed;inset:0;background:var(--green);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+#passcode-screen h2{color:#fff;font-size:22px;font-weight:700;margin-bottom:8px;}
+#passcode-screen p{color:rgba(255,255,255,.8);font-size:13px;margin-bottom:24px;text-align:center;}
+#passcode-dots{display:flex;gap:16px;margin-bottom:24px;}
+.pc-dot{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.3);transition:background .2s;}
+.pc-dot.filled{background:#fff;}
+#passcode-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:240px;}
+.pc-btn{height:64px;border-radius:16px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:24px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.pc-btn:active{background:rgba(255,255,255,.35);}
+#passcode-error{color:#ffcccc;font-size:13px;margin-top:12px;min-height:20px;font-weight:600;}
 body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px;}
 header{background:var(--green);color:#fff;padding:12px 16px 10px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
 .header-left h1{font-size:11px;font-weight:500;opacity:.75;}
@@ -197,7 +207,75 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v9.3';
+window.APP_VERSION = 'v9.4';
+
+// ===== パスコード =====
+const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
+let pcBuffer = '';
+
+function initPasscode(){
+  const stored = localStorage.getItem('app_passcode') || DEFAULT_PASSCODE;
+  const unlocked = sessionStorage.getItem('pc_unlocked');
+  if(unlocked === stored){
+    // 同じセッションで認証済み
+    document.getElementById('passcode-screen').style.display='none';
+    return;
+  }
+  document.getElementById('passcode-screen').style.display='flex';
+  document.querySelector('header').style.display='none';
+  document.querySelector('main').style.display='none';
+}
+
+function pcInput(n){
+  if(pcBuffer.length>=4) return;
+  pcBuffer += n;
+  updateDots();
+  if(pcBuffer.length===4) setTimeout(checkPasscode, 200);
+}
+
+function pcDelete(){
+  pcBuffer = pcBuffer.slice(0,-1);
+  updateDots();
+}
+
+function pcClear(){
+  pcBuffer = '';
+  updateDots();
+}
+
+function updateDots(){
+  for(let i=0;i<4;i++){
+    document.getElementById('d'+i).classList.toggle('filled', i<pcBuffer.length);
+  }
+}
+
+function checkPasscode(){
+  const stored = localStorage.getItem('app_passcode') || DEFAULT_PASSCODE;
+  if(pcBuffer === stored){
+    sessionStorage.setItem('pc_unlocked', stored);
+    document.getElementById('passcode-screen').style.display='none';
+    document.querySelector('header').style.display='';
+    document.querySelector('main').style.display='';
+  } else {
+    document.getElementById('passcode-error').textContent='パスコードが違います';
+    pcBuffer='';
+    updateDots();
+    setTimeout(()=>{ document.getElementById('passcode-error').textContent=''; },1500);
+  }
+}
+
+// パスコード変更（設定から呼ぶ）
+function changePasscode(){
+  const np = prompt('新しいパスコード（4桁の数字）を入力してください');
+  if(!np) return;
+  if(!/^[0-9]{4}$/.test(np)){
+    alert('4桁の数字で入力してください');
+    return;
+  }
+  localStorage.setItem('app_passcode', np);
+  sessionStorage.setItem('pc_unlocked', np);
+  alert('パスコードを変更しました：' + np);
+}
 window.APP_UPDATED = '2026-05-27';
 
 // setSyncStatus：DOM生成後も呼べるようキューイング方式
@@ -379,6 +457,33 @@ try {
   window.setSyncStatus('error', 'init');
 }
 </script>
+<div id="passcode-screen" style="display:none;">
+  <div style="font-size:48px;margin-bottom:16px;">🥛</div>
+  <h2>鎌倉【毎日在庫】</h2>
+  <p>パスコードを入力してください</p>
+  <div id="passcode-dots">
+    <div class="pc-dot" id="d0"></div>
+    <div class="pc-dot" id="d1"></div>
+    <div class="pc-dot" id="d2"></div>
+    <div class="pc-dot" id="d3"></div>
+  </div>
+  <div id="passcode-pad">
+    <button class="pc-btn" onclick="pcInput('1')">1</button>
+    <button class="pc-btn" onclick="pcInput('2')">2</button>
+    <button class="pc-btn" onclick="pcInput('3')">3</button>
+    <button class="pc-btn" onclick="pcInput('4')">4</button>
+    <button class="pc-btn" onclick="pcInput('5')">5</button>
+    <button class="pc-btn" onclick="pcInput('6')">6</button>
+    <button class="pc-btn" onclick="pcInput('7')">7</button>
+    <button class="pc-btn" onclick="pcInput('8')">8</button>
+    <button class="pc-btn" onclick="pcInput('9')">9</button>
+    <button class="pc-btn" onclick="pcClear()" style="font-size:16px;">消去</button>
+    <button class="pc-btn" onclick="pcInput('0')">0</button>
+    <button class="pc-btn" onclick="pcDelete()" style="font-size:20px;">⌫</button>
+  </div>
+  <div id="passcode-error"></div>
+</div>
+
 <header>
   <div class="header-left">
     <h1>🌿 鎌倉【毎日在庫】</h1>
@@ -393,7 +498,9 @@ try {
       <span id="sync-label">接続確認中…</span>
     </button>
     <button class="share-btn" onclick="showUberModal()" style="background:#e8f0ff;border-color:#99b8f0;color:#1a3f8a;">🛵 月間売上</button>
-    <button class="edit-toggle-btn" id="edit-btn" onclick="toggleEditMode()">✏️ 品目編集</button>  </div>
+    <button class="edit-toggle-btn" id="edit-btn" onclick="toggleEditMode()">✏️ 品目編集</button>
+    <button class="share-btn" onclick="changePasscode()" style="background:#fff3e0;border-color:#ffb74d;color:#e65100;">🔑 PW</button>
+  </div>
 </header>
 
 <!-- Uber Eats月間集計モーダル -->
@@ -1209,6 +1316,10 @@ function shareToLine(){
   } else {
     prompt('このURLをコピーしてください',url);
   }
+}
+
+function openPasscodeSettings(){
+  changePasscode();
 }
 
 function copyShareLink(){ shareToLine(); }
