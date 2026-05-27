@@ -168,8 +168,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
         <h1 class="hdr-h1">在庫管理</h1>
       </div>
       <div class="hdr-ctrl">
-        <button class="line-share-btn" onclick="shareToLine()">🔗 リンクをコピー</button>
-        <div class="role-switcher">
+<div class="role-switcher">
           <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡 管理者</button>
           <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️ 編集者</button>
           <button class="role-pill viewer" id="role-btn-viewer" onclick="switchRole('viewer')">👁 閲覧者</button>
@@ -1354,6 +1353,10 @@ function openSettings(){
   const isAdmin=currentRole==='admin';
   document.getElementById('modal-content').innerHTML=`
     <h2>⚙️ 設定・情報</h2>
+    <div style="background:#E8F9EE;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #06C755;">
+      <div style="font-size:12px;font-weight:700;color:#06C755;margin-bottom:8px;">🔗 アプリを共有</div>
+      <button onclick="shareToLine()" style="width:100%;height:44px;background:#06C755;border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🔗 リンクをコピー</button>
+    </div>
     <div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px">
       <div style="font-size:11px;color:var(--tf);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">バージョン</div>
       <div style="font-size:16px;font-weight:700;color:var(--g)">v${APP_VERSION}</div>
