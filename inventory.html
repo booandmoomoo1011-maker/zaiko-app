@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://accounts.google.com https://apis.google.com; connect-src https://www.googleapis.com https://accounts.google.com; style-src 'self' 'unsafe-inline';">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#1D9E75">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,11 +22,14 @@
   });
 })();
 
-// LINE共有
+// リンクをコピー
 function shareToLine(){
-  const url = encodeURIComponent(window.location.href);
-  const text = encodeURIComponent('在庫管理アプリ');
-  window.open('https://line.me/R/msg/text/?' + text + '%0A' + url, '_blank');
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(()=>{
+    alert('URLをコピーしました！\nLINEに貼り付けて共有してください。');
+  }).catch(()=>{
+    prompt('このURLをコピーしてください', url);
+  });
 }
 </script>
 <style>
@@ -165,7 +168,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
         <h1 class="hdr-h1">在庫管理</h1>
       </div>
       <div class="hdr-ctrl">
-        <button class="line-share-btn" onclick="shareToLine()">LINE 共有</button>
+        <button class="line-share-btn" onclick="shareToLine()">🔗 リンクをコピー</button>
         <div class="role-switcher">
           <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡 管理者</button>
           <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️ 編集者</button>
