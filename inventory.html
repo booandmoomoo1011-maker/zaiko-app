@@ -21,6 +21,13 @@
     m.href=URL.createObjectURL(blob);document.head.appendChild(m);
   });
 })();
+
+// LINE共有
+function shareToLine(){
+  const url = encodeURIComponent(window.location.href);
+  const text = encodeURIComponent('在庫管理アプリ');
+  window.open('https://line.me/R/msg/text/?' + text + '%0A' + url, '_blank');
+}
 </script>
 <style>
 :root{--g:#1D9E75;--gd:#0F6E56;--gl:#E1F5EE;--r:#E24B4A;--rl:#FCEBEB;--a:#BA7517;--al:#FAEEDA;--p:#534AB7;--pl:#EEEDFE;--gr:#5F5E5A;--grl:#F1EFE8;--bg:#F7F6F3;--sf:#FFF;--bd:rgba(0,0,0,0.1);--bds:rgba(0,0,0,0.18);--tx:#1a1a18;--tm:#6b6a66;--tf:#9e9c97;--ra:12px;--rs:8px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);--shm:0 4px 12px rgba(0,0,0,.1),0 2px 4px rgba(0,0,0,.06)}
@@ -37,6 +44,8 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .role-pill{display:inline-flex;align-items:center;gap:3px;padding:4px 7px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:none;white-space:nowrap}
 .role-pill.admin{background:var(--pl);color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd)}.role-pill.viewer{background:var(--grl);color:var(--gr)}
 .role-pill.inactive{opacity:0.35;filter:grayscale(0.4)}
+.line-share-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:20px;background:#06C755;border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.line-share-btn:active{background:#05a849;}
 .cat-tag{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--sf);color:var(--tx);white-space:nowrap;transition:all .15s}
 .cat-tag.active{background:var(--gl);border-color:var(--g);color:var(--g)}
 .cat-tag.all{background:var(--bg);border-color:var(--bd);color:var(--tm)}
@@ -156,6 +165,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
         <h1 class="hdr-h1">在庫管理</h1>
       </div>
       <div class="hdr-ctrl">
+        <button class="line-share-btn" onclick="shareToLine()">LINE 共有</button>
         <div class="role-switcher">
           <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡 管理者</button>
           <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️ 編集者</button>
