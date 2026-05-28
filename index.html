@@ -1058,6 +1058,102 @@ function renderUber(){
 }
 
 
+
+// ===== 入荷 個別編集・削除（今日分） =====
+function saveNyukaEdit(id, nyIdx, btn){
+  const inputEl = document.getElementById('nyedit-'+id+'-'+nyIdx);
+  if(!inputEl) return;
+  const newQty = parseInt(inputEl.value)||0;
+  if(newQty < 1){ showToast('1以上の個数を入力してください'); return; }
+  const oldQty = NYUKA[id][nyIdx].qty;
+  const diff = newQty - oldQty;
+  NYUKA[id][nyIdx].qty = newQty;
+  $set('stock_'+id, $v('stock_'+id) + diff);
+  updateDiff(id); renderNyuka(id);
+  saveDraft();
+  showToast('✅ 入荷数を ' + newQty + '個 に修正しました');
+  showNyukaSummary(id); // 再描画
+}
+
+function deleteNyukaEntry(id, nyIdx){
+  if(!confirm('この入荷記録を削除しますか？')) return;
+  const qty = NYUKA[id][nyIdx].qty;
+  NYUKA[id].splice(nyIdx, 1);
+  $set('stock_'+id, $v('stock_'+id) - qty);
+  updateDiff(id); renderNyuka(id);
+  saveDraft();
+  showToast('🗑 入荷記録を削除しました');
+  showNyukaSummary(id);
+}
+
+// ===== 入荷 個別編集・削除（過去の保存済み分） =====
+function saveNyukaHistEdit(id, dateKey, entryIdx, btn){
+  const safeKey = dateKey.replace(/\//g,'-');
+  const inputEl = document.getElementById('nyedit-hist-'+id+'-'+safeKey+'-'+entryIdx);
+  if(!inputEl) return;
+  const newQty = parseInt(inputEl.value)||0;
+  if(newQty < 1){ showToast('1以上の個数を入力してください'); return; }
+  // 履歴から該当日の記録を探して書き換え
+  const h = loadHistory();
+  const isoDate = dateKey.replace(/\//g,'-'); // "2026-05-03"
+  const slashDate = dateKey;                   // "2026/05/03"
+  let changed = false;
+  h.forEach(r => {
+    if(r.date !== slashDate) return;
+    if(!r.nyuka || !r.nyuka[id]) return;
+    // その日の入荷リストの entryIdx 番目を書き換え
+    const list = r.nyuka[id].filter(n => n.date === isoDate || n.date.replace(/-/g,'/') === slashDate);
+    if(list[entryIdx]){
+      const oldQty = list[entryIdx].qty;
+      list[entryIdx].qty = newQty;
+      // 在庫数も差分で修正
+      if(r.sales && r.sales[id] !== undefined){
+        r.sales[id] = Math.max(0, (r.sales[id] || 0) + (newQty - oldQty));
+      }
+      changed = true;
+    }
+  });
+  if(changed){
+    saveHistory(h);
+    showToast('✅ 入荷数を ' + newQty + '個 に修正しました');
+    showNyukaSummary(id);
+  } else {
+    showToast('⚠️ 該当の記録が見つかりませんでした');
+  }
+}
+
+function deleteNyukaHistEntry(id, dateKey, entryIdx){
+  if(!confirm('この入荷記録を削除しますか？')) return;
+  const h = loadHistory();
+  const isoDate = dateKey.replace(/\//g,'-');
+  const slashDate = dateKey;
+  let changed = false;
+  h.forEach(r => {
+    if(r.date !== slashDate) return;
+    if(!r.nyuka || !r.nyuka[id]) return;
+    const list = r.nyuka[id].filter(n => n.date === isoDate || n.date.replace(/-/g,'/') === slashDate);
+    if(list[entryIdx]){
+      const oldQty = list[entryIdx].qty;
+      // 元の配列から削除
+      const globalIdx = r.nyuka[id].indexOf(list[entryIdx]);
+      if(globalIdx >= 0){
+        r.nyuka[id].splice(globalIdx, 1);
+        if(r.sales && r.sales[id] !== undefined){
+          r.sales[id] = Math.max(0, (r.sales[id] || 0) - oldQty);
+        }
+        changed = true;
+      }
+    }
+  });
+  if(changed){
+    saveHistory(h);
+    showToast('🗑 入荷記録を削除しました');
+    showNyukaSummary(id);
+  } else {
+    showToast('⚠️ 該当の記録が見つかりませんでした');
+  }
+}
+
 // ===== 入荷サマリーモーダル =====
 function showNyukaSummary(id){
   const it = SALES.find(x=>x.id===id);
@@ -1129,10 +1225,44 @@ function showNyukaSummary(id){
       const dayTotal = list.reduce((s,n)=>s+n.qty,0);
       const [dy, dm, dd] = dateKey.split('/');
       const weekDay = '日月火水木金土'[new Date(parseInt(dy), parseInt(dm)-1, parseInt(dd)).getDay()];
-      html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:8px;">
-        <span style="font-size:13px;font-weight:700;color:var(--blue);min-width:80px;">${parseInt(dm)}/${parseInt(dd)}（${weekDay}）</span>
-        <span style="font-size:12px;color:var(--text2);flex:1;">${list.map(n=>n.qty+'個').join(' + ')}</span>
-        <span style="font-size:14px;font-weight:700;color:var(--text);">計 ${dayTotal}個</span>
+      // 今日の日付か判定
+      const isToday = dateKey === dateStr;
+      // 各エントリーに編集・削除ボタンを付ける
+      let entriesHtml = '';
+      list.forEach((n, ni) => {
+        if(isToday){
+          // 今日分：NYUKA配列のインデックスで操作
+          const nyIdx = NYUKA[id].findIndex(x => x.date===n.date && x.qty===n.qty);
+          entriesHtml += `
+            <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+              <input type="number" value="${n.qty}" min="1" inputmode="numeric"
+                id="nyedit-${id}-${nyIdx}"
+                style="width:60px;font-size:14px;font-weight:700;padding:4px 6px;border:1.5px solid var(--blue-bd);border-radius:7px;text-align:center;font-family:inherit;background:var(--surface);color:var(--text);">
+              <span style="font-size:12px;color:var(--text3);">個</span>
+              ${n.staff?`<span style="font-size:11px;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:10px;flex:1;">👤${esc(n.staff)}</span>`:'<span style="flex:1;font-size:11px;color:var(--text3);">担当者未記入</span>'}
+              <button onclick="saveNyukaEdit('${id}',${nyIdx},this)" style="padding:4px 10px;background:var(--blue-light);border:1px solid var(--blue-bd);color:var(--blue);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">保存</button>
+              <button onclick="deleteNyukaEntry('${id}',${nyIdx})" style="padding:4px 8px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">削除</button>
+            </div>`;
+        } else {
+          // 過去分：履歴を書き換え
+          entriesHtml += `
+            <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+              <input type="number" value="${n.qty}" min="1" inputmode="numeric"
+                id="nyedit-hist-${id}-${dateKey.replace(/\//g,'-')}-${ni}"
+                style="width:60px;font-size:14px;font-weight:700;padding:4px 6px;border:1.5px solid var(--blue-bd);border-radius:7px;text-align:center;font-family:inherit;background:var(--surface);color:var(--text);">
+              <span style="font-size:12px;color:var(--text3);">個</span>
+              ${n.staff?`<span style="font-size:11px;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:10px;flex:1;">👤${esc(n.staff)}</span>`:'<span style="flex:1;font-size:11px;color:var(--text3);">担当者未記入</span>'}
+              <button onclick="saveNyukaHistEdit('${id}','${dateKey}',${ni},this)" style="padding:4px 10px;background:var(--blue-light);border:1px solid var(--blue-bd);color:var(--blue);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">保存</button>
+              <button onclick="deleteNyukaHistEntry('${id}','${dateKey}',${ni})" style="padding:4px 8px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">削除</button>
+            </div>`;
+        }
+      });
+      html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;">
+        <div style="display:flex;align-items:center;margin-bottom:6px;">
+          <span style="font-size:13px;font-weight:700;color:var(--blue);flex:1;">${parseInt(dm)}/${parseInt(dd)}（${weekDay}）${isToday?'<span style="font-size:10px;background:var(--green-light);color:var(--green-text);padding:1px 6px;border-radius:10px;margin-left:6px;">今日</span>':''}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--text);">計 ${dayTotal}個</span>
+        </div>
+        ${entriesHtml}
       </div>`;
     });
     html += `</div>`;
@@ -1162,14 +1292,14 @@ function addNyukaFromSummary(id){
   const date = dateEl.value;
   const qty  = parseInt(qtyEl.value)||0;
   if(!date||qty<1){ showToast('日付と個数を入力してください'); return; }
-  NYUKA[id].push({date, qty});
+  const staff = document.getElementById('staff').value.trim();
+  NYUKA[id].push({date, qty, staff:staff||''});
   NYUKA[id].sort((a,b)=>a.date>b.date?-1:1);
   qtyEl.value = '';
   $set('stock_'+id, $v('stock_'+id)+qty);
   updateDiff(id); renderNyuka(id);
   saveDraft();
   showToast('入荷 '+qty+'個 → 在庫に追加しました ✅');
-  // モーダルを再描画
   showNyukaSummary(id);
 }
 
@@ -1291,9 +1421,20 @@ function renderNyukaHistory(){
       const [,, dd] = dateKey.split('/');
       const weekDay = '日月火水木金土'[new Date(y, m-1, parseInt(dd)).getDay()];
       const isWeekend = new Date(y, m-1, parseInt(dd)).getDay() % 6 === 0;
+      // スタッフ名を収集（その日の入荷スタッフ一覧）
+      const staffSet = new Set();
+      monthH.forEach(r => {
+        if(!r.nyuka || !r.nyuka[id]) return;
+        r.nyuka[id].forEach(n => {
+          const k = n.date.replace(/-/g,'/');
+          if(k === dateKey && n.staff) staffSet.add(n.staff);
+        });
+      });
+      const staffLabel = staffSet.size ? '👤 '+[...staffSet].join('・') : '';
       html += `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);gap:6px;flex-wrap:wrap;">
           <span style="font-size:13px;font-weight:600;color:${isWeekend?'#c04000':'var(--text)'};">${parseInt(m)}/${parseInt(dd)}（${weekDay}）</span>
+          ${staffLabel?`<span style="font-size:11px;color:var(--blue);flex:1;">${staffLabel}</span>`:''}
           <span style="font-size:14px;font-weight:700;color:var(--blue);">${qty}個</span>
         </div>`;
     });
@@ -1315,12 +1456,13 @@ function addNyuka(id){
   const date=document.getElementById('ndate_'+id).value;
   const qty=parseInt(document.getElementById('nqty_'+id).value)||0;
   if(!date||qty<1){showToast('日付と個数を入力してください');return;}
-  NYUKA[id].push({date,qty});
+  const staff=document.getElementById('staff').value.trim();
+  NYUKA[id].push({date,qty,staff:staff||''});
   NYUKA[id].sort((a,b)=>a.date>b.date?-1:1);
   document.getElementById('nqty_'+id).value='';
   $set('stock_'+id,$v('stock_'+id)+qty);
   updateDiff(id);renderNyuka(id);
-  saveDraft(); // [修正] 入荷追加も下書き保存
+  saveDraft();
   showToast('入荷 '+qty+'個 → 在庫に追加しました ✅');
 }
 function delNyuka(id,idx){
@@ -1339,6 +1481,7 @@ function renderNyuka(id){
     <div class="nyuka-item">
       <span class="ndate">${n.date.replace(/-/g,'/')}</span>
       <span class="nqty">${n.qty}個</span>
+      ${n.staff?`<span style="font-size:11px;color:var(--blue);background:var(--blue-light);padding:1px 7px;border-radius:10px;">👤${esc(n.staff)}</span>`:''}
       <button class="nyuka-del" onclick="delNyuka('${id}',${i})">✕</button>
     </div>`).join('');
 }
