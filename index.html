@@ -46,11 +46,11 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 .staff-complete-row input:focus{outline:none;border-color:var(--green);}
 .complete-inline-btn{margin-left:auto;padding:7px 16px;background:var(--done-bg);border:1.5px solid var(--done-bd);border-radius:20px;font-family:inherit;font-size:14px;font-weight:700;color:#7a6000;cursor:pointer;white-space:nowrap;transition:background .2s;}
 .complete-inline-btn:active{background:var(--done-bd);}
-.complete-inline-btn.warn-blink{animation:blink-red 1s ease-in-out infinite;background:#ffe0e0!important;border-color:#e02020!important;color:#c00000!important;}
+.complete-inline-btn.warn-blink{}
 .force-complete-btn{background:#fff0f0;border:1.5px solid #e02020;color:#c00000;border-radius:20px;font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;cursor:pointer;white-space:nowrap;margin-top:4px;}
 .force-complete-btn.confirm{background:#e02020;color:#fff;}
-.warn-complete-box{display:none;margin-top:6px;padding:8px 10px;background:#fff0f0;border:1.5px solid #e02020;border-radius:10px;font-size:12px;color:#c00000;font-weight:700;text-align:center;}
-.warn-complete-box.show{display:block;}
+.warn-complete-box{display:none;}
+.warn-complete-box.show{display:none;}
 .complete-inline-btn.confirmed{background:var(--done-bd);color:#5a4000;pointer-events:none;}
 .edit-inline-btn{display:none;}
 .edit-action-row{display:flex;gap:8px;}
@@ -67,7 +67,7 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 .num-input:focus{outline:none;border-color:var(--green);}
 .num-input::-webkit-outer-spin-button,.num-input::-webkit-inner-spin-button{-webkit-appearance:none;}
 @keyframes blink-input{0%,100%{border-color:#e02020;background:#fff0f0;}50%{border-color:#ffaaaa;background:#fff8f8;}}
-.num-input.mismatch{animation:blink-input 1.2s ease-in-out infinite;color:#c00000!important;}
+
 
 /* 在庫のみ */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:6px;}
@@ -119,8 +119,7 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 
 /* 警告 */
 .warn-box{display:none;}
-.item-warn{display:none;background:#fff0f0;border:1.5px solid #e02020;border-radius:8px;padding:7px 10px;margin-bottom:6px;font-size:12px;color:#c00000;font-weight:700;line-height:1.5;animation:blink-red 1.2s ease-in-out infinite;}
-.item-warn.show{display:block;}
+.item-warn{display:none;}
 @keyframes blink-hint{0%,100%{opacity:1;}50%{opacity:0.25;}}
 @keyframes blink-red{0%,100%{opacity:1;}50%{opacity:0.2;}}
 .staff-hint{animation:blink-red 1.2s ease-in-out infinite;color:#d00000;font-size:12px;font-weight:700;white-space:normal;width:100%;display:block;}
@@ -791,15 +790,6 @@ function _doConfirmComplete(){
     return(stock+out)!==prev;
   });
   if(warns.length){
-    // 入力完了ボタンを赤点滅
-    const btn=document.getElementById('complete-btn');
-    btn.classList.add('warn-blink');
-    // 警告ボックスを表示
-    const box=document.getElementById('warn-complete-box');
-    box.classList.add('show');
-    _forceConfirmStep=0;
-    const fb=document.getElementById('force-complete-btn');
-    if(fb){fb.textContent='⚠️ それでも入力完了する';fb.classList.remove('confirm');}
     showToast('⚠️ 在庫数が合わない品目があります！');
     return;
   }
@@ -904,16 +894,16 @@ function renderSales(){
     } else {
       const prevS=prevStock(it.id);
     const prevTxt=prevS!==null?` （前日在庫：${prevS}個）`:'';
-    html+=`<div id="warn_${it.id}" class="item-warn">⚠️ 前日の在庫数と合いません。確認してください${prevTxt}</div><div class="sales-card" id="scard_${it.id}">
+    html+=`<div class="sales-card" id="scard_${it.id}">
         <div class="sname-row">
           <span class="sname">${esc(it.name)}</span>
           <button class="nyuka-inline-btn" onclick="showNyukaSummary('${it.id}');event.stopPropagation()">📦 入荷</button>
           <span class="dbadge" id="diff_${it.id}">—</span>
         </div>
         <div class="sinputs">
-          <div class="scol"><div class="clabel">在庫</div><input class="num-input" type="number" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);updateDiff('${it.id}')"></div>
-          <div class="scol"><div class="clabel">販売</div><input class="num-input" type="number" id="sell_${it.id}" value="${(()=>{const e=document.getElementById('sell_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);updateDiff('${it.id}')"></div>
-          <div class="scol"><div class="clabel">${it.name.includes('釜揚げ箱')?'単品に移行':'無料'}</div><input class="num-input" type="number" id="free_${it.id}" value="${(()=>{const e=document.getElementById('free_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);updateDiff('${it.id}')"></div>
+          <div class="scol"><div class="clabel">在庫</div><input class="num-input" type="number" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);updateDiff('${it.id}')"><button onclick="clearInput('stock_','${it.id}')" style="font-size:11px;margin-top:2px;padding:2px 6px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer;color:#888">×消去</button></div>
+          <div class="scol"><div class="clabel">販売</div><input class="num-input" type="number" id="sell_${it.id}" value="${(()=>{const e=document.getElementById('sell_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);updateDiff('${it.id}')"><button onclick="clearInput('sell_','${it.id}')" style="font-size:11px;margin-top:2px;padding:2px 6px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer;color:#888">×消去</button></div>
+          <div class="scol"><div class="clabel">${it.name.includes('釜揚げ箱')?'単品に移行':'無料'}</div><input class="num-input" type="number" id="free_${it.id}" value="${(()=>{const e=document.getElementById('free_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);updateDiff('${it.id}')"><button onclick="clearInput('free_','${it.id}')" style="font-size:11px;margin-top:2px;padding:2px 6px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer;color:#888">×消去</button></div>
         </div>
         <div class="nyuka-toggle" id="ntoggle_${it.id}" onclick="toggleNyuka('${it.id}')">
           <span class="ntxt">📦 入荷記録</span>
@@ -987,19 +977,11 @@ function updateDiff(id){
   if(!el)return;
   // 前日在庫がある場合：（前日在庫＋前日入荷）vs 今日の在庫＋販売＋無料
   if(prev!==null){
-    const expected=prev; // prevStock()に前日入荷が含まれている
-    const actual=stock+out; // 今日の在庫＋出た数
+    const expected=prev;
+    const actual=stock+out;
     const diff=actual-expected;
-    const isMismatch = diff!==0;
     if(diff===0){el.textContent='';el.className='dbadge ok';}
     else{el.textContent='前日'+(diff>0?'+':'')+diff;el.className='dbadge warn';}
-  const warnEl=document.getElementById('warn_'+id);
-  if(warnEl)warnEl.classList.toggle('show',diff!==0);
-  // 在庫・販売・無料の入力欄を点滅
-  ['stock_','sell_','free_'].forEach(prefix=>{
-    const inp=document.getElementById(prefix+id);
-    if(inp) inp.classList.toggle('mismatch', diff!==0);
-  });
   } else {
     el.textContent='';el.className='dbadge';
   }
@@ -1240,8 +1222,8 @@ function showNyukaSummary(id){
                 style="width:60px;font-size:14px;font-weight:700;padding:4px 6px;border:1.5px solid var(--blue-bd);border-radius:7px;text-align:center;font-family:inherit;background:var(--surface);color:var(--text);">
               <span style="font-size:12px;color:var(--text3);">個</span>
               ${n.staff?`<span style="font-size:11px;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:10px;flex:1;">👤${esc(n.staff)}</span>`:'<span style="flex:1;font-size:11px;color:var(--text3);">担当者未記入</span>'}
-              <button onclick="saveNyukaEdit('${id}',${nyIdx},this)" style="padding:4px 10px;background:var(--blue-light);border:1px solid var(--blue-bd);color:var(--blue);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">保存</button>
-              <button onclick="deleteNyukaEntry('${id}',${nyIdx})" style="padding:4px 8px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">削除</button>
+              <button onclick="event.stopPropagation();saveNyukaEdit('${id}',${nyIdx},this)" style="padding:4px 10px;background:var(--blue-light);border:1px solid var(--blue-bd);color:var(--blue);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">保存</button>
+              <button onclick="event.stopPropagation();deleteNyukaEntry('${id}',${nyIdx})" style="padding:4px 8px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">削除</button>
             </div>`;
         } else {
           // 過去分：履歴を書き換え
@@ -1252,8 +1234,8 @@ function showNyukaSummary(id){
                 style="width:60px;font-size:14px;font-weight:700;padding:4px 6px;border:1.5px solid var(--blue-bd);border-radius:7px;text-align:center;font-family:inherit;background:var(--surface);color:var(--text);">
               <span style="font-size:12px;color:var(--text3);">個</span>
               ${n.staff?`<span style="font-size:11px;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:10px;flex:1;">👤${esc(n.staff)}</span>`:'<span style="flex:1;font-size:11px;color:var(--text3);">担当者未記入</span>'}
-              <button onclick="saveNyukaHistEdit('${id}','${dateKey}',${ni},this)" style="padding:4px 10px;background:var(--blue-light);border:1px solid var(--blue-bd);color:var(--blue);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">保存</button>
-              <button onclick="deleteNyukaHistEntry('${id}','${dateKey}',${ni})" style="padding:4px 8px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">削除</button>
+              <button onclick="event.stopPropagation();saveNyukaHistEdit('${id}','${dateKey}',${ni},this)" style="padding:4px 10px;background:var(--blue-light);border:1px solid var(--blue-bd);color:var(--blue);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">保存</button>
+              <button onclick="event.stopPropagation();deleteNyukaHistEntry('${id}','${dateKey}',${ni})" style="padding:4px 8px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">削除</button>
             </div>`;
         }
       });
@@ -1464,6 +1446,12 @@ function addNyuka(id){
   updateDiff(id);renderNyuka(id);
   saveDraft();
   showToast('入荷 '+qty+'個 → 在庫に追加しました ✅');
+}
+function clearInput(prefix, id){
+  $set(prefix+id, 0);
+  const el = document.getElementById(prefix+id);
+  if(el) markEdited(el);
+  updateDiff(id);
 }
 function delNyuka(id,idx){
   const qty=NYUKA[id][idx].qty;
