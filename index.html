@@ -576,11 +576,9 @@ try {
 
   <div class="note-wrap">
     <div class="note-label">備考</div>
-    <div style="display:flex;gap:8px;align-items:flex-start;">
-      <textarea id="note" rows="2" placeholder="備考（任意）" style="flex:1;font-size:12px;padding:6px 8px;"></textarea>
-      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-        <button class="complete-inline-btn" id="complete-btn" onclick="confirmComplete()">✅ 入力完了・保存</button>
-      </div>
+    <div style="display:flex;gap:8px;align-items:stretch;">
+      <textarea id="note" rows="1" placeholder="備考（任意）" style="flex:0 0 40%;font-size:12px;padding:6px 8px;resize:none;min-height:48px;"></textarea>
+      <button class="complete-inline-btn" id="complete-btn" onclick="confirmComplete()" style="flex:1;font-size:16px;padding:0 10px;min-height:48px;border-radius:12px;">✅ 入力完了・保存</button>
     </div>
     <div class="warn-complete-box" id="warn-complete-box">
       ⚠️ 在庫数が合いません！<br>
@@ -696,12 +694,13 @@ function confirmComplete(){
   const staff=document.getElementById('staff').value.trim();
   if(!staff){showToast('👤 担当者名を入力してください');return;}
   // 在庫不一致チェック
+  // [修正] prevStock()は「前日在庫＋前日入荷」を返す。今日の入荷はaddNyuka()で在庫欄に加算済みのため
+  // nyukaTotalを足すと二重加算になり誤警告が出る。expectedはprevStockのみで判定する。
   const warns=SALES.filter(it=>{
     const prev=prevStock(it.id);
     if(prev===null)return false;
     const stock=$v('stock_'+it.id),out=$v('sell_'+it.id)+$v('free_'+it.id);
-    const nyukaTotal=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
-    return(stock+out)!==(prev+nyukaTotal);
+    return(stock+out)!==prev;
   });
   if(warns.length){
     // 入力完了ボタンを赤点滅
@@ -892,14 +891,14 @@ function updateDiff(id){
     else if(stockEl){stockEl.style.color='';stockEl.style.fontWeight='';}
   }
   const out=$v('sell_'+id)+$v('free_'+id);
-  // 入荷数を合計
-  const nyukaTotal=(NYUKA[id]||[]).reduce((s,n)=>s+n.qty,0);
+  // [修正] prevStock()は「前日在庫＋前日入荷」を既に返す。今日の入荷はaddNyuka()で在庫欄に加算済みなので
+  // nyukaTotalをexpectedに足すと二重加算になり誤警告の原因になるため削除。
   const prev=prevStock(id);
   const el=document.getElementById('diff_'+id);
   if(!el)return;
-  // 前日在庫がある場合：前日在庫＋入荷 vs 今日の在庫＋販売＋無料
+  // 前日在庫がある場合：（前日在庫＋前日入荷）vs 今日の在庫＋販売＋無料
   if(prev!==null){
-    const expected=prev+nyukaTotal; // 前日在庫＋入荷
+    const expected=prev; // prevStock()に前日入荷が含まれている
     const actual=stock+out; // 今日の在庫＋出た数
     const diff=actual-expected;
     const isMismatch = diff!==0;
@@ -1016,11 +1015,11 @@ function doSave(autoSave=false){
   if(!autoSave&&!completed){if(!confirm('入力完了ボタンが押されていません。このまま保存しますか？'))return;}
   const t=new Date();
   const timeStr=t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+  // [修正] doSave内の警告判定も同様に修正。prevStock()に前日入荷が含まれるためnyukaTotalは不要。
   const warns=SALES.filter(it=>{
     const prev=prevStock(it.id);
     if(prev===null)return false;
-    const nyukaTotal=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
-    return($v('stock_'+it.id)+$v('sell_'+it.id)+$v('free_'+it.id))!==(prev+nyukaTotal);
+    return($v('stock_'+it.id)+$v('sell_'+it.id)+$v('free_'+it.id))!==prev;
   });
   // 編集中の場合はその日付で保存、新規なら今日の日付
   const targetDate = editingDate || dateStr;
