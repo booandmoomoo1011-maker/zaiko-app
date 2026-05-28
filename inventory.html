@@ -43,11 +43,11 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .hdr-title{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .hdr-title h1{font-size:15px;font-weight:700;white-space:nowrap}
 .hdr-icon{width:28px;height:28px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.hdr-ctrl{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.role-pill{display:inline-flex;align-items:center;gap:3px;padding:4px 7px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:none;white-space:nowrap}
-.role-pill.admin{background:var(--pl);color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd)}.role-pill.viewer{background:var(--grl);color:var(--gr)}
-.role-pill.inactive{opacity:0.35;filter:grayscale(0.4)}
-.line-share-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:20px;background:#06C755;border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.hdr-ctrl{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.role-pill{display:inline-flex;align-items:center;gap:4px;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;white-space:nowrap;min-height:40px}
+.role-pill.admin{background:var(--pl);color:var(--p);border-color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd);border-color:var(--gd)}.role-pill.viewer{background:var(--grl);color:var(--gr);border-color:var(--gr)}
+.role-pill.inactive{opacity:0.28;filter:grayscale(0.5)}
+.line-share-btn{display:none}
 .line-share-btn:active{background:#05a849;}
 .cat-tag{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--sf);color:var(--tx);white-space:nowrap;transition:all .15s}
 .cat-tag.active{background:var(--gl);border-color:var(--g);color:var(--g)}
@@ -79,10 +79,11 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .all-stores-total .ast-value{font-size:20px;font-weight:800;color:#fff}
 .all-stores-total .ast-stores{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .all-stores-total .ast-chip{font-size:10px;background:rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:2px 7px}
-.stat{background:var(--sf);border-radius:var(--ra);padding:12px 14px;box-shadow:var(--sh)}
-.stat-label{font-size:10px;color:var(--tm);margin-bottom:2px;font-weight:500}
-.stat-value{font-size:14px;font-weight:700}.stat-value.green{color:var(--g)}.stat-value.red{color:var(--r)}
+.stat{background:var(--sf);border-radius:var(--ra);padding:14px 10px;box-shadow:var(--sh);text-align:center}
+.stat-label{font-size:11px;color:var(--tm);margin-bottom:4px;font-weight:600}
+.stat-value{font-size:18px;font-weight:800}.stat-value.green{color:var(--g)}.stat-value.red{color:var(--r)}
 .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.toolbar-row{display:flex;gap:8px;width:100%}
 .sw{flex:1;min-width:120px;position:relative}
 .sw select{width:100%;height:40px;padding:0 12px 0 36px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--sf);color:var(--tx);font-size:14px;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer}
 .sw select:focus{border-color:var(--g)}.si{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tf);font-size:16px;pointer-events:none}
@@ -99,7 +100,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .cf-label{font-size:10px;color:var(--tf);font-weight:500;margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
 .cf-value{font-size:15px;font-weight:700}.cf-value.green{color:var(--g)}
 .card-ftr{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)}
-.btn-sm{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 10px;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--sf);color:var(--tm);transition:all .15s}
+.btn-sm{display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 12px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--sf);color:var(--tm);transition:all .15s}
 .btn-sm:hover{background:var(--bg)}.btn-sm.danger{color:var(--r);border-color:var(--rl);background:var(--rl)}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700}
 .badge.ok{background:var(--gl);color:var(--gd)}.badge.out{background:var(--rl);color:var(--r)}
@@ -118,7 +119,10 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .tbl-wrap th.r{text-align:right}.tbl-wrap td{font-size:13px;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
 .tbl-wrap td.r{text-align:right}.tbl-wrap tr:last-child td{border-bottom:none}.tbl-wrap tr:hover td{background:var(--bg)}
 .tbl-wrap .total-row td{font-weight:700;background:var(--bg)}.tlabel{font-size:11px;color:var(--tf)}
-.tbl-wrap tr.done-row td{background:#fffde7}.tbl-wrap tr.done-row:hover td{background:#fff9c4}
+.tbl-wrap tr.done-row td{background:var(--al);opacity:.85}.tbl-wrap tr.done-row:hover td{background:var(--al)}
+.empty{text-align:center;padding:48px 20px;color:var(--tf)}.empty-icon{font-size:48px;margin-bottom:16px}
+.empty p{font-size:14px;line-height:1.7}
+.empty-btn{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:12px 24px;background:var(--g);color:#fff;border:none;border-radius:var(--ra);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:flex-end;justify-content:center}
 .modal{background:var(--sf);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 20px 32px;max-height:90vh;overflow-y:auto}
 .modal-handle{width:36px;height:4px;background:var(--bds);border-radius:2px;margin:0 auto 16px}
@@ -126,7 +130,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .fr{margin-bottom:14px}.fr label{display:block;font-size:12px;font-weight:600;color:var(--tm);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
 .fr input,.fr select{width:100%;height:44px;padding:0 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--bg);color:var(--tx);font-size:15px;outline:none;appearance:none;-webkit-appearance:none}
 .fr input:focus,.fr select:focus{border-color:var(--g);background:var(--sf)}
-.fg{display:flex;flex-direction:column;gap:8px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .prev-box{background:var(--gl);border-radius:var(--rs);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .prev-box span{font-size:12px;color:var(--gd);font-weight:600}.prev-box strong{font-size:18px;color:var(--g);font-weight:800}
 .fa{display:flex;gap:10px}.fa .btn{flex:1;height:48px;font-size:15px}
@@ -169,12 +173,12 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
       </div>
       <div class="hdr-ctrl">
         <div class="role-switcher">
-          <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡</button>
-          <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️</button>
-          <button class="role-pill viewer" id="role-btn-viewer" onclick="switchRole('viewer')">👁</button>
+          <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡 管理者</button>
+          <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️ 編集者</button>
+          <button class="role-pill viewer" id="role-btn-viewer" onclick="switchRole('viewer')">👁 閲覧者</button>
         </div>
-        <button id="undo-btn" class="btn-sm" style="width:34px;padding:0;justify-content:center;font-size:18px;opacity:0.35" title="">↩️</button>
-        <button class="btn-sm" onclick="openSettings()" style="width:34px;padding:0;justify-content:center;font-size:20px;color:#fff;background:#555;border-color:#444">⚙️</button>
+        <button id="undo-btn" class="btn-sm" style="width:44px;height:44px;padding:0;justify-content:center;font-size:22px;opacity:0.35;flex-shrink:0" title="">↩️</button>
+        <button class="btn-sm" onclick="openSettings()" style="width:44px;height:44px;padding:0;justify-content:center;font-size:22px;color:#fff;background:#555;border-color:#444;flex-shrink:0">⚙️</button>
       </div>
     </div>
   </div>
@@ -184,13 +188,17 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
     <div id="all-stores-total-area"></div>
     <div class="stats" id="stats"></div>
     <div class="toolbar">
-      <div class="sw" style="min-width:140px;flex:1"><span class="si">🔍</span><input id="search-text" type="search" placeholder="商品名で検索" style="width:100%;height:46px;padding:0 12px 0 36px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--sf);color:var(--tx);font-size:16px;font-weight:600;outline:none;-webkit-appearance:none" oninput="debouncedRender()" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--bd)'"></div>
-      <button class="btn btn-g" id="cat-filter-btn" onclick="openCatModal2()" style="height:46px;font-size:15px;font-weight:700;gap:4px;white-space:nowrap;flex-shrink:0">🏷 <span id="cat-filter-label">カテゴリー</span></button>
+      <div class="toolbar-row">
+        <div class="sw" style="flex:1"><span class="si">🔍</span><input id="search-text" type="search" placeholder="商品名で検索" style="width:100%;height:46px;padding:0 12px 0 36px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--sf);color:var(--tx);font-size:16px;font-weight:600;outline:none;-webkit-appearance:none" oninput="debouncedRender()" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--bd)'"></div>
+        <button class="btn btn-g" id="cat-filter-btn" onclick="openCatModal2()" style="height:46px;font-size:15px;font-weight:700;gap:4px;white-space:nowrap;flex-shrink:0">🏷 <span id="cat-filter-label">カテゴリー</span></button>
+      </div>
+      <div class="toolbar-row">
+        <button class="btn btn-p" id="btn-add" onclick="openItemModal()" style="flex:1;height:46px;font-size:15px;font-weight:700">＋ 追加</button>
+        <button class="btn" id="btn-complete" onclick="completeInventory()" style="flex:1;background:#FF9800;color:#fff;border-color:#FF9800;height:46px;font-size:14px;font-weight:700">✅ 棚卸完了</button>
+        <button class="btn btn-g" id="btn-cat" onclick="openCatModal()" style="height:46px;font-size:18px;flex-shrink:0" title="カテゴリー管理">🏷</button>
+        <button class="btn btn-g" id="btn-export" onclick="openExportModal()" style="height:46px;font-size:18px;flex-shrink:0" title="Excel出力">📊</button>
+      </div>
       <input type="hidden" id="search" value="">
-      <button class="btn btn-p" id="btn-add" onclick="openItemModal()" style="height:46px;font-size:15px;font-weight:700;padding:0 16px">＋ 追加</button>
-      <button class="btn" id="btn-complete" onclick="completeInventory()" style="background:#FF9800;color:#fff;border-color:#FF9800;white-space:nowrap;height:46px;font-size:15px;font-weight:700;padding:0 16px">✅ 棚卸完了</button>
-      <button class="btn btn-g" id="btn-cat" onclick="openCatModal()">🏷</button>
-      <button class="btn btn-g" id="btn-export" onclick="openExportModal()">📊</button>
     </div>
     <div class="cards" id="cards"></div>
     <div class="tbl-wrap">
@@ -380,6 +388,8 @@ function checkEntryPassword(){
   if(!saved) return; // 未設定なら通過
   // すでに認証済みならスキップ（sessionStorageで管理）
   if(sessionStorage.getItem('entryAuth')==='1') return;
+  // body書き換え前にグローバル関数を明示的に登録（スクリプト順序に依存しないよう保護）
+  window.verifyEntryPassword = verifyEntryPassword;
   // パスワード入力画面を表示
   document.body.innerHTML=`
     <div style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
@@ -447,6 +457,7 @@ function saveData(){
       }
     } else {
       console.warn('保存失敗',e);
+      showToast('❌ 保存中に予期しないエラーが発生しました。データを確認してください。','#E24B4A');
     }
   }
 }
@@ -456,7 +467,10 @@ function loadData(){
   try{
     const catRaw=localStorage.getItem(CAT_KEY);
     if(catRaw) STORE_CATEGORIES=JSON.parse(catRaw);
-  }catch(e){}
+  }catch(e){
+    console.warn('カテゴリーデータの読み込みに失敗しました。初期値を使用します。',e);
+    STORE_CATEGORIES={};
+  }
 
   for(const key of[STORAGE_KEY,BACKUP_KEY]){
     try{
@@ -560,15 +574,20 @@ function switchRole(role){
 }
 
 async function submitRolePw(){
-  const input=document.getElementById('role-pw-inp').value;
-  const inputHash=await hashPw(input);
-  const storedHash=await getRolePwHash();
-  if(inputHash===storedHash){
-    currentRole='admin'; saveData(); closeModal(); applyRoleUI(); renderTabs(); render();
-    showToast('✅ 管理者モードに切り替えました');
-  } else {
-    document.getElementById('role-pw-err').textContent='パスワードが違います。';
-    document.getElementById('role-pw-inp').value='';
+  try{
+    const input=document.getElementById('role-pw-inp').value;
+    const inputHash=await hashPw(input);
+    const storedHash=await getRolePwHash();
+    if(inputHash===storedHash){
+      currentRole='admin'; saveData(); closeModal(); applyRoleUI(); renderTabs(); render();
+      showToast('✅ 管理者モードに切り替えました');
+    } else {
+      document.getElementById('role-pw-err').textContent='パスワードが違います。';
+      document.getElementById('role-pw-inp').value='';
+    }
+  }catch(e){
+    console.warn('パスワード認証エラー',e);
+    showToast('❌ パスワード認証に失敗しました。ブラウザの環境を確認してください。','#E24B4A');
   }
 }
 
@@ -581,37 +600,44 @@ function renderTabs(){
     stores.map(s=>{
       const col=storeColor(s.id); const act=s.id===currentStoreId?'active':'';
       const dotStyle=act?'':` style="background:${col}"`;
-      const rm=(r.manageStores&&stores.length>1)?`<span class="rm" onclick="confirmDeleteStore(event,${s.id})" title="長押しで削除">×</span>`:'';
-      return`<button class="stab ${act}" onclick="selectStore(${s.id})"><span class="dot"${dotStyle}></span>${s.name}${rm}</button>`;
+      return`<button class="stab ${act}" onclick="selectStore(${s.id})"><span class="dot"${dotStyle}></span>${s.name}</button>`;
     }).join('')
     +(r.manageStores?`<button class="stab tab-add" onclick="openStoreModal()">＋ 店舗を追加</button>`:'');
 }
 
 function selectStore(id){ currentStoreId=id; saveData(); _selectedCat=''; document.getElementById('search').value=''; const lbl2=document.getElementById('cat-filter-label'); if(lbl2) lbl2.textContent='カテゴリー'; const btnr=document.getElementById('cat-filter-btn'); if(btnr){btnr.style.borderColor='var(--bd)';btnr.style.color='var(--tm)';btnr.style.background='var(--sf)';} const st=document.getElementById('search-text'); if(st) st.value=''; _selectedCat=''; document.getElementById('search').value=''; renderTabs(); render(); }
 
-function confirmDeleteStore(e,id){
-  e.stopPropagation();
+function confirmDeleteStore(id){
+  const r=getRole();
+  if(!r.manageStores){ alert('管理者のみ店舗を削除できます。'); return; }
   const s=stores.find(s=>s.id===id);
   if(!s) return;
   document.getElementById('modal-content').innerHTML=`
     <h2>🗑️ 店舗を削除</h2>
     <div style="background:var(--rl);border-radius:8px;padding:12px;margin-bottom:16px;border:1.5px solid var(--r)">
-      <div style="font-size:14px;font-weight:700;color:var(--r);margin-bottom:6px">⚠️ 削除の確認</div>
-      <div style="font-size:13px;color:var(--r)">「${esc(s.name)}」を削除すると<br>在庫データもすべて消えます。<br>この操作は取り消せません。</div>
+      <div style="font-size:14px;font-weight:700;color:var(--r);margin-bottom:8px">⚠️ 本当に削除しますか？</div>
+      <div style="font-size:13px;color:var(--r);line-height:1.7">「${esc(s.name)}」を削除すると<br>在庫データもすべて消えます。<br>この操作は<strong>取り消せません</strong>。</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="delete-confirm-check" style="width:18px;height:18px;accent-color:var(--r)">
+        <span style="color:var(--r);font-weight:600;">削除することを理解しました</span>
+      </label>
     </div>
     <div class="fa">
       <button class="btn btn-g" onclick="closeModal()">キャンセル</button>
-      <button class="btn" style="background:var(--r);color:#fff;border-color:var(--r)" onclick="deleteStore(null,${id})">削除する</button>
+      <button class="btn" style="background:var(--r);color:#fff;border-color:var(--r)" onclick="deleteStore(${id})">削除する</button>
     </div>`;
   openOverlay();
 }
-function deleteStore(e,id){
-  e.stopPropagation();
+function deleteStore(id){
+  const check=document.getElementById('delete-confirm-check');
+  if(!check||!check.checked){ alert('「削除することを理解しました」にチェックを入れてください。'); return; }
   const s=stores.find(s=>s.id===id);
-  if(!confirm(`「${s.name}」を削除しますか？\n在庫データも削除されます。`)) return;
+  if(!s) return;
   stores=stores.filter(s=>s.id!==id); allItems=allItems.filter(i=>i.storeId!==id);
   if(currentStoreId===id) currentStoreId=stores[0]?.id;
-  saveData(); renderTabs(); render();
+  closeModal(); saveData(); renderTabs(); render();
 }
 
 function openStoreModal(){
@@ -688,7 +714,15 @@ function openAnnualModal(){
         <div style="font-size:32px;margin-bottom:8px">📭</div>
         <div>まだデータがありません。<br>棚卸完了ボタンを押すと保存されます。</div>
       </div>
-      <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
+      ${currentRole==='admin'?`
+    <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
+      <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:8px;">🗑️ 店舗を削除（管理者のみ）</div>
+      <select id="delete-store-select" style="width:100%;height:44px;border:1.5px solid var(--r);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx);margin-bottom:8px;">
+        ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
+      </select>
+      <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
+    </div>`:''}
+    <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
     openOverlay(); return;
   }
 
@@ -823,7 +857,15 @@ function openHistoryModal(){
         <div style="font-size:32px;margin-bottom:8px">📭</div>
         <div>履歴がまだありません。<br>棚卸完了後に「履歴を保存」してください。</div>
       </div>
-      <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
+      ${currentRole==='admin'?`
+    <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
+      <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:8px;">🗑️ 店舗を削除（管理者のみ）</div>
+      <select id="delete-store-select" style="width:100%;height:44px;border:1.5px solid var(--r);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx);margin-bottom:8px;">
+        ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
+      </select>
+      <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
+    </div>`:''}
+    <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
     openOverlay(); return;
   }
 
@@ -1075,16 +1117,21 @@ function render(){
   // モバイルカード
   const cards=document.getElementById('cards');
   if(!filtered.length){
-    cards.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><p>${si.length===0?'この店舗にはまだ商品がありません':(textQ?`「${esc(textQ)}」に一致する商品がありません`:'このカテゴリーに商品がありません')}</p></div>`;
+    const emptyMsg = si.length===0
+      ? `<div class="empty-icon">📦</div><p>この店舗にはまだ商品がありません</p>${r.canAdd?`<button class="empty-btn" onclick="openItemModal()">＋ 最初の商品を追加する</button>`:''}`
+      : textQ
+        ? `<div class="empty-icon">🔍</div><p>「${esc(textQ)}」に一致する商品がありません</p>`
+        : `<div class="empty-icon">🏷</div><p>このカテゴリーに商品がありません</p>`;
+    cards.innerHTML=`<div class="empty">${emptyMsg}</div>`;
   } else {
     cards.innerHTML=filtered.map(i=>{
       const isOut=i.qty===0;
       const isDone=!!i.done;
       const badge=isDone
-        ?`<span class="badge" style="background:#E8F4FD;color:#1565C0">✅ 完了</span>`
+        ?`<span class="badge" style="background:var(--pl);color:var(--p)">✅ 完了</span>`
         :isOut?`<span class="badge out">在庫切れ</span>`:`<span class="badge ok">在庫あり</span>`;
       const th=i.image?`<img class="thumb" src="${esc(i.image)}" alt="" onclick="openLightbox('${i.id}')" style="cursor:pointer">`:`<div class="thumb-ph">📦</div>`;
-      const cardStyle=isDone?`style="background:#FFFDE7;border:1.5px solid #FFF176"`:'';
+      const cardStyle=isDone?`style="background:var(--al);border:1.5px solid var(--a)"`:'';
       const qtyF=r.canEdit
         ?`<div class="cf"><div class="cf-label">在庫数</div><input class="cf-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.qty}" onblur="inlineUpdate(${i.id},'qty',this.value)" onfocus="this.select()"><span style="font-size:12px;color:var(--tm);margin-top:2px">${i.unit}</span></div>`
         :`<div class="cf"><div class="cf-label">在庫数</div><div class="cf-value">${fmt(i.qty)} ${esc(i.unit)}</div></div>`;
@@ -1095,7 +1142,7 @@ function render(){
       const doneBtn=r.canEdit
         ? isDone
           ? `<button class="btn-sm" onclick="toggleDone(${i.id})" style="color:var(--g);border-color:var(--g)">↩ 戻す</button>`
-          : `<button class="btn-sm" onclick="toggleDone(${i.id})" style="background:#E8F4FD;color:#1565C0;border-color:#90CAF9">✅ 完了</button>`
+          : `<button class="btn-sm" onclick="toggleDone(${i.id})" style="background:var(--pl);color:var(--p);border-color:var(--p)">✅ 完了</button>`
         : '';
       const act=(r.canEdit||r.canDelete)?`<div style="display:flex;gap:6px;flex-wrap:wrap">${doneBtn}${r.canEdit?`<button class="btn-sm" onclick="openItemModal(${i.id})">✏️ 編集</button>`:''}${r.canDelete?`<button class="btn-sm danger" onclick="deleteItem(${i.id})">🗑</button>`:''}</div>`:'';
       return`<div class="card" ${cardStyle}><div class="card-hdr"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">${th}<div style="min-width:0"><div style="font-weight:700;font-size:15px">${esc(i.name)}</div><div style="font-size:12px;color:var(--tm)">${esc(i.cat)}</div></div></div>${badge}</div><div class="card-body">${qtyF}${priceF}${valF}</div><div class="card-ftr"><span class="tlabel">🕐 ${esc(i.updatedAt)}</span>${act}</div></div>`;
@@ -1110,9 +1157,9 @@ function render(){
     const isOut=i.qty===0;
     const isDone=!!i.done;
     const badge=isDone
-      ?`<span class="badge" style="background:#E8F4FD;color:#1565C0">✅ 完了</span>`
+      ?`<span class="badge" style="background:var(--pl);color:var(--p)">✅ 完了</span>`
       :isOut?`<span class="badge out">在庫切れ</span>`:`<span class="badge ok">在庫あり</span>`;
-    const rowStyle=isDone?` style="background:#FFFDE7"`:'';
+    const rowStyle=isDone?` style="background:var(--al)"`:'';
     const th=i.image?`<img class="thumb-s" src="${esc(i.image)}" alt="" style="margin-right:8px;cursor:pointer" onclick="openLightbox('${i.id}')">`:`<span class="thumb-sph" style="margin-right:8px">📦</span>`;
     const qtyTd=r.canEdit?`<td class="r"><input class="inline-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.qty}" data-id="${i.id}" data-field="qty" onblur="inlineUpdate(${i.id},'qty',this.value)" onkeydown="inlineKeydown(event,${i.id},'qty',this)" onfocus="this.select()"></td>`:`<td class="r" style="font-weight:700">${fmt(i.qty)}</td>`;
     const priceTd=r.seePrice&&r.canEdit?`<td class="r"><input class="inline-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.price}" data-id="${i.id}" data-field="price" onblur="inlineUpdate(${i.id},'price',this.value)" onkeydown="inlineKeydown(event,${i.id},'price',this)" onfocus="this.select()"></td>`:r.seePrice?`<td class="r">${yen(i.price)}</td>`:`<td style="display:none"></td>`;
@@ -1120,13 +1167,16 @@ function render(){
     const doneBtn=r.canEdit
       ? isDone
         ? `<button class="btn-sm" onclick="toggleDone(${i.id})" style="color:var(--g);border-color:var(--g)">↩</button>`
-        : `<button class="btn-sm" onclick="toggleDone(${i.id})" style="background:#E8F4FD;color:#1565C0;border-color:#90CAF9">✅</button>`
+        : `<button class="btn-sm" onclick="toggleDone(${i.id})" style="background:var(--pl);color:var(--p);border-color:var(--p)">✅</button>`
       : '';
     const ac=(r.canEdit||r.canDelete)?`<td style="text-align:right;white-space:nowrap">${doneBtn}${r.canEdit?`<button class="btn-sm" onclick="openItemModal(${i.id})" style="margin-left:4px">✏️</button>`:''}${r.canDelete?`<button class="btn-sm danger" onclick="deleteItem(${i.id})" style="margin-left:4px">🗑</button>`:''}</td>`:`<td></td>`;
     return`<tr${rowStyle}><td style="font-weight:700"><div style="display:flex;align-items:center">${th}${esc(i.name)}</div></td><td style="color:var(--tm)">${esc(i.cat)}</td>${qtyTd}<td style="color:var(--tm)">${esc(i.unit)}</td>${priceTd}${valTd}<td>${badge}</td><td class="tlabel">${esc(i.updatedAt)}</td>${ac}</tr>`;
   }).join('');
   const trow=filtered.length&&r.seeTotal?`<tr class="total-row"><td colspan="5" style="color:var(--tm)">合計（${filtered.length}品）</td><td class="r" style="color:var(--g)">${yen(totalVal)}</td><td colspan="3"></td></tr>`:'';
-  document.getElementById('tbody').innerHTML=filtered.length?rows+trow:`<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--tf)">${si.length===0?'この店舗にはまだ商品がありません':(textQ?`「${esc(textQ)}」に一致する商品がありません`:'このカテゴリーに商品がありません')}</td></tr>`;
+  const emptyTd = si.length===0
+    ? `この店舗にはまだ商品がありません${r.canAdd?' — ＋ 追加ボタンから登録してください':''}`
+    : textQ ? `「${esc(textQ)}」に一致する商品がありません` : 'このカテゴリーに商品がありません';
+  document.getElementById('tbody').innerHTML=filtered.length?rows+trow:`<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--tf)">${emptyTd}</td></tr>`;
   updateStats();
   // render後にUndoボタンの状態を必ず同期（DOM再生成後も有効状態を維持）
   updateUndoBtn();
@@ -1255,6 +1305,14 @@ function renderCatModal(){
         onkeydown="if(event.key==='Enter')addCat()" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor=''">
       <button class="btn btn-p" style="height:40px;padding:0 16px" onclick="addCat()">＋ 追加</button>
     </div>
+    ${currentRole==='admin'?`
+    <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
+      <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:8px;">🗑️ 店舗を削除（管理者のみ）</div>
+      <select id="delete-store-select" style="width:100%;height:44px;border:1.5px solid var(--r);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx);margin-bottom:8px;">
+        ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
+      </select>
+      <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
+    </div>`:''}
     <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
 }
 
@@ -1355,8 +1413,9 @@ function openSettings(){
   document.getElementById('modal-content').innerHTML=`
     <h2>⚙️ 設定・情報</h2>
     <div style="background:#E8F9EE;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #06C755;">
-      <div style="font-size:12px;font-weight:700;color:#06C755;margin-bottom:8px;">🔗 アプリを共有</div>
-      <button onclick="shareToLine()" style="width:100%;height:44px;background:#06C755;border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🔗 リンクをコピー</button>
+      <div style="font-size:12px;font-weight:700;color:#06C755;margin-bottom:4px;">🔗 アプリを共有</div>
+      <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;">URLをコピーしてLINE等で貼り付けて共有してください。</div>
+      <button onclick="shareToLine()" style="width:100%;height:48px;background:#06C755;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🔗 URLをコピーする</button>
     </div>
     <div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px">
       <div style="font-size:11px;color:var(--tf);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">バージョン</div>
@@ -1421,6 +1480,14 @@ function openSettings(){
     </div>
 
 
+    ${isAdmin?`
+    <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
+      <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:8px;">🗑️ 店舗を削除（管理者のみ）</div>
+      <select id="delete-store-select" style="width:100%;height:44px;border:1.5px solid var(--r);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx);margin-bottom:8px;">
+        ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
+      </select>
+      <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
+    </div>`:''}
     <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
   openOverlay();
 }
@@ -1435,30 +1502,40 @@ function toggleAccessPw(enabled){
 }
 
 async function saveAccessPw(){
-  const pw = document.getElementById('access-pw1').value.trim();
-  const pw2 = document.getElementById('access-pw2').value.trim();
-  if(!pw||pw.length<4){alert('4文字以上で入力してください');return;}
-  if(pw!==pw2){alert('パスワードが一致しません');return;}
-  const h = await hashPw(pw);
-  localStorage.setItem(ACCESS_PW_KEY, h);
-  localStorage.setItem(ACCESS_ENABLED_KEY,'1');
-  document.getElementById('access-pw1').value='';
-  document.getElementById('access-pw2').value='';
-  closeModal();
-  showToast('✅ アクセスパスワードを設定しました');
+  try{
+    const pw = document.getElementById('access-pw1').value.trim();
+    const pw2 = document.getElementById('access-pw2').value.trim();
+    if(!pw||pw.length<4){alert('4文字以上で入力してください');return;}
+    if(pw!==pw2){alert('パスワードが一致しません');return;}
+    const h = await hashPw(pw);
+    localStorage.setItem(ACCESS_PW_KEY, h);
+    localStorage.setItem(ACCESS_ENABLED_KEY,'1');
+    document.getElementById('access-pw1').value='';
+    document.getElementById('access-pw2').value='';
+    closeModal();
+    showToast('✅ アクセスパスワードを設定しました');
+  }catch(e){
+    console.warn('アクセスPW設定エラー',e);
+    showToast('❌ パスワード設定に失敗しました。','#E24B4A');
+  }
 }
 
 async function saveEntryPw(){
-  const pw=document.getElementById('entry-pw1')?.value.trim();
-  const pw2=document.getElementById('entry-pw2')?.value.trim();
-  if(!pw||pw.length<4){alert('パスワードは4文字以上で入力してください');return;}
-  if(pw!==pw2){alert('パスワードが一致しません');return;}
-  const h=await hashPw(pw);
-  localStorage.setItem(ENTRY_PW_KEY,h);
-  document.getElementById('entry-pw1').value='';
-  document.getElementById('entry-pw2').value='';
-  closeModal();
-  showToast('✅ 入室パスワードを設定しました！');
+  try{
+    const pw=document.getElementById('entry-pw1')?.value.trim();
+    const pw2=document.getElementById('entry-pw2')?.value.trim();
+    if(!pw||pw.length<4){alert('パスワードは4文字以上で入力してください');return;}
+    if(pw!==pw2){alert('パスワードが一致しません');return;}
+    const h=await hashPw(pw);
+    localStorage.setItem(ENTRY_PW_KEY,h);
+    document.getElementById('entry-pw1').value='';
+    document.getElementById('entry-pw2').value='';
+    closeModal();
+    showToast('✅ 入室パスワードを設定しました！');
+  }catch(e){
+    console.warn('入室PW設定エラー',e);
+    showToast('❌ パスワード設定に失敗しました。','#E24B4A');
+  }
 }
 function clearEntryPw(){
   if(!confirm('入室パスワードを解除します。誰でも開けるようになります。よろしいですか？'))return;
@@ -1467,13 +1544,18 @@ function clearEntryPw(){
   showToast('✅ 入室パスワードを解除しました');
 }
 async function saveRolePw(){
-  const pw=document.getElementById('s-pw1').value.trim();
-  const pw2=document.getElementById('s-pw2').value.trim();
-  if(!pw||pw.length<4){alert('パスワードは4文字以上で入力してください');return;}
-  if(pw!==pw2){alert('パスワードが一致しません');return;}
-  const h=await hashPw(pw);
-  localStorage.setItem(ROLE_PW_KEY,h);
-  closeModal(); showToast('✅ パスワードを変更しました！');
+  try{
+    const pw=document.getElementById('s-pw1').value.trim();
+    const pw2=document.getElementById('s-pw2').value.trim();
+    if(!pw||pw.length<4){alert('パスワードは4文字以上で入力してください');return;}
+    if(pw!==pw2){alert('パスワードが一致しません');return;}
+    const h=await hashPw(pw);
+    localStorage.setItem(ROLE_PW_KEY,h);
+    closeModal(); showToast('✅ パスワードを変更しました！');
+  }catch(e){
+    console.warn('ロールPW変更エラー',e);
+    showToast('❌ パスワード変更に失敗しました。','#E24B4A');
+  }
 }
 
 function resetAllQtyToZero(){
@@ -1596,7 +1678,15 @@ function backupToGdrive(){
           onclick="window.open('https://drive.google.com/drive/my-drive','_blank')">
           ☁️ Googleドライブを開く
         </button>
-        <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
+        ${currentRole==='admin'?`
+    <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
+      <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:8px;">🗑️ 店舗を削除（管理者のみ）</div>
+      <select id="delete-store-select" style="width:100%;height:44px;border:1.5px solid var(--r);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx);margin-bottom:8px;">
+        ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
+      </select>
+      <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
+    </div>`:''}
+    <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
       openOverlay();
     },600);
   }catch(e){ alert('失敗しました：'+e.message); }
