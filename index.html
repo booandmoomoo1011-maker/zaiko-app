@@ -492,16 +492,37 @@ try {
     <span id="app-version" style="font-size:10px;opacity:.6;margin-top:2px;display:block;"></span>
   </div>
   <div class="header-right">
-    <button class="share-btn line-share-btn" onclick="shareToLine()" id="line-share-btn">📲 LINEで共有</button>
     <button id="sync-btn" onclick="manualSync()">
       <span id="sync-dot" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#aaa;flex-shrink:0;transition:background .4s;"></span>
       <span id="sync-label">接続確認中…</span>
     </button>
-    <button class="share-btn" onclick="showUberModal()" style="background:#e8f0ff;border-color:#99b8f0;color:#1a3f8a;">🛵 月間売上</button>
-    <button class="edit-toggle-btn" id="edit-btn" onclick="toggleEditMode()">✏️ 品目編集</button>
-    <button class="share-btn" onclick="changePasscode()" style="background:#fff3e0;border-color:#ffb74d;color:#e65100;">🔑 PW</button>
+    <button onclick="openSettingsModal()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);color:#fff;font-size:18px;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:inherit;">⚙️</button>
   </div>
 </header>
+
+<!-- 設定モーダル -->
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeSettingsModal(event)">
+  <div style="background:var(--surface);border-radius:16px;max-width:360px;margin:60px auto 24px;padding:0;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
+    <div style="background:var(--green);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="color:#fff;font-size:16px;font-weight:700;">⚙️ 設定</div>
+      <button onclick="closeSettingsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#fff;opacity:.8;">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+      <button onclick="closeSettingsModal();shareToLine();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#06c755;border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📲</span> LINEで共有
+      </button>
+      <button onclick="closeSettingsModal();showUberModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f0ff;border:1.5px solid #99b8f0;border-radius:12px;color:#1a3f8a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🛵</span> 月間売上
+      </button>
+      <button onclick="closeSettingsModal();toggleEditMode();" id="settings-edit-btn" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#f5f5ef;border:1.5px solid var(--border2);border-radius:12px;color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">✏️</span> 品目編集
+      </button>
+      <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🔑</span> パスワード変更
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Uber Eats月間集計モーダル -->
 <div id="uber-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeUberModal(event)">
@@ -652,16 +673,21 @@ function saveHistory(h){
   if(window.firebaseSave) window.firebaseSave(h);
 }
 
-// 前日在庫取得
+// 前日在庫取得（前日の入荷数を加算して翌日の期待在庫を返す）
 function prevStock(id){
   const h=loadHistory();
   if(h.length<1)return null;
   // 今日の記録を除いた直近の記録を参照
   const prev=h.find(r=>r.date!==dateStr);
   if(!prev)return null;
-  if(prev.sales&&prev.sales[id]!==undefined)return prev.sales[id];
-  if(prev.simple&&prev.simple[id]!==undefined)return prev.simple[id];
-  return null;
+  let stock=null;
+  if(prev.sales&&prev.sales[id]!==undefined)stock=prev.sales[id];
+  else if(prev.simple&&prev.simple[id]!==undefined)stock=prev.simple[id];
+  if(stock===null)return null;
+  // 前日の入荷数を加算（翌日に反映されるべき在庫）
+  const prevNyuka=(prev.nyuka&&prev.nyuka[id])||[];
+  const prevNyukaTotal=prevNyuka.reduce((s,n)=>s+n.qty,0);
+  return stock+prevNyukaTotal;
 }
 
 // ===== 完了確認 =====
@@ -1320,6 +1346,15 @@ function shareToLine(){
 
 function openPasscodeSettings(){
   changePasscode();
+}
+
+// ===== 設定モーダル =====
+function openSettingsModal(){
+  document.getElementById('settings-modal').style.display='block';
+}
+function closeSettingsModal(e){
+  if(e&&e.target!==document.getElementById('settings-modal'))return;
+  document.getElementById('settings-modal').style.display='none';
 }
 
 function copyShareLink(){ shareToLine(); }
