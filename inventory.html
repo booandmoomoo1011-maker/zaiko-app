@@ -39,12 +39,11 @@ function shareToLine(){
 body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
 .app{display:flex;flex-direction:column;min-height:100vh;max-width:900px;margin:0 auto}
 .hdr{background:var(--sf);border-bottom:1px solid var(--bd);padding:10px 12px;position:sticky;top:0;z-index:100}
-.hdr-in{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:nowrap}
+.hdr-in{display:flex;align-items:center;gap:6px;width:100%}
 .hdr-title{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.hdr-title h1{font-size:15px;font-weight:700;white-space:nowrap}
 .hdr-icon{width:28px;height:28px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.hdr-ctrl{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.role-pill{display:inline-flex;align-items:center;gap:4px;padding:8px 13px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid transparent;white-space:nowrap;min-height:40px}
+.hdr-ctrl{display:flex;align-items:center;gap:4px;flex:1}
+.role-pill{display:inline-flex;align-items:center;justify-content:center;gap:3px;height:40px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid transparent;white-space:nowrap;flex:1;min-width:0;padding:0 4px}
 .role-pill.admin{background:var(--pl);color:var(--p);border-color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd);border-color:var(--gd)}.role-pill.viewer{background:var(--grl);color:var(--gr);border-color:var(--gr)}
 .role-pill.inactive{opacity:0.28;filter:grayscale(0.5)}
 .line-share-btn{display:none}
@@ -59,7 +58,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .hist-up{color:#1D9E75;font-weight:700}.hist-down{color:#E24B4A;font-weight:700}.hist-same{color:var(--tf)}
 .hist-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
 .hist-badge.up{background:#E8F8F2;color:#1D9E75}.hist-badge.down{background:#FEE;color:#E24B4A}.hist-badge.same{background:var(--bg);color:var(--tf)}
-.role-switcher{display:flex;align-items:center;gap:3px}
+
 .hdr-h1{display:none}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
 .lightbox img{max-width:100%;max-height:90vh;border-radius:16px;object-fit:contain;box-shadow:0 8px 40px rgba(0,0,0,.5)}
@@ -169,16 +168,13 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
             <rect x="8" y="29" width="32" height="4" rx="1" fill="#E8C97A" opacity="0.7"/>
           </svg>
         </div>
-        <h1 class="hdr-h1">在庫管理</h1>
       </div>
       <div class="hdr-ctrl">
-        <div class="role-switcher">
-          <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡 管理者</button>
-          <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️ 編集者</button>
-          <button class="role-pill viewer" id="role-btn-viewer" onclick="switchRole('viewer')">👁 閲覧者</button>
-        </div>
-        <button id="undo-btn" class="btn-sm" style="width:44px;height:44px;padding:0;justify-content:center;font-size:22px;opacity:0.35;flex-shrink:0" title="">↩️</button>
-        <button class="btn-sm" onclick="openSettings()" style="width:44px;height:44px;padding:0;justify-content:center;font-size:22px;color:#fff;background:#555;border-color:#444;flex-shrink:0">⚙️</button>
+        <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡 管理者</button>
+        <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️ 編集者</button>
+        <button class="role-pill viewer" id="role-btn-viewer" onclick="switchRole('viewer')">👁 閲覧者</button>
+        <button id="undo-btn" class="btn-sm" style="width:40px;height:40px;padding:0;justify-content:center;font-size:20px;opacity:0.35;flex-shrink:0" title="">↩️</button>
+        <button class="btn-sm" onclick="openSettings()" style="width:40px;height:40px;padding:0;justify-content:center;font-size:20px;color:#fff;background:#555;border-color:#444;flex-shrink:0">⚙️</button>
       </div>
     </div>
   </div>
