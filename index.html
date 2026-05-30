@@ -1585,13 +1585,25 @@ function saveNyukaHistRow(uid, itemId, date, src, histDate, entryIdx){
 }
 
 function deleteNyukaHistRow(itemId, src, histDate, entryIdx, uid){
-  if(!confirm('この入荷記録を削除しますか？')) return;
+  // confirmの代わりにインライン確認ボタンを表示
+  const row = document.getElementById('nhrow-'+uid);
+  if(!row) return;
+  const orig = row.innerHTML;
+  row.innerHTML = `
+    <span style="font-size:13px;color:#e02020;font-weight:600;flex:1;">本当に削除しますか？</span>
+    <button onclick="execDeleteNyukaHistRow('${itemId}','${src}','${histDate}',${entryIdx},'${uid}')"
+      style="padding:6px 14px;background:#e02020;border:none;color:#fff;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🗑 削除</button>
+    <button onclick="renderNyukaHistory()"
+      style="padding:6px 12px;background:var(--surface);border:1px solid var(--border2);color:var(--text2);border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">取消</button>
+  `;
+}
+
+function execDeleteNyukaHistRow(itemId, src, histDate, entryIdx, uid){
   if(src === 'today'){
     if(!NYUKA[itemId] || !NYUKA[itemId][entryIdx]){ showToast('⚠️ 記録が見つかりません'); return; }
     const qty = NYUKA[itemId][entryIdx].qty;
     NYUKA[itemId].splice(entryIdx, 1);
-    $set('stock_'+itemId, Math.max(0, $v('stock_'+itemId) - qty));
-    updateDiff(itemId);
+    calcStock(itemId);
     saveDraft();
   } else {
     const h = loadHistory();
