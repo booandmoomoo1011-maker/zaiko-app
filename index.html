@@ -2170,7 +2170,7 @@ function restoreDraft(){
 
 // ===== スプレッドシート連携（GAS）=====
 const GAS_URL_KEY = 'zaiko_gas_url';
-const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbw2yjw36yKFoWxxO5fInUvwqZ8EcZJgUVMUQZsM_g3Ej-K-CSBiks6k7VAITyCajxU/exec';
+const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbxl-1U3kXuhdnewu7zGQR1S_hZRsJRFiLAD4IUfkX-wKqOu71nPWfr7CeeM4EWv3AA/exec';
 const SS_URL_DEFAULT = 'https://docs.google.com/spreadsheets/d/1iQ_7TLwmjzuJQH3n_Q1OsQ0pyWeE5ONY4Mys-fVwtSM';
 
 function openGasSettings(){
@@ -2193,14 +2193,10 @@ function openSpreadsheet(){
 function saveGasUrl(){
   const url = document.getElementById('gas-url-input').value.trim();
   const ssUrl = document.getElementById('ss-url-input').value.trim();
-  if(url && !url.startsWith('https://script.google.com')){
-    document.getElementById('gas-status').textContent = '⚠️ 正しいGAS URLを入力してください';
-    return;
-  }
-  localStorage.setItem(GAS_URL_KEY, url);
+  localStorage.setItem(GAS_URL_KEY, url || GAS_URL_DEFAULT);
   if(ssUrl) localStorage.setItem('zaiko_ss_url', ssUrl);
-  document.getElementById('gas-status').textContent = url ? '✅ 保存しました' : '解除しました';
-  showToast(url ? '📊 スプレッドシート連携URLを保存しました' : '連携を解除しました');
+  document.getElementById('gas-status').textContent = '✅ 保存しました';
+  showToast('📊 保存しました');
 }
 function clearGasUrl(){
   localStorage.removeItem(GAS_URL_KEY);
