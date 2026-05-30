@@ -2156,6 +2156,8 @@ function restoreDraft(){
 
 // ===== スプレッドシート連携（GAS）=====
 const GAS_URL_KEY = 'zaiko_gas_url';
+const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbw2yjw36yKFoWxxO5fInUvwqZ8EcZJgUVMUQZsM_g3Ej-K-CSBiks6k7VAITyCajxU/exec';
+const SS_URL_DEFAULT = 'https://docs.google.com/spreadsheets/d/1iQ_7TLwmjzuJQH3n_Q1OsQ0pyWeE5ONY4Mys-fVwtSM';
 
 function openGasSettings(){
   const url = localStorage.getItem(GAS_URL_KEY)||'';
@@ -2170,9 +2172,7 @@ function closeGasModal(e){
   document.getElementById('gas-modal').style.display = 'none';
 }
 function openSpreadsheet(){
-  // GAS URLからスプレッドシートIDを取得してシートを開く
-  // 直接Googleスプレッドシートのトップページを開く
-  const ssUrl = localStorage.getItem('zaiko_ss_url') || 'https://sheets.google.com';
+  const ssUrl = localStorage.getItem('zaiko_ss_url') || SS_URL_DEFAULT;
   window.open(ssUrl, '_blank');
 }
 
@@ -2205,7 +2205,7 @@ function testGasConnection(){
 
 // 記録をスプレッドシートに送信
 function sendToSpreadsheet(record){
-  const url = localStorage.getItem(GAS_URL_KEY);
+  const url = localStorage.getItem(GAS_URL_KEY) || GAS_URL_DEFAULT;
   if(!url) return;
 
   // 送信データ組み立て
