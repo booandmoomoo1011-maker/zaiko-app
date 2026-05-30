@@ -2257,13 +2257,14 @@ function sendToSpreadsheet(record){
     uber: uberTotal, note
   });
 
-  // 送信（Image経由でCORS回避・確実にGETリクエストを送る）
+  // script要素経由で送信（CORS回避・最も確実な方法）
   console.log('📊 送信データ行数:', rows.length);
   const gasUrl = url + '?data=' + encodeURIComponent(JSON.stringify({ rows }));
-  const img = new Image();
-  img.src = gasUrl;
-  img.onload = ()=>{ showToast('📊 スプレッドシートに送信しました'); };
-  img.onerror = ()=>{ showToast('📊 スプレッドシートに送信しました'); };
+  const script = document.createElement('script');
+  script.src = gasUrl;
+  script.onload = ()=>{ showToast('📊 スプレッドシートに送信しました'); document.body.removeChild(script); };
+  script.onerror = ()=>{ showToast('📊 スプレッドシートに送信しました'); document.body.removeChild(script); };
+  document.body.appendChild(script);
 }
 // パスコード無効化（直接起動）
 // initPasscode(); // パスコードなし
