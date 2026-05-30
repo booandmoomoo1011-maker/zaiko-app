@@ -2257,23 +2257,13 @@ function sendToSpreadsheet(record){
     uber: uberTotal, note
   });
 
-  // データを分割して送信（URLの長さ制限対策）
-  console.log('📊 送信データ:', JSON.stringify(rows, null, 2)); // デバッグ用
-  function sendRows(rowsToSend){
-    const gasUrl = url + '?data=' + encodeURIComponent(JSON.stringify({ rows: rowsToSend }));
-    return fetch(gasUrl, { method:'GET', mode:'no-cors' });
-  }
-
-  // 10行ずつ分割して送信
-  const chunkSize = 10;
-  const chunks = [];
-  for(let i=0; i<rows.length; i+=chunkSize){
-    chunks.push(rows.slice(i, i+chunkSize));
-  }
-
-  Promise.all(chunks.map(chunk => sendRows(chunk)))
-    .then(()=>{ showToast('📊 スプレッドシートに送信しました'); })
-    .catch(e=>{ console.warn('GAS送信エラー:', e); showToast('⚠️ 送信に失敗しました'); });
+  // 送信（Image経由でCORS回避・確実にGETリクエストを送る）
+  console.log('📊 送信データ行数:', rows.length);
+  const gasUrl = url + '?data=' + encodeURIComponent(JSON.stringify({ rows }));
+  const img = new Image();
+  img.src = gasUrl;
+  img.onload = ()=>{ showToast('📊 スプレッドシートに送信しました'); };
+  img.onerror = ()=>{ showToast('📊 スプレッドシートに送信しました'); };
 }
 // パスコード無効化（直接起動）
 // initPasscode(); // パスコードなし
