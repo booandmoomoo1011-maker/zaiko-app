@@ -1276,10 +1276,17 @@ function renderUber(){
 
   // 合計更新
   const total = UBER.reduce((s,u)=>s+(u.amount||0),0);
+  const filled = UBER.filter(u=>!u._empty).length;
   const totEl = document.getElementById('uber-total-big');
-  if(totEl) totEl.textContent = '¥'+total.toLocaleString();
+  if(totEl){
+    totEl.textContent = '¥'+total.toLocaleString();
+    totEl.style.color = filled>0 ? '#06C167' : '#888';
+  }
   const totSmall = document.getElementById('uber-total');
-  if(totSmall) totSmall.textContent = total>0?'合計 ¥'+total.toLocaleString():'';
+  if(totSmall){
+    totSmall.textContent = filled>0 ? (total>0?'合計 ¥'+total.toLocaleString():'✅ 売上なし（¥0）') : '';
+    totSmall.style.color = total>0?'#06C167':'#888';
+  }
 }
 
 function onUberInput(idx, val){
@@ -1295,10 +1302,17 @@ function onUberInput(idx, val){
   else { delete UBER[idx]._empty; }
   // 合計即時更新
   const total = UBER.reduce((s,u)=>s+(u.amount||0),0);
+  const filled = UBER.filter(u=>!u._empty).length;
   const totEl = document.getElementById('uber-total-big');
-  if(totEl) totEl.textContent = '¥'+total.toLocaleString();
+  if(totEl){
+    totEl.textContent = '¥'+total.toLocaleString();
+    totEl.style.color = filled>0 ? '#06C167' : '#888';
+  }
   const totSmall = document.getElementById('uber-total');
-  if(totSmall) totSmall.textContent = total>0?'合計 ¥'+total.toLocaleString():'';
+  if(totSmall){
+    totSmall.textContent = filled>0 ? (total>0?'合計 ¥'+total.toLocaleString():'✅ 売上なし（¥0）') : '';
+    totSmall.style.color = total>0?'#06C167':'#888';
+  }
   saveUberNow();
 }
 
