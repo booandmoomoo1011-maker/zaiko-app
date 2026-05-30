@@ -2254,20 +2254,26 @@ function sendToSpreadsheet(record){
     uber: uberTotal, note
   });
 
-  const sendUrl = url + '?data=' + encodeURIComponent(JSON.stringify({ rows }));
+  // データを分割して送信（URLの長さ制限対策）
+  function sendRows(rowsToSend){
+    const gasUrl = url + '?data=' + encodeURIComponent(JSON.stringify({ rows: rowsToSend }));
+    return fetch(gasUrl, { method:'GET', mode:'no-cors' });
+  }
 
-  fetch(sendUrl, {
-    method: 'GET',
-    mode: 'no-cors',
-  }).then(()=>{
-    showToast('📊 スプレッドシートに送信しました');
-  }).catch(e=>{
-    console.warn('GAS送信エラー:', e);
-    showToast('⚠️ スプレッドシートへの送信に失敗しました');
-  });
+  // 10行ずつ分割して送信
+  const chunkSize = 10;
+  const chunks = [];
+  for(let i=0; i<rows.length; i+=chunkSize){
+    chunks.push(rows.slice(i, i+chunkSize));
+  }
+
+  Promise.all(chunks.map(chunk => sendRows(chunk)))
+    .then(()=>{ showToast('📊 スプレッドシートに送信しました'); })
+    .catch(e=>{ console.warn('GAS送信エラー:', e); showToast('⚠️ 送信に失敗しました'); });
 }
-// パスコード画面を初期化
-initPasscode();
+// パスコード無効化（直接起動）
+// initPasscode(); // パスコードなし
+document.getElementById('passcode-screen').style.display='none';
 // 全品目の在庫を初期計算
 refreshAllStock();
 
