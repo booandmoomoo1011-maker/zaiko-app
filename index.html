@@ -921,7 +921,7 @@ function submitStaffModal(){
       return;
     }
     // OKなら¥0を自動入力して保存
-    UBER = UBER.filter(u=>u.amount>0);
+    UBER = UBER.filter(u=>!u._empty);
     const now=new Date();
     const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     UBER.push({amount:0, time:timeStr});
@@ -1320,7 +1320,7 @@ function delUber(idx){ clearUberRow(idx); }
 
 // Uber売上を即座にFirebaseへ保存
 function saveUberNow(){
-  const saved = UBER.filter(u=>u.amount>0);
+  const saved = UBER.filter(u=>!u._empty);
   const h=loadHistory();
   const idx=h.findIndex(r=>r.date===dateStr);
   if(idx>=0){
@@ -1627,7 +1627,7 @@ function doSave(autoSave=false){
     simpleItems:SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:SALES.map(it=>({id:it.id,name:it.name})),
     note:document.getElementById('note').value.trim(),
-    uber:UBER.filter(u=>u.amount>0),
+    uber:UBER.filter(u=>!u._empty),
     hasWarn:warns.length>0,
     forceCompleted:_isForceComplete||false,
     warnItems:_isForceComplete?warns.map(function(it){return it.id;}):[],
