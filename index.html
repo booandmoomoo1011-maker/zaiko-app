@@ -655,8 +655,8 @@ try {
       <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🔑</span> パスワード変更
       </button>
-      <button onclick="closeSettingsModal();openGasSettings();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f5e9;border:1.5px solid #81c784;border-radius:12px;color:#1b5e20;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">📊</span> スプレッドシート連携
+      <button onclick="closeSettingsModal();openSpreadsheet();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#1565c0;border:1.5px solid #1565c0;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📄</span> スプレッドシートを開く
       </button>
     </div>
   </div>
@@ -1047,15 +1047,15 @@ function editRecord(idx){
 // ===== 品目編集モード =====
 function toggleEditMode(){
   editMode=!editMode;
-  const btn=document.getElementById('edit-btn');
-  btn.textContent=editMode?'✅ 完了':'✏️ 品目編集';
-  btn.classList.toggle('active',editMode);
+  const btn=document.getElementById('settings-edit-btn');
+  if(btn) btn.querySelector('span:last-child') && (btn.querySelector('span:last-child').textContent = editMode ? '✅ 完了' : '品目編集');
   if(!editMode){
     SIMPLE.forEach(it=>{const el=document.getElementById('name_'+it.id);if(el)it.name=el.value.trim()||it.name;});
     SALES.forEach(it=>{const el=document.getElementById('name_'+it.id);if(el)it.name=el.value.trim()||it.name;});
     saveItems();
   }
   renderAll();
+  if(editMode) showToast('✏️ 品目編集モード：編集後「品目編集」を再度押して完了');
 }
 
 // ===== レンダリング =====
@@ -2228,13 +2228,13 @@ function sendToSpreadsheet(record){
     });
   });
 
-  // 販売・無料品目
+  // 販売・無料品目（recordとDOMの両方から最新値を取得）
   const saMap = Object.fromEntries((record.salesItems||SALES).map(x=>[x.id,x]));
   SALES.forEach(it=>{
     const item = saMap[it.id]||it;
-    const stock = record.sales&&record.sales[it.id]!==undefined ? record.sales[it.id] : '';
-    const sell  = record.sales&&record.sales[it.id+'_sell']!==undefined ? record.sales[it.id+'_sell'] : '';
-    const free  = record.sales&&record.sales[it.id+'_free']!==undefined ? record.sales[it.id+'_free'] : '';
+    const stock = record.sales&&record.sales[it.id]!==undefined ? record.sales[it.id] : 0;
+    const sell  = record.sales&&record.sales[it.id+'_sell']!==undefined ? record.sales[it.id+'_sell'] : 0;
+    const free  = record.sales&&record.sales[it.id+'_free']!==undefined ? record.sales[it.id+'_free'] : 0;
     const nyuka = record.nyuka&&record.nyuka[it.id] ? record.nyuka[it.id].reduce((s,n)=>s+n.qty,0) : 0;
     rows.push({
       date, time, staff,
@@ -2255,6 +2255,7 @@ function sendToSpreadsheet(record){
   });
 
   // データを分割して送信（URLの長さ制限対策）
+  console.log('📊 送信データ:', JSON.stringify(rows, null, 2)); // デバッグ用
   function sendRows(rowsToSend){
     const gasUrl = url + '?data=' + encodeURIComponent(JSON.stringify({ rows: rowsToSend }));
     return fetch(gasUrl, { method:'GET', mode:'no-cors' });
