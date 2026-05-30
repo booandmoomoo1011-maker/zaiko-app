@@ -1463,22 +1463,14 @@ function renderNyukaHistory(){
     });
   });
 
-  // 今日分（未保存）
+  // 今日分（NYUKA配列から・保存済み分は履歴から取得済みのため重複除外）
   SALES.forEach(it => {
     if(filterItem && it.id !== filterItem) return;
     (NYUKA[it.id]||[]).forEach((n, ni) => {
-      if(!n.date.startsWith(ym.replace('-','/'))) {
-        const d = n.date.replace(/-/g,'/');
-        if(!d.startsWith(fm)) return;
-      }
       const isoDate = n.date.includes('-') ? n.date : n.date.replace(/\//g,'-');
       const d2 = isoDate.replace(/-/g,'/');
       if(!d2.startsWith(fm)) return;
-      // 既に履歴に保存されている今日分と重複しないよう確認
-      const alreadySaved = monthH.find(r=>r.date===dateStr);
-      if(!alreadySaved){
-        allEntries.push({ itemId:it.id, itemName:it.name, date:isoDate, qty:n.qty, staff:n.staff||'', src:'today', todayIdx:ni });
-      }
+      allEntries.push({ itemId:it.id, itemName:it.name, date:isoDate, qty:n.qty, staff:n.staff||'', src:'today', todayIdx:ni });
     });
   });
 
