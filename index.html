@@ -617,10 +617,16 @@ try {
         <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/..."
           style="width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);">
       </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;">スプレッドシートURL（「開く」ボタン用）</div>
+        <input type="url" id="ss-url-input" placeholder="https://docs.google.com/spreadsheets/d/..."
+          style="width:100%;padding:10px 12px;border:1.5px solid var(--border2);border-radius:10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);">
+      </div>
       <div id="gas-status" style="font-size:12px;color:var(--text3);text-align:center;min-height:18px;"></div>
       <div style="display:flex;gap:8px;">
         <button onclick="testGasConnection()" style="flex:1;padding:11px;background:#e8f5e9;border:1.5px solid #81c784;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#1b5e20;">🔗 接続テスト</button>
         <button onclick="saveGasUrl()" style="flex:1;padding:11px;background:#1b5e20;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;">💾 保存</button>
+        <button onclick="openSpreadsheet()" style="flex:1;padding:11px;background:#1565c0;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;">📄 開く</button>
       </div>
       <button onclick="clearGasUrl()" style="padding:8px;background:none;border:1px solid var(--border2);border-radius:8px;font-size:12px;color:var(--text3);cursor:pointer;font-family:inherit;">連携を解除する</button>
     </div>
@@ -2150,7 +2156,9 @@ const GAS_URL_KEY = 'zaiko_gas_url';
 
 function openGasSettings(){
   const url = localStorage.getItem(GAS_URL_KEY)||'';
+  const ssUrl = localStorage.getItem('zaiko_ss_url')||'';
   document.getElementById('gas-url-input').value = url;
+  document.getElementById('ss-url-input').value = ssUrl;
   document.getElementById('gas-status').textContent = url ? '✅ URL設定済み' : '未設定';
   document.getElementById('gas-modal').style.display = 'flex';
 }
@@ -2158,13 +2166,22 @@ function closeGasModal(e){
   if(e && e.target !== document.getElementById('gas-modal')) return;
   document.getElementById('gas-modal').style.display = 'none';
 }
+function openSpreadsheet(){
+  // GAS URLからスプレッドシートIDを取得してシートを開く
+  // 直接Googleスプレッドシートのトップページを開く
+  const ssUrl = localStorage.getItem('zaiko_ss_url') || 'https://sheets.google.com';
+  window.open(ssUrl, '_blank');
+}
+
 function saveGasUrl(){
   const url = document.getElementById('gas-url-input').value.trim();
+  const ssUrl = document.getElementById('ss-url-input').value.trim();
   if(url && !url.startsWith('https://script.google.com')){
     document.getElementById('gas-status').textContent = '⚠️ 正しいGAS URLを入力してください';
     return;
   }
   localStorage.setItem(GAS_URL_KEY, url);
+  if(ssUrl) localStorage.setItem('zaiko_ss_url', ssUrl);
   document.getElementById('gas-status').textContent = url ? '✅ 保存しました' : '解除しました';
   showToast(url ? '📊 スプレッドシート連携URLを保存しました' : '連携を解除しました');
 }
@@ -2237,11 +2254,11 @@ function sendToSpreadsheet(record){
     uber: uberTotal, note
   });
 
-  fetch(url, {
-    method: 'POST',
+  const sendUrl = url + '?data=' + encodeURIComponent(JSON.stringify({ rows }));
+
+  fetch(sendUrl, {
+    method: 'GET',
     mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ rows })
   }).then(()=>{
     showToast('📊 スプレッドシートに送信しました');
   }).catch(e=>{
