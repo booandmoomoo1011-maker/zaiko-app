@@ -627,6 +627,12 @@ try {
       <button onclick="closeSettingsModal();showNyukaHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f7f0;border:1.5px solid #7dd4a8;border-radius:12px;color:#1a5f3a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">📦</span> 入荷履歴
       </button>
+      <button onclick="closeSettingsModal();showSellHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f0ff;border:1.5px solid #99b8f0;border-radius:12px;color:#1a3f8a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🛒</span> 販売記録
+      </button>
+      <button onclick="closeSettingsModal();showFreeHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff0f5;border:1.5px solid #f0a0c0;border-radius:12px;color:#8a1a3f;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🎁</span> 無料記録
+      </button>
       <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🔑</span> パスワード変更
       </button>
@@ -635,6 +641,40 @@ try {
   </div>
 </div>
 
+
+<!-- 販売記録モーダル -->
+<div id="sell-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeSellHistoryModal(event)">
+  <div style="background:var(--surface);border-radius:16px;max-width:520px;margin:40px auto 24px;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
+    <div style="background:#1a3f8a;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
+      <div style="color:#fff;font-size:17px;font-weight:700;">🛒 販売記録</div>
+      <button onclick="closeSellHistoryModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;background:var(--surface);">
+      <input type="month" id="sell-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('sell')">
+      <select id="sell-history-item" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('sell')">
+        <option value="">全品目</option>
+      </select>
+    </div>
+    <div id="sell-history-content" style="padding:14px 16px 20px;"></div>
+  </div>
+</div>
+
+<!-- 無料記録モーダル -->
+<div id="free-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeFreeHistoryModal(event)">
+  <div style="background:var(--surface);border-radius:16px;max-width:520px;margin:40px auto 24px;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
+    <div style="background:#8a1a3f;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
+      <div style="color:#fff;font-size:17px;font-weight:700;">🎁 無料記録</div>
+      <button onclick="closeFreeHistoryModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;background:var(--surface);">
+      <input type="month" id="free-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('free')">
+      <select id="free-history-item" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('free')">
+        <option value="">全品目</option>
+      </select>
+    </div>
+    <div id="free-history-content" style="padding:14px 16px 20px;"></div>
+  </div>
+</div>
 
 <!-- 入荷履歴モーダル（全面強化版） -->
 <div id="nyuka-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeNyukaHistoryModal(event)">
@@ -1598,6 +1638,121 @@ function getNyukaStaffNames(){
     (NYUKA[it.id]||[]).forEach(n => { if(n.staff) names.add(n.staff); });
   });
   return [...names];
+}
+
+// ===== 販売・無料記録モーダル =====
+function showSellHistoryModal(){
+  const modal = document.getElementById('sell-history-modal');
+  modal.style.display = 'block';
+  const now2 = new Date();
+  const ym = now2.getFullYear() + '-' + String(now2.getMonth()+1).padStart(2,'0');
+  document.getElementById('sell-history-month').value = ym;
+  const sel = document.getElementById('sell-history-item');
+  sel.innerHTML = '<option value="">全品目</option>';
+  SALES.forEach(it => {
+    const op = document.createElement('option');
+    op.value = it.id; op.textContent = it.name;
+    sel.appendChild(op);
+  });
+  renderSellFreeHistory('sell');
+}
+function closeSellHistoryModal(e){
+  if(e && e.target !== document.getElementById('sell-history-modal')) return;
+  document.getElementById('sell-history-modal').style.display = 'none';
+}
+
+function showFreeHistoryModal(){
+  const modal = document.getElementById('free-history-modal');
+  modal.style.display = 'block';
+  const now2 = new Date();
+  const ym = now2.getFullYear() + '-' + String(now2.getMonth()+1).padStart(2,'0');
+  document.getElementById('free-history-month').value = ym;
+  const sel = document.getElementById('free-history-item');
+  sel.innerHTML = '<option value="">全品目</option>';
+  SALES.forEach(it => {
+    const op = document.createElement('option');
+    op.value = it.id; op.textContent = it.name;
+    sel.appendChild(op);
+  });
+  renderSellFreeHistory('free');
+}
+function closeFreeHistoryModal(e){
+  if(e && e.target !== document.getElementById('free-history-modal')) return;
+  document.getElementById('free-history-modal').style.display = 'none';
+}
+
+function renderSellFreeHistory(type){
+  const isSell = type === 'sell';
+  const ym      = document.getElementById(type+'-history-month').value;
+  const filterItem = document.getElementById(type+'-history-item').value;
+  const el      = document.getElementById(type+'-history-content');
+  if(!ym || !el) return;
+
+  const fm = ym.replace('-','/');
+  const [y, m] = ym.split('-').map(Number);
+  const monthLabel = y + '年' + m + '月';
+  const allH = loadHistory();
+  const monthH = allH.filter(r => r.date.startsWith(fm));
+
+  // 品目ごとに日別データを収集
+  const itemMap = {}; // {itemId: {name, days:[{date,val}], total}}
+  monthH.forEach(r => {
+    const saMap = Object.fromEntries((r.salesItems||SALES).map(x=>[x.id,x]));
+    SALES.forEach(it => {
+      if(filterItem && it.id !== filterItem) return;
+      const item = saMap[it.id] || it;
+      const val = isSell
+        ? (r.sales&&r.sales[it.id+'_sell']!==undefined ? r.sales[it.id+'_sell'] : 0)
+        : (r.sales&&r.sales[it.id+'_free']!==undefined ? r.sales[it.id+'_free'] : 0);
+      if(val <= 0) return;
+      if(!itemMap[it.id]) itemMap[it.id] = {name: item.name, days:[], total:0};
+      itemMap[it.id].days.push({date: r.date, val});
+      itemMap[it.id].total += val;
+    });
+  });
+
+  const entries = Object.values(itemMap).filter(x => x.total > 0);
+  if(!entries.length){
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px;">${monthLabel}の${isSell?'販売':'無料'}記録はありません</div>`;
+    return;
+  }
+
+  // 月合計バナー
+  const grandTotal = entries.reduce((s,x)=>s+x.total, 0);
+  const accentColor = isSell ? '#1a3f8a' : '#8a1a3f';
+  const accentLight = isSell ? '#e8f0ff' : '#fff0f5';
+  const accentBd    = isSell ? '#99b8f0' : '#f0a0c0';
+
+  let html = `<div style="background:${accentLight};border:1px solid ${accentBd};border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;gap:16px;align-items:center;">
+    <div style="text-align:center;flex:1;"><div style="font-size:10px;color:${accentColor};font-weight:700;margin-bottom:2px;">${isSell?'販売':'無料'}日数</div><div style="font-size:26px;font-weight:700;color:${accentColor};">${new Set(monthH.filter(r=>entries.some(()=>true)).map(r=>r.date)).size}<span style="font-size:13px;">日</span></div></div>
+    <div style="width:1px;background:${accentBd};align-self:stretch;"></div>
+    <div style="text-align:center;flex:1;"><div style="font-size:10px;color:${accentColor};font-weight:700;margin-bottom:2px;">合計${isSell?'販売':'無料'}</div><div style="font-size:26px;font-weight:700;color:${accentColor};">${grandTotal}<span style="font-size:13px;">個</span></div></div>
+  </div>`;
+
+  entries.forEach(item => {
+    // 日付降順
+    const sorted = item.days.slice().sort((a,b)=>b.date.localeCompare(a.date));
+    html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;">
+      <div style="padding:9px 14px;display:flex;align-items:center;justify-content:space-between;background:${accentLight};border-bottom:1px solid ${accentBd};">
+        <span style="font-size:14px;font-weight:700;color:${accentColor};">${esc(item.name)}</span>
+        <span style="font-size:13px;font-weight:700;color:${accentColor};">計 ${item.total}個</span>
+      </div>
+      <div style="padding:4px 0;">`;
+    sorted.forEach(d => {
+      const parts = d.date.replace(/-/g,'/').split('/');
+      const dd = parseInt(parts[2]);
+      const weekDay = '日月火水木金土'[new Date(y, m-1, dd).getDay()];
+      const isWeekend = new Date(y, m-1, dd).getDay()%6===0;
+      const isToday2 = d.date.replace(/-/g,'/') === dateStr;
+      html += `<div style="display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);">
+        <span style="flex:1;font-size:13px;font-weight:${isToday2?'700':'500'};color:${isWeekend?'#c04000':'var(--text)'};">${m}/${dd}（${weekDay}）${isToday2?'<span style="font-size:9px;background:var(--green);color:#fff;padding:1px 5px;border-radius:8px;margin-left:6px;">今日</span>':''}</span>
+        <span style="font-size:15px;font-weight:700;color:${accentColor};">${d.val}個</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  el.innerHTML = html;
 }
 
 // ===== 入荷履歴モーダル（設定画面から）=====
