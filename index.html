@@ -618,11 +618,8 @@ try {
       <button onclick="closeSettingsModal();shareToLine();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#06c755;border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">📲</span> LINEで共有
       </button>
-      <button onclick="closeSettingsModal();showUberModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f0ff;border:1.5px solid #99b8f0;border-radius:12px;color:#1a3f8a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">🛵</span> 月間売上
-      </button>
-      <button onclick="closeSettingsModal();toggleEditMode();" id="settings-edit-btn" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#f5f5ef;border:1.5px solid var(--border2);border-radius:12px;color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">✏️</span> 品目編集
+      <button onclick="closeSettingsModal();showUberModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#000;border:1.5px solid #06C167;border-radius:12px;color:#06C167;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🛵</span> Uber Eats 月間売上
       </button>
       <button onclick="closeSettingsModal();showNyukaHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f7f0;border:1.5px solid #7dd4a8;border-radius:12px;color:#1a5f3a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">📦</span> 入荷履歴
@@ -632,6 +629,9 @@ try {
       </button>
       <button onclick="closeSettingsModal();showFreeHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff0f5;border:1.5px solid #f0a0c0;border-radius:12px;color:#8a1a3f;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🎁</span> 無料記録
+      </button>
+      <button onclick="closeSettingsModal();toggleEditMode();" id="settings-edit-btn" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#f5f5ef;border:1.5px solid var(--border2);border-radius:12px;color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">✏️</span> 品目編集
       </button>
       <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🔑</span> パスワード変更
@@ -697,16 +697,16 @@ try {
 
 <!-- Uber Eats月間集計モーダル -->
 <div id="uber-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeUberModal(event)">
-  <div style="background:var(--surface);border-radius:16px;max-width:480px;margin:40px auto 24px;padding:20px;position:relative;" onclick="event.stopPropagation()">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <div style="font-size:16px;font-weight:700;">🛵 Uber Eats 月間集計</div>
-      <button onclick="closeUberModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);">✕</button>
+  <div style="background:var(--surface);border-radius:16px;max-width:480px;margin:40px auto 24px;padding:0;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
+    <div style="background:#000;border-bottom:1px solid #222;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
+      <div style="font-size:17px;font-weight:700;color:#06C167;">🛵 Uber Eats 月間売上</div>
+      <button onclick="closeUberModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#aaa;line-height:1;">✕</button>
     </div>
-    <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
-      <input type="month" id="uber-modal-month" style="padding:6px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderUberModal()">
-      <button onclick="renderUberModal()" style="padding:6px 12px;background:var(--done-bg);border:1px solid var(--done-bd);border-radius:8px;font-size:12px;font-family:inherit;color:#7a6000;cursor:pointer;">表示</button>
+    <div style="padding:14px 20px 0;display:flex;gap:8px;align-items:center;background:var(--surface);">
+      <input type="month" id="uber-modal-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderUberModal()">
+      <button onclick="renderUberModal()" style="padding:8px 14px;background:#06C167;border:none;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;color:#000;cursor:pointer;">表示</button>
     </div>
-    <div id="uber-modal-content"></div>
+    <div id="uber-modal-content" style="padding:14px 20px 24px;background:var(--surface);"></div>
   </div>
 </div>
 
@@ -2209,10 +2209,8 @@ function renderUberModal(){
     el.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text3);">この月の記録がありません</div>`;
     return;
   }
-  // 月の日数を計算
   const [y,m]=ym.split('-').map(Number);
   const daysInMonth=new Date(y,m,0).getDate();
-  // 日付→記録のマップ
   const recordMap={};
   h.forEach(r=>{ recordMap[r.date]=r; });
   let totalAmt=0,totalCnt=0,salesDays=0;
@@ -2223,8 +2221,7 @@ function renderUberModal(){
     const r=recordMap[dateKey];
     const weekDay=['日','月','火','水','木','金','土'][new Date(y,m-1,d).getDay()];
     const isWeekend=(new Date(y,m-1,d).getDay()===0||new Date(y,m-1,d).getDay()===6);
-    const today=dateStr;
-    const isFuture=dateKey>today;
+    const isFuture=dateKey>dateStr;
     if(r&&r.uber&&r.uber.length){
       const dayTotal=r.uber.reduce((s,u)=>s+u.amount,0);
       totalAmt+=dayTotal; totalCnt+=r.uber.length; salesDays++;
@@ -2232,7 +2229,7 @@ function renderUberModal(){
       rows+=`<tr style="background:#f0f6ff;">
         <td style="padding:6px 4px;white-space:nowrap;font-weight:700;color:${isWeekend?'#c04000':'var(--text)'};">${fm}/${dd}(${weekDay})</td>
         <td style="padding:6px 4px;font-size:11px;color:var(--text2);line-height:1.6;">${items}</td>
-        <td style="padding:6px 4px;font-weight:700;color:var(--blue);text-align:right;white-space:nowrap;">¥${dayTotal.toLocaleString()}</td>
+        <td style="padding:6px 4px;font-weight:700;color:#06C167;text-align:right;white-space:nowrap;">¥${dayTotal.toLocaleString()}</td>
       </tr>`;
     } else if(!isFuture){
       rows+=`<tr style="opacity:.45;">
@@ -2248,10 +2245,10 @@ function renderUberModal(){
     }
   }
   el.innerHTML=`
-    <div style="background:#e8f0ff;border-radius:10px;padding:14px 16px;margin-bottom:12px;text-align:center;">
-      <div style="font-size:13px;color:#1a3f8a;margin-bottom:6px;">${fm} 月間売上</div>
-      <div style="font-size:32px;font-weight:700;color:#1a3f8a;">¥${totalAmt.toLocaleString()}</div>
-      <div style="display:flex;justify-content:center;gap:16px;margin-top:6px;font-size:12px;color:#4a6abf;">
+    <div style="background:#e8f5e9;border:1px solid #06C167;border-radius:12px;padding:14px 16px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:13px;color:#1a5f3a;margin-bottom:6px;">${fm} 月間売上</div>
+      <div style="font-size:32px;font-weight:700;color:#06C167;">¥${totalAmt.toLocaleString()}</div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:6px;font-size:12px;color:#1a5f3a;">
         <span>📦 ${totalCnt}件</span>
         <span>📅 ${salesDays}日</span>
         <span>📊 平均 ¥${salesDays?Math.round(totalAmt/salesDays).toLocaleString():0}/日</span>
@@ -2266,7 +2263,7 @@ function renderUberModal(){
       <tbody>${rows}</tbody>
       <tfoot><tr style="border-top:2px solid var(--border2);background:var(--done-bg);">
         <td colspan="2" style="padding:8px 4px;font-weight:700;">月間合計</td>
-        <td style="padding:8px 4px;font-weight:700;color:var(--blue);text-align:right;font-size:15px;">¥${totalAmt.toLocaleString()}</td>
+        <td style="padding:8px 4px;font-weight:700;color:#06C167;text-align:right;font-size:15px;">¥${totalAmt.toLocaleString()}</td>
       </tr></tfoot>
     </table>`;
 }
