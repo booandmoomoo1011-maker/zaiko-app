@@ -1266,12 +1266,12 @@ async function openItemModal(id,cont=false){
     <div style="font-size:12px;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${storeColor(currentStoreId)};display:inline-block"></span>${store?.name||''}</div>
     <div class="fr"><label>商品名</label><input id="f-name" value="${v.name}" placeholder="例：オレンジジュース" autocomplete="off"></div>
     <div class="fr"><label>商品画像</label>
-      <div class="img-area">
-        ${imgSrc?`<img class="img-prev" src="${imgSrc}" alt="">`:`<div class="img-ph" onclick="document.getElementById('f-img-file').click()">🖼<span style="font-size:10px;margin-top:2px">タップして選択</span></div>`}
+      <div class="img-area" id="img-area-wrap">
+        ${imgSrc?`<img class="img-prev" src="${imgSrc}" alt="" id="img-preview">`:`<div class="img-ph" id="img-preview" onclick="document.getElementById('f-img-file').click()">🖼<span style="font-size:10px;margin-top:2px">タップして選択</span></div>`}
         <div class="img-btns">
           <button type="button" class="btn-sm" onclick="document.getElementById('f-img-cam').click()" style="background:var(--g);color:#fff;border-color:var(--g)">📷 カメラ撮影</button>
           <button type="button" class="btn-sm" onclick="document.getElementById('f-img-file').click()">🖼 ファイルから選ぶ</button>
-          ${imgSrc?`<button type="button" class="btn-sm danger" onclick="clearImg()">🗑 削除</button>`:''}
+          <button type="button" class="btn-sm danger" id="img-del-btn" onclick="clearImg()" style="display:${(imgSrc&&imgSrc.length>10)?'inline-flex':'none'}">🗑 削除</button>
         </div>
       </div>
       <input type="file" id="f-img-cam" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)">
@@ -1312,7 +1312,12 @@ function handleImg(e){
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       pendingImage=canvas.toDataURL('image/jpeg',0.75);
-      document.querySelector('.img-area').innerHTML=`<img class="img-prev" src="${pendingImage}" alt=""><div class="img-btns"><button type="button" class="btn-sm" onclick="document.getElementById('f-img-cam2').click()" style="background:var(--g);color:#fff;border-color:var(--g)">📷 撮り直す</button><button type="button" class="btn-sm" onclick="document.getElementById('f-img-file2').click()">🖼 別の画像</button><button type="button" class="btn-sm danger" onclick="clearImg()">🗑 削除</button></div><input type="file" id="f-img-cam2" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)"><input type="file" id="f-img-file2" accept="image/*" style="display:none" onchange="handleImg(event)">`;
+      const prevEl=document.getElementById('img-preview');
+      if(prevEl){
+        const img2=document.createElement('img');img2.className='img-prev';img2.src=pendingImage;img2.id='img-preview';prevEl.replaceWith(img2);
+      }
+      const delBtn=document.getElementById('img-del-btn');
+      if(delBtn) delBtn.style.display='inline-flex';
     };
     img.src=ev.target.result;
   };
@@ -1320,7 +1325,12 @@ function handleImg(e){
 }
 function clearImg(){
   pendingImage='';
-  document.querySelector('.img-area').innerHTML=`<div class="img-ph" onclick="document.getElementById('f-img-file3').click()">🖼<span style="font-size:10px;margin-top:2px">タップして選択</span></div><div class="img-btns"><button type="button" class="btn-sm" onclick="document.getElementById('f-img-cam3').click()" style="background:var(--g);color:#fff;border-color:var(--g)">📷 カメラ撮影</button><button type="button" class="btn-sm" onclick="document.getElementById('f-img-file3').click()">🖼 ファイルから選ぶ</button></div><input type="file" id="f-img-cam3" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)"><input type="file" id="f-img-file3" accept="image/*" style="display:none" onchange="handleImg(event)">`;
+  const prevEl2=document.getElementById('img-preview');
+  if(prevEl2){
+    const ph=document.createElement('div');ph.className='img-ph';ph.id='img-preview';ph.onclick=()=>document.getElementById('f-img-file').click();ph.innerHTML='🖼<span style="font-size:10px;margin-top:2px">タップして選択</span>';prevEl2.replaceWith(ph);
+  }
+  const delBtn2=document.getElementById('img-del-btn');
+  if(delBtn2) delBtn2.style.display='none';
 }
 async function saveItem(cont=false){
   const name=document.getElementById('f-name').value.trim();
