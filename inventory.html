@@ -1271,7 +1271,7 @@ async function openItemModal(id,cont=false){
         ${imgSrc?`<img class="img-prev" src="${imgSrc}" alt="">`:`<div class="img-ph" onclick="document.getElementById('f-img').click()">📷<span style="font-size:10px;margin-top:2px">タップして撮影</span></div>`}
         <div class="img-btns"><button type="button" class="btn-sm" onclick="document.getElementById('f-img').click()">📷 撮影する</button>${imgSrc?`<button type="button" class="btn-sm danger" onclick="clearImg()">🗑 削除</button>`:''}<p>カメラまたはファイル</p></div>
       </div>
-      <input type="file" id="f-img" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)">
+      <input type="file" id="f-img" accept="image/*" style="display:none" onchange="handleImg(event)">
     </div>
     <div class="fr"><label>カテゴリ</label><select id="f-cat">${getCategories().map(c=>`<option${c===v.cat?' selected':''}>${c}</option>`).join('')}</select></div>
     <div class="fg">
@@ -1308,7 +1308,7 @@ function handleImg(e){
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       pendingImage=canvas.toDataURL('image/jpeg',0.75);
-      document.querySelector('.img-area').innerHTML=`<img class="img-prev" src="${pendingImage}" alt=""><div class="img-btns"><button type="button" class="btn-sm" onclick="document.getElementById('f-img').click()">📷 撮り直す</button><button type="button" class="btn-sm danger" onclick="clearImg()">🗑 削除</button><p>カメラまたはファイル</p></div><input type="file" id="f-img" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)">`;
+      document.querySelector('.img-area').innerHTML=`<img class="img-prev" src="${pendingImage}" alt=""><div class="img-btns"><button type="button" class="btn-sm" onclick="document.getElementById('f-img').click()">📷 撮り直す</button><button type="button" class="btn-sm danger" onclick="clearImg()">🗑 削除</button><p>カメラまたはファイル</p></div><input type="file" id="f-img" accept="image/*" style="display:none" onchange="handleImg(event)">`;
     };
     img.src=ev.target.result;
   };
@@ -1316,7 +1316,7 @@ function handleImg(e){
 }
 function clearImg(){
   pendingImage='';
-  document.querySelector('.img-area').innerHTML=`<div class="img-ph" onclick="document.getElementById('f-img').click()">📷<span style="font-size:10px;margin-top:2px">タップして撮影</span></div><div class="img-btns"><button type="button" class="btn-sm" onclick="document.getElementById('f-img').click()">📷 撮影する</button><p>カメラまたはファイル</p></div><input type="file" id="f-img" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)">`;
+  document.querySelector('.img-area').innerHTML=`<div class="img-ph" onclick="document.getElementById('f-img').click()">📷<span style="font-size:10px;margin-top:2px">タップして撮影</span></div><div class="img-btns"><button type="button" class="btn-sm" onclick="document.getElementById('f-img').click()">📷 撮影する</button><p>カメラまたはファイル</p></div><input type="file" id="f-img" accept="image/*" style="display:none" onchange="handleImg(event)">`;
 }
 async function saveItem(cont=false){
   const name=document.getElementById('f-name').value.trim();
