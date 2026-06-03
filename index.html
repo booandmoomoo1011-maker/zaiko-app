@@ -893,9 +893,8 @@ function openStaffModal(){
   const modal=document.getElementById('staff-modal');
   modal.style.display='flex';
   const inp=document.getElementById('staff-modal-input');
-  // 前回の担当者名を復元
-  const prev=document.getElementById('staff').value.trim();
-  inp.value=prev||'';
+  // 毎回空にする（間違った名前で入力しないよう）
+  inp.value='';
   updateStaffListModal();
   setTimeout(()=>inp.focus(),100);
 }
@@ -2422,13 +2421,18 @@ function restoreLastValues(){
   const isToday = last.date === dateStr;
   SALES.forEach(it=>{
     const stock=last.sales&&last.sales[it.id]!==undefined?last.sales[it.id]:0;
-    // 販売・無料は今日の記録のみ復元。翌日以降は0にする
+    // 販売・無料・入荷は今日の記録のみ復元。翌日以降は必ず0にする
     const sell = isToday && last.sales&&last.sales[it.id+'_sell']!==undefined ? last.sales[it.id+'_sell'] : 0;
     const free = isToday && last.sales&&last.sales[it.id+'_free']!==undefined ? last.sales[it.id+'_free'] : 0;
     $set('stock_'+it.id, stock);
     $set('sell_'+it.id,  sell);
     $set('free_'+it.id,  free);
-    if(isToday && last.nyuka&&last.nyuka[it.id]) NYUKA[it.id]=[...last.nyuka[it.id]];
+    if(!isToday){
+      // 前日以前なら入荷もリセット
+      NYUKA[it.id] = [];
+    } else if(last.nyuka&&last.nyuka[it.id]){
+      NYUKA[it.id]=[...last.nyuka[it.id]];
+    }
     calcStock(it.id);
   });
   // 色チェック
@@ -2455,6 +2459,8 @@ const DRAFT_KEY = 'zaiko_draft_' + dateStr.replace(/\//g, '-');
 
 function saveDraft(){
   try{
+    // 編集モード中は下書き保存しない（editingDateがある場合）
+    if(editingDate && editingDate !== dateStr) return;
     const draft = {
       date: dateStr,
       note: document.getElementById('note') ? document.getElementById('note').value : '',
@@ -2512,8 +2518,14 @@ function restoreDraft(){
   SALES.forEach(it=>{
     if(draft.sales){
       if(draft.sales[it.id]           !== undefined) $set('stock_'+it.id, draft.sales[it.id]);
-      if(draft.sales[it.id+'_sell']   !== undefined) $set('sell_'+it.id,  draft.sales[it.id+'_sell']);
-      if(draft.sales[it.id+'_free']   !== undefined) $set('free_'+it.id,  draft.sales[it.id+'_free']);
+      // sell/freeは今日の下書きのみ（loadDraftがdateStr一致を保証しているが念のため）
+      if(draft.date === dateStr){
+        if(draft.sales[it.id+'_sell'] !== undefined) $set('sell_'+it.id,  draft.sales[it.id+'_sell']);
+        if(draft.sales[it.id+'_free'] !== undefined) $set('free_'+it.id,  draft.sales[it.id+'_free']);
+      } else {
+        $set('sell_'+it.id, 0);
+        $set('free_'+it.id, 0);
+      }
     }
     if(draft.nyuka && draft.nyuka[it.id]) NYUKA[it.id] = [...draft.nyuka[it.id]];
     calcStock(it.id);
