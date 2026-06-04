@@ -1529,9 +1529,8 @@ function openNyukaInputModal(id){
   const titleEl=document.getElementById('nyuka-input-title');
   if(titleEl) titleEl.textContent = it.name + ' の入荷';
   document.getElementById('nyuka-input-qty').value = '';
-  // 検品者名：staff欄に入力済みなら引き継ぐ
-  const staffEl = document.getElementById('staff');
-  document.getElementById('nyuka-input-staff').value = staffEl ? staffEl.value.trim() : '';
+  // 検品者名：毎回空にする（間違い防止）
+  document.getElementById('nyuka-input-staff').value = '';
   // 過去スタッフ名をdatalistに反映
   const staffNames = getNyukaStaffNames();
   const dl = document.getElementById('nyuka-staff-list');
@@ -2233,11 +2232,10 @@ function clearEdited(){
 // 起動時：まずUIを組み立て、データはFirebase優先・localStorageフォールバックで表示
 renderAll();
 updateStaffList();
-// 前回の担当者名を自動入力
+// 担当者名は毎回空にする（間違い防止）
 try{
-  const staffHistory=JSON.parse(localStorage.getItem('zaiko_staff_history')||'[]');
   const staffEl=document.getElementById('staff');
-  if(staffEl&&staffHistory.length&&!staffEl.value) staffEl.value=staffHistory[0];
+  if(staffEl) staffEl.value='';
   checkStaffHint();
 }catch(e){}
 // Firebase同期完了前にlocalStorageのデータで先行表示（つなぎ）
@@ -2794,15 +2792,26 @@ function openTempInputPicker(id){
   } else { _tempPickerSign=1; input.value=''; }
   signBtn.textContent=_tempPickerSign===1?'＋':'－';
   signBtn.style.background=_tempPickerSign===1?'#1565c0':'#c62828';
+  // マイナスボタンをリセット
+  _tempPickerSign = 1;
+  try{
+    const minusBtns = document.querySelectorAll('[onclick="setTempMinus()"]');
+    minusBtns.forEach(b=>{ b.style.background='#e53935'; b.textContent='マイナス（−）'; });
+  }catch(e){}
   modal.style.display='flex';
   setTimeout(()=>input.focus(),100);
 }
 
 function togglePickerSign(){
   _tempPickerSign*=-1;
-  const btn=document.getElementById('temp-picker-sign');
-  btn.textContent=_tempPickerSign===1?'＋':'－';
-  btn.style.background=_tempPickerSign===1?'#1565c0':'#c62828';
+}
+
+function setTempMinus(){
+  _tempPickerSign = -1;
+  try{
+    const btns = document.querySelectorAll('[onclick="setTempMinus()"]');
+    btns.forEach(b=>{ b.style.background='#b71c1c'; b.textContent='マイナス（−）✓'; });
+  }catch(e){}
 }
 
 function selectTempValue(val){
@@ -2829,15 +2838,16 @@ function selectTempValue(val){
 function confirmTempInput(){
   const raw=document.getElementById('temp-picker-input').value;
   if(raw===''||isNaN(parseFloat(raw))){showToast('温度を入力してください');return;}
-  const val=(_tempPickerSign*parseFloat(raw));
+  const val=(_tempPickerSign*Math.abs(parseFloat(raw)));
   const id=_tempPickerTargetId;
+  if(!id)return;
   document.getElementById(id).value=String(val);
   const btn=document.getElementById(id+'-btn');
   if(btn){
     btn.textContent=val+'℃';
-    btn.style.background=_tempPickerSign<0?'#e3f2fd':'#e8f5e9';
-    btn.style.borderColor=_tempPickerSign<0?'#90caf9':'#81c784';
-    btn.style.color=_tempPickerSign<0?'#1565c0':'#2e7d32';
+    btn.style.background=val<0?'#e3f2fd':'#e8f5e9';
+    btn.style.borderColor=val<0?'#90caf9':'#81c784';
+    btn.style.color=val<0?'#1565c0':'#2e7d32';
   }
   closeTempPicker();
 }
@@ -3114,22 +3124,22 @@ try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
     <div style="text-align:center;font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;" id="temp-picker-title">温度を入力</div>
 
     <!-- DF選択 -->
-    <button onclick="selectTempValue('DF')" style="width:100%;padding:14px;background:#fff3e0;border:2px solid #ffb74d;border-radius:12px;font-size:16px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;margin-bottom:12px;">
+    <button onclick="selectTempValue('DF')" style="width:100%;padding:16px;background:#fff3e0;border:2px solid #ffb74d;border-radius:12px;font-size:17px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;margin-bottom:12px;">
       霜取り中（DF）
     </button>
 
     <!-- 数値入力 -->
     <div style="background:#f0f7ff;border-radius:12px;padding:14px;margin-bottom:12px;">
-      <div style="font-size:12px;font-weight:700;color:#1565c0;margin-bottom:8px;">温度を入力（℃）</div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button id="temp-picker-sign" onclick="togglePickerSign()" style="padding:10px 16px;background:#1565c0;border:none;border-radius:10px;color:#fff;font-size:18px;font-weight:700;cursor:pointer;flex-shrink:0;">＋</button>
-        <input type="number" id="temp-picker-input" inputmode="decimal" placeholder="0" min="0" max="99" step="0.1"
-          style="flex:1;padding:10px;border:2px solid #90caf9;border-radius:10px;font-size:20px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;">
+      <div style="font-size:13px;font-weight:700;color:#1565c0;margin-bottom:10px;">温度を入力（℃）</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+        <input type="number" id="temp-picker-input" inputmode="decimal" placeholder="例：18" min="0" max="99" step="0.1"
+          style="flex:1;padding:12px;border:2px solid #90caf9;border-radius:10px;font-size:24px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;">
         <span style="font-size:16px;font-weight:700;color:#888;">℃</span>
       </div>
-      <button onclick="confirmTempInput()" style="width:100%;margin-top:10px;padding:12px;background:#1565c0;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        この温度で登録
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="setTempMinus()" style="flex:1;padding:14px;background:#e53935;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">マイナス（−）</button>
+        <button onclick="confirmTempInput()" style="flex:2;padding:14px;background:#1565c0;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">登録</button>
+      </div>
     </div>
 
     <button onclick="clearTempValue()" style="width:100%;padding:12px;background:#fce4ec;border:1px solid #ef9a9a;border-radius:10px;font-size:14px;color:#b71c1c;cursor:pointer;font-family:inherit;margin-bottom:8px;">
