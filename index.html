@@ -2819,7 +2819,7 @@ function openTempInputPicker(id){
   _tempPickerSign = 1;
   try{
     const minusBtns = document.querySelectorAll('[onclick="setTempMinus()"]');
-    minusBtns.forEach(b=>{ b.style.background='#e53935'; b.textContent='マイナス（−）'; });
+    minusBtns.forEach(b=>{ b.style.background='#e3f2fd'; b.style.borderColor='#90caf9'; b.style.color='#1565c0'; b.textContent='マイナス（−）'; });
   }catch(e){}
   modal.style.display='flex';
   setTimeout(()=>input.focus(),100);
@@ -2833,7 +2833,7 @@ function setTempMinus(){
   _tempPickerSign = -1;
   try{
     const btns = document.querySelectorAll('[onclick="setTempMinus()"]');
-    btns.forEach(b=>{ b.style.background='#0d1757'; b.textContent='マイナス（−）✓'; });
+    btns.forEach(b=>{ b.style.background='#1a237e'; b.style.borderColor='#1a237e'; b.style.color='#fff'; b.textContent='マイナス（−）✓'; });
   }catch(e){}
 }
 
@@ -3136,7 +3136,7 @@ try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
         <span style="font-size:16px;font-weight:700;color:#888;">℃</span>
       </div>
       <div style="display:flex;gap:8px;">
-        <button onclick="setTempMinus()" style="flex:1;padding:14px;background:#1a237e;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">マイナス（−）</button>
+        <button onclick="setTempMinus()" style="flex:1;padding:14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;color:#1565c0;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">マイナス（−）</button>
         <button onclick="confirmTempInput()" style="flex:2;padding:14px;background:#1565c0;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">登録</button>
       </div>
     </div>
