@@ -93,7 +93,7 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 .dbadge.ok{background:transparent;color:transparent;}
 .dbadge.warn{background:var(--warn-bg);color:var(--warn-text);border:1px solid var(--warn-bd);}
 .sinputs{display:flex;}
-.scol{flex:1;padding:8px 6px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:3px;}
+.scol{flex:1;padding:8px 6px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:5px;}
 .scol:last-child{border-right:none;}
 .clabel{font-size:12px;font-weight:700;color:var(--text3);letter-spacing:.04em;text-align:center;}
 
@@ -166,16 +166,16 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 .hist-header h2{font-size:13px;font-weight:600;color:var(--text2);}
 .hist-count{font-size:12px;color:var(--text3);}
 .hist-card-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
-.hist-card-wrap.hist-card-today{background:#ffe44d;border:2.5px solid #e6b800;}
+.hist-card-wrap.hist-card-today{background:#fff8c0;border:1.5px solid #f5c800;}
 .hist-row{padding:8px 10px 6px;border-bottom:1px solid var(--border);}
-.hist-row.hist-today{background:#ffe44d;}
+.hist-row.hist-today{background:#fff0a0;}
 .hist-row:last-child{border-bottom:none;}
 .hist-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
 .hist-date{font-size:16px;font-weight:700;color:var(--green);}
 .hist-time{font-size:11px;color:var(--text3);background:var(--bg);padding:1px 6px;border-radius:10px;}
 .hist-staff{font-size:11px;font-weight:600;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:20px;}
 .hist-warn-badge{font-size:10px;color:var(--amber-text);background:var(--amber-bg);padding:2px 7px;border-radius:4px;margin-left:auto;}
-
+.hist-edit-btn{display:none;}
 
 /* 履歴テーブル */
 .htbl{width:100%;border-collapse:collapse;font-size:12px;}
@@ -237,28 +237,25 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 .hist-edit-btn{background:#fff0a0;border:1px solid #f5c800;color:#7a6000;border-radius:12px;font-size:11px;font-weight:700;padding:3px 9px;cursor:pointer;}
 
 @media(min-width:540px){main{padding:18px;}.item-row{padding:10px 14px;}.scol{padding:9px 10px;}}
-.month-name-badge{font-size:10px;font-weight:700;color:var(--green);background:#e8f7f0;border:1px solid #7dd4a8;border-radius:10px;padding:2px 8px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
-.month-name-badge:empty{display:none;}
-.month-name-badge:active{background:#c8f0d8;}
+
+/* ===== 月次集計ボタン ===== */
 .month-btn-row{display:flex;gap:6px;padding:6px 10px;border-top:1px solid var(--border);background:var(--bg);}
-.month-ind-btn{flex:1;font-size:11px;font-weight:700;padding:5px 4px;border-radius:8px;border:1.5px solid #7dd4a8;background:#e8f7f0;color:#1a5f3a;cursor:pointer;font-family:inherit;text-align:center;transition:background .15s;}
+.month-ind-btn{flex:1;font-size:11px;font-weight:700;padding:5px 4px;border-radius:8px;border:1.5px solid #7dd4a8;background:#e8f7f0;color:#1a5f3a;cursor:pointer;font-family:inherit;text-align:center;}
 .month-ind-btn:active{background:#c8f0d8;}
 .month-ind-btn.active{background:#1a5f3a;color:#fff;border-color:#1a5f3a;}
 
-/* ===== わらび餅入荷セクション ===== */
+/* ===== わらび餅入荷記録 ===== */
 .warabi-section{background:#f3eeff;border:1.5px solid #c9a8f0;border-radius:14px;margin-bottom:12px;overflow:hidden;}
 .warabi-header{background:#8a5fcf;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
 .warabi-header-title{color:#fff;font-size:15px;font-weight:700;}
 .warabi-header-arrow{color:#fff;font-size:16px;transition:transform .2s;}
 .warabi-header-arrow.open{transform:rotate(180deg);}
-.warabi-body{display:none;padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+.warabi-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;overflow:hidden;}
 .warabi-field{display:flex;flex-direction:column;gap:3px;}
 .warabi-label{font-size:11px;font-weight:700;color:#6a3faf;}
-.warabi-input{padding:8px 10px;border:1.5px solid #c9a8f0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#333;}
-.warabi-input:focus{outline:none;border-color:#8a5fcf;}
-.warabi-select{padding:8px 10px;border:1.5px solid #c9a8f0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#333;}
+.warabi-input{padding:8px 10px;border:1.5px solid #c9a8f0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#333;width:100%;box-sizing:border-box;}
+.warabi-select{padding:8px 10px;border:1.5px solid #c9a8f0;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#333;min-width:0;box-sizing:border-box;}
 .warabi-btn{padding:10px;background:#8a5fcf;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;}
-.warabi-btn:active{background:#6a3faf;}
 .warabi-btn-sm{padding:5px 12px;background:#e8d8ff;border:1.5px solid #c9a8f0;border-radius:8px;color:#6a3faf;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 .warabi-record-row{background:#fff;border:1px solid #c9a8f0;border-radius:8px;padding:8px 10px;font-size:12px;color:#444;display:flex;flex-direction:column;gap:2px;}
 .warabi-record-date{font-weight:700;color:#8a5fcf;font-size:13px;}
@@ -272,22 +269,11 @@ main{padding:12px;max-width:680px;margin:0 auto;}
 .temp-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
 .temp-label{font-size:11px;font-weight:700;color:#1565c0;}
 .temp-input{padding:9px 10px;border:1.5px solid #90caf9;border-radius:8px;font-size:15px;font-family:inherit;background:#fff;color:#333;width:100%;box-sizing:border-box;}
-.temp-input:focus{outline:none;border-color:#1565c0;}
-.temp-unit-row{display:flex;gap:8px;align-items:flex-end;}
-.temp-unit{flex:1;}
-.temp-fridge-card{background:#fff;border:1.5px solid #90caf9;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
-.temp-fridge-title{font-size:13px;font-weight:700;color:#1565c0;margin-bottom:2px;}
-.temp-ampm-row{display:flex;gap:8px;}
-.temp-ampm-block{flex:1;background:#f0f7ff;border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;}
 .temp-ampm-label{font-size:16px;font-weight:800;color:#1565c0;text-align:center;margin-bottom:4px;padding:3px 0;border-radius:6px;letter-spacing:.05em;background:#d6eeff;}
 .temp-ampm-label.pm{color:#0a3d7a;background:#7ec8f0;}
 .temp-save-btn{padding:10px;background:#1565c0;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;}
-.temp-save-btn:active{background:#0d47a1;}
 .temp-record-row{background:#fff;border:1px solid #90caf9;border-radius:8px;padding:8px 10px;font-size:12px;}
 .temp-record-date{font-weight:700;color:#1565c0;font-size:13px;}
-.temp-badge{background:#e3f2fd;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#1565c0;}
-.temp-val{font-weight:700;color:#0d47a1;}
-.temp-low{color:#1976d2;}
 </style>
 
 </head>
@@ -305,6 +291,7 @@ function initPasscode(){
   const stored = localStorage.getItem('app_passcode') || DEFAULT_PASSCODE;
   const unlocked = localStorage.getItem('pc_unlocked');
   if(unlocked === stored){
+    // 同じセッションで認証済み
     document.getElementById('passcode-screen').style.display='none';
     return;
   }
@@ -615,8 +602,6 @@ try {
         </div>
       </div>
       <button onclick="submitNyukaInput()" style="width:100%;padding:13px;background:var(--blue);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">✅ 入荷を登録</button>
-      <!-- 今月の入荷履歴 -->
-      <div id="nyuka-modal-history" style="margin-top:4px;"></div>
     </div>
   </div>
 </div>
@@ -662,20 +647,14 @@ try {
       <button onclick="closeSettingsModal();shareToLine();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#06c755;border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">📲</span> LINEで共有
       </button>
-      <button onclick="closeSettingsModal();showUberModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#000;border:1.5px solid #06C167;border-radius:12px;color:#06C167;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">🛵</span> Uber Eats 月間売上
-      </button>
-      <button onclick="closeSettingsModal();showNyukaHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f7f0;border:1.5px solid #7dd4a8;border-radius:12px;color:#1a5f3a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">📦</span> 入荷履歴
-      </button>
-      <button onclick="closeSettingsModal();showSellHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f0ff;border:1.5px solid #99b8f0;border-radius:12px;color:#1a3f8a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">🛒</span> 販売記録
-      </button>
-      <button onclick="closeSettingsModal();showFreeHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff0f5;border:1.5px solid #f0a0c0;border-radius:12px;color:#8a1a3f;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">🎁</span> 無料記録
+      <button onclick="closeSettingsModal();showUberModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f0ff;border:1.5px solid #99b8f0;border-radius:12px;color:#1a3f8a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🛵</span> 月間売上
       </button>
       <button onclick="closeSettingsModal();toggleEditMode();" id="settings-edit-btn" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#f5f5ef;border:1.5px solid var(--border2);border-radius:12px;color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">✏️</span> 品目編集
+      </button>
+      <button onclick="closeSettingsModal();showNyukaHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f7f0;border:1.5px solid #7dd4a8;border-radius:12px;color:#1a5f3a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📦</span> 入荷履歴
       </button>
       <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🔑</span> パスワード変更
@@ -685,204 +664,6 @@ try {
   </div>
 </div>
 
-
-<!-- 販売記録モーダル -->
-<div id="sell-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeSellHistoryModal(event)">
-  <div style="background:var(--surface);border-radius:16px;max-width:520px;margin:40px auto 24px;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
-    <div style="background:#1a3f8a;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
-      <div style="color:#fff;font-size:17px;font-weight:700;">🛒 販売記録</div>
-      <button onclick="closeSellHistoryModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
-    </div>
-    <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;background:var(--surface);">
-      <input type="month" id="sell-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('sell')">
-      <select id="sell-history-item" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('sell')">
-        <option value="">全品目</option>
-      </select>
-    </div>
-    <div id="sell-history-content" style="padding:14px 16px 20px;"></div>
-  </div>
-</div>
-
-<!-- 無料記録モーダル -->
-<div id="free-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeFreeHistoryModal(event)">
-  <div style="background:var(--surface);border-radius:16px;max-width:520px;margin:40px auto 24px;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
-    <div style="background:#8a1a3f;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
-      <div style="color:#fff;font-size:17px;font-weight:700;">🎁 無料記録</div>
-      <button onclick="closeFreeHistoryModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
-    </div>
-    <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;background:var(--surface);">
-      <input type="month" id="free-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('free')">
-      <select id="free-history-item" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('free')">
-        <option value="">全品目</option>
-      </select>
-    </div>
-    <div id="free-history-content" style="padding:14px 16px 20px;"></div>
-  </div>
-</div>
-
-<!-- 冷蔵庫温度記録 編集モーダル -->
-<div id="temp-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2200;align-items:center;justify-content:center;padding:16px;" onclick="closeTempEditModal(event)">
-  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;" onclick="event.stopPropagation()">
-    <div style="background:#1565c0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
-      <div style="color:#fff;font-size:16px;font-weight:700;">✏️ 温度記録を編集</div>
-      <button onclick="closeTempEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
-    </div>
-    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
-      <input type="hidden" id="temp-edit-id">
-      <div style="display:flex;gap:8px;">
-        <div style="flex:1;"><div class="temp-label">記録者 *</div><input type="text" id="temp-edit-recorder" class="temp-input" placeholder="記録者名"></div>
-        <div style="flex:1;"><div class="temp-label">記録日 *</div><input type="date" id="temp-edit-date" class="temp-input"></div>
-      </div>
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">❄️ ①冷蔵</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block"><div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r1-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r1-am-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block"><div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r1-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r1-pm-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">❄️ ②冷蔵（兼用機・冷蔵側）</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block"><div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r2-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r2-am-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block"><div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r2-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r2-pm-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">🧊 ③冷凍（兼用機・冷凍側）</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block"><div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r3-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r3-am-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block"><div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r3-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r3-pm-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">🧊 ④冷凍</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block"><div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r4-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r4-am-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block"><div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-edit-r4-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-edit-r4-pm-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <button class="temp-save-btn" onclick="saveTempEdit()">💾 保存する</button>
-    </div>
-  </div>
-</div>
-
-<!-- わらび餅 入荷記録 編集モーダル -->
-<div id="warabi-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2200;align-items:center;justify-content:center;padding:20px;" onclick="closeWarabiEditModal(event)">
-  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:400px;overflow:hidden;" onclick="event.stopPropagation()">
-    <div style="background:#8a5fcf;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="color:#fff;font-size:16px;font-weight:700;">✏️ 入荷記録を編集</div>
-      <button onclick="closeWarabiEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
-    </div>
-    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
-      <input type="hidden" id="warabi-edit-id">
-      <div style="display:flex;gap:8px;">
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">検品者名 *</div>
-          <input type="text" id="warabi-edit-inspector" class="warabi-input" placeholder="検品者名">
-        </div>
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">入荷日 *</div>
-          <input type="date" id="warabi-edit-date" class="warabi-input">
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">品目 *</div>
-          <select id="warabi-edit-item" class="warabi-select" style="width:100%;"></select>
-        </div>
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">工場名 *</div>
-          <select id="warabi-edit-factory" class="warabi-select" style="width:100%;"></select>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;">
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">お問い合わせ番号</div>
-          <input type="text" id="warabi-edit-inquiry" class="warabi-input" placeholder="例：WB-2026-001">
-        </div>
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">運送会社</div>
-          <select id="warabi-edit-carrier" class="warabi-select" style="width:100%;"></select>
-        </div>
-      </div>
-      <button class="warabi-btn" onclick="saveWarabiEdit()">💾 保存する</button>
-    </div>
-  </div>
-</div>
-
-<!-- わらび餅 品目・工場・運送会社 管理モーダル -->
-<div id="warabi-manage-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2100;align-items:center;justify-content:center;padding:20px;" onclick="closeWarabiManageModal(event)">
-  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:400px;overflow:hidden;" onclick="event.stopPropagation()">
-    <div style="background:#8a5fcf;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="color:#fff;font-size:16px;font-weight:700;">⚙️ 登録内容の管理</div>
-      <button onclick="closeWarabiManageModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
-    </div>
-    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto;">
-
-      <!-- 品目 -->
-      <div>
-        <div style="font-size:12px;font-weight:700;color:#6a3faf;margin-bottom:6px;">🍡 品目</div>
-        <div id="warabi-manage-items" style="display:flex;flex-direction:column;gap:4px;"></div>
-        <button class="warabi-btn-sm" onclick="addWarabiItem()" style="margin-top:6px;">＋ 追加</button>
-      </div>
-
-      <!-- 工場名 -->
-      <div style="border-top:1px solid #e8d8ff;padding-top:12px;">
-        <div style="font-size:12px;font-weight:700;color:#6a3faf;margin-bottom:6px;">🏭 工場名</div>
-        <div id="warabi-manage-factories" style="display:flex;flex-direction:column;gap:4px;"></div>
-        <button class="warabi-btn-sm" onclick="addWarabiFactory()" style="margin-top:6px;">＋ 追加</button>
-      </div>
-
-      <!-- 運送会社 -->
-      <div style="border-top:1px solid #e8d8ff;padding-top:12px;">
-        <div style="font-size:12px;font-weight:700;color:#6a3faf;margin-bottom:6px;">🚚 運送会社</div>
-        <div id="warabi-manage-carriers" style="display:flex;flex-direction:column;gap:4px;"></div>
-        <button class="warabi-btn-sm" onclick="addWarabiCarrier()" style="margin-top:6px;">＋ 追加</button>
-      </div>
-
-    </div>
-  </div>
-</div>
 
 <!-- 入荷履歴モーダル（全面強化版） -->
 <div id="nyuka-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeNyukaHistoryModal(event)">
@@ -947,95 +728,39 @@ try {
     </div>
     <div class="temp-body" id="temp-body" style="display:none;">
       <div style="display:flex;gap:8px;">
-        <div style="flex:1;">
-          <div class="temp-label">記録者 *</div>
+        <div style="flex:1;"><div class="temp-label">記録者 *</div>
           <input type="text" id="temp-recorder" class="temp-input" placeholder="記録者名" list="temp-recorder-list">
           <datalist id="temp-recorder-list"></datalist>
         </div>
-        <div style="flex:1;">
-          <div class="temp-label">記録日 *</div>
+        <div style="flex:1;"><div class="temp-label">記録日 *</div>
           <input type="date" id="temp-date" class="temp-input">
         </div>
       </div>
-
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">❄️ ①冷蔵</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r1-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r1-am-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r1-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r1-pm-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
+      <div style="display:flex;gap:6px;margin-bottom:2px;">
+        <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">①冷蔵</div>
+        <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">②冷蔵兼用</div>
+        <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">③冷凍兼用</div>
+        <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">④冷凍</div>
+      </div>
+      <div style="background:#d6eeff;border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+        <div class="temp-ampm-label" style="text-align:left;margin-bottom:6px;">AM</div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><input type="time" id="temp-r1-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r1-am-temp" class="temp-input" placeholder="例：5 or DF"></div>
+          <div style="flex:1;"><input type="time" id="temp-r2-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r2-am-temp" class="temp-input" placeholder="例：5 or DF"></div>
+          <div style="flex:1;"><input type="time" id="temp-r3-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r3-am-temp" class="temp-input" placeholder="例：-18 or DF"></div>
+          <div style="flex:1;"><input type="time" id="temp-r4-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r4-am-temp" class="temp-input" placeholder="例：-18 or DF"></div>
         </div>
       </div>
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">❄️ ②冷蔵（兼用機・冷蔵側）</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r2-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r2-am-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r2-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r2-pm-temp" class="temp-input" placeholder="例：5 or DF"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">🧊 ③冷凍（兼用機・冷凍側）</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r3-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r3-am-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r3-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r3-pm-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="temp-fridge-card">
-        <div class="temp-fridge-title">🧊 ④冷凍</div>
-        <div class="temp-ampm-row">
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label">AM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r4-am-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r4-am-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
-          <div class="temp-ampm-block">
-            <div class="temp-ampm-label pm">PM</div>
-            <div class="temp-unit-row">
-              <div class="temp-unit"><div class="temp-label">時間</div><input type="time" id="temp-r4-pm-time" class="temp-input"></div>
-              <div class="temp-unit"><div class="temp-label">温度(℃)</div><input type="text" inputmode="decimal" id="temp-r4-pm-temp" class="temp-input" placeholder="例：-18 or DF"></div>
-            </div>
-          </div>
+      <div style="background:#7ec8f0;border-radius:8px;padding:8px 10px;">
+        <div class="temp-ampm-label pm" style="text-align:left;margin-bottom:6px;">PM</div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><input type="time" id="temp-r1-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r1-pm-temp" class="temp-input" placeholder="例：5 or DF"></div>
+          <div style="flex:1;"><input type="time" id="temp-r2-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r2-pm-temp" class="temp-input" placeholder="例：5 or DF"></div>
+          <div style="flex:1;"><input type="time" id="temp-r3-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r3-pm-temp" class="temp-input" placeholder="例：-18 or DF"></div>
+          <div style="flex:1;"><input type="time" id="temp-r4-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" inputmode="text" id="temp-r4-pm-temp" class="temp-input" placeholder="例：-18 or DF"></div>
         </div>
       </div>
       <button class="temp-save-btn" onclick="saveTempRecord()">温度を記録する</button>
-      <!-- 履歴 -->
       <div style="border-top:1px solid #90caf9;padding-top:10px;margin-top:2px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
           <span style="font-size:12px;font-weight:700;color:#1565c0;">📋 温度記録履歴</span>
@@ -1053,56 +778,38 @@ try {
       <span class="warabi-header-arrow" id="warabi-arrow">▼</span>
     </div>
     <div class="warabi-body" id="warabi-body" style="display:none;">
-      <!-- 入力フォーム -->
-      <!-- 1行目：検品者名 | 入荷日 -->
-      <div style="display:flex;gap:8px;">
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">検品者名 *</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="warabi-field"><div class="warabi-label">検品者名 *</div>
           <input type="text" id="warabi-inspector" class="warabi-input" placeholder="検品者名" list="warabi-inspector-list">
           <datalist id="warabi-inspector-list"></datalist>
         </div>
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">入荷日 *</div>
+        <div class="warabi-field"><div class="warabi-label">入荷日 *</div>
           <input type="date" id="warabi-date" class="warabi-input">
         </div>
-      </div>
-      <!-- 2行目：品目 | 工場名 -->
-      <div style="display:flex;gap:8px;">
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">品目 *</div>
+        <div class="warabi-field"><div class="warabi-label">品目 *</div>
           <div style="display:flex;gap:4px;align-items:center;">
-            <select id="warabi-item" class="warabi-select" style="flex:1;"></select>
+            <select id="warabi-item" class="warabi-select" style="flex:1;min-width:0;"></select>
             <button class="warabi-btn-sm" onclick="addWarabiItem()">＋</button>
           </div>
         </div>
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">工場名 *</div>
+        <div class="warabi-field"><div class="warabi-label">工場名 *</div>
           <div style="display:flex;gap:4px;align-items:center;">
-            <select id="warabi-factory" class="warabi-select" style="flex:1;"></select>
+            <select id="warabi-factory" class="warabi-select" style="flex:1;min-width:0;"></select>
             <button class="warabi-btn-sm" onclick="addWarabiFactory()">＋</button>
           </div>
         </div>
-      </div>
-      <!-- 3行目：お問い合わせ番号 | 運送会社 -->
-      <div style="display:flex;gap:8px;">
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">お問い合わせ番号</div>
+        <div class="warabi-field"><div class="warabi-label">お問い合わせ番号</div>
           <input type="text" id="warabi-inquiry" class="warabi-input" placeholder="例：WB-2026-001">
         </div>
-        <div class="warabi-field" style="flex:1;">
-          <div class="warabi-label">運送会社</div>
+        <div class="warabi-field"><div class="warabi-label">運送会社</div>
           <div style="display:flex;gap:4px;align-items:center;">
-            <select id="warabi-carrier" class="warabi-select" style="flex:1;"></select>
+            <select id="warabi-carrier" class="warabi-select" style="flex:1;min-width:0;"></select>
             <button class="warabi-btn-sm" onclick="addWarabiCarrier()">＋</button>
           </div>
         </div>
       </div>
-      <!-- 管理ボタン -->
       <button class="warabi-btn-sm" onclick="openWarabiManageModal()" style="align-self:flex-start;background:#e8d8ff;border-color:#c9a8f0;color:#6a3faf;padding:5px 14px;">⚙️ 品目・工場・運送会社を管理</button>
-      <!-- 4行目：登録ボタン -->
       <button class="warabi-btn" onclick="saveWarabiRecord()">📥 入荷を記録する</button>
-
-      <!-- 履歴 -->
       <div style="border-top:1px solid #c9a8f0;padding-top:10px;margin-top:2px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
           <span style="font-size:12px;font-weight:700;color:#6a3faf;">📋 入荷履歴</span>
@@ -1146,10 +853,9 @@ try {
   </div>
   <div class="note-wrap">
     <div class="note-label">備考</div>
-    <div style="display:flex;gap:6px;align-items:stretch;">
-      <textarea id="note" rows="1" placeholder="備考" style="flex:1;font-size:12px;padding:6px 8px;resize:none;min-height:48px;" oninput="saveDraft()"></textarea>
-      <button class="complete-inline-btn" id="complete-btn" onclick="confirmComplete()" style="flex:1;font-size:13px;padding:0 6px;min-height:48px;border-radius:10px;">✅ 入力保存</button>
-      <button onclick="editTodayRecord()" style="flex:1;font-size:13px;padding:0 6px;min-height:48px;border-radius:10px;background:#e8f0ff;border:1.5px solid #99b8f0;color:#1a3f8a;font-weight:700;cursor:pointer;font-family:inherit;">✏️ 編集</button>
+    <div style="display:flex;gap:8px;align-items:stretch;">
+      <textarea id="note" rows="1" placeholder="備考（任意）" style="flex:0 0 40%;font-size:12px;padding:6px 8px;resize:none;min-height:48px;" oninput="saveDraft()"></textarea>
+      <button class="complete-inline-btn" id="complete-btn" onclick="confirmComplete()" style="flex:1;font-size:16px;padding:0 10px;min-height:48px;border-radius:12px;">✅ 入力完了・保存</button>
     </div>
 
   </div>
@@ -1278,7 +984,6 @@ function openStaffModal(){
   const modal=document.getElementById('staff-modal');
   modal.style.display='flex';
   const inp=document.getElementById('staff-modal-input');
-  // 毎回空にする（間違った名前で入力しないよう）
   inp.value='';
   updateStaffListModal();
   setTimeout(()=>inp.focus(),100);
@@ -1418,10 +1123,7 @@ function doComplete(){
 function editTodayRecord(){
   const h = loadHistory();
   const idx = h.findIndex(r => r.date === dateStr);
-  if(idx === -1){
-    showToast('今日の保存済み記録がありません');
-    return;
-  }
+  if(idx === -1){ showToast('今日の保存済み記録がありません'); return; }
   editRecord(idx);
 }
 
@@ -1498,12 +1200,6 @@ function renderSales(){
           <button class="nyuka-inline-btn" onclick="openNyukaInputModal('${it.id}');event.stopPropagation()">📦 入荷</button>
           <span class="dbadge" id="diff_${it.id}">—</span>
         </div>
-        <div class="month-btn-row" id="month-btn-row_${it.id}">
-          <button class="month-ind-btn" id="mbtn-nyuka_${it.id}" onclick="toggleMonthlyDetail('${it.id}','nyuka');event.stopPropagation()">入荷記録 <span id="mbtn-nyuka-val_${it.id}">0</span></button>
-          <button class="month-ind-btn" id="mbtn-sell_${it.id}"  onclick="toggleMonthlyDetail('${it.id}','sell');event.stopPropagation()">販売記録 <span id="mbtn-sell-val_${it.id}">0</span></button>
-          <button class="month-ind-btn" id="mbtn-free_${it.id}"  onclick="toggleMonthlyDetail('${it.id}','free');event.stopPropagation()">${it.name.includes('釜揚げ箱')?'単品移行記録':'無料記録'} <span id="mbtn-free-val_${it.id}">0</span></button>
-        </div>
-        <div id="monthly-detail_${it.id}" style="display:none;padding:8px 12px;border-top:1px solid var(--border);background:var(--bg);font-size:12px;"></div>
         <div class="sinputs">
           <div class="scol scol-readonly">
             <div class="clabel">前日在庫</div>
@@ -1513,14 +1209,8 @@ function renderSales(){
             <div class="clabel">入荷</div>
             <div class="num-readonly" id="nyuka_total_${it.id}">0</div>
           </div>
-          <div class="scol">
-            <div class="clabel">販売</div>
-            <input class="num-input" type="number" id="sell_${it.id}" value="${(()=>{const e=document.getElementById('sell_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()">
-          </div>
-          <div class="scol">
-            <div class="clabel">${it.name.includes('釜揚げ箱')?'単品に移行':'無料'}</div>
-            <input class="num-input" type="number" id="free_${it.id}" value="${(()=>{const e=document.getElementById('free_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()">
-          </div>
+          <div class="scol"><div class="clabel">販売</div><input class="num-input" type="number" id="sell_${it.id}" value="${(()=>{const e=document.getElementById('sell_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
+          <div class="scol"><div class="clabel">${it.name.includes('釜揚げ箱')?'単品に移行':'無料'}</div><input class="num-input" type="number" id="free_${it.id}" value="${(()=>{const e=document.getElementById('free_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
         </div>
         <div class="stock-result-row">
           <span class="stock-result-label">本日在庫</span>
@@ -1533,145 +1223,9 @@ function renderSales(){
   if(editMode)html+=`<div class="add-row"><input type="text" id="new-sales-name" placeholder="新しい品目名"><button class="add-row-btn" onclick="addSales()">＋ 追加</button></div>`;
   wrap.innerHTML=html;
   if(!editMode)SALES.forEach(it=>{if(NYUKA[it.id]&&NYUKA[it.id].length)renderNyuka(it.id);});
-  if(!editMode) renderAllMonthlySummaryBadges();
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-// ===== 当月販売・無料集計バッジ =====
-// 月次集計用履歴キャッシュ（renderAllMonthlySummaryBadges呼び出し時にリセット）
-let _monthlyHistCache = null;
-function getMonthlyHistCache(){ if(!_monthlyHistCache) _monthlyHistCache = loadHistory(); return _monthlyHistCache; }
-function clearMonthlyHistCache(){ _monthlyHistCache = null; }
-
-function calcMonthlySellFree(id){
-  const now2 = new Date();
-  const y = now2.getFullYear();
-  const m = now2.getMonth()+1;
-  const ym = y+'/'+String(m).padStart(2,'0');
-  const allH = getMonthlyHistCache();
-  let totalSell=0, totalFree=0, totalNyuka=0;
-  const dayMap={};
-  allH.filter(r=>r.date.startsWith(ym)).forEach(r=>{
-    const sell  = r.sales&&r.sales[id+'_sell']!==undefined ? r.sales[id+'_sell'] : 0;
-    const free  = r.sales&&r.sales[id+'_free']!==undefined ? r.sales[id+'_free'] : 0;
-    const nyuka = r.nyuka&&r.nyuka[id] ? r.nyuka[id].reduce((s,n)=>s+n.qty,0) : 0;
-    dayMap[r.date] = {sell, free, nyuka};
-    totalSell+=sell; totalFree+=free; totalNyuka+=nyuka;
-  });
-  // 今日の未保存入荷（NYUKA配列）をマージ
-  const todayUnsaved = (NYUKA[id]||[]).reduce((s,n)=>s+n.qty,0);
-  if(todayUnsaved>0){
-    if(dayMap[dateStr]){
-      const savedNyuka = dayMap[dateStr].nyuka;
-      if(todayUnsaved > savedNyuka){
-        totalNyuka += todayUnsaved - savedNyuka;
-        dayMap[dateStr].nyuka = todayUnsaved;
-      }
-    } else {
-      dayMap[dateStr] = {sell:0, free:0, nyuka:todayUnsaved};
-      totalNyuka += todayUnsaved;
-    }
-  }
-  const dayRows = Object.entries(dayMap)
-    .filter(([,v])=>v.sell>0||v.free>0||v.nyuka>0)
-    .sort(([a],[b])=>a.localeCompare(b))
-    .map(([date,v])=>({date,...v}));
-  return {totalSell, totalFree, totalNyuka, dayRows, m, y};
-}
-
-function renderMonthlySummaryBadge(id){
-  const {totalSell, totalFree, totalNyuka} = calcMonthlySellFree(id);
-  const nyukaVal = document.getElementById('mbtn-nyuka-val_'+id);
-  const sellVal  = document.getElementById('mbtn-sell-val_'+id);
-  const freeVal  = document.getElementById('mbtn-free-val_'+id);
-  if(nyukaVal) nyukaVal.textContent = totalNyuka;
-  if(sellVal)  sellVal.textContent  = totalSell;
-  if(freeVal)  freeVal.textContent  = totalFree;
-  // 列バッジ（入荷・販売・無料の上）
-  const nyukaEl = document.getElementById('month-nyuka_'+id);
-  const sellEl  = document.getElementById('month-sell_'+id);
-  const freeEl  = document.getElementById('month-free_'+id);
-  if(nyukaEl) nyukaEl.textContent = totalNyuka > 0 ? `今月${totalNyuka}` : '';
-  if(sellEl)  sellEl.textContent  = totalSell  > 0 ? `今月${totalSell}`  : '';
-  if(freeEl)  freeEl.textContent  = totalFree  > 0 ? `今月${totalFree}`  : '';
-}
-
-let _monthDetailOpen = {};
-
-function toggleMonthlyDetail(id, type){
-  clearMonthlyHistCache(); // 最新データを取得
-  const detail = document.getElementById('monthly-detail_'+id);
-  if(!detail) return;
-  const current = _monthDetailOpen[id];
-  if(current === type && detail.style.display !== 'none'){
-    detail.style.display = 'none';
-    _monthDetailOpen[id] = null;
-    ['nyuka','sell','free'].forEach(t=>{
-      const b = document.getElementById('mbtn-'+t+'_'+id);
-      if(b) b.classList.remove('active');
-    });
-    return;
-  }
-  _monthDetailOpen[id] = type;
-  ['nyuka','sell','free'].forEach(t=>{
-    const b = document.getElementById('mbtn-'+t+'_'+id);
-    if(b) b.classList.toggle('active', t===type);
-  });
-  const {totalSell, totalFree, totalNyuka, dayRows, m, y} = calcMonthlySellFree(id);
-  const it = SALES.find(x=>x.id===id);
-  const freeLabel = it&&it.name.includes('釜揚げ箱') ? '単品移行' : '無料';
-  const mo = new Date().getMonth();
-  const typeLabel = type==='nyuka' ? '入荷' : type==='sell' ? '販売' : freeLabel;
-  const typeTotal = type==='nyuka' ? totalNyuka : type==='sell' ? totalSell : totalFree;
-
-  const filtered = dayRows.filter(r => {
-    const val = type==='nyuka' ? r.nyuka||0 : type==='sell' ? r.sell : r.free;
-    return val > 0;
-  });
-
-  if(!filtered.length){
-    detail.innerHTML=`<div style="padding:8px 4px;font-size:12px;color:var(--text3);">${m}月の${typeLabel}記録はありません</div>`;
-    detail.style.display='block';
-    return;
-  }
-
-  let html=`
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-    <span style="font-size:11px;font-weight:700;color:var(--text3);">📅 ${m}月の${typeLabel}記録</span>
-    <span style="font-size:12px;font-weight:700;color:#1a5f3a;">合計 ${typeTotal}個</span>
-  </div>
-  <div style="display:flex;flex-direction:column;gap:2px;max-height:200px;overflow-y:auto;">
-    <div style="display:flex;align-items:center;padding:2px 6px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:2px;">
-      <span style="flex:1;">日付</span>
-      <span style="min-width:48px;text-align:right;">個数</span>
-    </div>`;
-
-  filtered.slice().reverse().forEach(r=>{
-    const val = type==='nyuka' ? r.nyuka||0 : type==='sell' ? r.sell : r.free;
-    const parts = r.date.replace(/-/g,'/').split('/');
-    const dd = parseInt(parts[2]);
-    const weekDay = '日月火水木金土'[new Date(y, mo, dd).getDay()];
-    const isWeekend = new Date(y, mo, dd).getDay()%6===0;
-    const isToday2 = r.date.replace(/-/g,'/')===dateStr;
-    html+=`<div style="display:flex;align-items:center;padding:5px 6px;border-radius:6px;background:${isToday2?'var(--blue-light)':'transparent'};">
-      <span style="flex:1;font-size:13px;color:${isWeekend?'#c04000':'var(--text)'};font-weight:${isToday2?'700':'500'};">${m}/${dd}（${weekDay}）${isToday2?'<span style="font-size:9px;background:var(--green);color:#fff;padding:1px 5px;border-radius:8px;margin-left:4px;">今日</span>':''}</span>
-      <span style="min-width:48px;text-align:right;font-size:15px;font-weight:700;color:#1a5f3a;">${val}個</span>
-    </div>`;
-  });
-  html+=`</div>`;
-  detail.innerHTML = html;
-  detail.style.display = 'block';
-}
-
-function toggleMonthlySummary(id){ toggleMonthlyDetail(id,'sell'); }
-
-
-function renderAllMonthlySummaryBadges(){
-  clearMonthlyHistCache(); // 呼び出し毎にキャッシュリセット
-  SALES.forEach(it=>renderMonthlySummaryBadge(it.id));
-  _monthlyHistCache = null;
-}
 function fmtDate(d){
   if(!d)return d;
   const p=d.split('/');
@@ -1919,76 +1473,9 @@ function openNyukaInputModal(id){
   const staffNames = getNyukaStaffNames();
   const dl = document.getElementById('nyuka-staff-list');
   dl.innerHTML = staffNames.map(n=>`<option value="${esc(n)}">`).join('');
-
-  // 今月の入荷履歴を描画
-  renderNyukaModalHistory(id);
-
   const modal = document.getElementById('nyuka-input-modal');
   modal.style.display = 'flex';
   setTimeout(()=>document.getElementById('nyuka-input-qty').focus(), 80);
-}
-
-function renderNyukaModalHistory(id){
-  const el = document.getElementById('nyuka-modal-history');
-  if(!el) return;
-  const now2 = new Date();
-  const y = now2.getFullYear();
-  const m = now2.getMonth()+1;
-  const ym = y + '/' + String(m).padStart(2,'0');
-
-  // 今月分を履歴＋当日未保存分から収集
-  const entries = []; // {date, qty, staff}
-
-  // 保存済み履歴から
-  const allH = loadHistory();
-  allH.filter(r => r.date.startsWith(ym)).forEach(r => {
-    const list = (r.nyuka && r.nyuka[id]) || [];
-    list.forEach(n => entries.push({date: n.date||r.date, qty: n.qty, staff: n.staff||''}));
-  });
-
-  // 今日の未保存分（NYUKA配列）
-  (NYUKA[id]||[]).forEach(n => {
-    const d = (n.date||todayISO).replace(/-/g,'/').slice(0,7);
-    if(d === ym){
-      // 履歴に今日分がすでにある場合は重複しないようにチェック
-      const alreadySaved = allH.some(r => r.date === dateStr && r.nyuka && (r.nyuka[id]||[]).some(x=>x.qty===n.qty&&x.staff===n.staff&&(x.date||r.date)===(n.date||todayISO)));
-      if(!alreadySaved) entries.push({date: n.date||todayISO, qty: n.qty, staff: n.staff||''});
-    }
-  });
-
-  if(!entries.length){
-    el.innerHTML = `<div style="font-size:11px;color:var(--text3);text-align:center;padding:6px 0;">${m}月の入荷記録はまだありません</div>`;
-    return;
-  }
-
-  // 日付昇順ソート
-  entries.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-
-  // 月合計
-  const total = entries.reduce((s,e)=>s+e.qty,0);
-
-  let html = `<div style="border-top:1px solid var(--border);padding-top:10px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <span style="font-size:11px;font-weight:700;color:var(--text3);">📅 ${m}月の入荷履歴</span>
-      <span style="font-size:12px;font-weight:700;color:var(--blue);">合計 ${total}個</span>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;">`;
-
-  entries.forEach(e => {
-    const parts = (e.date||'').replace(/-/g,'/').split('/');
-    const dd = parseInt(parts[2]||0);
-    const weekDay = '日月火水木金土'[new Date(y, m-1, dd).getDay()];
-    const isWeekend = new Date(y, m-1, dd).getDay()%6===0;
-    const isToday2 = (e.date||'').replace(/-/g,'/') === dateStr;
-    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:${isToday2?'var(--blue-light)':'var(--bg)'};border-radius:6px;">
-      <span style="font-size:12px;color:${isWeekend?'#c04000':'var(--text)'};font-weight:${isToday2?'700':'400'};">${m}/${dd}（${weekDay}）${isToday2?'<span style="font-size:9px;background:var(--green);color:#fff;padding:1px 5px;border-radius:8px;margin-left:4px;">今日</span>':''}</span>
-      ${e.staff?`<span style="font-size:10px;color:var(--text3);">👤${esc(e.staff)}</span>`:''}
-      <span style="font-size:13px;font-weight:700;color:var(--blue);">${e.qty}個</span>
-    </div>`;
-  });
-
-  html += `</div></div>`;
-  el.innerHTML = html;
 }
 
 function closeNyukaInputModal(e){
@@ -2011,8 +1498,6 @@ function submitNyukaInput(){
   // staff欄にも反映
   const staffEl = document.getElementById('staff');
   if(staffEl && !staffEl.value.trim()) staffEl.value = staff;
-  // 履歴を再描画してモーダルを閉じる
-  renderNyukaModalHistory(id);
   document.getElementById('nyuka-input-modal').style.display = 'none';
   _nyukaTargetId = null;
   const it = SALES.find(x=>x.id===id);
@@ -2033,121 +1518,6 @@ function getNyukaStaffNames(){
     (NYUKA[it.id]||[]).forEach(n => { if(n.staff) names.add(n.staff); });
   });
   return [...names];
-}
-
-// ===== 販売・無料記録モーダル =====
-function showSellHistoryModal(){
-  const modal = document.getElementById('sell-history-modal');
-  modal.style.display = 'block';
-  const now2 = new Date();
-  const ym = now2.getFullYear() + '-' + String(now2.getMonth()+1).padStart(2,'0');
-  document.getElementById('sell-history-month').value = ym;
-  const sel = document.getElementById('sell-history-item');
-  sel.innerHTML = '<option value="">全品目</option>';
-  SALES.forEach(it => {
-    const op = document.createElement('option');
-    op.value = it.id; op.textContent = it.name;
-    sel.appendChild(op);
-  });
-  renderSellFreeHistory('sell');
-}
-function closeSellHistoryModal(e){
-  if(e && e.target !== document.getElementById('sell-history-modal')) return;
-  document.getElementById('sell-history-modal').style.display = 'none';
-}
-
-function showFreeHistoryModal(){
-  const modal = document.getElementById('free-history-modal');
-  modal.style.display = 'block';
-  const now2 = new Date();
-  const ym = now2.getFullYear() + '-' + String(now2.getMonth()+1).padStart(2,'0');
-  document.getElementById('free-history-month').value = ym;
-  const sel = document.getElementById('free-history-item');
-  sel.innerHTML = '<option value="">全品目</option>';
-  SALES.forEach(it => {
-    const op = document.createElement('option');
-    op.value = it.id; op.textContent = it.name;
-    sel.appendChild(op);
-  });
-  renderSellFreeHistory('free');
-}
-function closeFreeHistoryModal(e){
-  if(e && e.target !== document.getElementById('free-history-modal')) return;
-  document.getElementById('free-history-modal').style.display = 'none';
-}
-
-function renderSellFreeHistory(type){
-  const isSell = type === 'sell';
-  const ym      = document.getElementById(type+'-history-month').value;
-  const filterItem = document.getElementById(type+'-history-item').value;
-  const el      = document.getElementById(type+'-history-content');
-  if(!ym || !el) return;
-
-  const fm = ym.replace('-','/');
-  const [y, m] = ym.split('-').map(Number);
-  const monthLabel = y + '年' + m + '月';
-  const allH = loadHistory();
-  const monthH = allH.filter(r => r.date.startsWith(fm));
-
-  // 品目ごとに日別データを収集
-  const itemMap = {}; // {itemId: {name, days:[{date,val}], total}}
-  monthH.forEach(r => {
-    const saMap = Object.fromEntries((r.salesItems||SALES).map(x=>[x.id,x]));
-    SALES.forEach(it => {
-      if(filterItem && it.id !== filterItem) return;
-      const item = saMap[it.id] || it;
-      const val = isSell
-        ? (r.sales&&r.sales[it.id+'_sell']!==undefined ? r.sales[it.id+'_sell'] : 0)
-        : (r.sales&&r.sales[it.id+'_free']!==undefined ? r.sales[it.id+'_free'] : 0);
-      if(val <= 0) return;
-      if(!itemMap[it.id]) itemMap[it.id] = {name: item.name, days:[], total:0};
-      itemMap[it.id].days.push({date: r.date, val});
-      itemMap[it.id].total += val;
-    });
-  });
-
-  const entries = Object.values(itemMap).filter(x => x.total > 0);
-  if(!entries.length){
-    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px;">${monthLabel}の${isSell?'販売':'無料'}記録はありません</div>`;
-    return;
-  }
-
-  // 月合計バナー
-  const grandTotal = entries.reduce((s,x)=>s+x.total, 0);
-  const accentColor = isSell ? '#1a3f8a' : '#8a1a3f';
-  const accentLight = isSell ? '#e8f0ff' : '#fff0f5';
-  const accentBd    = isSell ? '#99b8f0' : '#f0a0c0';
-
-  let html = `<div style="background:${accentLight};border:1px solid ${accentBd};border-radius:12px;padding:12px 16px;margin-bottom:14px;display:flex;gap:16px;align-items:center;">
-    <div style="text-align:center;flex:1;"><div style="font-size:10px;color:${accentColor};font-weight:700;margin-bottom:2px;">${isSell?'販売':'無料'}日数</div><div style="font-size:26px;font-weight:700;color:${accentColor};">${new Set(monthH.filter(r=>entries.some(()=>true)).map(r=>r.date)).size}<span style="font-size:13px;">日</span></div></div>
-    <div style="width:1px;background:${accentBd};align-self:stretch;"></div>
-    <div style="text-align:center;flex:1;"><div style="font-size:10px;color:${accentColor};font-weight:700;margin-bottom:2px;">合計${isSell?'販売':'無料'}</div><div style="font-size:26px;font-weight:700;color:${accentColor};">${grandTotal}<span style="font-size:13px;">個</span></div></div>
-  </div>`;
-
-  entries.forEach(item => {
-    // 日付降順
-    const sorted = item.days.slice().sort((a,b)=>b.date.localeCompare(a.date));
-    html += `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;">
-      <div style="padding:9px 14px;display:flex;align-items:center;justify-content:space-between;background:${accentLight};border-bottom:1px solid ${accentBd};">
-        <span style="font-size:14px;font-weight:700;color:${accentColor};">${esc(item.name)}</span>
-        <span style="font-size:13px;font-weight:700;color:${accentColor};">計 ${item.total}個</span>
-      </div>
-      <div style="padding:4px 0;">`;
-    sorted.forEach(d => {
-      const parts = d.date.replace(/-/g,'/').split('/');
-      const dd = parseInt(parts[2]);
-      const weekDay = '日月火水木金土'[new Date(y, m-1, dd).getDay()];
-      const isWeekend = new Date(y, m-1, dd).getDay()%6===0;
-      const isToday2 = d.date.replace(/-/g,'/') === dateStr;
-      html += `<div style="display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);">
-        <span style="flex:1;font-size:13px;font-weight:${isToday2?'700':'500'};color:${isWeekend?'#c04000':'var(--text)'};">${m}/${dd}（${weekDay}）${isToday2?'<span style="font-size:9px;background:var(--green);color:#fff;padding:1px 5px;border-radius:8px;margin-left:6px;">今日</span>':''}</span>
-        <span style="font-size:15px;font-weight:700;color:${accentColor};">${d.val}個</span>
-      </div>`;
-    });
-    html += `</div></div>`;
-  });
-
-  el.innerHTML = html;
 }
 
 // ===== 入荷履歴モーダル（設定画面から）=====
@@ -2431,8 +1801,6 @@ function doSave(autoSave=false){
   editingDate=null;
   renderHistory();
   showToast('✅ 記録を保存しました！');
-  clearMonthlyHistCache();
-  renderAllMonthlySummaryBadges();
 }
 
 
@@ -2501,21 +1869,6 @@ function renderHistory(){
       <strong style="color:#06C167;white-space:nowrap;">合計 ¥${uberTotal.toLocaleString()}</strong>
     </div>`;
     const noteHtml=r.note?`<div class="hist-note">📝 ${esc(r.note)}</div>`:'';
-    // わらび餅入荷記録（当日分）
-    const warabiRecs = loadWarabiRecords().filter(wr=>{
-      const wrDate = wr.date.replace(/-/g,'/');
-      return wrDate === r.date;
-    });
-    const warabiHtml = warabiRecs.length ? `<div style="margin-top:4px;padding:6px 10px;background:#f3eeff;border:1px solid #c9a8f0;border-radius:8px;font-size:12px;">
-      <div style="font-weight:700;color:#6a3faf;margin-bottom:4px;">🏭 わらび餅入荷</div>
-      ${warabiRecs.map(wr=>`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px;padding-bottom:3px;border-bottom:1px solid #e8d8ff;">
-        <span style="background:#e8d8ff;border-radius:5px;padding:1px 7px;font-size:11px;font-weight:700;color:#6a3faf;">${esc(wr.item)}</span>
-        <span style="font-size:11px;color:#555;">👤${esc(wr.inspector)}</span>
-        <span style="font-size:11px;color:#555;">🏭${esc(wr.factory)}</span>
-        ${wr.carrier?`<span style="font-size:11px;color:#555;">🚚${esc(wr.carrier)}</span>`:''}
-        ${wr.inquiry?`<span style="font-size:11px;color:#555;">📞${esc(wr.inquiry)}</span>`:''}
-      </div>`).join('')}
-    </div>` : '';
     let diffPopupHtml='';
     if(r.editLog&&r.editLog.length){
       const allDiffs=r.editLog.filter(e=>e.diff&&e.diff.length);
@@ -2544,7 +1897,7 @@ function renderHistory(){
         <button class="hist-edit-btn" onclick="editRecord(${realIdx})">✏️ 編集</button>
       </div>
       ${diffPopupHtml}
-      ${stbl}${stbl2}${uberHtml}${warabiHtml}${noteHtml}
+      ${stbl}${stbl2}${uberHtml}${noteHtml}
     </div></div>`;
   }).join('');
 }
@@ -2620,8 +1973,10 @@ function renderUberModal(){
     el.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text3);">この月の記録がありません</div>`;
     return;
   }
+  // 月の日数を計算
   const [y,m]=ym.split('-').map(Number);
   const daysInMonth=new Date(y,m,0).getDate();
+  // 日付→記録のマップ
   const recordMap={};
   h.forEach(r=>{ recordMap[r.date]=r; });
   let totalAmt=0,totalCnt=0,salesDays=0;
@@ -2632,7 +1987,8 @@ function renderUberModal(){
     const r=recordMap[dateKey];
     const weekDay=['日','月','火','水','木','金','土'][new Date(y,m-1,d).getDay()];
     const isWeekend=(new Date(y,m-1,d).getDay()===0||new Date(y,m-1,d).getDay()===6);
-    const isFuture=dateKey>dateStr;
+    const today=dateStr;
+    const isFuture=dateKey>today;
     if(r&&r.uber&&r.uber.length){
       const dayTotal=r.uber.reduce((s,u)=>s+u.amount,0);
       totalAmt+=dayTotal; totalCnt+=r.uber.length; salesDays++;
@@ -2640,7 +1996,7 @@ function renderUberModal(){
       rows+=`<tr style="background:#f0f6ff;">
         <td style="padding:6px 4px;white-space:nowrap;font-weight:700;color:${isWeekend?'#c04000':'var(--text)'};">${fm}/${dd}(${weekDay})</td>
         <td style="padding:6px 4px;font-size:11px;color:var(--text2);line-height:1.6;">${items}</td>
-        <td style="padding:6px 4px;font-weight:700;color:#06C167;text-align:right;white-space:nowrap;">¥${dayTotal.toLocaleString()}</td>
+        <td style="padding:6px 4px;font-weight:700;color:var(--blue);text-align:right;white-space:nowrap;">¥${dayTotal.toLocaleString()}</td>
       </tr>`;
     } else if(!isFuture){
       rows+=`<tr style="opacity:.45;">
@@ -2656,10 +2012,10 @@ function renderUberModal(){
     }
   }
   el.innerHTML=`
-    <div style="background:#e8f5e9;border:1px solid #06C167;border-radius:12px;padding:14px 16px;margin-bottom:12px;text-align:center;">
-      <div style="font-size:13px;color:#1a5f3a;margin-bottom:6px;">${fm} 月間売上</div>
-      <div style="font-size:32px;font-weight:700;color:#06C167;">¥${totalAmt.toLocaleString()}</div>
-      <div style="display:flex;justify-content:center;gap:16px;margin-top:6px;font-size:12px;color:#1a5f3a;">
+    <div style="background:#e8f0ff;border-radius:10px;padding:14px 16px;margin-bottom:12px;text-align:center;">
+      <div style="font-size:13px;color:#1a3f8a;margin-bottom:6px;">${fm} 月間売上</div>
+      <div style="font-size:32px;font-weight:700;color:#1a3f8a;">¥${totalAmt.toLocaleString()}</div>
+      <div style="display:flex;justify-content:center;gap:16px;margin-top:6px;font-size:12px;color:#4a6abf;">
         <span>📦 ${totalCnt}件</span>
         <span>📅 ${salesDays}日</span>
         <span>📊 平均 ¥${salesDays?Math.round(totalAmt/salesDays).toLocaleString():0}/日</span>
@@ -2674,7 +2030,7 @@ function renderUberModal(){
       <tbody>${rows}</tbody>
       <tfoot><tr style="border-top:2px solid var(--border2);background:var(--done-bg);">
         <td colspan="2" style="padding:8px 4px;font-weight:700;">月間合計</td>
-        <td style="padding:8px 4px;font-weight:700;color:#06C167;text-align:right;font-size:15px;">¥${totalAmt.toLocaleString()}</td>
+        <td style="padding:8px 4px;font-weight:700;color:var(--blue);text-align:right;font-size:15px;">¥${totalAmt.toLocaleString()}</td>
       </tr></tfoot>
     </table>`;
 }
@@ -2821,18 +2177,13 @@ function restoreLastValues(){
   const isToday = last.date === dateStr;
   SALES.forEach(it=>{
     const stock=last.sales&&last.sales[it.id]!==undefined?last.sales[it.id]:0;
-    // 販売・無料・入荷は今日の記録のみ復元。翌日以降は必ず0にする
     const sell = isToday && last.sales&&last.sales[it.id+'_sell']!==undefined ? last.sales[it.id+'_sell'] : 0;
     const free = isToday && last.sales&&last.sales[it.id+'_free']!==undefined ? last.sales[it.id+'_free'] : 0;
     $set('stock_'+it.id, stock);
     $set('sell_'+it.id,  sell);
     $set('free_'+it.id,  free);
-    if(!isToday){
-      // 前日以前なら入荷もリセット
-      NYUKA[it.id] = [];
-    } else if(last.nyuka&&last.nyuka[it.id]){
-      NYUKA[it.id]=[...last.nyuka[it.id]];
-    }
+    if(!isToday){ NYUKA[it.id]=[]; }
+    else if(last.nyuka&&last.nyuka[it.id]) NYUKA[it.id]=[...last.nyuka[it.id]];
     calcStock(it.id);
   });
   // 色チェック
@@ -2859,8 +2210,6 @@ const DRAFT_KEY = 'zaiko_draft_' + dateStr.replace(/\//g, '-');
 
 function saveDraft(){
   try{
-    // 編集モード中は下書き保存しない（editingDateがある場合）
-    if(editingDate && editingDate !== dateStr) return;
     const draft = {
       date: dateStr,
       note: document.getElementById('note') ? document.getElementById('note').value : '',
@@ -2918,14 +2267,8 @@ function restoreDraft(){
   SALES.forEach(it=>{
     if(draft.sales){
       if(draft.sales[it.id]           !== undefined) $set('stock_'+it.id, draft.sales[it.id]);
-      // sell/freeは今日の下書きのみ（loadDraftがdateStr一致を保証しているが念のため）
-      if(draft.date === dateStr){
-        if(draft.sales[it.id+'_sell'] !== undefined) $set('sell_'+it.id,  draft.sales[it.id+'_sell']);
-        if(draft.sales[it.id+'_free'] !== undefined) $set('free_'+it.id,  draft.sales[it.id+'_free']);
-      } else {
-        $set('sell_'+it.id, 0);
-        $set('free_'+it.id, 0);
-      }
+      if(draft.sales[it.id+'_sell']   !== undefined) $set('sell_'+it.id,  draft.sales[it.id+'_sell']);
+      if(draft.sales[it.id+'_free']   !== undefined) $set('free_'+it.id,  draft.sales[it.id+'_free']);
     }
     if(draft.nyuka && draft.nyuka[it.id]) NYUKA[it.id] = [...draft.nyuka[it.id]];
     calcStock(it.id);
@@ -2938,543 +2281,477 @@ function restoreDraft(){
 }
 
 
-// ===== 冷蔵庫温度記録 =====
-const TEMP_RECORDS_KEY = 'temp_records';
 
-function loadTempRecords(){
-  try{ return JSON.parse(localStorage.getItem(TEMP_RECORDS_KEY)) || []; }
-  catch(e){ return []; }
-}
-function saveTempRecords(list){ localStorage.setItem(TEMP_RECORDS_KEY, JSON.stringify(list)); }
 
-function initTempSection(){
-  const now2 = new Date();
-  const ymd = now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0')+'-'+String(now2.getDate()).padStart(2,'0');
-  const ym  = now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
-  document.getElementById('temp-date').value = ymd;
-  document.getElementById('temp-hist-month').value = ym;
-  renderTempRecorderList();
-  renderTempHistory();
-}
+// ===== 月次集計ボタン =====
+let _monthlyHistCache = null;
+function getMonthlyHistCache(){ if(!_monthlyHistCache) _monthlyHistCache = loadHistory(); return _monthlyHistCache; }
+function clearMonthlyHistCache(){ _monthlyHistCache = null; }
 
-function renderTempRecorderList(){
-  const records = loadTempRecords();
-  const names = [...new Set(records.map(r=>r.recorder).filter(Boolean))];
-  const dl = document.getElementById('temp-recorder-list');
-  if(dl) dl.innerHTML = names.map(n=>`<option value="${esc(n)}">`).join('');
-}
-
-function toggleTempSection(){
-  const body = document.getElementById('temp-body');
-  const arrow = document.getElementById('temp-arrow');
-  const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'flex';
-  arrow.classList.toggle('open', !isOpen);
-}
-
-function saveTempRecord(){
-  const date     = document.getElementById('temp-date').value;
-  const recorder = document.getElementById('temp-recorder').value.trim();
-  if(!date){ showToast('記録日を入力してください'); return; }
-  if(!recorder){ showToast('記録者名を入力してください'); return; }
-
-  const fridges = [
-    { name:'①冷蔵', key:'r1' },
-    { name:'②冷蔵（兼用機・冷蔵側）', key:'r2' },
-    { name:'③冷凍（兼用機・冷凍側）', key:'r3' },
-    { name:'④冷凍', key:'r4' },
-  ];
-  const data = fridges.map(f=>({
-    name: f.name,
-    am: {
-      time: document.getElementById(`temp-${f.key}-am-time`).value,
-      temp: document.getElementById(`temp-${f.key}-am-temp`).value,
-    },
-    pm: {
-      time: document.getElementById(`temp-${f.key}-pm-time`).value,
-      temp: document.getElementById(`temp-${f.key}-pm-temp`).value,
-    }
-  }));
-
-  const records = loadTempRecords();
-  records.unshift({ id: uid(), date, recorder, data, createdAt: new Date().toISOString() });
-  saveTempRecords(records);
-
-  // 入力リセット（日付・記録者は残す）
-  fridges.forEach(f=>{
-    ['am','pm'].forEach(t=>{
-      document.getElementById(`temp-${f.key}-${t}-time`).value = '';
-      document.getElementById(`temp-${f.key}-${t}-temp`).value = '';
-    });
+function calcMonthlySellFree(id){
+  const now2=new Date(); const y=now2.getFullYear(); const m=now2.getMonth()+1;
+  const ym=y+'/'+String(m).padStart(2,'0');
+  const allH=getMonthlyHistCache(); let totalSell=0,totalFree=0,totalNyuka=0; const dayMap={};
+  allH.filter(r=>r.date.startsWith(ym)).forEach(r=>{
+    const sell=r.sales&&r.sales[id+'_sell']!==undefined?r.sales[id+'_sell']:0;
+    const free=r.sales&&r.sales[id+'_free']!==undefined?r.sales[id+'_free']:0;
+    const nyuka=r.nyuka&&r.nyuka[id]?r.nyuka[id].reduce((s,n)=>s+n.qty,0):0;
+    dayMap[r.date]={sell,free,nyuka}; totalSell+=sell; totalFree+=free; totalNyuka+=nyuka;
   });
-
-  renderTempRecorderList();
-  renderTempHistory();
-  showToast('🌡️ 温度記録を保存しました');
+  const todayUnsaved=(NYUKA[id]||[]).reduce((s,n)=>s+n.qty,0);
+  if(todayUnsaved>0){
+    if(dayMap[dateStr]){const saved=dayMap[dateStr].nyuka;if(todayUnsaved>saved){totalNyuka+=todayUnsaved-saved;dayMap[dateStr].nyuka=todayUnsaved;}}
+    else{dayMap[dateStr]={sell:0,free:0,nyuka:todayUnsaved};totalNyuka+=todayUnsaved;}
+  }
+  const dayRows=Object.entries(dayMap).filter(([,v])=>v.sell>0||v.free>0||v.nyuka>0).sort(([a],[b])=>a.localeCompare(b)).map(([date,v])=>({date,...v}));
+  return{totalSell,totalFree,totalNyuka,dayRows,m,y};
 }
 
-function renderTempHistory(){
-  const ym = document.getElementById('temp-hist-month').value;
-  const el = document.getElementById('temp-history-list');
-  if(!el) return;
-  const records = loadTempRecords();
-  const filtered = ym ? records.filter(r=>r.date.startsWith(ym)) : records;
-
-  if(!filtered.length){
-    el.innerHTML = `<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;
+let _monthDetailOpen={};
+function toggleMonthlyDetail(id,type){
+  const detail=document.getElementById('monthly-detail_'+id);
+  if(!detail)return;
+  clearMonthlyHistCache();
+  const current=_monthDetailOpen[id];
+  if(current===type&&detail.style.display!=='none'){
+    detail.style.display='none'; _monthDetailOpen[id]=null;
+    ['nyuka','sell','free'].forEach(t=>{const b=document.getElementById('mbtn-'+t+'_'+id);if(b)b.classList.remove('active');});
     return;
   }
-
-  el.innerHTML = filtered.map(r=>{
-    const dp = r.date.split('-');
-    const dateLabel = dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
-    const rows = (r.data||[]).map(f=>`
-      <div style="margin-top:4px;">
-        <span style="font-size:11px;font-weight:700;color:#1565c0;">${esc(f.name)}</span>
-        <span style="font-size:11px;color:#555;margin-left:6px;">
-          AM ${f.am.time||'—'} <span class="temp-val">${f.am.temp!==''&&f.am.temp!==undefined?f.am.temp+'℃':'—'}</span>
-          　PM ${f.pm.time||'—'} <span class="temp-val">${f.pm.temp!==''&&f.pm.temp!==undefined?f.pm.temp+'℃':'—'}</span>
-        </span>
-      </div>`).join('');
-    return `<div class="temp-record-row">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span class="temp-record-date">📅 ${dateLabel}</span>
-        <div style="display:flex;gap:6px;">
-          <span style="font-size:11px;color:#555;">👤 ${esc(r.recorder)}</span>
-          <button onclick="openTempEditModal('${r.id}')" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;cursor:pointer;color:#1565c0;">✏️ 編集</button>
-          <button onclick="deleteTempRecord('${r.id}')" style="background:none;border:none;font-size:15px;cursor:pointer;color:#c09;">🗑</button>
-        </div>
-      </div>
-      ${rows}
-    </div>`;
-  }).join('');
-}
-
-function deleteTempRecord(id){
-  if(!confirm('この温度記録を削除しますか？')) return;
-  saveTempRecords(loadTempRecords().filter(r=>r.id!==id));
-  renderTempHistory();
-  showToast('削除しました');
-}
-
-function openTempEditModal(id){
-  const r = loadTempRecords().find(x=>x.id===id);
-  if(!r) return;
-  document.getElementById('temp-edit-id').value = id;
-  document.getElementById('temp-edit-date').value = r.date;
-  document.getElementById('temp-edit-recorder').value = r.recorder||'';
-  const keys = ['r1','r2','r3'];
-  (r.data||[]).forEach((f,i)=>{
-    const k = keys[i];
-    document.getElementById(`temp-edit-${k}-am-time`).value = f.am.time||'';
-    document.getElementById(`temp-edit-${k}-am-temp`).value = f.am.temp!==undefined?f.am.temp:'';
-    document.getElementById(`temp-edit-${k}-pm-time`).value = f.pm.time||'';
-    document.getElementById(`temp-edit-${k}-pm-temp`).value = f.pm.temp!==undefined?f.pm.temp:'';
+  _monthDetailOpen[id]=type;
+  ['nyuka','sell','free'].forEach(t=>{const b=document.getElementById('mbtn-'+t+'_'+id);if(b)b.classList.toggle('active',t===type);});
+  const{totalSell,totalFree,totalNyuka,dayRows,m,y}=calcMonthlySellFree(id);
+  const it=SALES.find(x=>x.id===id);
+  const freeLabel=it&&it.name.includes('釜揚げ箱')?'単品移行':'無料';
+  const mo=new Date().getMonth();
+  const typeLabel=type==='nyuka'?'入荷':type==='sell'?'販売':freeLabel;
+  const typeTotal=type==='nyuka'?totalNyuka:type==='sell'?totalSell:totalFree;
+  const filtered=dayRows.filter(r=>{const val=type==='nyuka'?r.nyuka||0:type==='sell'?r.sell:r.free;return val>0;});
+  if(!filtered.length){detail.innerHTML=`<div style="padding:8px 4px;font-size:12px;color:var(--text3);">${m}月の${typeLabel}記録はありません</div>`;detail.style.display='block';return;}
+  let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><span style="font-size:11px;font-weight:700;color:var(--text3);">📅 ${m}月の${typeLabel}記録</span><span style="font-size:12px;font-weight:700;color:#1a5f3a;">合計 ${typeTotal}個</span></div><div style="display:flex;flex-direction:column;gap:2px;max-height:200px;overflow-y:auto;"><div style="display:flex;align-items:center;padding:2px 6px;font-size:10px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:2px;"><span style="flex:1;">日付</span><span style="min-width:48px;text-align:right;">個数</span></div>`;
+  filtered.slice().reverse().forEach(r=>{
+    const val=type==='nyuka'?r.nyuka||0:type==='sell'?r.sell:r.free;
+    const parts=r.date.replace(/-/g,'/').split('/'); const dd=parseInt(parts[2]);
+    const weekDay='日月火水木金土'[new Date(y,mo,dd).getDay()];
+    const isWeekend=new Date(y,mo,dd).getDay()%6===0;
+    const isToday2=r.date.replace(/-/g,'/')===dateStr;
+    html+=`<div style="display:flex;align-items:center;padding:5px 6px;border-radius:6px;background:${isToday2?'var(--blue-light)':'transparent'};"><span style="flex:1;font-size:13px;font-weight:${isToday2?'700':'500'};color:${isWeekend?'#c04000':'var(--text)'};">${m}/${dd}（${weekDay}）${isToday2?'<span style="font-size:9px;background:var(--green);color:#fff;padding:1px 5px;border-radius:8px;margin-left:4px;">今日</span>':''}</span><span style="min-width:48px;text-align:right;font-size:15px;font-weight:700;color:#1a5f3a;">${val}個</span></div>`;
   });
-  document.getElementById('temp-edit-modal').style.display='flex';
+  html+=`</div>`; detail.innerHTML=html; detail.style.display='block';
 }
 
-function closeTempEditModal(e){
-  if(e && e.target !== document.getElementById('temp-edit-modal')) return;
-  document.getElementById('temp-edit-modal').style.display='none';
+function renderMonthlySummaryBadge(id){
+  const{totalSell,totalFree,totalNyuka}=calcMonthlySellFree(id);
+  const nyukaVal=document.getElementById('mbtn-nyuka-val_'+id);
+  const sellVal=document.getElementById('mbtn-sell-val_'+id);
+  const freeVal=document.getElementById('mbtn-free-val_'+id);
+  if(nyukaVal)nyukaVal.textContent=totalNyuka;
+  if(sellVal)sellVal.textContent=totalSell;
+  if(freeVal)freeVal.textContent=totalFree;
+}
+function renderAllMonthlySummaryBadges(){
+  clearMonthlyHistCache();
+  SALES.forEach(it=>renderMonthlySummaryBadge(it.id));
+  _monthlyHistCache=null;
 }
 
-function saveTempEdit(){
-  const id       = document.getElementById('temp-edit-id').value;
-  const date     = document.getElementById('temp-edit-date').value;
-  const recorder = document.getElementById('temp-edit-recorder').value.trim();
-  if(!date){ showToast('記録日を入力してください'); return; }
-  if(!recorder){ showToast('記録者名を入力してください'); return; }
-  const fridgeNames = ['①冷蔵','②冷蔵（兼用機・冷蔵側）','③冷凍（兼用機・冷凍側）','④冷凍'];
-  const keys = ['r1','r2','r3','r4'];
-  const data = fridgeNames.map((name,i)=>({
-    name,
-    am:{ time:document.getElementById(`temp-edit-${keys[i]}-am-time`).value, temp:document.getElementById(`temp-edit-${keys[i]}-am-temp`).value },
-    pm:{ time:document.getElementById(`temp-edit-${keys[i]}-pm-time`).value, temp:document.getElementById(`temp-edit-${keys[i]}-pm-temp`).value },
-  }));
-  const records = loadTempRecords();
-  const idx = records.findIndex(r=>r.id===id);
-  if(idx===-1){ showToast('記録が見つかりません'); return; }
-  records[idx] = {...records[idx], date, recorder, data};
-  saveTempRecords(records);
-  document.getElementById('temp-edit-modal').style.display='none';
-  renderTempHistory();
-  showToast('✅ 編集を保存しました');
+// ===== 販売・無料記録モーダル =====
+function showSellHistoryModal(){
+  const modal=document.getElementById('sell-history-modal'); modal.style.display='block';
+  const now2=new Date(); const ym=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
+  document.getElementById('sell-history-month').value=ym;
+  const sel=document.getElementById('sell-history-item');
+  sel.innerHTML='<option value="">全品目</option>'+SALES.map(it=>`<option value="${esc(it.id)}">${esc(it.name)}</option>`).join('');
+  renderSellFreeHistory('sell');
+}
+function closeSellHistoryModal(e){if(e&&e.target!==document.getElementById('sell-history-modal'))return;document.getElementById('sell-history-modal').style.display='none';}
+function showFreeHistoryModal(){
+  const modal=document.getElementById('free-history-modal'); modal.style.display='block';
+  const now2=new Date(); const ym=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
+  document.getElementById('free-history-month').value=ym;
+  const sel=document.getElementById('free-history-item');
+  sel.innerHTML='<option value="">全品目</option>'+SALES.map(it=>`<option value="${esc(it.id)}">${esc(it.name)}</option>`).join('');
+  renderSellFreeHistory('free');
+}
+function closeFreeHistoryModal(e){if(e&&e.target!==document.getElementById('free-history-modal'))return;document.getElementById('free-history-modal').style.display='none';}
+function renderSellFreeHistory(type){
+  const isSell=type==='sell';
+  const ym=document.getElementById(type+'-history-month').value;
+  const filterItem=document.getElementById(type+'-history-item').value;
+  const el=document.getElementById(type+'-history-content');
+  if(!ym||!el)return;
+  const fm=ym.replace('-','/'); const[y,m]=ym.split('-').map(Number);
+  const allH=loadHistory(); const monthH=allH.filter(r=>r.date.startsWith(fm));
+  const itemMap={};
+  monthH.forEach(r=>{
+    SALES.forEach(it=>{
+      if(filterItem&&it.id!==filterItem)return;
+      const val=isSell?(r.sales&&r.sales[it.id+'_sell']!==undefined?r.sales[it.id+'_sell']:0):(r.sales&&r.sales[it.id+'_free']!==undefined?r.sales[it.id+'_free']:0);
+      if(val<=0)return;
+      if(!itemMap[it.id])itemMap[it.id]={name:it.name,days:[],total:0};
+      itemMap[it.id].days.push({date:r.date,val}); itemMap[it.id].total+=val;
+    });
+  });
+  const entries=Object.values(itemMap).filter(x=>x.total>0);
+  if(!entries.length){el.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px;">${m}月の記録はありません</div>`;return;}
+  const grandTotal=entries.reduce((s,x)=>s+x.total,0);
+  const accentColor=isSell?'#1a3f8a':'#8a1a3f'; const accentLight=isSell?'#e8f0ff':'#fff0f5'; const accentBd=isSell?'#99b8f0':'#f0a0c0';
+  let html=`<div style="background:${accentLight};border:1px solid ${accentBd};border-radius:12px;padding:12px 16px;margin-bottom:14px;text-align:center;"><div style="font-size:10px;color:${accentColor};font-weight:700;margin-bottom:4px;">${m}月合計</div><div style="font-size:28px;font-weight:700;color:${accentColor};">${grandTotal}<span style="font-size:13px;">個</span></div></div>`;
+  entries.forEach(item=>{
+    const sorted=item.days.slice().sort((a,b)=>b.date.localeCompare(a.date));
+    html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;"><div style="padding:9px 14px;display:flex;align-items:center;justify-content:space-between;background:${accentLight};border-bottom:1px solid ${accentBd};"><span style="font-size:14px;font-weight:700;color:${accentColor};">${esc(item.name)}</span><span style="font-size:13px;font-weight:700;color:${accentColor};">計 ${item.total}個</span></div><div style="padding:4px 0;">`;
+    sorted.forEach(d=>{
+      const parts=d.date.replace(/-/g,'/').split('/'); const dd=parseInt(parts[2]);
+      const weekDay='日月火水木金土'[new Date(y,m-1,dd).getDay()];
+      const isWeekend=new Date(y,m-1,dd).getDay()%6===0;
+      const isToday2=d.date.replace(/-/g,'/')===dateStr;
+      html+=`<div style="display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);"><span style="flex:1;font-size:13px;font-weight:${isToday2?'700':'500'};color:${isWeekend?'#c04000':'var(--text)'};">${m}/${dd}（${weekDay}）</span><span style="font-size:15px;font-weight:700;color:${accentColor};">${d.val}個</span></div>`;
+    });
+    html+=`</div></div>`;
+  });
+  el.innerHTML=html;
 }
 
 // ===== わらび餅入荷記録 =====
-const WARABI_RECORDS_KEY = 'warabi_records';
-const WARABI_ITEMS_KEY   = 'warabi_items';
-const WARABI_FACTORIES_KEY = 'warabi_factories';
-const WARABI_CARRIERS_KEY = 'warabi_carriers';
+const WARABI_RECORDS_KEY='warabi_records'; const WARABI_ITEMS_KEY='warabi_items';
+const WARABI_FACTORIES_KEY='warabi_factories'; const WARABI_CARRIERS_KEY='warabi_carriers';
+const WARABI_DEFAULT_ITEMS=['わらび餅','スティックわらび餅','釜揚げ単品','釜揚げ箱'];
+const WARABI_DEFAULT_CARRIERS=['ヤマト運輸','佐川急便','日本郵便','西濃運輸','福山通運'];
 
-const WARABI_DEFAULT_ITEMS = ['わらび餅','スティックわらび餅','釜揚げ単品','釜揚げ箱'];
-const WARABI_DEFAULT_FACTORIES = [];
-const WARABI_DEFAULT_CARRIERS = ['ヤマト運輸','佐川急便','日本郵便','西濃運輸','福山通運'];
-
-function loadWarabiItems(){
-  try{ return JSON.parse(localStorage.getItem(WARABI_ITEMS_KEY)) || WARABI_DEFAULT_ITEMS; }
-  catch(e){ return WARABI_DEFAULT_ITEMS; }
-}
-function saveWarabiItems(list){ localStorage.setItem(WARABI_ITEMS_KEY, JSON.stringify(list)); }
-
-function loadWarabiFactories(){
-  try{ return JSON.parse(localStorage.getItem(WARABI_FACTORIES_KEY)) || []; }
-  catch(e){ return []; }
-}
-function saveWarabiFactories(list){ localStorage.setItem(WARABI_FACTORIES_KEY, JSON.stringify(list)); }
-
-function loadWarabiCarriers(){
-  try{ return JSON.parse(localStorage.getItem(WARABI_CARRIERS_KEY)) || WARABI_DEFAULT_CARRIERS; }
-  catch(e){ return WARABI_DEFAULT_CARRIERS; }
-}
-function saveWarabiCarriers(list){ localStorage.setItem(WARABI_CARRIERS_KEY, JSON.stringify(list)); }
-
-function loadWarabiRecords(){
-  try{ return JSON.parse(localStorage.getItem(WARABI_RECORDS_KEY)) || []; }
-  catch(e){ return []; }
-}
-function saveWarabiRecords(list){ localStorage.setItem(WARABI_RECORDS_KEY, JSON.stringify(list)); }
+function loadWarabiItems(){try{return JSON.parse(localStorage.getItem(WARABI_ITEMS_KEY))||WARABI_DEFAULT_ITEMS;}catch(e){return WARABI_DEFAULT_ITEMS;}}
+function saveWarabiItems(list){localStorage.setItem(WARABI_ITEMS_KEY,JSON.stringify(list));}
+function loadWarabiFactories(){try{return JSON.parse(localStorage.getItem(WARABI_FACTORIES_KEY))||[];}catch(e){return[];}}
+function saveWarabiFactories(list){localStorage.setItem(WARABI_FACTORIES_KEY,JSON.stringify(list));}
+function loadWarabiCarriers(){try{return JSON.parse(localStorage.getItem(WARABI_CARRIERS_KEY))||WARABI_DEFAULT_CARRIERS;}catch(e){return WARABI_DEFAULT_CARRIERS;}}
+function saveWarabiCarriers(list){localStorage.setItem(WARABI_CARRIERS_KEY,JSON.stringify(list));}
+function loadWarabiRecords(){try{return JSON.parse(localStorage.getItem(WARABI_RECORDS_KEY))||[];}catch(e){return[];}}
+function saveWarabiRecords(list){localStorage.setItem(WARABI_RECORDS_KEY,JSON.stringify(list));}
 
 function initWarabiSection(){
-  // 今日の日付をセット
-  const now2 = new Date();
-  const ymd = now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0')+'-'+String(now2.getDate()).padStart(2,'0');
-  document.getElementById('warabi-date').value = ymd;
+  const now2=new Date();
+  const ymd=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0')+'-'+String(now2.getDate()).padStart(2,'0');
+  document.getElementById('warabi-date').value=ymd;
+  renderWarabiItemSelect(); renderWarabiFactorySelect(); renderWarabiCarrierSelect();
+  renderWarabiInspectorList(); renderWarabiFilterSelect(); renderWarabiHistory();
+}
+function renderWarabiItemSelect(){const items=loadWarabiItems();const sel=document.getElementById('warabi-item');if(sel)sel.innerHTML=items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');}
+function renderWarabiFilterSelect(){const items=loadWarabiItems();const sel=document.getElementById('warabi-hist-filter');if(sel)sel.innerHTML='<option value="">全品目</option>'+items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');}
+function renderWarabiFactorySelect(){const factories=loadWarabiFactories();const sel=document.getElementById('warabi-factory');if(!sel)return;sel.innerHTML=factories.length?factories.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join(''):'<option value="">（工場未登録）</option>';}
+function renderWarabiCarrierSelect(){const carriers=loadWarabiCarriers();const sel=document.getElementById('warabi-carrier');if(!sel)return;sel.innerHTML='<option value="">（未選択）</option>'+carriers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');}
+function renderWarabiInspectorList(){const records=loadWarabiRecords();const names=[...new Set(records.map(r=>r.inspector).filter(Boolean))];const dl=document.getElementById('warabi-inspector-list');if(dl)dl.innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');}
 
-  // 品目セレクト
-  renderWarabiItemSelect();
-  // 工場セレクト
-  renderWarabiFactorySelect();
-  // 運送会社セレクト
-  renderWarabiCarrierSelect();
-  // 検品者候補
-  renderWarabiInspectorList();
-  // フィルター
-  renderWarabiFilterSelect();
-  // 履歴
-  renderWarabiHistory();
-}
-
-function renderWarabiItemSelect(){
-  const items = loadWarabiItems();
-  const sel = document.getElementById('warabi-item');
-  const histSel = document.getElementById('warabi-hist-filter');
-  sel.innerHTML = items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');
-}
-
-function renderWarabiFilterSelect(){
-  const items = loadWarabiItems();
-  const sel = document.getElementById('warabi-hist-filter');
-  sel.innerHTML = '<option value="">全品目</option>' + items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');
-}
-
-function renderWarabiFactorySelect(){
-  const factories = loadWarabiFactories();
-  const sel = document.getElementById('warabi-factory');
-  if(!factories.length){
-    sel.innerHTML = '<option value="">（工場未登録）</option>';
-  } else {
-    sel.innerHTML = factories.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
-  }
-}
-
-function renderWarabiCarrierSelect(){
-  const carriers = loadWarabiCarriers();
-  const sel = document.getElementById('warabi-carrier');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">（未選択）</option>' + carriers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-}
-
-function addWarabiCarrier(){
-  const name = prompt('追加する運送会社名を入力してください');
-  if(!name || !name.trim()) return;
-  const carriers = loadWarabiCarriers();
-  if(carriers.includes(name.trim())){ showToast('すでに登録されています'); return; }
-  carriers.push(name.trim());
-  saveWarabiCarriers(carriers);
-  renderWarabiCarrierSelect();
-  document.getElementById('warabi-carrier').value = name.trim();
-  if(document.getElementById('warabi-manage-modal').style.display!=='none') renderWarabiManageLists();
-  showToast('運送会社を追加しました：' + name.trim());
-}
-function openWarabiManageModal(){
-  document.getElementById('warabi-manage-modal').style.display='flex';
-  renderWarabiManageLists();
-}
-function closeWarabiManageModal(e){
-  if(e && e.target !== document.getElementById('warabi-manage-modal')) return;
-  document.getElementById('warabi-manage-modal').style.display='none';
-  // セレクトを再描画
-  renderWarabiItemSelect();
-  renderWarabiFilterSelect();
-  renderWarabiFactorySelect();
-  renderWarabiCarrierSelect();
-}
-
-function renderWarabiManageLists(){
-  // 品目
-  const items = loadWarabiItems();
-  document.getElementById('warabi-manage-items').innerHTML = items.map((item,i)=>`
-    <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#f3eeff;border-radius:8px;">
-      <span style="flex:1;font-size:13px;color:#333;">${esc(item)}</span>
-      <button onclick="deleteWarabiManageItem('item',${i})" style="background:#ffe0e0;border:1px solid #f0a0a0;border-radius:6px;color:#a00;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">削除</button>
-    </div>`).join('') || '<div style="font-size:12px;color:#999;">登録なし</div>';
-
-  // 工場名
-  const factories = loadWarabiFactories();
-  document.getElementById('warabi-manage-factories').innerHTML = factories.map((f,i)=>`
-    <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#f3eeff;border-radius:8px;">
-      <span style="flex:1;font-size:13px;color:#333;">${esc(f)}</span>
-      <button onclick="deleteWarabiManageItem('factory',${i})" style="background:#ffe0e0;border:1px solid #f0a0a0;border-radius:6px;color:#a00;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">削除</button>
-    </div>`).join('') || '<div style="font-size:12px;color:#999;">登録なし</div>';
-
-  // 運送会社
-  const carriers = loadWarabiCarriers();
-  document.getElementById('warabi-manage-carriers').innerHTML = carriers.map((c,i)=>`
-    <div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#f3eeff;border-radius:8px;">
-      <span style="flex:1;font-size:13px;color:#333;">${esc(c)}</span>
-      <button onclick="deleteWarabiManageItem('carrier',${i})" style="background:#ffe0e0;border:1px solid #f0a0a0;border-radius:6px;color:#a00;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">削除</button>
-    </div>`).join('') || '<div style="font-size:12px;color:#999;">登録なし</div>';
-}
-
-function deleteWarabiManageItem(type, idx){
-  if(type==='item'){
-    const items = loadWarabiItems();
-    if(!confirm(`「${items[idx]}」を削除しますか？`)) return;
-    items.splice(idx,1);
-    saveWarabiItems(items);
-  } else if(type==='factory'){
-    const factories = loadWarabiFactories();
-    if(!confirm(`「${factories[idx]}」を削除しますか？`)) return;
-    factories.splice(idx,1);
-    saveWarabiFactories(factories);
-  } else if(type==='carrier'){
-    const carriers = loadWarabiCarriers();
-    if(!confirm(`「${carriers[idx]}」を削除しますか？`)) return;
-    carriers.splice(idx,1);
-    saveWarabiCarriers(carriers);
-  }
-  renderWarabiManageLists();
-  showToast('削除しました');
-}
-
-function deleteWarabiItem(){ openWarabiManageModal(); }
-function deleteWarabiFactory(){ openWarabiManageModal(); }
-function deleteWarabiCarrier(){ openWarabiManageModal(); }
-
-function renderWarabiInspectorList(){
-  const records = loadWarabiRecords();
-  const names = [...new Set(records.map(r=>r.inspector).filter(Boolean))];
-  const dl = document.getElementById('warabi-inspector-list');
-  dl.innerHTML = names.map(n=>`<option value="${esc(n)}">`).join('');
-}
-
-function addWarabiItem(){
-  const name = prompt('追加する品目名を入力してください');
-  if(!name || !name.trim()) return;
-  const items = loadWarabiItems();
-  if(items.includes(name.trim())){ showToast('すでに登録されています'); return; }
-  items.push(name.trim());
-  saveWarabiItems(items);
-  renderWarabiItemSelect();
-  renderWarabiFilterSelect();
-  document.getElementById('warabi-item').value = name.trim();
-  if(document.getElementById('warabi-manage-modal').style.display!=='none') renderWarabiManageLists();
-  showToast('品目を追加しました：' + name.trim());
-}
-function deleteWarabiItem(){
-  const sel = document.getElementById('warabi-item');
-  const val = sel.value;
-  if(!val){ showToast('削除する品目を選択してください'); return; }
-  if(!confirm(`「${val}」を削除しますか？
-※この品目の入荷履歴は残ります`)) return;
-  const items = loadWarabiItems().filter(i=>i!==val);
-  saveWarabiItems(items);
-  renderWarabiItemSelect();
-  renderWarabiFilterSelect();
-  showToast('削除しました');
-}
-
-function addWarabiFactory(){
-  const name = prompt('追加する工場名を入力してください');
-  if(!name || !name.trim()) return;
-  const factories = loadWarabiFactories();
-  if(factories.includes(name.trim())){ showToast('すでに登録されています'); return; }
-  factories.push(name.trim());
-  saveWarabiFactories(factories);
-  renderWarabiFactorySelect();
-  document.getElementById('warabi-factory').value = name.trim();
-  if(document.getElementById('warabi-manage-modal').style.display!=='none') renderWarabiManageLists();
-  showToast('工場を追加しました：' + name.trim());
-}
-function deleteWarabiFactory(){
-  const sel = document.getElementById('warabi-factory');
-  const val = sel.value;
-  if(!val){ showToast('削除する工場名を選択してください'); return; }
-  if(!confirm(`「${val}」を削除しますか？`)) return;
-  const factories = loadWarabiFactories().filter(f=>f!==val);
-  saveWarabiFactories(factories);
-  renderWarabiFactorySelect();
-  showToast('削除しました');
-}
+function addWarabiItem(){const name=prompt('品目名を入力してください');if(!name||!name.trim())return;const items=loadWarabiItems();if(items.includes(name.trim())){showToast('すでに登録されています');return;}items.push(name.trim());saveWarabiItems(items);renderWarabiItemSelect();renderWarabiFilterSelect();document.getElementById('warabi-item').value=name.trim();if(document.getElementById('warabi-manage-modal').style.display!=='none')renderWarabiManageLists();showToast('品目を追加しました：'+name.trim());}
+function addWarabiFactory(){const name=prompt('工場名を入力してください');if(!name||!name.trim())return;const factories=loadWarabiFactories();if(factories.includes(name.trim())){showToast('すでに登録されています');return;}factories.push(name.trim());saveWarabiFactories(factories);renderWarabiFactorySelect();document.getElementById('warabi-factory').value=name.trim();if(document.getElementById('warabi-manage-modal').style.display!=='none')renderWarabiManageLists();showToast('工場を追加しました：'+name.trim());}
+function addWarabiCarrier(){const name=prompt('運送会社名を入力してください');if(!name||!name.trim())return;const carriers=loadWarabiCarriers();if(carriers.includes(name.trim())){showToast('すでに登録されています');return;}carriers.push(name.trim());saveWarabiCarriers(carriers);renderWarabiCarrierSelect();document.getElementById('warabi-carrier').value=name.trim();if(document.getElementById('warabi-manage-modal').style.display!=='none')renderWarabiManageLists();showToast('運送会社を追加しました：'+name.trim());}
 
 function saveWarabiRecord(){
-  const date      = document.getElementById('warabi-date').value;
-  const item      = document.getElementById('warabi-item').value;
-  const inspector = document.getElementById('warabi-inspector').value.trim();
-  const factory   = document.getElementById('warabi-factory').value.trim();
-  const inquiry   = document.getElementById('warabi-inquiry').value.trim();
-  const carrier   = document.getElementById('warabi-carrier').value.trim();
-
-  if(!date){ showToast('入荷日を入力してください'); return; }
-  if(!item){ showToast('品目を選択してください'); return; }
-  if(!inspector){ showToast('検品者名を入力してください'); return; }
-  if(!factory){ showToast('工場名を選択または追加してください'); return; }
-
-  const records = loadWarabiRecords();
-  records.unshift({ id: uid(), date, item, inspector, factory, inquiry, carrier, createdAt: new Date().toISOString() });
+  const date=document.getElementById('warabi-date').value;
+  const item=document.getElementById('warabi-item').value;
+  const inspector=document.getElementById('warabi-inspector').value.trim();
+  const factory=document.getElementById('warabi-factory').value.trim();
+  const inquiry=document.getElementById('warabi-inquiry').value.trim();
+  const carrier=document.getElementById('warabi-carrier').value.trim();
+  if(!date){showToast('入荷日を入力してください');return;}
+  if(!item){showToast('品目を選択してください');return;}
+  if(!inspector){showToast('検品者名を入力してください');return;}
+  const records=loadWarabiRecords();
+  records.unshift({id:uid(),date,item,inspector,factory,inquiry,carrier,createdAt:new Date().toISOString()});
   saveWarabiRecords(records);
-
-  // 入力欄リセット
-  document.getElementById('warabi-inspector').value = '';
-  document.getElementById('warabi-inquiry').value = '';
-
-  renderWarabiInspectorList();
-  renderWarabiHistory();
+  document.getElementById('warabi-inspector').value='';
+  document.getElementById('warabi-inquiry').value='';
+  renderWarabiInspectorList(); renderWarabiHistory();
   showToast('📥 入荷記録を保存しました');
 }
 
 function renderWarabiHistory(){
-  const filter = document.getElementById('warabi-hist-filter').value;
-  const records = loadWarabiRecords();
-  const filtered = filter ? records.filter(r=>r.item===filter) : records;
-  const el = document.getElementById('warabi-history-list');
-
-  if(!filtered.length){
-    el.innerHTML = `<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;
-    return;
-  }
-
-  el.innerHTML = filtered.map(r=>{
-    const dateParts = r.date.split('-');
-    const dateLabel = dateParts[0]+'年'+parseInt(dateParts[1])+'月'+parseInt(dateParts[2])+'日';
-    return `<div class="warabi-record-row">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <span class="warabi-record-date">📅 ${dateLabel}</span>
-        <div style="display:flex;gap:6px;">
-          <button onclick="openWarabiEditModal('${r.id}')" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;cursor:pointer;color:#6a3faf;">✏️ 編集</button>
-          <button onclick="deleteWarabiRecord('${r.id}')" style="background:none;border:none;font-size:16px;cursor:pointer;color:#c09;">🗑</button>
-        </div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
-        <span style="background:#e8d8ff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;color:#6a3faf;">${esc(r.item)}</span>
-        <span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">👤 ${esc(r.inspector)}</span>
-        <span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">🏭 ${esc(r.factory)}</span>
-        ${r.carrier?`<span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">🚚 ${esc(r.carrier)}</span>`:''}
-        ${r.inquiry ? `<span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">📞 ${esc(r.inquiry)}</span>` : ''}
-      </div>
-    </div>`;
+  const filter=document.getElementById('warabi-hist-filter')?document.getElementById('warabi-hist-filter').value:'';
+  const records=loadWarabiRecords();
+  const filtered=filter?records.filter(r=>r.item===filter):records;
+  const el=document.getElementById('warabi-history-list');
+  if(!el)return;
+  if(!filtered.length){el.innerHTML=`<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;return;}
+  el.innerHTML=filtered.map(r=>{
+    const dp=r.date.split('-');
+    const dateLabel=dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
+    return `<div class="warabi-record-row"><div style="display:flex;align-items:center;justify-content:space-between;"><span class="warabi-record-date">📅 ${dateLabel}</span><div style="display:flex;gap:6px;"><button onclick="openWarabiEditModal('${r.id}')" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;cursor:pointer;color:#6a3faf;">✏️ 編集</button><button onclick="deleteWarabiRecord('${r.id}')" style="background:none;border:none;font-size:16px;cursor:pointer;color:#c09;">🗑</button></div></div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"><span style="background:#e8d8ff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;color:#6a3faf;">${esc(r.item)}</span><span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">👤 ${esc(r.inspector)}</span>${r.factory?`<span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">🏭 ${esc(r.factory)}</span>`:''} ${r.carrier?`<span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">🚚 ${esc(r.carrier)}</span>`:''} ${r.inquiry?`<span style="background:#f0f0f0;border-radius:6px;padding:2px 8px;font-size:11px;color:#555;">📞 ${esc(r.inquiry)}</span>`:''}</div></div>`;
   }).join('');
 }
 
+function deleteWarabiRecord(id){if(!confirm('この入荷記録を削除しますか？'))return;saveWarabiRecords(loadWarabiRecords().filter(r=>r.id!==id));renderWarabiHistory();showToast('削除しました');}
+
+function toggleWarabiSection(){const body=document.getElementById('warabi-body');const arrow=document.getElementById('warabi-arrow');const isOpen=body.style.display!=='none';body.style.display=isOpen?'none':'flex';arrow.classList.toggle('open',!isOpen);}
+
+function openWarabiManageModal(){document.getElementById('warabi-manage-modal').style.display='flex';renderWarabiManageLists();}
+function closeWarabiManageModal(e){if(e&&e.target!==document.getElementById('warabi-manage-modal'))return;document.getElementById('warabi-manage-modal').style.display='none';renderWarabiItemSelect();renderWarabiFilterSelect();renderWarabiFactorySelect();renderWarabiCarrierSelect();}
+function renderWarabiManageLists(){
+  const items=loadWarabiItems();
+  document.getElementById('warabi-manage-items').innerHTML=items.map((item,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#f3eeff;border-radius:8px;"><span style="flex:1;font-size:13px;color:#333;">${esc(item)}</span><button onclick="editWarabiManageItem('item',${i},'${esc(item)}')" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;color:#6a3faf;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">編集</button><button onclick="deleteWarabiManageItem('item',${i})" style="background:#ffe0e0;border:1px solid #f0a0a0;border-radius:6px;color:#a00;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">削除</button></div>`).join('')||'<div style="font-size:12px;color:#999;">登録なし</div>';
+  const factories=loadWarabiFactories();
+  document.getElementById('warabi-manage-factories').innerHTML=factories.map((f,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#f3eeff;border-radius:8px;"><span style="flex:1;font-size:13px;color:#333;">${esc(f)}</span><button onclick="editWarabiManageItem('factory',${i},'${esc(f)}')" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;color:#6a3faf;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">編集</button><button onclick="deleteWarabiManageItem('factory',${i})" style="background:#ffe0e0;border:1px solid #f0a0a0;border-radius:6px;color:#a00;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">削除</button></div>`).join('')||'<div style="font-size:12px;color:#999;">登録なし</div>';
+  const carriers=loadWarabiCarriers();
+  document.getElementById('warabi-manage-carriers').innerHTML=carriers.map((c,i)=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#f3eeff;border-radius:8px;"><span style="flex:1;font-size:13px;color:#333;">${esc(c)}</span><button onclick="editWarabiManageItem('carrier',${i},'${esc(c)}')" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;color:#6a3faf;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">編集</button><button onclick="deleteWarabiManageItem('carrier',${i})" style="background:#ffe0e0;border:1px solid #f0a0a0;border-radius:6px;color:#a00;font-size:12px;font-weight:700;padding:2px 8px;cursor:pointer;">削除</button></div>`).join('')||'<div style="font-size:12px;color:#999;">登録なし</div>';
+}
+
+function editWarabiManageItem(type, idx, currentName){
+  const newName = prompt('新しい名前を入力してください', currentName);
+  if(!newName || !newName.trim()) return;
+  if(type==='item'){
+    const items=loadWarabiItems(); items[idx]=newName.trim(); saveWarabiItems(items);
+    renderWarabiItemSelect(); renderWarabiFilterSelect();
+  } else if(type==='factory'){
+    const factories=loadWarabiFactories(); factories[idx]=newName.trim(); saveWarabiFactories(factories);
+    renderWarabiFactorySelect();
+  } else if(type==='carrier'){
+    const carriers=loadWarabiCarriers(); carriers[idx]=newName.trim(); saveWarabiCarriers(carriers);
+    renderWarabiCarrierSelect();
+  }
+  renderWarabiManageLists();
+  showToast('✅ 更新しました');
+}
+function deleteWarabiManageItem(type,idx){
+  if(type==='item'){const items=loadWarabiItems();if(!confirm(`「${items[idx]}」を削除しますか？`))return;items.splice(idx,1);saveWarabiItems(items);}
+  else if(type==='factory'){const factories=loadWarabiFactories();if(!confirm(`「${factories[idx]}」を削除しますか？`))return;factories.splice(idx,1);saveWarabiFactories(factories);}
+  else if(type==='carrier'){const carriers=loadWarabiCarriers();if(!confirm(`「${carriers[idx]}」を削除しますか？`))return;carriers.splice(idx,1);saveWarabiCarriers(carriers);}
+  renderWarabiManageLists();showToast('削除しました');
+}
+
 function openWarabiEditModal(id){
-  const records = loadWarabiRecords();
-  const r = records.find(x=>x.id===id);
-  if(!r) return;
-  document.getElementById('warabi-edit-id').value = id;
-  document.getElementById('warabi-edit-date').value = r.date;
-  document.getElementById('warabi-edit-inspector').value = r.inspector||'';
-  document.getElementById('warabi-edit-inquiry').value = r.inquiry||'';
-  // 品目セレクト
-  const items = loadWarabiItems();
-  const itemSel = document.getElementById('warabi-edit-item');
-  itemSel.innerHTML = items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');
-  itemSel.value = r.item||'';
-  // 工場セレクト
-  const factories = loadWarabiFactories();
-  const facSel = document.getElementById('warabi-edit-factory');
-  facSel.innerHTML = '<option value="">（未選択）</option>' + factories.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
-  facSel.value = r.factory||'';
-  // 運送会社セレクト
-  const carriers = loadWarabiCarriers();
-  const carSel = document.getElementById('warabi-edit-carrier');
-  carSel.innerHTML = '<option value="">（未選択）</option>' + carriers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  carSel.value = r.carrier||'';
+  const r=loadWarabiRecords().find(x=>x.id===id);if(!r)return;
+  document.getElementById('warabi-edit-id').value=id;
+  document.getElementById('warabi-edit-date').value=r.date;
+  document.getElementById('warabi-edit-inspector').value=r.inspector||'';
+  document.getElementById('warabi-edit-inquiry').value=r.inquiry||'';
+  const items=loadWarabiItems();
+  const itemSel=document.getElementById('warabi-edit-item');
+  itemSel.innerHTML=items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');
+  itemSel.value=r.item||'';
+  const factories=loadWarabiFactories();
+  const facSel=document.getElementById('warabi-edit-factory');
+  facSel.innerHTML='<option value="">（未選択）</option>'+factories.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  facSel.value=r.factory||'';
+  const carriers=loadWarabiCarriers();
+  const carSel=document.getElementById('warabi-edit-carrier');
+  carSel.innerHTML='<option value="">（未選択）</option>'+carriers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  carSel.value=r.carrier||'';
   document.getElementById('warabi-edit-modal').style.display='flex';
 }
-
-function closeWarabiEditModal(e){
-  if(e && e.target !== document.getElementById('warabi-edit-modal')) return;
-  document.getElementById('warabi-edit-modal').style.display='none';
-}
-
+function closeWarabiEditModal(e){if(e&&e.target!==document.getElementById('warabi-edit-modal'))return;document.getElementById('warabi-edit-modal').style.display='none';}
 function saveWarabiEdit(){
-  const id        = document.getElementById('warabi-edit-id').value;
-  const date      = document.getElementById('warabi-edit-date').value;
-  const inspector = document.getElementById('warabi-edit-inspector').value.trim();
-  const item      = document.getElementById('warabi-edit-item').value;
-  const factory   = document.getElementById('warabi-edit-factory').value.trim();
-  const inquiry   = document.getElementById('warabi-edit-inquiry').value.trim();
-  const carrier   = document.getElementById('warabi-edit-carrier').value.trim();
-
-  if(!date){ showToast('入荷日を入力してください'); return; }
-  if(!inspector){ showToast('検品者名を入力してください'); return; }
-  if(!item){ showToast('品目を選択してください'); return; }
-
-  const records = loadWarabiRecords();
-  const idx = records.findIndex(r=>r.id===id);
-  if(idx===-1){ showToast('記録が見つかりません'); return; }
-  records[idx] = {...records[idx], date, inspector, item, factory, inquiry, carrier};
-  saveWarabiRecords(records);
-  document.getElementById('warabi-edit-modal').style.display='none';
-  renderWarabiHistory();
-  showToast('✅ 編集を保存しました');
+  const id=document.getElementById('warabi-edit-id').value;
+  const date=document.getElementById('warabi-edit-date').value;
+  const inspector=document.getElementById('warabi-edit-inspector').value.trim();
+  const item=document.getElementById('warabi-edit-item').value;
+  const factory=document.getElementById('warabi-edit-factory').value.trim();
+  const inquiry=document.getElementById('warabi-edit-inquiry').value.trim();
+  const carrier=document.getElementById('warabi-edit-carrier').value.trim();
+  if(!date){showToast('入荷日を入力してください');return;}
+  if(!inspector){showToast('検品者名を入力してください');return;}
+  const records=loadWarabiRecords(); const idx=records.findIndex(r=>r.id===id);
+  if(idx===-1){showToast('記録が見つかりません');return;}
+  records[idx]={...records[idx],date,inspector,item,factory,inquiry,carrier};
+  saveWarabiRecords(records); document.getElementById('warabi-edit-modal').style.display='none';
+  renderWarabiHistory(); showToast('✅ 編集を保存しました');
 }
 
-function deleteWarabiRecord(id){
-  if(!confirm('この入荷記録を削除しますか？')) return;
-  const records = loadWarabiRecords().filter(r=>r.id!==id);
-  saveWarabiRecords(records);
-  renderWarabiHistory();
-  showToast('削除しました');
+// ===== 冷蔵庫温度記録 =====
+const TEMP_RECORDS_KEY='temp_records';
+function loadTempRecords(){try{return JSON.parse(localStorage.getItem(TEMP_RECORDS_KEY))||[];}catch(e){return[];}}
+function saveTempRecords(list){localStorage.setItem(TEMP_RECORDS_KEY,JSON.stringify(list));}
+
+function initTempSection(){
+  const now2=new Date();
+  const ymd=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0')+'-'+String(now2.getDate()).padStart(2,'0');
+  const ym=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0');
+  const dateEl=document.getElementById('temp-date'); if(dateEl)dateEl.value=ymd;
+  const monthEl=document.getElementById('temp-hist-month'); if(monthEl)monthEl.value=ym;
+  renderTempRecorderList(); renderTempHistory();
+}
+function renderTempRecorderList(){const records=loadTempRecords();const names=[...new Set(records.map(r=>r.recorder).filter(Boolean))];const dl=document.getElementById('temp-recorder-list');if(dl)dl.innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');}
+function toggleTempSection(){const body=document.getElementById('temp-body');const arrow=document.getElementById('temp-arrow');const isOpen=body.style.display!=='none';body.style.display=isOpen?'none':'flex';arrow.classList.toggle('open',!isOpen);}
+
+function saveTempRecord(){
+  const date=document.getElementById('temp-date').value;
+  const recorder=document.getElementById('temp-recorder').value.trim();
+  if(!date){showToast('記録日を入力してください');return;}
+  if(!recorder){showToast('記録者名を入力してください');return;}
+  const fridges=[{name:'①冷蔵',key:'r1'},{name:'②冷蔵（兼用機・冷蔵側）',key:'r2'},{name:'③冷凍（兼用機・冷凍側）',key:'r3'},{name:'④冷凍',key:'r4'}];
+  const data=fridges.map(f=>({name:f.name,am:{time:document.getElementById(`temp-${f.key}-am-time`).value,temp:document.getElementById(`temp-${f.key}-am-temp`).value},pm:{time:document.getElementById(`temp-${f.key}-pm-time`).value,temp:document.getElementById(`temp-${f.key}-pm-temp`).value}}));
+  const records=loadTempRecords();
+  records.unshift({id:uid(),date,recorder,data,createdAt:new Date().toISOString()});
+  saveTempRecords(records);
+  fridges.forEach(f=>{['am','pm'].forEach(t=>{document.getElementById(`temp-${f.key}-${t}-time`).value='';document.getElementById(`temp-${f.key}-${t}-temp`).value='';});});
+  renderTempRecorderList(); renderTempHistory(); showToast('🌡️ 温度記録を保存しました');
 }
 
-function toggleWarabiSection(){
-  const body = document.getElementById('warabi-body');
-  const arrow = document.getElementById('warabi-arrow');
-  const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'flex';
-  arrow.classList.toggle('open', !isOpen);
+function renderTempHistory(){
+  const ym=document.getElementById('temp-hist-month')?document.getElementById('temp-hist-month').value:'';
+  const el=document.getElementById('temp-history-list'); if(!el)return;
+  const records=loadTempRecords();
+  const filtered=ym?records.filter(r=>r.date.startsWith(ym)):records;
+  if(!filtered.length){el.innerHTML=`<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;return;}
+  el.innerHTML=filtered.map(r=>{
+    const dp=r.date.split('-'); const dateLabel=dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
+    const rows=(r.data||[]).map(f=>`<div style="margin-top:4px;"><span style="font-size:11px;font-weight:700;color:#1565c0;">${esc(f.name)}</span><span style="font-size:11px;color:#555;margin-left:6px;">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?f.am.temp+'℃':'—'}</b> / PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?f.pm.temp+'℃':'—'}</b></span></div>`).join('');
+    return `<div class="temp-record-row"><div style="display:flex;align-items:center;justify-content:space-between;"><span class="temp-record-date">📅 ${dateLabel}</span><div style="display:flex;gap:6px;align-items:center;"><span style="font-size:11px;color:#555;">👤 ${esc(r.recorder)}</span><button onclick="openTempEditModal('${r.id}')" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;cursor:pointer;color:#1565c0;">✏️ 編集</button><button onclick="deleteTempRecord('${r.id}')" style="background:none;border:none;font-size:15px;cursor:pointer;color:#c09;">🗑</button></div></div>${rows}</div>`;
+  }).join('');
 }
 
+function deleteTempRecord(id){if(!confirm('この温度記録を削除しますか？'))return;saveTempRecords(loadTempRecords().filter(r=>r.id!==id));renderTempHistory();showToast('削除しました');}
 
-// パスコード無効化（直接起動）
-// initPasscode(); // パスコードなし
-document.getElementById('passcode-screen').style.display='none';
-// 全品目の在庫を初期計算
-refreshAllStock();
-// 冷蔵庫温度記録セクション初期化
-initTempSection();
-// わらび餅入荷セクション初期化
-initWarabiSection();
-
-// ===== スワイプ離脱・タブ切替・ブラウザ閉じる時の強制保存 =====
-function emergencySave(){
-  try{ saveDraft(); }catch(e){}
+function openTempEditModal(id){
+  const r=loadTempRecords().find(x=>x.id===id);if(!r)return;
+  document.getElementById('temp-edit-id').value=id;
+  document.getElementById('temp-edit-date').value=r.date;
+  document.getElementById('temp-edit-recorder').value=r.recorder||'';
+  const keys=['r1','r2','r3','r4'];
+  (r.data||[]).forEach((f,i)=>{
+    const k=keys[i];
+    document.getElementById(`temp-edit-${k}-am-time`).value=f.am.time||'';
+    document.getElementById(`temp-edit-${k}-am-temp`).value=f.am.temp!==undefined?f.am.temp:'';
+    document.getElementById(`temp-edit-${k}-pm-time`).value=f.pm.time||'';
+    document.getElementById(`temp-edit-${k}-pm-temp`).value=f.pm.temp!==undefined?f.pm.temp:'';
+  });
+  document.getElementById('temp-edit-modal').style.display='flex';
 }
-// 画面が隠れる瞬間（スワイプでホームに戻るなど）
-document.addEventListener('visibilitychange', function(){
-  if(document.visibilityState === 'hidden') emergencySave();
-});
-// ページ離脱時
-window.addEventListener('pagehide', emergencySave);
-window.addEventListener('beforeunload', emergencySave);
+function closeTempEditModal(e){if(e&&e.target!==document.getElementById('temp-edit-modal'))return;document.getElementById('temp-edit-modal').style.display='none';}
+function saveTempEdit(){
+  const id=document.getElementById('temp-edit-id').value;
+  const date=document.getElementById('temp-edit-date').value;
+  const recorder=document.getElementById('temp-edit-recorder').value.trim();
+  if(!date){showToast('記録日を入力してください');return;}
+  if(!recorder){showToast('記録者名を入力してください');return;}
+  const fridgeNames=['①冷蔵','②冷蔵（兼用機・冷蔵側）','③冷凍（兼用機・冷凍側）','④冷凍'];
+  const keys=['r1','r2','r3','r4'];
+  const data=fridgeNames.map((name,i)=>({name,am:{time:document.getElementById(`temp-edit-${keys[i]}-am-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-am-temp`).value},pm:{time:document.getElementById(`temp-edit-${keys[i]}-pm-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-pm-temp`).value}}));
+  const records=loadTempRecords(); const idx=records.findIndex(r=>r.id===id);
+  if(idx===-1){showToast('記録が見つかりません');return;}
+  records[idx]={...records[idx],date,recorder,data};
+  saveTempRecords(records); document.getElementById('temp-edit-modal').style.display='none';
+  renderTempHistory(); showToast('✅ 編集を保存しました');
+}
 
-// 30秒ごとの定期自動保存
 setInterval(function(){
   try{ saveDraft(); }catch(e){}
 }, 30000);
+try{ initTempSection(); }catch(e){ console.warn('initTempSection:', e); }
+try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
 </script>
+
+<!-- 販売記録モーダル -->
+<div id="sell-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeSellHistoryModal(event)">
+  <div style="background:var(--surface);border-radius:16px;max-width:520px;margin:40px auto 24px;overflow:hidden;" onclick="event.stopPropagation()">
+    <div style="background:#1a3f8a;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
+      <div style="color:#fff;font-size:17px;font-weight:700;">🛒 販売記録</div>
+      <button onclick="closeSellHistoryModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;">
+      <input type="month" id="sell-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('sell')">
+      <select id="sell-history-item" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('sell')"><option value="">全品目</option></select>
+    </div>
+    <div id="sell-history-content" style="padding:14px 16px 20px;"></div>
+  </div>
+</div>
+
+<!-- 無料記録モーダル -->
+<div id="free-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeFreeHistoryModal(event)">
+  <div style="background:var(--surface);border-radius:16px;max-width:520px;margin:40px auto 24px;overflow:hidden;" onclick="event.stopPropagation()">
+    <div style="background:#8a1a3f;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
+      <div style="color:#fff;font-size:17px;font-weight:700;">🎁 無料記録</div>
+      <button onclick="closeFreeHistoryModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;">
+      <input type="month" id="free-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('free')">
+      <select id="free-history-item" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderSellFreeHistory('free')"><option value="">全品目</option></select>
+    </div>
+    <div id="free-history-content" style="padding:14px 16px 20px;"></div>
+  </div>
+</div>
+
+<!-- わらび餅管理モーダル -->
+<div id="warabi-manage-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2100;align-items:center;justify-content:center;padding:20px;" onclick="closeWarabiManageModal(event)">
+  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:400px;overflow:hidden;" onclick="event.stopPropagation()">
+    <div style="background:#8a5fcf;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="color:#fff;font-size:16px;font-weight:700;">⚙️ 登録内容の管理</div>
+      <button onclick="closeWarabiManageModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:14px;max-height:70vh;overflow-y:auto;">
+      <div><div style="font-size:12px;font-weight:700;color:#6a3faf;margin-bottom:6px;">品目</div>
+        <div id="warabi-manage-items" style="display:flex;flex-direction:column;gap:4px;"></div>
+        <button class="warabi-btn-sm" onclick="addWarabiItem()" style="margin-top:6px;">＋ 追加</button>
+      </div>
+      <div style="border-top:1px solid #e8d8ff;padding-top:12px;">
+        <div style="font-size:12px;font-weight:700;color:#6a3faf;margin-bottom:6px;">🏭 工場名</div>
+        <div id="warabi-manage-factories" style="display:flex;flex-direction:column;gap:4px;"></div>
+        <button class="warabi-btn-sm" onclick="addWarabiFactory()" style="margin-top:6px;">＋ 追加</button>
+      </div>
+      <div style="border-top:1px solid #e8d8ff;padding-top:12px;">
+        <div style="font-size:12px;font-weight:700;color:#6a3faf;margin-bottom:6px;">🚚 運送会社</div>
+        <div id="warabi-manage-carriers" style="display:flex;flex-direction:column;gap:4px;"></div>
+        <button class="warabi-btn-sm" onclick="addWarabiCarrier()" style="margin-top:6px;">＋ 追加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- わらび餅編集モーダル -->
+<div id="warabi-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2200;align-items:center;justify-content:center;padding:20px;" onclick="closeWarabiEditModal(event)">
+  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:400px;overflow:hidden;" onclick="event.stopPropagation()">
+    <div style="background:#8a5fcf;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="color:#fff;font-size:16px;font-weight:700;">✏️ 入荷記録を編集</div>
+      <button onclick="closeWarabiEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+      <input type="hidden" id="warabi-edit-id">
+      <div style="display:flex;gap:8px;">
+        <div class="warabi-field" style="flex:1;"><div class="warabi-label">検品者名 *</div><input type="text" id="warabi-edit-inspector" class="warabi-input"></div>
+        <div class="warabi-field" style="flex:1;"><div class="warabi-label">入荷日 *</div><input type="date" id="warabi-edit-date" class="warabi-input"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="warabi-field" style="flex:1;"><div class="warabi-label">品目 *</div><select id="warabi-edit-item" class="warabi-select" style="width:100%;"></select></div>
+        <div class="warabi-field" style="flex:1;"><div class="warabi-label">工場名</div><select id="warabi-edit-factory" class="warabi-select" style="width:100%;"></select></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div class="warabi-field" style="flex:1;"><div class="warabi-label">お問い合わせ番号</div><input type="text" id="warabi-edit-inquiry" class="warabi-input"></div>
+        <div class="warabi-field" style="flex:1;"><div class="warabi-label">運送会社</div><select id="warabi-edit-carrier" class="warabi-select" style="width:100%;"></select></div>
+      </div>
+      <button class="warabi-btn" onclick="saveWarabiEdit()">💾 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 冷蔵庫温度記録編集モーダル -->
+<div id="temp-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2200;align-items:center;justify-content:center;padding:16px;" onclick="closeTempEditModal(event)">
+  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;" onclick="event.stopPropagation()">
+    <div style="background:#1565c0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
+      <div style="color:#fff;font-size:16px;font-weight:700;">✏️ 温度記録を編集</div>
+      <button onclick="closeTempEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+      <input type="hidden" id="temp-edit-id">
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><div class="temp-label">記録者 *</div><input type="text" id="temp-edit-recorder" class="temp-input"></div>
+        <div style="flex:1;"><div class="temp-label">記録日 *</div><input type="date" id="temp-edit-date" class="temp-input"></div>
+      </div>
+      <div style="display:flex;gap:6px;"><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">①冷蔵</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">②冷蔵兼用</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">③冷凍兼用</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">④冷凍</div></div>
+      <div style="background:#d6eeff;border-radius:8px;padding:8px;"><div class="temp-ampm-label" style="text-align:left;margin-bottom:6px;">AM</div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><input type="time" id="temp-edit-r1-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r1-am-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r2-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r2-am-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r3-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r3-am-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r4-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r4-am-temp" class="temp-input"></div>
+        </div>
+      </div>
+      <div style="background:#7ec8f0;border-radius:8px;padding:8px;"><div class="temp-ampm-label pm" style="text-align:left;margin-bottom:6px;">PM</div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><input type="time" id="temp-edit-r1-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r1-pm-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r2-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r2-pm-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r3-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r3-pm-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r4-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r4-pm-temp" class="temp-input"></div>
+        </div>
+      </div>
+      <button class="temp-save-btn" onclick="saveTempEdit()">💾 保存する</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
