@@ -266,7 +266,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .temp-header-title{color:#fff;font-size:18px;font-weight:700;letter-spacing:.03em;}
 .temp-header-arrow{color:#fff;font-size:20px;transition:transform .2s;}
 .temp-header-arrow.open{transform:rotate(180deg);}
-.temp-body{padding:14px;display:flex;flex-direction:column;gap:12px;}
+.temp-body{padding:12px;display:flex;flex-direction:column;gap:12px;overflow:hidden;}
 .temp-label{font-size:13px;font-weight:700;color:#1565c0;}
 .temp-input{padding:11px 10px;border:1.5px solid #90caf9;border-radius:10px;font-size:16px;font-family:inherit;background:#fff;color:#333;width:100%;box-sizing:border-box;}
 .temp-ampm-label{font-size:18px;font-weight:800;color:#1565c0;text-align:center;margin-bottom:4px;padding:5px 0;border-radius:8px;letter-spacing:.05em;background:#d6eeff;}
@@ -796,19 +796,43 @@ try {
             <input type="time" id="temp-am-time" class="temp-input">
           </div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">①冷蔵</div>
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">②冷蔵兼</div>
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">③冷凍兼</div>
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">④冷凍</div>
-        </div>
-        <div style="display:flex;gap:6px;margin-bottom:14px;">
-          <div style="flex:1;"><button id="temp-r1-am-temp-btn" onclick="openTempInputPicker('temp-r1-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r1-am-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r2-am-temp-btn" onclick="openTempInputPicker('temp-r2-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r2-am-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r3-am-temp-btn" onclick="openTempInputPicker('temp-r3-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r3-am-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r4-am-temp-btn" onclick="openTempInputPicker('temp-r4-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r4-am-temp" value=""></div>
-        </div>
-        <button class="temp-save-btn" onclick="saveTempAM()" style="background:#1565c0;font-size:17px;padding:16px;">✅ AM まとめて記録する</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">①冷蔵</div>
+          <input type="number" id="temp-r1-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){document.getElementById('temp-r2-am-input').focus();}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r1-am-temp" value="">
+          <button onclick="setRowMinus('temp-r1-am-input','temp-r1-am-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">②冷蔵兼</div>
+          <input type="number" id="temp-r2-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){document.getElementById('temp-r3-am-input').focus();}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r2-am-temp" value="">
+          <button onclick="setRowMinus('temp-r2-am-input','temp-r2-am-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">③冷凍兼</div>
+          <input type="number" id="temp-r3-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){document.getElementById('temp-r4-am-input').focus();}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r3-am-temp" value="">
+          <button onclick="setRowMinus('temp-r3-am-input','temp-r3-am-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">④冷凍</div>
+          <input type="number" id="temp-r4-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){confirmTempInputAll()}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r4-am-temp" value="">
+          <button onclick="setRowMinus('temp-r4-am-input','temp-r4-am-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <button class="temp-save-btn" onclick="saveTempAM()" style="background:#1565c0;font-size:17px;padding:16px;margin-top:4px;">✅ AM を記録する</button>
       </div>
 
       <!-- PM -->
@@ -823,19 +847,43 @@ try {
             <input type="time" id="temp-pm-time" class="temp-input">
           </div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:6px;">
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">①冷蔵</div>
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">②冷蔵兼</div>
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">③冷凍兼</div>
-          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">④冷凍</div>
-        </div>
-        <div style="display:flex;gap:6px;margin-bottom:14px;">
-          <div style="flex:1;"><button id="temp-r1-pm-temp-btn" onclick="openTempInputPicker('temp-r1-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r1-pm-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r2-pm-temp-btn" onclick="openTempInputPicker('temp-r2-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r2-pm-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r3-pm-temp-btn" onclick="openTempInputPicker('temp-r3-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r3-pm-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r4-pm-temp-btn" onclick="openTempInputPicker('temp-r4-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r4-pm-temp" value=""></div>
-        </div>
-        <button class="temp-save-btn" onclick="saveTempPM()" style="background:#0a3d7a;font-size:17px;padding:16px;">✅ PM まとめて記録する</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">①冷蔵</div>
+          <input type="number" id="temp-r1-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){document.getElementById('temp-r2-pm-input').focus();}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r1-pm-temp" value="">
+          <button onclick="setRowMinus('temp-r1-pm-input','temp-r1-pm-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">②冷蔵兼</div>
+          <input type="number" id="temp-r2-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){document.getElementById('temp-r3-pm-input').focus();}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r2-pm-temp" value="">
+          <button onclick="setRowMinus('temp-r2-pm-input','temp-r2-pm-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">③冷凍兼</div>
+          <input type="number" id="temp-r3-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){document.getElementById('temp-r4-pm-input').focus();}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r3-pm-temp" value="">
+          <button onclick="setRowMinus('temp-r3-pm-input','temp-r3-pm-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">④冷凍</div>
+          <input type="number" id="temp-r4-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+            style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
+            onkeydown="if(event.key==='Enter'){confirmTempInputAll()}"
+            onfocus="this.select()">
+          <input type="hidden" id="temp-r4-pm-temp" value="">
+          <button onclick="setRowMinus('temp-r4-pm-input','temp-r4-pm-temp',this)"
+            style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+        </div>        <button class="temp-save-btn" onclick="saveTempPM()" style="background:#0a3d7a;font-size:17px;padding:16px;margin-top:4px;">✅ PM を記録する</button>
       </div>
       <div style="border-top:1px solid #90caf9;padding-top:10px;margin-top:2px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -2829,6 +2877,38 @@ function togglePickerSign(){
   _tempPickerSign*=-1;
 }
 
+function setRowMinus(inputId, hiddenId, btn){
+  const input = document.getElementById(inputId);
+  const val = parseFloat(input.value);
+  if(isNaN(val)||val===0){ showToast('先に温度を入力してください'); return; }
+  const minus = -Math.abs(val);
+  input.value = minus;
+  document.getElementById(hiddenId).value = String(minus);
+  if(btn){ btn.style.background='#1a237e'; btn.style.color='#fff'; btn.textContent='マイナス✓'; }
+  showToast('マイナスで設定しました');
+}
+
+function getInputTemp(key, period){
+  // 入力欄から値を取得（マイナスボタンが押された場合はhiddenから）
+  const input = document.getElementById(`temp-${key}-${period}-input`);
+  const hidden = document.getElementById(`temp-${key}-${period}-temp`);
+  if(input && input.value !== '') return input.value;
+  if(hidden && hidden.value !== '') return hidden.value;
+  return '';
+}
+
+function resetTempInputRow(period){
+  ['r1','r2','r3','r4'].forEach(k=>{
+    const input = document.getElementById(`temp-${k}-${period}-input`);
+    const hidden = document.getElementById(`temp-${k}-${period}-temp`);
+    if(input) input.value='';
+    if(hidden) hidden.value='';
+    // マイナスボタンをリセット
+    const btns = document.querySelectorAll(`[onclick*="temp-${k}-${period}-input"]`);
+    btns.forEach(b=>{ b.style.background='#e3f2fd'; b.style.color='#1565c0'; b.textContent='−'; });
+  });
+}
+
 function setTempMinus(){
   _tempPickerSign = -1;
   try{
@@ -2912,17 +2992,19 @@ function saveTempAM(){
   if(existing){
     existing.amRecorder=recorder;
     if(!existing.data) existing.data=names.map(n=>({name:n,am:{time:'',temp:''},pm:{time:'',temp:''}}));
-    existing.data.forEach((f,i)=>{f.am={time,temp:document.getElementById(`temp-${keys[i]}-am-temp`).value};});
+    existing.data.forEach((f,i)=>{f.am={time,temp:getInputTemp(keys[i],'am')};});
   } else {
-    records.unshift({id:uid(),date,amRecorder:recorder,pmRecorder:'',data:names.map((n,i)=>({name:n,am:{time,temp:document.getElementById(`temp-${keys[i]}-am-temp`).value},pm:{time:'',temp:''}})),createdAt:new Date().toISOString()});
+    records.unshift({id:uid(),date,amRecorder:recorder,pmRecorder:'',
+      data:names.map((n,i)=>({name:n,am:{time,temp:getInputTemp(keys[i],'am')},pm:{time:'',temp:''}})),
+      createdAt:new Date().toISOString()});
   }
   saveTempRecords(records);
-  resetTempButtons('am');
+  resetTempInputRow('am');
   document.getElementById('temp-am-time').value='';
   document.getElementById('temp-am-recorder').value='';
   renderTempRecorderList();renderTempHistory();
-  showToast('✅ AMの温度をまとめて記録しました');
-  btnFeedback(document.querySelector('[onclick="saveTempAM()"]'),'AM記録完了');
+  showToast('✅ AMの温度を記録しました');
+  btnFeedback(document.querySelector('[onclick="saveTempAM()"]'),'AM完了');
 }
 
 function saveTempPM(){
@@ -2939,20 +3021,20 @@ function saveTempPM(){
   if(existing){
     existing.pmRecorder=recorder;
     if(!existing.data) existing.data=names.map(n=>({name:n,am:{time:'',temp:''},pm:{time:'',temp:''}}));
-    existing.data.forEach((f,i)=>{f.pm={time,temp:document.getElementById(`temp-${keys[i]}-pm-temp`).value};});
+    existing.data.forEach((f,i)=>{f.pm={time,temp:getInputTemp(keys[i],'pm')};});
   } else {
-    records.unshift({id:uid(),date,amRecorder:'',pmRecorder:recorder,data:names.map((n,i)=>({name:n,am:{time:'',temp:''},pm:{time,temp:document.getElementById(`temp-${keys[i]}-pm-temp`).value}})),createdAt:new Date().toISOString()});
+    records.unshift({id:uid(),date,amRecorder:'',pmRecorder:recorder,
+      data:names.map((n,i)=>({name:n,am:{time:'',temp:''},pm:{time,temp:getInputTemp(keys[i],'pm')}})),
+      createdAt:new Date().toISOString()});
   }
   saveTempRecords(records);
-  resetTempButtons('pm');
+  resetTempInputRow('pm');
   document.getElementById('temp-pm-time').value='';
   document.getElementById('temp-pm-recorder').value='';
   renderTempRecorderList();renderTempHistory();
-  showToast('✅ PMの温度をまとめて記録しました');
-  btnFeedback(document.querySelector('[onclick="saveTempPM()"]'),'PM記録完了');
+  showToast('✅ PMの温度を記録しました');
+  btnFeedback(document.querySelector('[onclick="saveTempPM()"]'),'PM完了');
 }
-
-function saveTempRecord(){ saveTempAM(); }
 
 
 // saveTempRecordは廃止（saveTempAM/PMを使用）
@@ -3130,15 +3212,15 @@ try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
     <!-- 数値入力 -->
     <div style="background:#f0f7ff;border-radius:12px;padding:14px;margin-bottom:12px;">
       <div style="font-size:13px;font-weight:700;color:#1565c0;margin-bottom:10px;">温度を入力（℃）</div>
+      <div style="font-size:13px;color:#555;margin-bottom:8px;text-align:center;">数値を入力すると自動で登録されます</div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
         <input type="number" id="temp-picker-input" inputmode="decimal" placeholder="例：18" min="0" max="99" step="0.1"
-          style="flex:1;padding:12px;border:2px solid #90caf9;border-radius:10px;font-size:24px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;">
+          style="flex:1;padding:12px;border:2px solid #90caf9;border-radius:10px;font-size:28px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;"
+          onblur="if(this.value!=='')confirmTempInput();"
+          onkeydown="if(event.key==='Enter'||event.key==='Done'){confirmTempInput();}">
         <span style="font-size:16px;font-weight:700;color:#888;">℃</span>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button onclick="setTempMinus()" style="flex:1;padding:14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;color:#1565c0;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">マイナス（−）</button>
-        <button onclick="confirmTempInput()" style="flex:2;padding:14px;background:#1565c0;border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">登録</button>
-      </div>
+      <button onclick="setTempMinusAndConfirm()" style="width:100%;padding:14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;color:#1565c0;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:4px;">マイナス（−）で登録</button>
     </div>
 
     <button onclick="clearTempValue()" style="width:100%;padding:12px;background:#fce4ec;border:1px solid #ef9a9a;border-radius:10px;font-size:14px;color:#b71c1c;cursor:pointer;font-family:inherit;margin-bottom:8px;">
