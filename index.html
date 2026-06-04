@@ -339,6 +339,51 @@ function checkPasscode(){
 }
 
 // パスコード変更（設定から呼ぶ）
+function deleteOldRecords(){
+  const now = new Date();
+  const threeYearsAgo = new Date(now.getFullYear()-3, now.getMonth(), now.getDate());
+  const cutoffDate = threeYearsAgo.getFullYear()+'/'
+    + String(threeYearsAgo.getMonth()+1).padStart(2,'0')+'/'
+    + String(threeYearsAgo.getDate()).padStart(2,'0');
+  const cutoffStr = threeYearsAgo.getFullYear()+'-'
+    + String(threeYearsAgo.getMonth()+1).padStart(2,'0')+'-'
+    + String(threeYearsAgo.getDate()).padStart(2,'0');
+
+  // 削除件数を事前確認
+  const h = loadHistory();
+  const tempRecs = loadTempRecords();
+  const warabiRecs = loadWarabiRecords();
+
+  const hOld = h.filter(r=>r.date < cutoffDate).length;
+  const tOld = tempRecs.filter(r=>r.date < cutoffStr).length;
+  const wOld = warabiRecs.filter(r=>r.date < cutoffStr).length;
+  const total = hOld + tOld + wOld;
+
+  if(total === 0){
+    alert('3年以上前の記録はありません。');
+    return;
+  }
+
+  if(!confirm(
+    `3年以上前（${threeYearsAgo.getFullYear()}年${threeYearsAgo.getMonth()+1}月${threeYearsAgo.getDate()}日より前）の記録を削除します。\n\n` +
+    `・在庫履歴：${hOld}件\n` +
+    `・温度記録：${tOld}件\n` +
+    `・わらび餅入荷：${wOld}件\n\n` +
+    `合計 ${total}件を削除します。\nこの操作は元に戻せません。よろしいですか？`
+  )) return;
+
+  // 削除実行
+  const newH = h.filter(r=>r.date >= cutoffDate);
+  saveHistory(newH);
+  if(window.firebaseSave) window.firebaseSave(newH);
+
+  saveTempRecords(tempRecs.filter(r=>r.date >= cutoffStr));
+  saveWarabiRecords(warabiRecs.filter(r=>r.date >= cutoffStr));
+
+  renderHistory();
+  showToast(`🗑 ${total}件の古い記録を削除しました`);
+}
+
 function changePasscode(){
   const np = prompt('新しいパスコード（4桁の数字）を入力してください');
   if(!np) return;
@@ -659,6 +704,9 @@ try {
       <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🔑</span> パスワード変更
       </button>
+      <button onclick="closeSettingsModal();deleteOldRecords();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fce4ec;border:1.5px solid #ef9a9a;border-radius:12px;color:#b71c1c;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🗑</span> 3年以上前の記録を削除
+      </button>
 
     </div>
   </div>
@@ -813,13 +861,16 @@ try {
         <div class="warabi-field"><div class="warabi-label">品目 *</div>
           <select id="warabi-item" class="warabi-select" style="width:100%;"></select>
         </div>
-        <div class="warabi-field"><div class="warabi-label">工場名 *</div>
-          <select id="warabi-factory" class="warabi-select" style="width:100%;"></select>
+        <div class="warabi-field"><div class="warabi-label">個数 *</div>
+          <input type="number" id="warabi-qty" class="warabi-input" placeholder="個数" min="1" step="1" inputmode="numeric" style="width:100%;box-sizing:border-box;">
         </div>
         <div class="warabi-field"><div class="warabi-label">お問い合わせ番号</div>
           <input type="text" id="warabi-inquiry" class="warabi-input" placeholder="例：WB-2026-001">
         </div>
-        <div class="warabi-field"><div class="warabi-label">運送会社</div>
+        <div class="warabi-field"><div class="warabi-label">工場名</div>
+          <select id="warabi-factory" class="warabi-select" style="width:100%;"></select>
+        </div>
+        <div class="warabi-field" style="grid-column:1/-1;"><div class="warabi-label">運送会社</div>
           <select id="warabi-carrier" class="warabi-select" style="width:100%;"></select>
         </div>
       </div>
@@ -967,7 +1018,7 @@ function saveHistory(h){
   if(window.firebaseSave) window.firebaseSave(h);
 }
 
-// 前日在庫取得（前日の入荷数を加算して翌日の期待在庫を返す）
+// 前日在庫取得
 function prevStock(id){
   const h=loadHistory();
   if(h.length<1)return null;
@@ -978,15 +1029,7 @@ function prevStock(id){
   if(prev.sales&&prev.sales[id]!==undefined)stock=prev.sales[id];
   else if(prev.simple&&prev.simple[id]!==undefined)stock=prev.simple[id];
   if(stock===null)return null;
-  // [修正] 差異あり強制保存の場合は保存した在庫数をそのままスタート値にする
-  // （入荷加算なし）。正常保存の場合のみ前日入荷を加算する。
-  if(prev.forceCompleted && prev.warnItems && prev.warnItems.includes(id)){
-    return stock;
-  }
-  // 前日の入荷数を加算（翌日に反映されるべき在庫）
-  const prevNyuka=(prev.nyuka&&prev.nyuka[id])||[];
-  const prevNyukaTotal=prevNyuka.reduce((s,n)=>s+n.qty,0);
-  return stock+prevNyukaTotal;
+  return stock;
 }
 
 // ===== 完了確認 =====
@@ -1213,7 +1256,7 @@ function renderSales(){
       html+=`<div class="sales-card" id="scard_${it.id}">
         <div class="sname-row">
           <span class="sname">${esc(it.name)}</span>
-          <button class="nyuka-inline-btn" onclick="openNyukaInputModal('${it.id}');event.stopPropagation()">📦 入荷</button>
+          <button class="nyuka-inline-btn" onclick="openNyukaInputModal('${it.id}');event.stopPropagation()" style="${it.id.startsWith('strap')?'':'display:none;'}">📦 入荷</button>
           <span class="dbadge" id="diff_${it.id}">—</span>
         </div>
         <div class="sinputs">
@@ -2429,9 +2472,18 @@ function renderSellFreeHistory(type){
 }
 
 // ===== わらび餅入荷記録 =====
+
+// わらび餅入荷品目名→在庫品目IDのマッピング
+const WARABI_ITEM_MAP = {
+  'わらび餅シート': 'warabi-sheet',
+  'スティック':     'stick',
+  '釜揚げ（単品）': 'kama-solo',
+  '釜揚げ（箱）':   'kama-box',
+};
+
 const WARABI_RECORDS_KEY='warabi_records'; const WARABI_ITEMS_KEY='warabi_items';
 const WARABI_FACTORIES_KEY='warabi_factories'; const WARABI_CARRIERS_KEY='warabi_carriers';
-const WARABI_DEFAULT_ITEMS=['わらび餅','スティックわらび餅','釜揚げ単品','釜揚げ箱'];
+const WARABI_DEFAULT_ITEMS=['わらび餅シート','スティック','釜揚げ（単品）','釜揚げ（箱）'];
 const WARABI_DEFAULT_CARRIERS=['ヤマト運輸','佐川急便','日本郵便','西濃運輸','福山通運'];
 
 function loadWarabiItems(){try{return JSON.parse(localStorage.getItem(WARABI_ITEMS_KEY))||WARABI_DEFAULT_ITEMS;}catch(e){return WARABI_DEFAULT_ITEMS;}}
@@ -2463,18 +2515,53 @@ function addWarabiCarrier(){const name=prompt('運送会社名を入力してく
 function saveWarabiRecord(){
   const date=document.getElementById('warabi-date').value;
   const item=document.getElementById('warabi-item').value;
+  const qtyRaw=document.getElementById('warabi-qty').value;
+  const qty=parseInt(qtyRaw)||0;
   const inspector=document.getElementById('warabi-inspector').value.trim();
   const factory=document.getElementById('warabi-factory').value.trim();
   const inquiry=document.getElementById('warabi-inquiry').value.trim();
   const carrier=document.getElementById('warabi-carrier').value.trim();
   if(!date){showToast('入荷日を入力してください');return;}
   if(!item){showToast('品目を選択してください');return;}
+  if(qty<=0){showToast('個数を入力してください');return;}
   if(!inspector){showToast('検品者名を入力してください');return;}
+
+  // わらび餅入荷記録に保存
   const records=loadWarabiRecords();
-  records.unshift({id:uid(),date,item,inspector,factory,inquiry,carrier,createdAt:new Date().toISOString()});
+  const recordId=uid();
+  records.unshift({id:recordId,date,item,qty,inspector,factory,inquiry,carrier,createdAt:new Date().toISOString()});
   saveWarabiRecords(records);
+
+  // 在庫のNYUKAに反映（今日の記録のみ即反映・過去日は履歴に保存）
+  const stockItemId = WARABI_ITEM_MAP[item];
+  if(stockItemId){
+    if(date.replace(/-/g,'/')===dateStr){
+      // 今日の入荷→NYUKAに即反映
+      if(!NYUKA[stockItemId]) NYUKA[stockItemId]=[];
+      NYUKA[stockItemId].push({qty, staff:inspector, date:dateStr});
+      renderNyuka(stockItemId);
+      calcStock(stockItemId);
+      saveDraft();
+    } else {
+      // 過去日の入荷→履歴のNYUKAに保存
+      const h=loadHistory();
+      const dateKey=date.replace(/-/g,'/');
+      const idx=h.findIndex(r=>r.date===dateKey);
+      if(idx!==-1){
+        if(!h[idx].nyuka) h[idx].nyuka={};
+        if(!h[idx].nyuka[stockItemId]) h[idx].nyuka[stockItemId]=[];
+        h[idx].nyuka[stockItemId].push({qty, staff:inspector, date:dateKey});
+        saveHistory(h);
+        if(window.firebaseSave) window.firebaseSave(h);
+      }
+    }
+    renderAllMonthlySummaryBadges();
+  }
+
+  // フォームリセット
   document.getElementById('warabi-inspector').value='';
   document.getElementById('warabi-inquiry').value='';
+  document.getElementById('warabi-qty').value='';
   renderWarabiInspectorList(); renderWarabiHistory();
   showToast('📥 入荷記録を保存しました');
   btnFeedback(document.querySelector('.warabi-btn[onclick="saveWarabiRecord()"]'), '登録完了');
@@ -2499,7 +2586,11 @@ function renderWarabiHistory(){
         </div>
       </div>
       <div style="margin-top:4px;display:flex;flex-direction:column;gap:3px;">
-        <div><span style="background:#e8d8ff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#6a3faf;">${esc(r.item)}</span> <span style="font-size:11px;color:#555;">👤${esc(r.inspector)}</span></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="background:#e8d8ff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#6a3faf;">${esc(r.item)}</span>
+          ${r.qty?`<span style="background:#1a5f3a;border-radius:6px;padding:2px 9px;font-size:13px;font-weight:700;color:#fff;">${r.qty}個</span>`:''}
+          <span style="font-size:11px;color:#555;">👤${esc(r.inspector)}</span>
+        </div>
         <div style="font-size:11px;color:#555;display:flex;flex-wrap:wrap;gap:6px;">
           ${r.factory?`<span>🏭${esc(r.factory)}</span>`:''}
           ${r.carrier?`<span>🚚${esc(r.carrier)}</span>`:''}
