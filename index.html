@@ -779,59 +779,63 @@ try {
     </div>
     <div class="temp-body" id="temp-body" style="display:none;">
       <div style="display:flex;gap:8px;">
-        <div style="flex:1;"><div class="temp-label">記録者 *</div>
-          <input type="text" id="temp-recorder" class="temp-input" placeholder="記録者名" list="temp-recorder-list">
-          <datalist id="temp-recorder-list"></datalist>
-        </div>
         <div style="flex:1;"><div class="temp-label">記録日 *</div>
           <input type="date" id="temp-date" class="temp-input">
         </div>
       </div>
 
       <!-- AM -->
-      <div style="background:#d6eeff;border-radius:12px;padding:12px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span class="temp-ampm-label" style="margin:0;padding:4px 18px;font-size:17px;">AM</span>
-          <div style="flex:1;"><div class="temp-label">時間</div>
+      <div style="background:#d6eeff;border-radius:12px;padding:14px;">
+        <div style="font-size:18px;font-weight:800;color:#1565c0;margin-bottom:12px;text-align:center;background:#fff;border-radius:8px;padding:6px;">AM</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;"><div class="temp-label">記録者 *</div>
+            <input type="text" id="temp-am-recorder" class="temp-input" placeholder="記録者名" list="temp-am-recorder-list">
+            <datalist id="temp-am-recorder-list"></datalist>
+          </div>
+          <div style="flex:1;"><div class="temp-label">時間 *</div>
             <input type="time" id="temp-am-time" class="temp-input">
           </div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:4px;">
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">①冷蔵</div>
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">②冷蔵兼</div>
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">③冷凍兼</div>
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">④冷凍</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">①冷蔵</div>
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">②冷蔵兼</div>
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">③冷凍兼</div>
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#1565c0;">④冷凍</div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <div style="flex:1;"><button id="temp-r1-am-temp-btn" onclick="openTempInputPicker('temp-r1-am-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r1-am-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r2-am-temp-btn" onclick="openTempInputPicker('temp-r2-am-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r2-am-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r3-am-temp-btn" onclick="openTempInputPicker('temp-r3-am-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r3-am-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r4-am-temp-btn" onclick="openTempInputPicker('temp-r4-am-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r4-am-temp" value=""></div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+          <div style="flex:1;"><button id="temp-r1-am-temp-btn" onclick="openTempInputPicker('temp-r1-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r1-am-temp" value=""></div>
+          <div style="flex:1;"><button id="temp-r2-am-temp-btn" onclick="openTempInputPicker('temp-r2-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r2-am-temp" value=""></div>
+          <div style="flex:1;"><button id="temp-r3-am-temp-btn" onclick="openTempInputPicker('temp-r3-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r3-am-temp" value=""></div>
+          <div style="flex:1;"><button id="temp-r4-am-temp-btn" onclick="openTempInputPicker('temp-r4-am-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r4-am-temp" value=""></div>
         </div>
-        <button class="temp-save-btn" onclick="saveTempAM()" style="background:#1565c0;">AM を記録する</button>
+        <button class="temp-save-btn" onclick="saveTempAM()" style="background:#1565c0;font-size:17px;padding:16px;">✅ AM まとめて記録する</button>
       </div>
 
       <!-- PM -->
-      <div style="background:#7ec8f0;border-radius:12px;padding:12px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <span class="temp-ampm-label pm" style="margin:0;padding:4px 18px;font-size:17px;">PM</span>
-          <div style="flex:1;"><div class="temp-label">時間</div>
+      <div style="background:#7ec8f0;border-radius:12px;padding:14px;">
+        <div style="font-size:18px;font-weight:800;color:#0a3d7a;margin-bottom:12px;text-align:center;background:#fff;border-radius:8px;padding:6px;">PM</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div style="flex:1;"><div class="temp-label" style="color:#0a3d7a;">記録者 *</div>
+            <input type="text" id="temp-pm-recorder" class="temp-input" placeholder="記録者名" list="temp-pm-recorder-list">
+            <datalist id="temp-pm-recorder-list"></datalist>
+          </div>
+          <div style="flex:1;"><div class="temp-label" style="color:#0a3d7a;">時間 *</div>
             <input type="time" id="temp-pm-time" class="temp-input">
           </div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:4px;">
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#0a3d7a;">①冷蔵</div>
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#0a3d7a;">②冷蔵兼</div>
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#0a3d7a;">③冷凍兼</div>
-          <div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#0a3d7a;">④冷凍</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">①冷蔵</div>
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">②冷蔵兼</div>
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">③冷凍兼</div>
+          <div style="flex:1;text-align:center;font-size:12px;font-weight:700;color:#0a3d7a;">④冷凍</div>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <div style="flex:1;"><button id="temp-r1-pm-temp-btn" onclick="openTempInputPicker('temp-r1-pm-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r1-pm-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r2-pm-temp-btn" onclick="openTempInputPicker('temp-r2-pm-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r2-pm-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r3-pm-temp-btn" onclick="openTempInputPicker('temp-r3-pm-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r3-pm-temp" value=""></div>
-          <div style="flex:1;"><button id="temp-r4-pm-temp-btn" onclick="openTempInputPicker('temp-r4-pm-temp')" style="width:100%;padding:16px 4px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r4-pm-temp" value=""></div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;">
+          <div style="flex:1;"><button id="temp-r1-pm-temp-btn" onclick="openTempInputPicker('temp-r1-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r1-pm-temp" value=""></div>
+          <div style="flex:1;"><button id="temp-r2-pm-temp-btn" onclick="openTempInputPicker('temp-r2-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r2-pm-temp" value=""></div>
+          <div style="flex:1;"><button id="temp-r3-pm-temp-btn" onclick="openTempInputPicker('temp-r3-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r3-pm-temp" value=""></div>
+          <div style="flex:1;"><button id="temp-r4-pm-temp-btn" onclick="openTempInputPicker('temp-r4-pm-temp')" style="width:100%;padding:18px 4px;background:#e3f2fd;border:2px solid #90caf9;border-radius:10px;font-size:15px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;">入力</button><input type="hidden" id="temp-r4-pm-temp" value=""></div>
         </div>
-        <button class="temp-save-btn" onclick="saveTempPM()" style="background:#0a3d7a;">PM を記録する</button>
+        <button class="temp-save-btn" onclick="saveTempPM()" style="background:#0a3d7a;font-size:17px;padding:16px;">✅ PM まとめて記録する</button>
       </div>
       <div style="border-top:1px solid #90caf9;padding-top:10px;margin-top:2px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -2762,7 +2766,15 @@ function initTempSection(){
   const monthEl=document.getElementById('temp-hist-month'); if(monthEl)monthEl.value=ym;
   renderTempRecorderList(); renderTempHistory();
 }
-function renderTempRecorderList(){const records=loadTempRecords();const names=[...new Set(records.map(r=>r.recorder).filter(Boolean))];const dl=document.getElementById('temp-recorder-list');if(dl)dl.innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');}
+function renderTempRecorderList(){
+  const records=loadTempRecords();
+  const amNames=[...new Set(records.map(r=>r.amRecorder||r.recorder||'').filter(Boolean))];
+  const pmNames=[...new Set(records.map(r=>r.pmRecorder||r.recorder||'').filter(Boolean))];
+  const dlAM=document.getElementById('temp-am-recorder-list');
+  const dlPM=document.getElementById('temp-pm-recorder-list');
+  if(dlAM)dlAM.innerHTML=amNames.map(n=>`<option value="${esc(n)}">`).join('');
+  if(dlPM)dlPM.innerHTML=pmNames.map(n=>`<option value="${esc(n)}">`).join('');
+}
 
 // ===== 温度入力ピッカー =====
 let _tempPickerTargetId = null;
@@ -2855,54 +2867,56 @@ function resetTempButtons(period){
 
 function saveTempAM(){
   const date=document.getElementById('temp-date').value;
-  const recorder=document.getElementById('temp-recorder').value.trim();
+  const recorder=document.getElementById('temp-am-recorder').value.trim();
   const time=document.getElementById('temp-am-time').value;
   if(!date){showToast('記録日を入力してください');return;}
-  if(!recorder){showToast('記録者名を入力してください');return;}
+  if(!recorder){showToast('AMの記録者名を入力してください');return;}
   if(!time){showToast('AMの時間を入力してください');return;}
   const keys=['r1','r2','r3','r4'];
-  const names=['①冷蔵','②冷蔵（兼用機・冷蔵側）','③冷凍（兼用機・冷凍側）','④冷凍'];
+  const names=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const records=loadTempRecords();
   const existing=records.find(r=>r.date===date);
   if(existing){
-    existing.recorder=recorder;
+    existing.amRecorder=recorder;
     if(!existing.data) existing.data=names.map(n=>({name:n,am:{time:'',temp:''},pm:{time:'',temp:''}}));
     existing.data.forEach((f,i)=>{f.am={time,temp:document.getElementById(`temp-${keys[i]}-am-temp`).value};});
   } else {
-    records.unshift({id:uid(),date,recorder,data:names.map((n,i)=>({name:n,am:{time,temp:document.getElementById(`temp-${keys[i]}-am-temp`).value},pm:{time:'',temp:''}})),createdAt:new Date().toISOString()});
+    records.unshift({id:uid(),date,amRecorder:recorder,pmRecorder:'',data:names.map((n,i)=>({name:n,am:{time,temp:document.getElementById(`temp-${keys[i]}-am-temp`).value},pm:{time:'',temp:''}})),createdAt:new Date().toISOString()});
   }
   saveTempRecords(records);
   resetTempButtons('am');
   document.getElementById('temp-am-time').value='';
+  document.getElementById('temp-am-recorder').value='';
   renderTempRecorderList();renderTempHistory();
-  showToast('✅ AMの温度を記録しました');
-  btnFeedback(document.querySelector('[onclick="saveTempAM()"]'),'AM完了');
+  showToast('✅ AMの温度をまとめて記録しました');
+  btnFeedback(document.querySelector('[onclick="saveTempAM()"]'),'AM記録完了');
 }
 
 function saveTempPM(){
   const date=document.getElementById('temp-date').value;
-  const recorder=document.getElementById('temp-recorder').value.trim();
+  const recorder=document.getElementById('temp-pm-recorder').value.trim();
   const time=document.getElementById('temp-pm-time').value;
   if(!date){showToast('記録日を入力してください');return;}
-  if(!recorder){showToast('記録者名を入力してください');return;}
+  if(!recorder){showToast('PMの記録者名を入力してください');return;}
   if(!time){showToast('PMの時間を入力してください');return;}
   const keys=['r1','r2','r3','r4'];
-  const names=['①冷蔵','②冷蔵（兼用機・冷蔵側）','③冷凍（兼用機・冷凍側）','④冷凍'];
+  const names=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const records=loadTempRecords();
   const existing=records.find(r=>r.date===date);
   if(existing){
-    existing.recorder=recorder;
+    existing.pmRecorder=recorder;
     if(!existing.data) existing.data=names.map(n=>({name:n,am:{time:'',temp:''},pm:{time:'',temp:''}}));
     existing.data.forEach((f,i)=>{f.pm={time,temp:document.getElementById(`temp-${keys[i]}-pm-temp`).value};});
   } else {
-    records.unshift({id:uid(),date,recorder,data:names.map((n,i)=>({name:n,am:{time:'',temp:''},pm:{time,temp:document.getElementById(`temp-${keys[i]}-pm-temp`).value}})),createdAt:new Date().toISOString()});
+    records.unshift({id:uid(),date,amRecorder:'',pmRecorder:recorder,data:names.map((n,i)=>({name:n,am:{time:'',temp:''},pm:{time,temp:document.getElementById(`temp-${keys[i]}-pm-temp`).value}})),createdAt:new Date().toISOString()});
   }
   saveTempRecords(records);
   resetTempButtons('pm');
   document.getElementById('temp-pm-time').value='';
+  document.getElementById('temp-pm-recorder').value='';
   renderTempRecorderList();renderTempHistory();
-  showToast('✅ PMの温度を記録しました');
-  btnFeedback(document.querySelector('[onclick="saveTempPM()"]'),'PM完了');
+  showToast('✅ PMの温度をまとめて記録しました');
+  btnFeedback(document.querySelector('[onclick="saveTempPM()"]'),'PM記録完了');
 }
 
 function saveTempRecord(){ saveTempAM(); }
@@ -2913,7 +2927,7 @@ function saveTempRecord(){
   const recorder=document.getElementById('temp-recorder').value.trim();
   if(!date){showToast('記録日を入力してください');return;}
   if(!recorder){showToast('記録者名を入力してください');return;}
-  const fridges=[{name:'①冷蔵',key:'r1'},{name:'②冷蔵（兼用機・冷蔵側）',key:'r2'},{name:'③冷凍（兼用機・冷凍側）',key:'r3'},{name:'④冷凍',key:'r4'}];
+  const fridges=[{name:'①冷蔵',key:'r1'},{name:'②冷蔵兼用',key:'r2'},{name:'③冷凍兼用',key:'r3'},{name:'④冷凍',key:'r4'}];
   const data=fridges.map(f=>({name:f.name,
     am:{time:document.getElementById(`temp-${f.key}-am-time`).value, temp:document.getElementById(`temp-${f.key}-am-temp`).value},
     pm:{time:document.getElementById(`temp-${f.key}-pm-time`).value, temp:document.getElementById(`temp-${f.key}-pm-temp`).value}
@@ -2942,8 +2956,31 @@ function renderTempHistory(){
   if(!filtered.length){el.innerHTML=`<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;return;}
   el.innerHTML=filtered.map(r=>{
     const dp=r.date.split('-'); const dateLabel=dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
-    const rows=(r.data||[]).map(f=>`<div style="margin-top:4px;"><span style="font-size:11px;font-weight:700;color:#1565c0;">${esc(f.name)}</span><span style="font-size:11px;color:#555;margin-left:6px;">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?f.am.temp+'℃':'—'}</b> / PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?f.pm.temp+'℃':'—'}</b></span></div>`).join('');
-    return `<div class="temp-record-row"><div style="display:flex;align-items:center;justify-content:space-between;"><span class="temp-record-date">📅 ${dateLabel}</span><div style="display:flex;gap:6px;align-items:center;"><span style="font-size:11px;color:#555;">👤 ${esc(r.recorder)}</span><button onclick="openTempEditModal('${r.id}')" style="background:#e3f2fd;border:1px solid #90caf9;border-radius:6px;font-size:11px;font-weight:700;padding:2px 8px;cursor:pointer;color:#1565c0;">✏️ 編集</button><button onclick="deleteTempRecord('${r.id}')" style="background:none;border:none;font-size:15px;cursor:pointer;color:#c09;">🗑</button></div></div>${rows}</div>`;
+    const amRecorder = r.amRecorder||r.recorder||'';
+    const pmRecorder = r.pmRecorder||r.recorder||'';
+    const rows=(r.data||[]).map(f=>`
+      <div style="display:flex;align-items:center;gap:4px;margin-top:3px;font-size:12px;">
+        <span style="font-weight:700;color:${isTodayRec?'#fff':'#1565c0'};min-width:52px;">${esc(f.name)}</span>
+        <span style="background:${isTodayRec?'rgba(255,255,255,.25)':'#d6eeff'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#1565c0'};">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?f.am.temp+'℃':'—'}</b></span>
+        <span style="background:${isTodayRec?'rgba(255,255,255,.15)':'#7ec8f0'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#0a3d7a'};">PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?f.pm.temp+'℃':'—'}</b></span>
+      </div>`).join('');
+    const isTodayRec = r.date.replace(/-/g,'/') === dateStr;
+    return `<div class="temp-record-row" style="${isTodayRec?'background:#1565c0;border:2px solid #0a3d7a;':''}">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="temp-record-date" style="${isTodayRec?'color:#fff;':''}">📅 ${dateLabel}${isTodayRec?'<span style="font-size:10px;background:#fff;color:#1565c0;padding:1px 7px;border-radius:8px;margin-left:6px;font-weight:700;">今日</span>':''}</span>
+        <div style="display:flex;gap:4px;">
+          <button onclick="openTempEditModal('${r.id}')" style="background:${isTodayRec?'rgba(255,255,255,.2)':'#e3f2fd'};border:1px solid ${isTodayRec?'rgba(255,255,255,.4)':'#90caf9'};border-radius:6px;font-size:11px;font-weight:700;padding:3px 8px;cursor:pointer;color:${isTodayRec?'#fff':'#1565c0'};">✏️</button>
+          <button onclick="deleteTempRecord('${r.id}')" style="background:none;border:none;font-size:15px;cursor:pointer;color:${isTodayRec?'#ffd':`#c09`};padding:0;">🗑</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;font-size:11px;color:${isTodayRec?'#cde':'#555'};margin-top:2px;">
+        ${amRecorder?`<span>AM👤${esc(amRecorder)}</span>`:''}
+        ${pmRecorder?`<span>PM👤${esc(pmRecorder)}</span>`:''}
+      </div>
+      <div style="${isTodayRec?'filter:brightness(1.3);':''}">
+        ${rows}
+      </div>
+    </div>`;
   }).join('');
 }
 
@@ -2971,7 +3008,7 @@ function saveTempEdit(){
   const recorder=document.getElementById('temp-edit-recorder').value.trim();
   if(!date){showToast('記録日を入力してください');return;}
   if(!recorder){showToast('記録者名を入力してください');return;}
-  const fridgeNames=['①冷蔵','②冷蔵（兼用機・冷蔵側）','③冷凍（兼用機・冷凍側）','④冷凍'];
+  const fridgeNames=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const keys=['r1','r2','r3','r4'];
   const data=fridgeNames.map((name,i)=>({name,am:{time:document.getElementById(`temp-edit-${keys[i]}-am-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-am-temp`).value},pm:{time:document.getElementById(`temp-edit-${keys[i]}-pm-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-pm-temp`).value}}));
   const records=loadTempRecords(); const idx=records.findIndex(r=>r.id===id);
