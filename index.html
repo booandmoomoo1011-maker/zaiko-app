@@ -3098,7 +3098,7 @@ function renderTempHistory(){
     const isTodayRec = r.date.replace(/-/g,'/') === dateStr;
     const rows=(r.data||[]).map(f=>`
       <div style="display:flex;align-items:center;gap:4px;margin-top:3px;font-size:12px;">
-        <span style="font-weight:700;color:${isTodayRec?'#fff':'#1565c0'};min-width:52px;">${esc(f.name)}</span>
+        <span style="font-weight:700;color:${isTodayRec?'#fff':'#1565c0'};min-width:52px;">${esc(f.name.replace(/冷蔵側|冷凍側|兼用機|冷蔵兼用|冷凍兼用/g,''))}</span>
         <span style="background:${isTodayRec?'rgba(255,255,255,.25)':'#d6eeff'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#1565c0'};">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?(f.am.temp==='DF'?'DF':f.am.temp+'℃'):'—'}</b></span>
         <span style="background:${isTodayRec?'rgba(255,255,255,.15)':'#7ec8f0'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#0a3d7a'};">PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?(f.pm.temp==='DF'?'DF':f.pm.temp+'℃'):'—'}</b></span>
       </div>`).join('');
