@@ -877,9 +877,9 @@ try {
       <button class="warabi-btn-sm" onclick="openWarabiManageModal()" style="align-self:flex-start;background:#e8d8ff;border-color:#c9a8f0;color:#6a3faf;padding:5px 14px;">⚙️ 品目・工場・運送会社を管理</button>
       <button class="warabi-btn" onclick="saveWarabiRecord()">📥 入荷を記録する</button>
       <div style="border-top:1px solid #c9a8f0;padding-top:10px;margin-top:2px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-          <span style="font-size:12px;font-weight:700;color:#6a3faf;">📋 入荷履歴</span>
-          <select id="warabi-hist-filter" class="warabi-select" style="font-size:11px;padding:3px 6px;" onchange="renderWarabiHistory()">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:12px;font-weight:700;color:#6a3faf;white-space:nowrap;">📋 入荷履歴</span>
+          <select id="warabi-hist-filter" class="warabi-select" style="flex:1;font-size:11px;padding:3px 6px;" onchange="renderWarabiHistory()">
             <option value="">全品目</option>
           </select>
         </div>
@@ -2601,7 +2601,47 @@ function renderWarabiHistory(){
   }).join('');
 }
 
-function deleteWarabiRecord(id){if(!confirm('この入荷記録を削除しますか？'))return;saveWarabiRecords(loadWarabiRecords().filter(r=>r.id!==id));renderWarabiHistory();showToast('削除しました');}
+function deleteWarabiRecord(id){
+  if(!confirm('この入荷記録を削除しますか？\n在庫の入荷数からも取り除かれます。'))return;
+  const records = loadWarabiRecords();
+  const rec = records.find(r=>r.id===id);
+  if(!rec){ saveWarabiRecords(records.filter(r=>r.id!==id)); renderWarabiHistory(); return; }
+
+  const stockItemId = WARABI_ITEM_MAP[rec.item];
+  const qty = rec.qty || 0;
+  const dateKey = rec.date.replace(/-/g,'/');
+
+  // NYUKAから該当エントリを削除
+  if(stockItemId && qty > 0){
+    if(dateKey === dateStr){
+      // 今日の未保存NYUKA
+      const arr = NYUKA[stockItemId] || [];
+      const idx = arr.findIndex(n=>n.qty===qty && n.staff===rec.inspector);
+      if(idx!==-1) arr.splice(idx,1);
+      NYUKA[stockItemId] = arr;
+      renderNyuka(stockItemId);
+      calcStock(stockItemId);
+      saveDraft();
+    } else {
+      // 保存済み履歴のNYUKA
+      const h = loadHistory();
+      const hi = h.findIndex(r=>r.date===dateKey);
+      if(hi!==-1 && h[hi].nyuka && h[hi].nyuka[stockItemId]){
+        const arr = h[hi].nyuka[stockItemId];
+        const idx = arr.findIndex(n=>n.qty===qty && n.staff===rec.inspector);
+        if(idx!==-1) arr.splice(idx,1);
+        h[hi].nyuka[stockItemId] = arr;
+        saveHistory(h);
+        if(window.firebaseSave) window.firebaseSave(h);
+      }
+    }
+    renderAllMonthlySummaryBadges();
+  }
+
+  saveWarabiRecords(records.filter(r=>r.id!==id));
+  renderWarabiHistory();
+  showToast('削除しました');
+}
 
 function toggleWarabiSection(){const body=document.getElementById('warabi-body');const arrow=document.getElementById('warabi-arrow');const isOpen=body.style.display!=='none';body.style.display=isOpen?'none':'flex';arrow.classList.toggle('open',!isOpen);}
 
