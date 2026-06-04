@@ -805,6 +805,8 @@ try {
           <input type="hidden" id="temp-r1-am-temp" value="">
           <button onclick="setRowMinus('temp-r1-am-input','temp-r1-am-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r1-am-df-btn" onclick="setRowDF('temp-r1-am-input','temp-r1-am-temp','temp-r1-am-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">②冷蔵兼</div>
           <input type="number" id="temp-r2-am-input" inputmode="decimal" placeholder="温度" step="0.1"
@@ -814,6 +816,8 @@ try {
           <input type="hidden" id="temp-r2-am-temp" value="">
           <button onclick="setRowMinus('temp-r2-am-input','temp-r2-am-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r2-am-df-btn" onclick="setRowDF('temp-r2-am-input','temp-r2-am-temp','temp-r2-am-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">③冷凍兼</div>
           <input type="number" id="temp-r3-am-input" inputmode="decimal" placeholder="温度" step="0.1"
@@ -823,6 +827,8 @@ try {
           <input type="hidden" id="temp-r3-am-temp" value="">
           <button onclick="setRowMinus('temp-r3-am-input','temp-r3-am-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r3-am-df-btn" onclick="setRowDF('temp-r3-am-input','temp-r3-am-temp','temp-r3-am-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">④冷凍</div>
           <input type="number" id="temp-r4-am-input" inputmode="decimal" placeholder="温度" step="0.1"
@@ -832,6 +838,8 @@ try {
           <input type="hidden" id="temp-r4-am-temp" value="">
           <button onclick="setRowMinus('temp-r4-am-input','temp-r4-am-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r4-am-df-btn" onclick="setRowDF('temp-r4-am-input','temp-r4-am-temp','temp-r4-am-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <button class="temp-save-btn" onclick="saveTempAM()" style="background:#1565c0;font-size:17px;padding:16px;margin-top:4px;">✅ AM を記録する</button>
       </div>
 
@@ -856,6 +864,8 @@ try {
           <input type="hidden" id="temp-r1-pm-temp" value="">
           <button onclick="setRowMinus('temp-r1-pm-input','temp-r1-pm-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r1-pm-df-btn" onclick="setRowDF('temp-r1-pm-input','temp-r1-pm-temp','temp-r1-pm-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">②冷蔵兼</div>
           <input type="number" id="temp-r2-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
@@ -865,6 +875,8 @@ try {
           <input type="hidden" id="temp-r2-pm-temp" value="">
           <button onclick="setRowMinus('temp-r2-pm-input','temp-r2-pm-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r2-pm-df-btn" onclick="setRowDF('temp-r2-pm-input','temp-r2-pm-temp','temp-r2-pm-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">③冷凍兼</div>
           <input type="number" id="temp-r3-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
@@ -874,6 +886,8 @@ try {
           <input type="hidden" id="temp-r3-pm-temp" value="">
           <button onclick="setRowMinus('temp-r3-pm-input','temp-r3-pm-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r3-pm-df-btn" onclick="setRowDF('temp-r3-pm-input','temp-r3-pm-temp','temp-r3-pm-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">④冷凍</div>
           <input type="number" id="temp-r4-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
@@ -883,6 +897,8 @@ try {
           <input type="hidden" id="temp-r4-pm-temp" value="">
           <button onclick="setRowMinus('temp-r4-pm-input','temp-r4-pm-temp',this)"
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
+          <button id="temp-r4-pm-df-btn" onclick="setRowDF('temp-r4-pm-input','temp-r4-pm-temp','temp-r4-pm-df-btn')"
+            style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <button class="temp-save-btn" onclick="saveTempPM()" style="background:#0a3d7a;font-size:17px;padding:16px;margin-top:4px;">✅ PM を記録する</button>
       </div>
       <div style="border-top:1px solid #90caf9;padding-top:10px;margin-top:2px;">
@@ -1087,7 +1103,6 @@ function prevStock(id){
 // ===== 完了確認 =====
 let _forceConfirmStep=0; // 2回押し用カウンター
 function confirmComplete(){
-  btnFeedback(document.getElementById('complete-btn'), '保存完了');
   // [修正] 担当者名は入力完了ボタン押下時にモーダルで入力する
   openStaffModal();
 }
@@ -1911,6 +1926,7 @@ function doSave(autoSave=false){
   editingDate=null;
   renderHistory();
   showToast('✅ 記録を保存しました！');
+  btnFeedback(document.getElementById('complete-btn'), '保存完了');
 }
 
 
@@ -2879,21 +2895,48 @@ function togglePickerSign(){
 
 function setRowMinus(inputId, hiddenId, btn){
   const input = document.getElementById(inputId);
+  const hidden = document.getElementById(hiddenId);
+  // DFが設定されていたら解除してからマイナス設定
+  if(hidden && hidden.value === 'DF') hidden.value = '';
   const val = parseFloat(input.value);
   if(isNaN(val)||val===0){ showToast('先に温度を入力してください'); return; }
   const minus = -Math.abs(val);
   input.value = minus;
   document.getElementById(hiddenId).value = String(minus);
   if(btn){ btn.style.background='#1a237e'; btn.style.color='#fff'; btn.textContent='マイナス✓'; }
+  // DFボタンをリセット（同じ行のDF btnを探す）
+  try{
+    const dfBtnId = hiddenId.replace('-temp','-df-btn');
+    const dfBtn = document.getElementById(dfBtnId);
+    if(dfBtn){ dfBtn.style.background='#fff3e0'; dfBtn.style.borderColor='#ffb74d'; dfBtn.style.color='#e65100'; dfBtn.textContent='DF'; }
+  }catch(e){}
   showToast('マイナスで設定しました');
 }
 
+function setRowDF(inputId, hiddenId, btnId){
+  const input = document.getElementById(inputId);
+  const hidden = document.getElementById(hiddenId);
+  const btn = document.getElementById(btnId);
+  // 既にDFなら解除
+  if(hidden && hidden.value === 'DF'){
+    if(input) input.value = '';
+    if(hidden) hidden.value = '';
+    if(btn){ btn.style.background='#fff3e0'; btn.style.borderColor='#ffb74d'; btn.style.color='#e65100'; btn.textContent='DF'; }
+    showToast('DF解除しました');
+    return;
+  }
+  if(input) input.value = '';
+  if(hidden) hidden.value = 'DF';
+  if(btn){ btn.style.background='#e65100'; btn.style.borderColor='#e65100'; btn.style.color='#fff'; btn.textContent='DF✓'; }
+  showToast('霜取り中（DF）に設定しました');
+}
+
 function getInputTemp(key, period){
-  // 入力欄から値を取得（マイナスボタンが押された場合はhiddenから）
+  // hidden フィールドを優先（DF・マイナス設定の値が入っている）
   const input = document.getElementById(`temp-${key}-${period}-input`);
   const hidden = document.getElementById(`temp-${key}-${period}-temp`);
-  if(input && input.value !== '') return input.value;
   if(hidden && hidden.value !== '') return hidden.value;
+  if(input && input.value !== '') return input.value;
   return '';
 }
 
@@ -2904,8 +2947,11 @@ function resetTempInputRow(period){
     if(input) input.value='';
     if(hidden) hidden.value='';
     // マイナスボタンをリセット
-    const btns = document.querySelectorAll(`[onclick*="temp-${k}-${period}-input"]`);
-    btns.forEach(b=>{ b.style.background='#e3f2fd'; b.style.color='#1565c0'; b.textContent='−'; });
+    const minusBtns = document.querySelectorAll(`[onclick*="setRowMinus"][onclick*="temp-${k}-${period}"]`);
+    minusBtns.forEach(b=>{ b.style.background='#e3f2fd'; b.style.color='#1565c0'; b.textContent='−'; });
+    // DFボタンをリセット
+    const dfBtn = document.getElementById(`temp-${k}-${period}-df-btn`);
+    if(dfBtn){ dfBtn.style.background='#fff3e0'; dfBtn.style.borderColor='#ffb74d'; dfBtn.style.color='#e65100'; dfBtn.textContent='DF'; }
   });
 }
 
@@ -3049,13 +3095,13 @@ function renderTempHistory(){
     const dp=r.date.split('-'); const dateLabel=dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
     const amRecorder = r.amRecorder||r.recorder||'';
     const pmRecorder = r.pmRecorder||r.recorder||'';
+    const isTodayRec = r.date.replace(/-/g,'/') === dateStr;
     const rows=(r.data||[]).map(f=>`
       <div style="display:flex;align-items:center;gap:4px;margin-top:3px;font-size:12px;">
         <span style="font-weight:700;color:${isTodayRec?'#fff':'#1565c0'};min-width:52px;">${esc(f.name)}</span>
-        <span style="background:${isTodayRec?'rgba(255,255,255,.25)':'#d6eeff'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#1565c0'};">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?f.am.temp+'℃':'—'}</b></span>
-        <span style="background:${isTodayRec?'rgba(255,255,255,.15)':'#7ec8f0'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#0a3d7a'};">PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?f.pm.temp+'℃':'—'}</b></span>
+        <span style="background:${isTodayRec?'rgba(255,255,255,.25)':'#d6eeff'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#1565c0'};">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?(f.am.temp==='DF'?'DF':f.am.temp+'℃'):'—'}</b></span>
+        <span style="background:${isTodayRec?'rgba(255,255,255,.15)':'#7ec8f0'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#0a3d7a'};">PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?(f.pm.temp==='DF'?'DF':f.pm.temp+'℃'):'—'}</b></span>
       </div>`).join('');
-    const isTodayRec = r.date.replace(/-/g,'/') === dateStr;
     return `<div class="temp-record-row" style="${isTodayRec?'background:#1565c0;border:2px solid #0a3d7a;':''}">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span class="temp-record-date" style="${isTodayRec?'color:#fff;':''}">📅 ${dateLabel}${isTodayRec?'<span style="font-size:10px;background:#fff;color:#1565c0;padding:1px 7px;border-radius:8px;margin-left:6px;font-weight:700;">今日</span>':''}</span>
@@ -3081,14 +3127,23 @@ function openTempEditModal(id){
   const r=loadTempRecords().find(x=>x.id===id);if(!r)return;
   document.getElementById('temp-edit-id').value=id;
   document.getElementById('temp-edit-date').value=r.date;
-  document.getElementById('temp-edit-recorder').value=r.recorder||'';
+  // amRecorder/pmRecorder を両フィールドにセット（片方しかない場合も対応）
+  const amRec = r.amRecorder||r.recorder||'';
+  const pmRec = r.pmRecorder||r.recorder||'';
+  const recEl = document.getElementById('temp-edit-recorder');
+  if(recEl) recEl.value = amRec || pmRec;
+  // AM/PM 記録者欄がある場合は個別にセット
+  const amRecEl = document.getElementById('temp-edit-am-recorder');
+  if(amRecEl) amRecEl.value = amRec;
+  const pmRecEl = document.getElementById('temp-edit-pm-recorder');
+  if(pmRecEl) pmRecEl.value = pmRec;
   const keys=['r1','r2','r3','r4'];
   (r.data||[]).forEach((f,i)=>{
     const k=keys[i];
-    document.getElementById(`temp-edit-${k}-am-time`).value=f.am.time||'';
-    document.getElementById(`temp-edit-${k}-am-temp`).value=f.am.temp!==undefined?f.am.temp:'';
-    document.getElementById(`temp-edit-${k}-pm-time`).value=f.pm.time||'';
-    document.getElementById(`temp-edit-${k}-pm-temp`).value=f.pm.temp!==undefined?f.pm.temp:'';
+    const amTime=document.getElementById(`temp-edit-${k}-am-time`); if(amTime) amTime.value=f.am.time||'';
+    const amTemp=document.getElementById(`temp-edit-${k}-am-temp`); if(amTemp) amTemp.value=f.am.temp!==undefined?f.am.temp:'';
+    const pmTime=document.getElementById(`temp-edit-${k}-pm-time`); if(pmTime) pmTime.value=f.pm.time||'';
+    const pmTemp=document.getElementById(`temp-edit-${k}-pm-temp`); if(pmTemp) pmTemp.value=f.pm.temp!==undefined?f.pm.temp:'';
   });
   document.getElementById('temp-edit-modal').style.display='flex';
 }
@@ -3101,10 +3156,14 @@ function saveTempEdit(){
   if(!recorder){showToast('記録者名を入力してください');return;}
   const fridgeNames=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const keys=['r1','r2','r3','r4'];
-  const data=fridgeNames.map((name,i)=>({name,am:{time:document.getElementById(`temp-edit-${keys[i]}-am-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-am-temp`).value},pm:{time:document.getElementById(`temp-edit-${keys[i]}-pm-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-pm-temp`).value}}));
+  const data=fridgeNames.map((name,i)=>({name,
+    am:{time:document.getElementById(`temp-edit-${keys[i]}-am-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-am-temp`).value},
+    pm:{time:document.getElementById(`temp-edit-${keys[i]}-pm-time`).value,temp:document.getElementById(`temp-edit-${keys[i]}-pm-temp`).value}
+  }));
   const records=loadTempRecords(); const idx=records.findIndex(r=>r.id===id);
   if(idx===-1){showToast('記録が見つかりません');return;}
-  records[idx]={...records[idx],date,recorder,data};
+  // amRecorder/pmRecorder を保持しつつ recorder も更新
+  records[idx]={...records[idx],date,recorder,amRecorder:recorder,pmRecorder:records[idx].pmRecorder||recorder,data};
   saveTempRecords(records); document.getElementById('temp-edit-modal').style.display='none';
   renderTempHistory(); showToast('✅ 編集を保存しました');
   btnFeedback(document.querySelector('#temp-edit-modal .temp-save-btn'), '保存完了');
