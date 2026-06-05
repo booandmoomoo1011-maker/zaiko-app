@@ -166,7 +166,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .hist-header h2{font-size:13px;font-weight:600;color:var(--text2);}
 .hist-count{font-size:12px;color:var(--text3);}
 .hist-card-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
-.hist-card-wrap.hist-card-today{background:#fff8c0;border:1.5px solid #f5c800;}
+.hist-card-wrap.hist-card-today{background:#fff0a0;border:1.5px solid #f5c800;}
 .hist-row{padding:8px 10px 6px;border-bottom:1px solid var(--border);}
 .hist-row.hist-today{background:#fff0a0;}
 .hist-row:last-child{border-bottom:none;}
@@ -194,7 +194,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .hlist{display:flex;flex-direction:column;}
 .hlist-row{display:flex;align-items:center;justify-content:space-between;padding:2px 2px;border-bottom:1px solid var(--border);gap:4px;}
 .hlist-row:last-child{border-bottom:none;}
-.hlist-row.warn-row{background:#ffe87a;}
+.hlist-row.warn-row{background:#c8e6c9;}
 .hlist-name{font-size:11px;font-weight:500;color:var(--text);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:auto;}
 .hlist-val{font-size:12px;font-weight:700;color:var(--blue);flex-shrink:0;}
 .hlist-val.stock-low{color:#e02020!important;}
@@ -704,7 +704,7 @@ try {
       <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🔑</span> パスワード変更
       </button>
-      <button onclick="closeSettingsModal();changeLineSharePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f5e9;border:1.5px solid #81c784;border-radius:12px;color:#1b5e20;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+      <button onclick="closeSettingsModal();changeLineSharePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff0a0;border:1.5px solid #f5c800;border-radius:12px;color:#5a4000;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">📲</span> LINE共有パスワード変更
       </button>
       <button onclick="closeSettingsModal();deleteOldRecords();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fce4ec;border:1.5px solid #ef9a9a;border-radius:12px;color:#b71c1c;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
@@ -975,7 +975,10 @@ try {
         <div style="display:flex;gap:8px;align-items:flex-start;">
           <div style="flex:1;">
             <div id="uber-inputs" style="display:flex;flex-direction:column;gap:5px;max-width:55%;"></div>
-            <button onclick="addUberRow()" style="margin-top:6px;padding:4px 16px;background:#06C167;border:none;color:#fff;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;line-height:1;">＋</button>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <button onclick="addUberRow()" style="padding:4px 16px;background:#06C167;border:none;color:#fff;border-radius:8px;font-size:18px;font-weight:700;cursor:pointer;line-height:1;">＋</button>
+              <button id="uber-notrade-btn" onclick="setUberNoTrade()" style="padding:4px 12px;background:#1a1a1a;border:2px solid #1a1a1a;color:#06C167;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.4;">✓ 本日取引無し</button>
+            </div>
           </div>
           <div style="flex-shrink:0;text-align:right;padding-top:4px;">
             <div style="font-size:10px;font-weight:700;color:#888;margin-bottom:2px;">合計</div>
@@ -1101,10 +1104,70 @@ function prevStock(id){
 }
 
 // ===== 完了確認 =====
-let _forceConfirmStep=0; // 2回押し用カウンター
+let _forceConfirmStep=0;
 function confirmComplete(){
-  // [修正] 担当者名は入力完了ボタン押下時にモーダルで入力する
+  const missing=[];
+
+  // Uber Eats チェック：「本日取引無し」OR 金額が1件以上入力済み
+  const uberFilled = UBER.some(u => u.noTrade) || UBER.filter(u => !u._empty && u.time).length > 0;
+  if(!uberFilled) missing.push('🛵 Uber Eats（金額 または 本日取引無し）を入力してください');
+
+  // 冷蔵庫温度チェック（dateStr は YYYY/MM/DD、temp記録は YYYY-MM-DD）
+  const dateStrHyphen = dateStr.replace(/\//g, '-');
+  const tempRecs = loadTempRecords();
+  const todayTemp = tempRecs.find(r => r.date === dateStrHyphen || r.date === dateStr);
+  if(!todayTemp){
+    missing.push('🌡️ 冷蔵庫温度記録（AM・PM）を入力してください');
+  } else {
+    const hasAM = todayTemp.amRecorder && todayTemp.data && todayTemp.data.some(f => f.am && f.am.temp !== '');
+    const hasPM = todayTemp.pmRecorder && todayTemp.data && todayTemp.data.some(f => f.pm && f.pm.temp !== '');
+    if(!hasAM) missing.push('🌡️ 冷蔵庫温度記録（AM）を入力してください');
+    if(!hasPM) missing.push('🌡️ 冷蔵庫温度記録（PM）を入力してください');
+  }
+
+  if(missing.length > 0){
+    showMissingAlert(missing);
+    return;
+  }
+
   openStaffModal();
+}
+
+function showMissingAlert(items){
+  // 既存アラートがあれば削除
+  const existing = document.getElementById('missing-alert');
+  if(existing) existing.remove();
+
+  const div = document.createElement('div');
+  div.id = 'missing-alert';
+  div.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:#fff;border:3px solid #e02020;border-radius:16px;padding:20px 24px;min-width:280px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.25);';
+  div.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <span style="font-size:22px;">🚨</span>
+      <span style="font-size:15px;font-weight:800;color:#e02020;">入力が未完了です</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;">
+      ${items.map(m=>`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff5f5;border:1.5px solid #f09595;border-radius:10px;">
+        <span style="font-size:18px;">❌</span>
+        <span style="font-size:13px;font-weight:700;color:#e02020;">${m}</span>
+      </div>`).join('')}
+    </div>
+    <button onclick="document.getElementById('missing-alert').remove()"
+      style="width:100%;padding:12px;background:#e02020;border:none;color:#fff;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;">
+      閉じて入力する
+    </button>
+  `;
+  document.body.appendChild(div);
+
+  // 背景オーバーレイ
+  const overlay = document.createElement('div');
+  overlay.id = 'missing-alert-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9998;';
+  overlay.onclick = ()=>{ div.remove(); overlay.remove(); };
+  document.body.appendChild(overlay);
+
+  // 「閉じて入力する」ボタンでオーバーレイも消す
+  div.querySelector('button').addEventListener('click', ()=> overlay.remove());
 }
 function openStaffModal(){
   const modal=document.getElementById('staff-modal');
@@ -1135,26 +1198,6 @@ function submitStaffModal(){
   document.getElementById('staff').value=val;
   saveStaffName();
   closeStaffModal();
-  // Uber Eatsが未入力の場合は警告（0入力済みはOK）
-  const uberFilled = UBER.some(u => u.amount >= 0 && !u._empty);
-  if(!uberFilled){
-    if(!confirm('🛵 Uber Eatsの入力をして下さい。\n\n入力せずに保存する場合は「OK」、入力する場合は「キャンセル」を押してください。')){
-      // キャンセル→Uber入力欄の1行目にフォーカス
-      setTimeout(()=>{
-        const inputs = document.querySelectorAll('#uber-inputs input[type="number"]');
-        if(inputs && inputs[0]) inputs[0].focus();
-      }, 100);
-      return;
-    }
-    // OKなら¥0を自動入力して保存
-    UBER = UBER.filter(u=>!u._empty);
-    const now=new Date();
-    const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-    UBER.push({amount:0, time:timeStr});
-    renderUber();
-    showToast('🛵 Uber Eats ¥0 を自動入力しました');
-  }
-  // 元のconfirmComplete処理を続行
   _doConfirmComplete();
 }
 function _doConfirmComplete(){
@@ -1163,13 +1206,16 @@ function _doConfirmComplete(){
   const warns=SALES.filter(it=>{
     const prev=prevStock(it.id);
     if(prev===null)return false;
+    const stockEl=document.getElementById('stock_'+it.id);
+    const stockRaw=stockEl?stockEl.value.trim():'';
+    if(stockRaw===''||isNaN(parseFloat(stockRaw)))return false; // 未入力はスキップ
+    const stock=parseFloat(stockRaw);
     const todayNyuka=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
-    const expected=prev+todayNyuka;
-    const stock=$v('stock_'+it.id),out=$v('sell_'+it.id)+$v('free_'+it.id);
-    return(stock+out)!==expected;
+    const sell=$v('sell_'+it.id), free=$v('free_'+it.id);
+    // 本日在庫 + 販売 + 無料 ≠ 前日在庫 + 入荷
+    return (stock+sell+free) !== (prev+todayNyuka);
   });
   if(warns.length){
-    // 差異モーダルを表示
     openDiffModal(warns);
   } else {
     doComplete();
@@ -1180,19 +1226,22 @@ let _selectedDiffReason = '';
 
 function openDiffModal(warns){
   _selectedDiffReason = '';
-  // 差異品目リスト生成
   const list = document.getElementById('diff-modal-list');
   list.innerHTML = warns.map(it=>{
     const prev = prevStock(it.id)||0;
-    const stock = $v('stock_'+it.id);
-    const out = $v('sell_'+it.id)+$v('free_'+it.id);
-    const diff = (stock+out) - prev;
+    const stockEl=document.getElementById('stock_'+it.id);
+    const stock = stockEl&&stockEl.value.trim()!=='' ? parseFloat(stockEl.value) : 0;
+    const sell = $v('sell_'+it.id);
+    const free = $v('free_'+it.id);
+    const todayNyuka=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
+    // 差異 = 本日在庫 - (前日在庫 + 入荷 - 販売 - 無料)
+    const diff = stock - (prev + todayNyuka - sell - free);
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff5f5;border:1px solid #fcc;border-radius:8px;">
       <span style="font-size:13px;font-weight:600;color:var(--text);">${esc(it.name)}</span>
+      <span style="font-size:12px;color:#888;margin:0 8px;">前日${prev}＋入荷${todayNyuka}－販売${sell}－無料${free}</span>
       <span style="font-size:13px;font-weight:700;color:#e02020;">${diff>0?'+':''}${diff}</span>
     </div>`;
   }).join('');
-  // 理由ボタンリセット
   document.querySelectorAll('.diff-reason-btn').forEach(b=>b.classList.remove('selected'));
   document.getElementById('diff-reason-note').value='';
   const modal = document.getElementById('diff-modal');
@@ -1267,7 +1316,7 @@ function editRecord(idx){
     $set('sell_'+it.id,r.sales[it.id+'_sell']||0);
     $set('free_'+it.id,r.sales[it.id+'_free']||0);
     NYUKA[it.id]=(r.nyuka&&r.nyuka[it.id])?[...r.nyuka[it.id]]:[];
-    renderNyuka(it.id);updateDiff(it.id);
+    renderNyuka(it.id);calcStock(it.id);
   });
   // 完了状態を解除
   completed=false;
@@ -1331,17 +1380,16 @@ function renderSales(){
             <div class="clabel">前日在庫</div>
             <div class="num-readonly" id="prev_${it.id}">—</div>
           </div>
-          <div class="scol scol-readonly">
-            <div class="clabel">入荷</div>
-            <div class="num-readonly" id="nyuka_total_${it.id}">0</div>
+          <div class="scol">
+            <div class="clabel">本日在庫</div>
+            <input class="num-input" type="number" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'';})()}" min="0" step="0.1" inputmode="decimal" placeholder="—" oninput="markEdited(this);calcStock('${it.id}');saveDraft()">
           </div>
           <div class="scol"><div class="clabel">販売</div><input class="num-input" type="number" id="sell_${it.id}" value="${(()=>{const e=document.getElementById('sell_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
           <div class="scol"><div class="clabel">${it.name.includes('釜揚げ箱')?'単品に移行':'無料'}</div><input class="num-input" type="number" id="free_${it.id}" value="${(()=>{const e=document.getElementById('free_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
         </div>
         <div class="stock-result-row">
-          <span class="stock-result-label">本日在庫</span>
-          <span class="stock-result-val" id="stock_result_${it.id}">—</span>
-          <input type="hidden" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'0';})()}">
+          <span class="stock-result-label">入荷</span>
+          <span class="stock-result-val" id="nyuka_total_${it.id}" style="color:var(--blue);">0</span>
         </div>
       </div>`;
     }
@@ -1384,53 +1432,16 @@ function delSimple(id){if(!confirm('削除しますか？'))return;SIMPLE=SIMPLE
 function addSales(){const inp=document.getElementById('new-sales-name');const name=inp.value.trim();if(!name){showToast('品目名を入力してください');return;}const id=uid();SALES.push({id,name});NYUKA[id]=[];saveItems();inp.value='';renderSales();restoreLastValues();showToast('追加しました');}
 function delSales(id){if(!confirm('削除しますか？'))return;SALES=SALES.filter(it=>it.id!==id);delete NYUKA[id];saveItems();renderSales();}
 
-// ===== 差異（前日在庫との比較） =====
-function updateDiff(id){
-  const stock=$v('stock_'+id);
-  // 在庫入力欄の赤文字チェック
-  const stockEl=document.getElementById('stock_'+id);
-  if(stockEl){
-    const it=SALES.find(x=>x.id===id);
-    if(it&&isLowStock(it.name,stock)){stockEl.style.color='#e02020';stockEl.style.fontWeight='700';}
-    else if(stockEl){stockEl.style.color='';stockEl.style.fontWeight='';}
-  }
-  const out=$v('sell_'+id)+$v('free_'+id);
-  const prev=prevStock(id);
-  const todayNyuka=(NYUKA[id]||[]).reduce((s,n)=>s+n.qty,0);
-  const el=document.getElementById('diff_'+id);
-  if(!el)return;
-  if(prev!==null){
-    // 期待値 = 前日在庫（前日入荷込み） + 今日入荷
-    const expected = prev + todayNyuka;
-    // 実績 = 本日在庫 + 販売 + 無料
-    const stock=$v('stock_'+id);
-    const actual = stock + out;
-    const diff = actual - expected;
-    if(diff===0){
-      el.textContent='';el.className='dbadge ok';
-      const card=document.getElementById('scard_'+id);
-      if(card) card.classList.remove('diff-warn-card');
-    } else {
-      el.textContent='差異'+(diff>0?'+':'')+diff;el.className='dbadge warn';
-      const card=document.getElementById('scard_'+id);
-      if(card) card.classList.add('diff-warn-card');
-    }
-  } else {
-    el.textContent='';el.className='dbadge';
-    const card=document.getElementById('scard_'+id);
-    if(card) card.classList.remove('diff-warn-card');
-  }
-  updateWarnBox();
-}
-
-function updateWarnBox(){}
-
-// 本日在庫を自動計算して表示
+// 差異を計算して表示（本日在庫は手入力）
 function calcStock(id){
   const prev = prevStock(id);
   const nyukaTotal = (NYUKA[id]||[]).reduce((s,n)=>s+n.qty, 0);
   const sell = $v('sell_'+id);
   const free = $v('free_'+id);
+  const stockEl = document.getElementById('stock_'+id);
+  const stockRaw = stockEl ? stockEl.value.trim() : '';
+  const stockEntered = stockRaw !== '' && !isNaN(parseFloat(stockRaw));
+  const stock = stockEntered ? parseFloat(stockRaw) : null;
 
   // 前日在庫表示
   const prevEl = document.getElementById('prev_'+id);
@@ -1438,31 +1449,52 @@ function calcStock(id){
 
   // 入荷合計表示
   const nyukaEl = document.getElementById('nyuka_total_'+id);
-  if(nyukaEl) nyukaEl.textContent = nyukaTotal;
-
-  // 本日在庫 = 前日在庫 + 入荷 - 販売 - 無料
-  let todayStock = null;
-  if(prev !== null){
-    todayStock = Math.max(0, prev + nyukaTotal - sell - free);
-  } else {
-    // 前日データなし → 入荷のみで計算
-    todayStock = Math.max(0, nyukaTotal - sell - free);
+  if(nyukaEl){
+    nyukaEl.textContent = nyukaTotal;
+    const nyukaRow = nyukaEl.closest('.stock-result-row');
+    if(nyukaRow){
+      if(nyukaTotal > 0){
+        nyukaRow.style.background='#ede7f6';
+        nyukaRow.style.borderRadius='8px';
+        nyukaEl.style.color='#6a1b9a';
+      } else {
+        nyukaRow.style.background='';
+        nyukaEl.style.color='var(--blue)';
+      }
+    }
   }
 
-  // hidden inputに値をセット（保存用）
-  const stockInput = document.getElementById('stock_'+id);
-  if(stockInput) stockInput.value = todayStock;
-
-  // 本日在庫表示
-  const resultEl = document.getElementById('stock_result_'+id);
-  if(resultEl){
-    resultEl.textContent = todayStock;
+  // 在庫数の色チェック
+  if(stockEl && stockEntered){
     const it = SALES.find(x=>x.id===id);
-    resultEl.className = 'stock-result-val' + (it && isLowStock(it.name, todayStock) ? ' low' : '');
+    if(it && isLowStock(it.name, stock)){stockEl.style.color='#e02020';stockEl.style.fontWeight='700';}
+    else{stockEl.style.color='';stockEl.style.fontWeight='';}
   }
 
-  updateDiff(id);
+  // 差異 = 本日在庫 - (前日在庫 + 入荷 - 販売 - 無料)
+  const el = document.getElementById('diff_'+id);
+  if(!el) return;
+  if(prev !== null && stockEntered){
+    const expected = prev + nyukaTotal - sell - free;
+    const diff = stock - expected;
+    if(diff === 0){
+      el.textContent=''; el.className='dbadge ok';
+      const card=document.getElementById('scard_'+id);
+      if(card) card.classList.remove('diff-warn-card');
+    } else {
+      el.textContent='差異'+(diff>0?'+':'')+diff; el.className='dbadge warn';
+      const card=document.getElementById('scard_'+id);
+      if(card) card.classList.add('diff-warn-card');
+    }
+  } else {
+    el.textContent=''; el.className='dbadge';
+    const card=document.getElementById('scard_'+id);
+    if(card) card.classList.remove('diff-warn-card');
+  }
+  updateWarnBox();
 }
+
+function updateWarnBox(){}
 
 // 全品目のcalcStockを実行
 function refreshAllStock(){
@@ -1473,6 +1505,15 @@ function refreshAllStock(){
 const UBER_MAX_ROWS = 5; // 最大入力行数
 
 function toggleUber(){} // 常時表示のため無効
+
+function setUberNoTrade(){
+  const now=new Date();
+  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  UBER=[{amount:0,time:timeStr,noTrade:true}];
+  renderUber();
+  saveUberNow();
+  showToast('🛵 本日取引無しに設定しました');
+}
 
 function addUberRow(){
   if(UBER.length >= UBER_MAX_ROWS){ showToast('最大'+UBER_MAX_ROWS+'件まで入力できます'); return; }
@@ -1489,7 +1530,26 @@ function renderUber(){
   const wrap = document.getElementById('uber-inputs');
   if(!wrap) return;
 
-  // 行数：現在のUBER配列の長さ（最低1行）
+  // 「取引無し」状態チェック
+  const isNoTrade = UBER.length===1 && UBER[0].noTrade;
+  const noTradeBtn = document.getElementById('uber-notrade-btn');
+
+  if(isNoTrade){
+    wrap.innerHTML=`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f3e5f5;border:2px solid #ce93d8;border-radius:10px;">
+      <span style="font-size:16px;">🚫</span>
+      <span style="font-size:13px;font-weight:700;color:#6a1b9a;flex:1;">本日取引無し</span>
+      <button onclick="cancelUberNoTrade()" style="padding:3px 10px;background:#fff;border:1px solid #ce93d8;color:#6a1b9a;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">取消</button>
+    </div>`;
+    if(noTradeBtn){ noTradeBtn.style.background='#1a1a1a'; noTradeBtn.style.color='#06C167'; noTradeBtn.style.borderColor='#1a1a1a'; noTradeBtn.textContent='✓ 本日取引無し ✅'; }
+    const totEl=document.getElementById('uber-total-big');
+    if(totEl){ totEl.textContent='¥0'; totEl.style.color='#888'; }
+    const totSmall=document.getElementById('uber-total');
+    if(totSmall){ totSmall.textContent=''; }
+    return;
+  }
+
+  if(noTradeBtn){ noTradeBtn.style.background='#1a1a1a'; noTradeBtn.style.color='#06C167'; noTradeBtn.style.borderColor='#1a1a1a'; noTradeBtn.textContent='✓ 本日取引無し'; }
+
   const rowCount = Math.max(UBER.length, 1);
   while(UBER.length < rowCount) UBER.push({amount:0, time:'', _empty:true});
 
@@ -1507,19 +1567,18 @@ function renderUber(){
       ${UBER.length>1?`<button onclick="clearUberRow(${i})" style="padding:3px 7px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:6px;font-size:11px;cursor:pointer;">✕</button>`:'<span style="width:28px;"></span>'}
     </div>`).join('');
 
-  // 合計更新
   const total = UBER.reduce((s,u)=>s+(u.amount||0),0);
   const filled = UBER.filter(u=>!u._empty).length;
   const totEl = document.getElementById('uber-total-big');
-  if(totEl){
-    totEl.textContent = '¥'+total.toLocaleString();
-    totEl.style.color = filled>0 ? '#06C167' : '#888';
-  }
+  if(totEl){ totEl.textContent='¥'+total.toLocaleString(); totEl.style.color=filled>0?'#06C167':'#888'; }
   const totSmall = document.getElementById('uber-total');
-  if(totSmall){
-    totSmall.textContent = filled>0 ? (total>0?'合計 ¥'+total.toLocaleString():'✅ 売上なし（¥0）') : '';
-    totSmall.style.color = total>0?'#06C167':'#888';
-  }
+  if(totSmall){ totSmall.textContent=filled>0?(total>0?'合計 ¥'+total.toLocaleString():'✅ 売上なし（¥0）'):''; totSmall.style.color=total>0?'#06C167':'#888'; }
+}
+
+function cancelUberNoTrade(){
+  UBER=[{amount:0,time:'',_empty:true}];
+  renderUber();
+  saveUberNow();
 }
 
 function onUberInput(idx, val){
@@ -1795,7 +1854,7 @@ function saveNyukaHistRow(uid, itemId, date, src, histDate, entryIdx){
     const oldQty = NYUKA[itemId][entryIdx].qty;
     NYUKA[itemId][entryIdx] = { date, qty: newQty, staff: newStaff };
     $set('stock_'+itemId, $v('stock_'+itemId) + (newQty - oldQty));
-    updateDiff(itemId);
+    calcStock(itemId);
     saveDraft();
   } else {
     const h = loadHistory();
@@ -1971,15 +2030,23 @@ function renderHistory(){
     // ── 販売・無料：横並びリスト（在庫／販売／無料／差異を右側に横並び）──
     let stbl2=`<div class="htbl-section"><div class="htbl-label">販売・無料</div><div class="hlist-head"><span class="hlist-name"></span><span class="hlist-cols"><span>在庫</span><span>販売</span><span>無料</span><span>差異</span></span></div><div class="hlist">`;
     sa.forEach(it=>{
-      const s=r.sales[it.id]||0,sell=r.sales[it.id+'_sell']||0,free=r.sales[it.id+'_free']||0,diff=s-sell-free;
-      const sWarn=isLowStock(it.name,s)?'stock-low':'';
-      const ny=(r.nyuka&&r.nyuka[it.id]&&r.nyuka[it.id].length)?`<span style="color:var(--blue);font-size:10px;margin-left:4px;">入荷${r.nyuka[it.id].reduce((a,n)=>a+n.qty,0)}</span>`:'';
+      const s=r.sales[it.id]||0,sell=r.sales[it.id+'_sell']||0,free=r.sales[it.id+'_free']||0;
+      const nyukaTotal=(r.nyuka&&r.nyuka[it.id])?r.nyuka[it.id].reduce((a,n)=>a+n.qty,0):0;
+      const h2=loadHistory();
+      const prev2=h2.find(rec=>rec.date<r.date&&rec.sales&&rec.sales[it.id]!==undefined);
+      // 「在庫」欄は販売前の在庫（前日在庫 + 今日入荷）を表示
+      const prevS=prev2?(prev2.sales[it.id]||0):null;
+      const displayStock = prevS!==null ? prevS+nyukaTotal : s+sell+free;
+      // 差異 = (在庫) - (販売 + 無料 + 残り) = 理論残 - 実残
+      const diff = prevS!==null ? (prevS+nyukaTotal)-(sell+free+s) : 0;
+      const sWarn=isLowStock(it.name,displayStock)?'stock-low':'';
+      const ny=(r.nyuka&&r.nyuka[it.id]&&r.nyuka[it.id].length)?`<span style="color:var(--blue);font-size:10px;margin-left:4px;">入荷${nyukaTotal}</span>`:'';
       const dc=diff===0?'diff-ok':'diff-warn';
       const isWarnRow=r.forceCompleted&&r.warnItems&&r.warnItems.includes(it.id);
       stbl2+=`<div class="hlist-row${isWarnRow?' warn-row':''}">
         <span class="hlist-name">${esc(it.name)}${ny}</span>
         <span class="hlist-cols">
-          <span class="hlist-val ${sWarn}">${s}</span>
+          <span class="hlist-val ${sWarn}">${displayStock}</span>
           <span class="hlist-sub">${sell}</span>
           <span class="hlist-sub">${free}</span>
           <span class="hlist-diff ${dc}">${diff>0?'+':''}${diff}</span>
@@ -2253,7 +2320,7 @@ function resetToday(){
     $set('free_'+it.id,0);
     NYUKA[it.id]=[];
     renderNyuka(it.id);
-    updateDiff(it.id);
+    calcStock(it.id);
   });
   UBER=[];
   renderUber();
@@ -2281,8 +2348,8 @@ function showToast(msg){
 
 // ===== 入力ハイライト =====
 function markEdited(el){
-  el.style.background='#fff0a0';
-  el.style.borderColor='#f5c800';
+  el.style.background='#e8f5e9';
+  el.style.borderColor='#81c784';
   // [修正] 入力のたびに下書き保存（更新しても消えない）
   saveDraft();
 }
@@ -2336,7 +2403,7 @@ function restoreLastValues(){
   });
   // 色チェック
   SIMPLE.forEach(it=>checkSimpleLow(it.id));
-  SALES.forEach(it=>updateDiff(it.id));
+  SALES.forEach(it=>calcStock(it.id));
   // Uber Eats：今日の記録があれば復元、なければ空に
   UBER = (last.date===dateStr && last.uber) ? [...last.uber] : [];
   renderUber();
@@ -2847,7 +2914,7 @@ function btnFeedback(btn, label){
   const origBorder = btn.style.border || '';
   try{
     btn.innerHTML = '✅ ' + (label||'完了');
-    btn.style.background = '#2e7d32';
+    btn.style.background = '#7a6000';
     btn.style.color = '#fff';
     btn.style.border = 'none';
     btn.disabled = true;
@@ -2979,7 +3046,7 @@ function selectTempValue(val){
     btn.textContent=val;
     if(val==='DF'){btn.style.background='#fff3e0';btn.style.borderColor='#ffb74d';btn.style.color='#e65100';}
     else if(storeVal.startsWith('-')){btn.style.background='#e3f2fd';btn.style.borderColor='#90caf9';btn.style.color='#1565c0';}
-    else{btn.style.background='#e8f5e9';btn.style.borderColor='#81c784';btn.style.color='#2e7d32';}
+    else{btn.style.background='#e8f5e9';btn.style.borderColor='#81c784';btn.style.color='#7a6000';}
   }
   closeTempPicker();
 }
@@ -2996,7 +3063,7 @@ function confirmTempInput(){
     btn.textContent=val+'℃';
     btn.style.background=val<0?'#e3f2fd':'#e8f5e9';
     btn.style.borderColor=val<0?'#90caf9':'#81c784';
-    btn.style.color=val<0?'#1565c0':'#2e7d32';
+    btn.style.color=val<0?'#1565c0':'#7a6000';
   }
   closeTempPicker();
 }
