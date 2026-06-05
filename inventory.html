@@ -425,9 +425,23 @@ async function idbSaveImage(itemId, dataUrl){
       const tx=db.transaction(IDB_STORE,'readwrite');
       tx.objectStore(IDB_STORE).put({id:String(itemId),data:dataUrl});
       tx.oncomplete=()=>resolve(true);
-      tx.onerror=e=>reject(e);
+      tx.onerror=e=>{
+        console.warn('IDB save error',e);
+        // QuotaExceededErrorを検知して分かりやすいメッセージを表示
+        const err=e.target?.error;
+        if(err?.name==='QuotaExceededError'||err?.name==='NS_ERROR_DOM_QUOTA_REACHED'){
+          showToast('❌ 端末の保存容量が不足しています。設定→不要な写真データを削除してください。','#E24B4A');
+        } else {
+          showToast('❌ 写真の保存に失敗しました（'+( err?.message||'不明なエラー')+'）','#E24B4A');
+        }
+        reject(e);
+      };
     });
-  }catch(e){console.warn('IDB save error',e);return false;}
+  }catch(e){
+    console.warn('IDB save error',e);
+    showToast('❌ 写真の保存に失敗しました。端末の空き容量を確認してください。','#E24B4A');
+    return false;
+  }
 }
 
 async function idbGetImage(itemId){
@@ -1539,10 +1553,11 @@ function handleImg(e){
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
   reader.onload=ev=>{
-    // 画像をリサイズして容量を削減（最大800px、JPEG品質0.75）
+    // 画像を強力圧縮（棚卸用途なので小さくても実用的）
     const img=new Image();
     img.onload=()=>{
-      const MAX=800;
+      // 最大400px・品質40%で約15〜25KBに圧縮（250枚で約5〜6MB）
+      const MAX=400;
       let w=img.width, h=img.height;
       if(w>MAX||h>MAX){
         if(w>h){h=Math.round(h*MAX/w);w=MAX;}
@@ -1551,7 +1566,21 @@ function handleImg(e){
       const canvas=document.createElement('canvas');
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
-      pendingImage=canvas.toDataURL('image/jpeg',0.70); // 品質70%で保存容量を削減
+
+      // 段階的圧縮：まず品質40%で試し、20KB超えたらさらに圧縮
+      let quality=0.40;
+      let dataUrl=canvas.toDataURL('image/jpeg',quality);
+      const sizeKB=Math.round((dataUrl.length*3/4)/1024);
+      if(sizeKB>20){
+        // さらに小さくする
+        quality=Math.max(0.20, quality*(20/sizeKB));
+        dataUrl=canvas.toDataURL('image/jpeg',quality);
+      }
+
+      pendingImage=dataUrl;
+      const finalKB=Math.round((dataUrl.length*3/4)/1024);
+      console.log('写真圧縮完了:', finalKB+'KB', '('+w+'x'+h+'px, 品質'+Math.round(quality*100)+'%)');
+
       const prevEl=document.getElementById('img-preview');
       if(prevEl){
         const img2=document.createElement('img');img2.className='img-prev';img2.src=pendingImage;img2.id='img-preview';prevEl.replaceWith(img2);
