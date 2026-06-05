@@ -537,6 +537,41 @@ try {
       .catch((e)=> { window.setSyncStatus('error', e.code||''); console.error('保存失敗',e); });
   };
 
+  // ── 保存（温度記録）──
+  let _skipNextTempSync = false;
+  window.firebaseSaveTempRecords = function(records){
+    _skipNextTempSync = true;
+    set(ref(db, 'zaiko/temp_records'), records)
+      .catch((e)=> { console.error('温度記録保存失敗',e); });
+  };
+
+  // ── 保存（わらび餅入荷）──
+  let _skipNextWarabiSync = false;
+  window.firebaseSaveWarabiRecords = function(records){
+    _skipNextWarabiSync = true;
+    set(ref(db, 'zaiko/warabi_records'), records)
+      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); });
+  };
+
+  // ── 温度記録のリアルタイム同期 ──
+  onValue(ref(db, 'zaiko/temp_records'), (snap) => {
+    if(_skipNextTempSync){ _skipNextTempSync = false; return; }
+    const data = snap.val();
+    if(data){
+      localStorage.setItem('temp_records', JSON.stringify(data));
+      if(typeof renderTempHistory==='function') renderTempHistory();
+    }
+  });
+
+  // ── わらび餅入荷のリアルタイム同期 ──
+  onValue(ref(db, 'zaiko/warabi_records'), (snap) => {
+    if(_skipNextWarabiSync){ _skipNextWarabiSync = false; return; }
+    const data = snap.val();
+    if(data){
+      localStorage.setItem('warabi_records', JSON.stringify(data));
+    }
+  });
+
   // ── 保存（品目リスト）──
   window.firebaseSaveItems = function(items){
     _suppressItemsUpdate = true; // 自分の保存への反応を抑制
@@ -573,14 +608,13 @@ try {
   // ── 手動再同期 ──
   window.manualSync = function(){
     window.setSyncStatus('syncing');
-    // 品目リストと履歴を並行取得
     Promise.all([
       get(ref(db, 'zaiko/items')),
-      get(ref(db, 'zaiko/history'))
-    ]).then(([itemsSnap, histSnap]) => {
-        // 品目リストを反映
+      get(ref(db, 'zaiko/history')),
+      get(ref(db, 'zaiko/temp_records')),
+      get(ref(db, 'zaiko/warabi_records'))
+    ]).then(([itemsSnap, histSnap, tempSnap, warabiSnap]) => {
         if(itemsSnap.val()) applyItemsFromFirebase(itemsSnap.val());
-        // 履歴を反映
         const data = histSnap.val();
         if(data){
           localStorage.setItem('zaiko_history', JSON.stringify(data));
@@ -588,6 +622,13 @@ try {
           if(typeof renderHistory==='function') renderHistory();
           if(typeof restoreLastValues==='function') restoreLastValues();
         }
+        const tempData = tempSnap.val();
+        if(tempData){
+          localStorage.setItem('temp_records', JSON.stringify(tempData));
+          if(typeof renderTempHistory==='function') renderTempHistory();
+        }
+        const warabiData = warabiSnap.val();
+        if(warabiData) localStorage.setItem('warabi_records', JSON.stringify(warabiData));
         window.setSyncStatus('online');
         if(typeof showToast==='function') showToast('🔄 同期しました・データを復元しました');
       })
@@ -2715,7 +2756,10 @@ function saveWarabiFactories(list){localStorage.setItem(WARABI_FACTORIES_KEY,JSO
 function loadWarabiCarriers(){try{return JSON.parse(localStorage.getItem(WARABI_CARRIERS_KEY))||WARABI_DEFAULT_CARRIERS;}catch(e){return WARABI_DEFAULT_CARRIERS;}}
 function saveWarabiCarriers(list){localStorage.setItem(WARABI_CARRIERS_KEY,JSON.stringify(list));}
 function loadWarabiRecords(){try{return JSON.parse(localStorage.getItem(WARABI_RECORDS_KEY))||[];}catch(e){return[];}}
-function saveWarabiRecords(list){localStorage.setItem(WARABI_RECORDS_KEY,JSON.stringify(list));}
+function saveWarabiRecords(list){
+  localStorage.setItem(WARABI_RECORDS_KEY,JSON.stringify(list));
+  if(typeof window.firebaseSaveWarabiRecords==='function') window.firebaseSaveWarabiRecords(list);
+}
 
 function initWarabiSection(){
   const now2=new Date();
@@ -2943,6 +2987,10 @@ function saveWarabiEdit(){
 // ===== 冷蔵庫温度記録 =====
 const TEMP_RECORDS_KEY='temp_records';
 function loadTempRecords(){try{return JSON.parse(localStorage.getItem(TEMP_RECORDS_KEY))||[];}catch(e){return[];}}
+function saveTempRecords(list){
+  localStorage.setItem(TEMP_RECORDS_KEY,JSON.stringify(list));
+  if(typeof window.firebaseSaveTempRecords==='function') window.firebaseSaveTempRecords(list);
+}
 function saveTempRecords(list){localStorage.setItem(TEMP_RECORDS_KEY,JSON.stringify(list));}
 function toggleTempSection(){
   const body=document.getElementById("temp-body");
