@@ -384,6 +384,64 @@ function deleteOldRecords(){
   showToast(`🗑 ${total}件の古い記録を削除しました`);
 }
 
+function exportAllData(){
+  const now = new Date();
+  const ts = now.getFullYear()+'-'
+    +String(now.getMonth()+1).padStart(2,'0')+'-'
+    +String(now.getDate()).padStart(2,'0');
+  const data = {
+    _version: 1,
+    _exportedAt: new Date().toISOString(),
+    zaiko_history:        localStorage.getItem('zaiko_history')        || '[]',
+    zaiko_items:          localStorage.getItem('zaiko_items')          || 'null',
+    zaiko_staff_history:  localStorage.getItem('zaiko_staff_history')  || '[]',
+    temp_records:         localStorage.getItem('temp_records')         || '[]',
+    warabi_records:       localStorage.getItem('warabi_records')       || '[]',
+    warabi_items:         localStorage.getItem('warabi_items')         || 'null',
+    warabi_factories:     localStorage.getItem('warabi_factories')     || '[]',
+    warabi_carriers:      localStorage.getItem('warabi_carriers')      || '[]',
+    app_passcode:         localStorage.getItem('app_passcode')         || '',
+    line_share_passcode:  localStorage.getItem('line_share_passcode')  || '',
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '鎌倉在庫バックアップ_' + ts + '.json';
+  a.click();
+  showToast('📤 エクスポートしました');
+}
+
+function importAllData(){
+  if(!confirm('⚠️ インポートすると現在のデータに上書きされます。\n\n続けますか？')) return;
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try{
+        const data = JSON.parse(ev.target.result);
+        if(!data._version){ showToast('❌ 無効なバックアップファイルです'); return; }
+        const keys = [
+          'zaiko_history','zaiko_items','zaiko_staff_history',
+          'temp_records','warabi_records','warabi_items',
+          'warabi_factories','warabi_carriers',
+          'app_passcode','line_share_passcode'
+        ];
+        keys.forEach(k=>{ if(data[k] !== undefined && data[k] !== 'null' && data[k] !== '') localStorage.setItem(k, data[k]); });
+        showToast('✅ インポート完了！ページを再読み込みします');
+        setTimeout(()=>location.reload(), 1200);
+      } catch(err){
+        showToast('❌ 読み込みに失敗しました');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
 function changePasscode(){
   const np = prompt('新しいパスコード（4桁の数字）を入力してください');
   if(!np) return;
@@ -709,6 +767,14 @@ try {
       </button>
       <button onclick="closeSettingsModal();deleteOldRecords();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fce4ec;border:1.5px solid #ef9a9a;border-radius:12px;color:#b71c1c;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🗑</span> 3年以上前の記録を削除
+      </button>
+      <div style="border-top:1px solid var(--border2);margin:4px 0;"></div>
+      <div style="font-size:11px;font-weight:700;color:var(--text3);padding:0 2px;">📦 データ引き継ぎ（アプリ更新時に使用）</div>
+      <button onclick="closeSettingsModal();exportAllData();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:12px;color:#1565c0;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📤</span> データをエクスポート
+      </button>
+      <button onclick="closeSettingsModal();importAllData();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f5e9;border:1.5px solid #81c784;border-radius:12px;color:#2e7d32;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📥</span> データをインポート
       </button>
 
     </div>
