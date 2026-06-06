@@ -67,6 +67,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .num-input{width:58px;height:40px;font-size:18px;font-weight:700;text-align:center;border:1.5px solid var(--border2);border-radius:7px;background:var(--surface);color:var(--text);font-family:inherit;-moz-appearance:textfield;}
 .num-input:focus{outline:none;border-color:var(--green);}
 .num-input::-webkit-outer-spin-button,.num-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.num-input.stock-input{color:#1565c0 !important;font-weight:700;}
 
 
 /* 在庫のみ */
@@ -541,8 +542,12 @@ try {
   let _skipNextTempSync = false;
   window.firebaseSaveTempRecords = function(records){
     _skipNextTempSync = true;
-    set(ref(db, 'zaiko/temp_records'), records)
-      .catch((e)=> { console.error('温度記録保存失敗',e); });
+    // 配列をそのままsetすると Firebaseがオブジェクトに変換する場合があるため
+    // 各レコードをIDをキーとしたオブジェクトとして保存する
+    const obj = {};
+    (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||i] = r; });
+    set(ref(db, 'zaiko/temp_records'), obj)
+      .catch((e)=> { console.error('温度記録保存失敗',e); _skipNextTempSync = false; });
   };
 
   // ── 保存（わらび餅マスター：工場名・運送業者・品目）──
@@ -586,10 +591,15 @@ try {
   // ── 温度記録のリアルタイム同期 ──
   onValue(ref(db, 'zaiko/temp_records'), (snap) => {
     if(_skipNextTempSync){ _skipNextTempSync = false; return; }
-    const data = snap.val();
-    if(data){
+    const raw = snap.val();
+    if(raw){
+      // Firebaseは配列をオブジェクト{0:...,1:...}に変換することがあるため正規化
+      const data = Array.isArray(raw) ? raw : Object.values(raw);
+      // 日付降順に整列
+      data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('temp_records', JSON.stringify(data));
       if(typeof renderTempHistory==='function') renderTempHistory();
+      if(typeof renderTempRecorderList==='function') renderTempRecorderList();
     }
   });
 
@@ -599,6 +609,23 @@ try {
     const data = snap.val();
     if(data){
       localStorage.setItem('warabi_records', JSON.stringify(data));
+      // 今日の入荷をNYUKAに反映
+      if(typeof NYUKA !== 'undefined' && typeof WARABI_ITEM_MAP !== 'undefined'){
+        const todayRecords = data.filter(r => r.date && r.date.replace(/-/g,'/') === (typeof dateStr !== 'undefined' ? dateStr : ''));
+        todayRecords.forEach(r => {
+          const sid = WARABI_ITEM_MAP[r.item];
+          if(sid){
+            if(!NYUKA[sid]) NYUKA[sid] = [];
+            // 重複チェック
+            if(!NYUKA[sid].find(n => n.qty === r.qty && n.staff === r.inspector && n.date === r.date.replace(/-/g,'/'))){
+              NYUKA[sid].push({qty: r.qty, staff: r.inspector, date: r.date.replace(/-/g,'/')});
+            }
+            if(typeof renderNyuka === 'function') renderNyuka(sid);
+            if(typeof calcStock === 'function') calcStock(sid);
+          }
+        });
+      }
+      if(typeof renderWarabiHistory === 'function') renderWarabiHistory();
     }
   });
 
@@ -1529,7 +1556,7 @@ function renderSales(){
           </div>
           <div class="scol">
             <div class="clabel">本日在庫</div>
-            <input class="num-input" type="number" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'';})()}" min="0" step="0.1" inputmode="decimal" placeholder="—" oninput="markEdited(this);calcStock('${it.id}');saveDraft()">
+            <input class="num-input stock-input" type="number" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'';})()}" min="0" step="0.1" inputmode="decimal" placeholder="—" style="color:#1565c0;font-weight:700;" oninput="markEdited(this);calcStock('${it.id}');saveDraft()">
           </div>
           <div class="scol"><div class="clabel">販売</div><input class="num-input" type="number" id="sell_${it.id}" value="${(()=>{const e=document.getElementById('sell_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
           <div class="scol"><div class="clabel">${it.name.includes('釜揚げ箱')?'単品に移行':'無料'}</div><input class="num-input" type="number" id="free_${it.id}" value="${(()=>{const e=document.getElementById('free_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
@@ -2063,7 +2090,10 @@ function execDeleteNyukaHistRow(itemId, src, histDate, entryIdx, uid){
 function toggleNyuka(){}
 function addNyuka(){}
 function nyukaRender(){}
-function renderNyuka(){}
+function renderNyuka(id){
+  if(id) calcStock(id);
+  else SALES.forEach(it=>calcStock(it.id));
+}
 function nyukaDelToday(){}
 function nyukaDelHist(){}
 function showNyukaSummary(){}
@@ -2086,7 +2116,13 @@ function doSave(autoSave=false){
   const warns=SALES.filter(it=>{
     const prev=prevStock(it.id);
     if(prev===null)return false;
-    return($v('stock_'+it.id)+$v('sell_'+it.id)+$v('free_'+it.id))!==prev;
+    const stockEl=document.getElementById('stock_'+it.id);
+    const stockRaw=stockEl?stockEl.value.trim():'';
+    if(stockRaw===''||isNaN(parseFloat(stockRaw)))return false;
+    const stock=parseFloat(stockRaw);
+    const todayNyuka=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
+    const sell=$v('sell_'+it.id), free=$v('free_'+it.id);
+    return (stock+sell+free) !== (prev+todayNyuka);
   });
   // 編集中の場合はその日付で保存、新規なら今日の日付
   const targetDate = editingDate || dateStr;
@@ -2607,9 +2643,11 @@ function restoreLastValues(){
     const stock=last.sales&&last.sales[it.id]!==undefined?last.sales[it.id]:0;
     const sell = isToday && last.sales&&last.sales[it.id+'_sell']!==undefined ? last.sales[it.id+'_sell'] : 0;
     const free = isToday && last.sales&&last.sales[it.id+'_free']!==undefined ? last.sales[it.id+'_free'] : 0;
-    $set('stock_'+it.id, stock);
-    $set('sell_'+it.id,  sell);
-    $set('free_'+it.id,  free);
+    // stock は手入力のため直接 value にセット（$set は空欄を0にしてしまうため使わない）
+    const stockEl = document.getElementById('stock_'+it.id);
+    if(stockEl) stockEl.value = (stock !== '' && stock !== null) ? stock : '';
+    $set('sell_'+it.id, sell);
+    $set('free_'+it.id, free);
     if(!isToday){ NYUKA[it.id]=[]; }
     else if(last.nyuka&&last.nyuka[it.id]) NYUKA[it.id]=[...last.nyuka[it.id]];
     calcStock(it.id);
@@ -2695,9 +2733,11 @@ function restoreDraft(){
   });
   SALES.forEach(it=>{
     if(draft.sales){
-      if(draft.sales[it.id]           !== undefined) $set('stock_'+it.id, draft.sales[it.id]);
-      if(draft.sales[it.id+'_sell']   !== undefined) $set('sell_'+it.id,  draft.sales[it.id+'_sell']);
-      if(draft.sales[it.id+'_free']   !== undefined) $set('free_'+it.id,  draft.sales[it.id+'_free']);
+      // stock は空欄もあるので直接 value にセット
+      const stockEl = document.getElementById('stock_'+it.id);
+      if(stockEl && draft.sales[it.id] !== undefined) stockEl.value = draft.sales[it.id];
+      if(draft.sales[it.id+'_sell'] !== undefined) $set('sell_'+it.id, draft.sales[it.id+'_sell']);
+      if(draft.sales[it.id+'_free'] !== undefined) $set('free_'+it.id, draft.sales[it.id+'_free']);
     }
     if(draft.nyuka && draft.nyuka[it.id]) NYUKA[it.id] = [...draft.nyuka[it.id]];
     calcStock(it.id);
@@ -3115,7 +3155,14 @@ function saveWarabiEdit(){
 
 // ===== 冷蔵庫温度記録 =====
 const TEMP_RECORDS_KEY='temp_records';
-function loadTempRecords(){try{return JSON.parse(localStorage.getItem(TEMP_RECORDS_KEY))||[];}catch(e){return[];}}
+function loadTempRecords(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(TEMP_RECORDS_KEY));
+    if(!raw)return[];
+    const arr=Array.isArray(raw)?raw:Object.values(raw);
+    return arr.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  }catch(e){return[];}
+}
 function saveTempRecords(list){
   localStorage.setItem(TEMP_RECORDS_KEY,JSON.stringify(list));
   if(typeof window.firebaseSaveTempRecords==='function') window.firebaseSaveTempRecords(list);
@@ -3408,11 +3455,16 @@ function saveTempPM(){
 // saveTempRecordは廃止（saveTempAM/PMを使用）
 
 function renderTempHistory(){
-  const ym=document.getElementById('temp-hist-month')?document.getElementById('temp-hist-month').value:'';
-  const el=document.getElementById('temp-history-list'); if(!el)return;
-  const records=loadTempRecords();
-  const filtered=ym?records.filter(r=>r.date.startsWith(ym)):records;
-  if(!filtered.length){el.innerHTML=`<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;return;}
+  const monthEl = document.getElementById('temp-hist-month');
+  const ym = monthEl ? monthEl.value : '';
+  const el = document.getElementById('temp-history-list'); if(!el)return;
+  const records = loadTempRecords();
+  // ym は YYYY-MM 形式、record.date は YYYY-MM-DD 形式なので startsWith で一致
+  const filtered = ym ? records.filter(r => r.date && r.date.startsWith(ym)) : records;
+  if(!filtered.length){
+    el.innerHTML=`<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;
+    return;
+  }
   el.innerHTML=filtered.map(r=>{
     const dp=r.date.split('-'); const dateLabel=dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
     const amRecorder = r.amRecorder||r.recorder||'';
