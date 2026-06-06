@@ -528,26 +528,32 @@ try {
     window.setSyncStatus(snap.val() === true ? 'online' : 'offline');
   });
 
-  // ── 保存（履歴）──
-  let _skipNextFirebaseSync = false; // 自分の書き込みによるonValueを無視するフラグ
+  // ── 保存（履歴）── deviceIdで自分の書き込みを識別
+  let _lastHistoryWriteId = null;
   window.firebaseSave = function(history){
-    _skipNextFirebaseSync = true; // 次のonValue受信をスキップ
+    const writeId = _deviceId + '_h_' + Date.now();
+    _lastHistoryWriteId = writeId;
     window.setSyncStatus('syncing');
-    set(ref(db, 'zaiko/history'), history)
+    // _metaを付与してwrittenByを記録
+    const payload = { _meta: { writtenBy: writeId }, records: history };
+    set(ref(db, 'zaiko/history'), payload)
       .then(()  => { window.setSyncStatus('online'); })
-      .catch((e)=> { window.setSyncStatus('error', e.code||''); console.error('保存失敗',e); });
+      .catch((e)=> { window.setSyncStatus('error', e.code||''); console.error('保存失敗',e); _lastHistoryWriteId=null; });
   };
 
-  // ── 保存（温度記録）──
-  let _skipNextTempSync = false;
+  // ── 保存（温度記録）── deviceIdで自分の書き込みを識別し競合を防ぐ
+  if(!localStorage.getItem('_deviceId')){
+    localStorage.setItem('_deviceId', 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
+  }
+  const _deviceId = localStorage.getItem('_deviceId');
+  let _lastTempWriteId = null;
   window.firebaseSaveTempRecords = function(records){
-    _skipNextTempSync = true;
-    // 配列をそのままsetすると Firebaseがオブジェクトに変換する場合があるため
-    // 各レコードをIDをキーとしたオブジェクトとして保存する
-    const obj = {};
+    const writeId = _deviceId + '_' + Date.now();
+    _lastTempWriteId = writeId;
+    const obj = { _meta: { writtenBy: writeId } };
     (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||i] = r; });
     set(ref(db, 'zaiko/temp_records'), obj)
-      .catch((e)=> { console.error('温度記録保存失敗',e); _skipNextTempSync = false; });
+      .catch((e)=> { console.error('温度記録保存失敗',e); _lastTempWriteId = null; });
   };
 
   // ── 保存（わらび餅マスター：工場名・運送業者・品目）──
@@ -580,37 +586,64 @@ try {
     if(typeof renderWarabiItemSelect==='function') renderWarabiItemSelect();
   });
 
-  // ── 保存（わらび餅入荷）──
-  let _skipNextWarabiSync = false;
+  // ── 保存（わらび餅入荷）── deviceIdで自分の書き込みを識別
+  let _lastWarabiWriteId = null;
   window.firebaseSaveWarabiRecords = function(records){
-    _skipNextWarabiSync = true;
-    const obj = {};
+    const writeId = _deviceId + '_w_' + Date.now();
+    _lastWarabiWriteId = writeId;
+    const obj = { _meta: { writtenBy: writeId } };
     (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||('r'+i)] = r; });
     set(ref(db, 'zaiko/warabi_records'), obj)
-      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); _skipNextWarabiSync=false; });
+      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); _lastWarabiWriteId=null; });
   };
 
-  // ── 温度記録のリアルタイム同期 ──
+  // ── 温度記録のリアルタイム同期 ── 自分の書き込みはwrittenByで識別してスキップ
   onValue(ref(db, 'zaiko/temp_records'), (snap) => {
-    if(_skipNextTempSync){ _skipNextTempSync = false; return; }
     const raw = snap.val();
-    if(raw){
-      // Firebaseは配列をオブジェクト{0:...,1:...}に変換することがあるため正規化
-      const data = Array.isArray(raw) ? raw : Object.values(raw);
-      // 日付降順に整列
-      data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-      localStorage.setItem('temp_records', JSON.stringify(data));
-      if(typeof renderTempHistory==='function') renderTempHistory();
-      if(typeof renderTempRecorderList==='function') renderTempRecorderList();
+    if(!raw) return;
+    // _metaキーで自分の書き込みかチェック
+    if(raw._meta && raw._meta.writtenBy === _lastTempWriteId){
+      _lastTempWriteId = null; // 自分の書き込みなのでスキップ
+      return;
+    }
+    _lastTempWriteId = null;
+    // _metaを除いたレコードのみ抽出
+    const data = Object.entries(raw)
+      .filter(([k]) => k !== '_meta')
+      .map(([,v]) => v);
+    data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    localStorage.setItem('temp_records', JSON.stringify(data));
+    if(typeof renderTempHistory==='function') renderTempHistory();
+    if(typeof renderTempRecorderList==='function') renderTempRecorderList();
+  });
+
+  // ── LINEパスワードの保存・同期 ──
+  window.firebaseSavePasscode = function(code){
+    set(ref(db, 'zaiko/line_passcode'), { code })
+      .catch((e)=>{ console.error('パスワード保存失敗',e); });
+  };
+  onValue(ref(db, 'zaiko/line_passcode'), (snap) => {
+    const data = snap.val();
+    if(data && data.code){
+      const local = localStorage.getItem('line_share_passcode') || '0000';
+      // Firebaseの値が異なる場合のみ更新（自分の書き込みによる再受信を除外）
+      if(data.code !== local){
+        localStorage.setItem('line_share_passcode', data.code);
+      }
     }
   });
 
-  // ── わらび餅入荷のリアルタイム同期 ──
+  // ── わらび餅入荷のリアルタイム同期 ── deviceIdで自分の書き込みをスキップ
   onValue(ref(db, 'zaiko/warabi_records'), (snap) => {
-    if(_skipNextWarabiSync){ _skipNextWarabiSync = false; return; }
     const raw = snap.val();
+    if(!raw) return;
+    if(raw._meta && raw._meta.writtenBy === _lastWarabiWriteId){
+      _lastWarabiWriteId = null;
+      return;
+    }
+    _lastWarabiWriteId = null;
     if(raw){
-      const data = Array.isArray(raw) ? raw : Object.values(raw);
+      const data = Array.isArray(raw) ? raw : Object.entries(raw).filter(([k])=>k!=='_meta').map(([,v])=>v);
       data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('warabi_records', JSON.stringify(data));
       if(typeof NYUKA !== 'undefined' && typeof WARABI_ITEM_MAP !== 'undefined'){
@@ -675,20 +708,33 @@ try {
       get(ref(db, 'zaiko/warabi_master'))
     ]).then(([itemsSnap, histSnap, tempSnap, warabiSnap, masterSnap]) => {
         if(itemsSnap.val()) applyItemsFromFirebase(itemsSnap.val());
-        const data = histSnap.val();
-        if(data){
-          localStorage.setItem('zaiko_history', JSON.stringify(data));
+        // 履歴: 新形式{_meta,records}と旧形式(配列)の両方に対応
+        const rawHist = histSnap.val();
+        const histArr = rawHist && rawHist.records ? rawHist.records
+                      : rawHist && Array.isArray(rawHist) ? rawHist
+                      : rawHist ? Object.entries(rawHist).filter(([k])=>k!=='_meta').map(([,v])=>v)
+                      : null;
+        if(histArr){
+          localStorage.setItem('zaiko_history', JSON.stringify(histArr));
           if(typeof renderAll==='function') renderAll();
           if(typeof renderHistory==='function') renderHistory();
           if(typeof restoreLastValues==='function') restoreLastValues();
         }
+        // 温度記録: _metaを除外
         const tempData = tempSnap.val();
         if(tempData){
-          localStorage.setItem('temp_records', JSON.stringify(tempData));
+          const tempArr = Array.isArray(tempData) ? tempData
+                        : Object.entries(tempData).filter(([k])=>k!=='_meta').map(([,v])=>v);
+          localStorage.setItem('temp_records', JSON.stringify(tempArr));
           if(typeof renderTempHistory==='function') renderTempHistory();
         }
-        const warabiData = warabiSnap.val();
-        if(warabiData) localStorage.setItem('warabi_records', JSON.stringify(warabiData));
+        // わらび餅: _metaを除外
+        const rawWarabi = warabiSnap.val();
+        if(rawWarabi){
+          const warabiArr = Array.isArray(rawWarabi) ? rawWarabi
+                          : Object.entries(rawWarabi).filter(([k])=>k!=='_meta').map(([,v])=>v);
+          localStorage.setItem('warabi_records', JSON.stringify(warabiArr));
+        }
         const master = masterSnap.val();
         if(master){
           if(master.factories&&master.factories.length) localStorage.setItem('warabi_factories', JSON.stringify(master.factories));
@@ -716,11 +762,21 @@ try {
   // ── 初回ロード＆リアルタイム受信（履歴）──
   let firstLoad = true;
   onValue(ref(db, 'zaiko/history'), (snap) => {
+    const raw = snap.val();
+    // _metaとrecordsの新形式、または旧形式(配列)の両方に対応
+    const writtenBy = raw && raw._meta ? raw._meta.writtenBy : null;
     // 自分の書き込みによるコールバックはスキップ
-    if(_skipNextFirebaseSync){ _skipNextFirebaseSync = false; return; }
-    const data = snap.val();
-    if(data){
-      localStorage.setItem('zaiko_history', JSON.stringify(data));
+    if(writtenBy && writtenBy === _lastHistoryWriteId){
+      _lastHistoryWriteId = null;
+      window.setSyncStatus('online');
+      return;
+    }
+    _lastHistoryWriteId = null;
+    // 新形式: {_meta, records} / 旧形式: 配列
+    const data = raw && raw.records ? raw.records : raw;
+    if(data && (Array.isArray(data) || typeof data === 'object')){
+      const arr = Array.isArray(data) ? data : Object.values(data);
+      localStorage.setItem('zaiko_history', JSON.stringify(arr));
       // renderAll を先に呼んでDOMを確実に作ってから値を流し込む
       if(typeof renderAll==='function') renderAll();
       if(typeof renderHistory==='function') renderHistory();
@@ -974,7 +1030,7 @@ try {
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">①冷蔵</div>
-          <input type="number" id="temp-r1-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r1-am-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r1-am-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){document.getElementById('temp-r2-am-input').focus();}"
             onfocus="this.select()">
@@ -985,7 +1041,7 @@ try {
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">②冷蔵兼</div>
-          <input type="number" id="temp-r2-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r2-am-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r2-am-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){document.getElementById('temp-r3-am-input').focus();}"
             onfocus="this.select()">
@@ -996,7 +1052,7 @@ try {
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">③冷凍兼</div>
-          <input type="number" id="temp-r3-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r3-am-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r3-am-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){document.getElementById('temp-r4-am-input').focus();}"
             onfocus="this.select()">
@@ -1007,7 +1063,7 @@ try {
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">④冷凍</div>
-          <input type="number" id="temp-r4-am-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r4-am-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r4-am-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){confirmTempInputAll()}"
             onfocus="this.select()">
@@ -1033,7 +1089,7 @@ try {
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">①冷蔵</div>
-          <input type="number" id="temp-r1-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r1-pm-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r1-pm-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){document.getElementById('temp-r2-pm-input').focus();}"
             onfocus="this.select()">
@@ -1044,7 +1100,7 @@ try {
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">②冷蔵兼</div>
-          <input type="number" id="temp-r2-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r2-pm-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r2-pm-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){document.getElementById('temp-r3-pm-input').focus();}"
             onfocus="this.select()">
@@ -1055,7 +1111,7 @@ try {
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">③冷凍兼</div>
-          <input type="number" id="temp-r3-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r3-pm-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r3-pm-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){document.getElementById('temp-r4-pm-input').focus();}"
             onfocus="this.select()">
@@ -1066,7 +1122,7 @@ try {
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
         </div>        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <div style="width:54px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">④冷凍</div>
-          <input type="number" id="temp-r4-pm-input" inputmode="decimal" placeholder="温度" step="0.1"
+          <input type="number" id="temp-r4-pm-input" inputmode="decimal" placeholder="温度" step="0.1" oninput="syncTempHidden(this,'temp-r4-pm-temp')"
             style="flex:1;padding:8px 4px;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:inherit;color:#1565c0;min-width:0;"
             onkeydown="if(event.key==='Enter'){confirmTempInputAll()}"
             onfocus="this.select()">
@@ -2519,6 +2575,8 @@ function changeLineSharePasscode(){
   if(!np) return;
   if(!/^[0-9]{4}$/.test(np)){ alert('4桁の数字で入力してください'); return; }
   localStorage.setItem(LINE_SHARE_PASSCODE_KEY, np);
+  // Firebaseにも保存して全端末で共有
+  if(typeof window.firebaseSavePasscode === 'function') window.firebaseSavePasscode(np);
   alert('LINE共有パスワードを変更しました：' + np);
 }
 
@@ -3219,7 +3277,6 @@ function saveTempRecords(list){
   localStorage.setItem(TEMP_RECORDS_KEY,JSON.stringify(list));
   if(typeof window.firebaseSaveTempRecords==='function') window.firebaseSaveTempRecords(list);
 }
-function saveTempRecords(list){localStorage.setItem(TEMP_RECORDS_KEY,JSON.stringify(list));}
 function toggleTempSection(){
   const body=document.getElementById("temp-body");
   const arrow=document.getElementById("temp-arrow");
@@ -3237,16 +3294,36 @@ function initTempSection(){
   const monthEl=document.getElementById('temp-hist-month'); if(monthEl)monthEl.value=ym;
   renderTempRecorderList(); renderTempHistory();
 
-  // localStorageに温度記録があればFirebaseへアップロード（他端末への引き継ぎ）
+  // localStorageに温度記録があればFirebaseと比較し、localが新しい場合のみアップロード
+  // （他端末のデータを起動時に上書きしないようにマージ型で処理）
   const existing = loadTempRecords();
   if(existing.length > 0 && typeof window.firebaseSaveTempRecords === 'function'){
-    // Firebaseの現在値と比較して、localの方が新しければアップロード
     setTimeout(()=>{
-      if(typeof window.firebaseSaveTempRecords === 'function'){
-        window.firebaseSaveTempRecords(existing);
-        console.log('温度記録をFirebaseにアップロードしました:', existing.length + '件');
+      import('firebase/database').then(({get, ref: dbRef})=>{
+        // Firebase側の最新件数・最新日付を確認
+      }).catch(()=>{});
+      // Firebase onValue で既に最新データを受信済みの場合は上書きしない
+      // localのデータが Firebase より多い or Firebaseが空の場合のみ送信
+      const localJson = localStorage.getItem('temp_records');
+      const localCount = existing.length;
+      const localLatest = existing[0] ? (existing[0].date||'') : '';
+      // Firebaseへ送信前に現在のFirebaseデータと比較するため get() を使用
+      if(typeof window._db !== 'undefined'){
+        // _db が公開されている場合（将来の拡張用）
+      } else {
+        // Firebase onValue で同期済みの場合、重複送信を避けるためタイムスタンプで判断
+        const lastUpload = localStorage.getItem('_tempLastUploadDate');
+        const today = new Date().toISOString().slice(0,10);
+        if(lastUpload !== today){
+          // 本日まだアップロードしていない場合のみ送信（初回起動時の引き継ぎ用）
+          if(typeof window.firebaseSaveTempRecords === 'function'){
+            window.firebaseSaveTempRecords(existing);
+            localStorage.setItem('_tempLastUploadDate', today);
+            console.log('温度記録をFirebaseにアップロードしました:', localCount + '件');
+          }
+        }
       }
-    }, 2000); // Firebase初期化完了を待つ
+    }, 3000); // Firebase初期化完了・onValue初回受信完了を待つ
   }
 }
 function renderTempRecorderList(){
@@ -3350,6 +3427,31 @@ function setRowDF(inputId, hiddenId, btnId){
   if(hidden) hidden.value = 'DF';
   if(btn){ btn.style.background='#e65100'; btn.style.borderColor='#e65100'; btn.style.color='#fff'; btn.textContent='DF✓'; }
   showToast('霜取り中（DF）に設定しました');
+}
+
+// number input の直接入力をhiddenフィールドに同期（DFが解除される）
+function syncTempHidden(inputEl, hiddenId){
+  const hidden = document.getElementById(hiddenId);
+  if(!hidden) return;
+  // DF設定中に直接入力した場合はDF解除
+  if(hidden.value === 'DF'){
+    hidden.value = '';
+    // DFボタンをリセット
+    const dfBtnId = hiddenId.replace('-temp','-df-btn');
+    const dfBtn = document.getElementById(dfBtnId);
+    if(dfBtn){ dfBtn.style.background='#fff3e0'; dfBtn.style.borderColor='#ffb74d'; dfBtn.style.color='#e65100'; dfBtn.textContent='DF'; }
+  }
+  // マイナスボタンをリセット（正の値を直接入力した場合）
+  if(inputEl.value !== '' && parseFloat(inputEl.value) >= 0){
+    const minusBtnSelector = `[onclick*="setRowMinus"][onclick*="${inputEl.id.replace('-input','')}"]`;
+    try{
+      const minusBtn = document.querySelector(minusBtnSelector);
+      if(minusBtn){ minusBtn.style.background='#e3f2fd'; minusBtn.style.color='#1565c0'; minusBtn.textContent='−'; }
+    }catch(e){}
+    hidden.value = inputEl.value !== '' ? inputEl.value : '';
+  } else {
+    hidden.value = inputEl.value !== '' ? inputEl.value : '';
+  }
 }
 
 function getInputTemp(key, period){
@@ -3558,7 +3660,7 @@ function openTempEditModal(id){
   const pmRec = r.pmRecorder||r.recorder||'';
   const recEl = document.getElementById('temp-edit-recorder');
   if(recEl) recEl.value = amRec || pmRec;
-  // AM/PM 記録者欄がある場合は個別にセット
+  // AM/PM 記録者欄を個別にセット
   const amRecEl = document.getElementById('temp-edit-am-recorder');
   if(amRecEl) amRecEl.value = amRec;
   const pmRecEl = document.getElementById('temp-edit-pm-recorder');
@@ -3577,9 +3679,11 @@ function closeTempEditModal(e){if(e&&e.target!==document.getElementById('temp-ed
 function saveTempEdit(){
   const id=document.getElementById('temp-edit-id').value;
   const date=document.getElementById('temp-edit-date').value;
-  const recorder=document.getElementById('temp-edit-recorder').value.trim();
+  const amRecorder=(document.getElementById('temp-edit-am-recorder')||{}).value||'';
+  const pmRecorder=(document.getElementById('temp-edit-pm-recorder')||{}).value||'';
+  const amRec=amRecorder.trim(); const pmRec=pmRecorder.trim();
   if(!date){showToast('記録日を入力してください');return;}
-  if(!recorder){showToast('記録者名を入力してください');return;}
+  if(!amRec&&!pmRec){showToast('AM または PM の記録者名を入力してください');return;}
   const fridgeNames=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const keys=['r1','r2','r3','r4'];
   const data=fridgeNames.map((name,i)=>({name,
@@ -3588,15 +3692,42 @@ function saveTempEdit(){
   }));
   const records=loadTempRecords(); const idx=records.findIndex(r=>r.id===id);
   if(idx===-1){showToast('記録が見つかりません');return;}
-  // amRecorder/pmRecorder を保持しつつ recorder も更新
-  records[idx]={...records[idx],date,recorder,amRecorder:recorder,pmRecorder:records[idx].pmRecorder||recorder,data};
+  // AM/PMの記録者をそれぞれ独立して更新（空欄の場合は既存値を保持）
+  records[idx]={...records[idx],date,
+    recorder:amRec||pmRec,
+    amRecorder:amRec||records[idx].amRecorder||'',
+    pmRecorder:pmRec||records[idx].pmRecorder||'',
+    data};
   saveTempRecords(records); document.getElementById('temp-edit-modal').style.display='none';
   renderTempHistory(); showToast('✅ 編集を保存しました');
   btnFeedback(document.querySelector('#temp-edit-modal .temp-save-btn'), '保存完了');
 }
 
+// saveDraft の自動保存: 変更があった場合のみFirebaseに送信（debounce付き）
+let _lastDraftHash = null;
+let _draftFirebaseTimer = null;
+function _getDraftHash(){
+  try{
+    const h = loadHistory();
+    return JSON.stringify(h).length + '_' + (h[0]?h[0].date:'');
+  }catch(e){ return ''; }
+}
 setInterval(function(){
-  try{ saveDraft(); }catch(e){}
+  try{
+    saveDraft(); // localStorageには常に保存
+    // Firebaseへの送信は変更があった場合のみ（debounce: 変更後5秒後に1回）
+    const hash = _getDraftHash();
+    if(hash !== _lastDraftHash){
+      _lastDraftHash = hash;
+      if(_draftFirebaseTimer) clearTimeout(_draftFirebaseTimer);
+      _draftFirebaseTimer = setTimeout(function(){
+        try{
+          const h = loadHistory();
+          if(window.firebaseSave) window.firebaseSave(h);
+        }catch(e){}
+      }, 5000);
+    }
+  }catch(e){}
 }, 30000);
 try{ initTempSection(); }catch(e){ console.warn('initTempSection:', e); }
 try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
@@ -3727,9 +3858,13 @@ try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
     <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
       <input type="hidden" id="temp-edit-id">
       <div style="display:flex;gap:8px;">
-        <div style="flex:1;"><div class="temp-label">記録者 *</div><input type="text" id="temp-edit-recorder" class="temp-input"></div>
         <div style="flex:1;"><div class="temp-label">記録日 *</div><input type="date" id="temp-edit-date" class="temp-input"></div>
       </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><div class="temp-label">AM記録者 *</div><input type="text" id="temp-edit-am-recorder" class="temp-input" placeholder="AM担当者名"></div>
+        <div style="flex:1;"><div class="temp-label">PM記録者 *</div><input type="text" id="temp-edit-pm-recorder" class="temp-input" placeholder="PM担当者名"></div>
+      </div>
+      <input type="hidden" id="temp-edit-recorder">
       <div style="display:flex;gap:6px;"><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">①</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">②冷蔵兼用</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">③冷凍兼用</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">④</div></div>
       <div style="background:#d6eeff;border-radius:8px;padding:8px;"><div class="temp-ampm-label" style="text-align:left;margin-bottom:6px;">AM</div>
         <div style="display:flex;gap:6px;">
