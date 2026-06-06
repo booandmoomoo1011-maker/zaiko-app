@@ -584,8 +584,10 @@ try {
   let _skipNextWarabiSync = false;
   window.firebaseSaveWarabiRecords = function(records){
     _skipNextWarabiSync = true;
-    set(ref(db, 'zaiko/warabi_records'), records)
-      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); });
+    const obj = {};
+    (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||('r'+i)] = r; });
+    set(ref(db, 'zaiko/warabi_records'), obj)
+      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); _skipNextWarabiSync=false; });
   };
 
   // ── 温度記録のリアルタイム同期 ──
@@ -606,17 +608,17 @@ try {
   // ── わらび餅入荷のリアルタイム同期 ──
   onValue(ref(db, 'zaiko/warabi_records'), (snap) => {
     if(_skipNextWarabiSync){ _skipNextWarabiSync = false; return; }
-    const data = snap.val();
-    if(data){
+    const raw = snap.val();
+    if(raw){
+      const data = Array.isArray(raw) ? raw : Object.values(raw);
+      data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('warabi_records', JSON.stringify(data));
-      // 今日の入荷をNYUKAに反映
       if(typeof NYUKA !== 'undefined' && typeof WARABI_ITEM_MAP !== 'undefined'){
         const todayRecords = data.filter(r => r.date && r.date.replace(/-/g,'/') === (typeof dateStr !== 'undefined' ? dateStr : ''));
         todayRecords.forEach(r => {
           const sid = WARABI_ITEM_MAP[r.item];
           if(sid){
             if(!NYUKA[sid]) NYUKA[sid] = [];
-            // 重複チェック
             if(!NYUKA[sid].find(n => n.qty === r.qty && n.staff === r.inspector && n.date === r.date.replace(/-/g,'/'))){
               NYUKA[sid].push({qty: r.qty, staff: r.inspector, date: r.date.replace(/-/g,'/')});
             }
@@ -938,7 +940,7 @@ try {
         style="width:100%;font-size:16px;padding:12px 14px;border:1.5px solid var(--border2);border-radius:10px;font-family:inherit;background:var(--surface);color:var(--text);margin-bottom:14px;"
         onkeydown="if(event.key==='Enter')submitStaffModal()">
       <datalist id="staff-list-modal"></datalist>
-      <button onclick="submitStaffModal()" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">✅ 入力完了・保存</button>
+      <button onclick="submitStaffModal()" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">☑️ 最終確認・完了</button>
     </div>
   </div>
 </div>
@@ -1166,7 +1168,7 @@ try {
     <div class="note-label">備考</div>
     <div style="display:flex;gap:8px;align-items:stretch;">
       <textarea id="note" rows="1" placeholder="備考（任意）" style="flex:0 0 40%;font-size:12px;padding:6px 8px;resize:none;min-height:48px;" oninput="saveDraft()"></textarea>
-      <button class="complete-inline-btn" id="complete-btn" onclick="confirmComplete()" style="flex:1;font-size:16px;padding:0 10px;min-height:48px;border-radius:12px;">✅ 入力完了・保存</button>
+      <button class="complete-inline-btn" id="complete-btn" onclick="confirmComplete()" style="flex:1;font-size:16px;padding:0 10px;min-height:48px;border-radius:12px;">☑️ 最終確認・完了</button>
     </div>
 
   </div>
@@ -1496,7 +1498,7 @@ function editRecord(idx){
   completed=false;
   const btn=document.getElementById('complete-btn');
   btn.classList.remove('confirmed');
-  btn.textContent='✅ 入力完了・保存';
+  btn.textContent='☑️ 最終確認・完了';
   clearEdited();
   checkStaffHint();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -2136,7 +2138,7 @@ function doSave(autoSave=false){
     hasWarn:warns.length>0,
     forceCompleted:_isForceComplete||false,
     warnItems:_isForceComplete?warns.map(function(it){return it.id;}):[],
-
+    _autoSaved: false,
     editLog:[] // 編集履歴
   };
   SIMPLE.forEach(it=>{record.simple[it.id]=$v('simple_'+it.id);});
@@ -2334,7 +2336,8 @@ function renderHistory(){
           📅 ${fmtDate(r.date)}${hasEdit?'<span class="diff-toggle-hint">✏️</span>':''}
         </button>
         <span class="hist-time">${r.time||''}</span>
-        ${r.staff?`<span class="hist-staff">👤 ${esc(r.staff)}</span>`:''}
+        ${r.staff?`<span class="hist-staff">👤 ${esc(r.staff==='（入力中）'?'入力中':r.staff)}</span>`:''}
+        ${r._autoSaved&&!r.forceCompleted?'<span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 7px;border-radius:8px;font-weight:700;">📝 入力中</span>':''}
         ${r.hasWarn?'<span class="hist-warn-badge">⚠️ 差異あり</span>':''}
         <button class="hist-edit-btn" onclick="editRecord(${realIdx})">✏️ 編集</button>
       </div>
@@ -2579,7 +2582,7 @@ function resetToday(){
   completed=false;
   editingDate=null;
   const btn=document.getElementById('complete-btn');
-  if(btn){btn.classList.remove('confirmed');btn.textContent='✅ 入力完了・保存';}
+  if(btn){btn.classList.remove('confirmed');btn.textContent='☑️ 最終確認・完了';}
   clearEdited();
   clearDraft(); // [修正] リセット時も下書きを削除
   showToast('🔄 今日の入力をリセットしました');
@@ -2674,6 +2677,7 @@ function restoreLastValues(){
 // ===== 下書き自動保存（更新・リロード対策）=====
 const DRAFT_KEY = 'zaiko_draft_' + dateStr.replace(/\//g, '-');
 
+let _autoSaveTimer = null;
 function saveDraft(){
   try{
     const draft = {
@@ -2695,14 +2699,55 @@ function saveDraft(){
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
   }catch(e){
     console.warn('saveDraft failed:', e);
-    // 古い下書きを削除して再試行
     try{
       Object.keys(localStorage).forEach(k=>{
         if(k.startsWith('zaiko_draft_') && k!==DRAFT_KEY) localStorage.removeItem(k);
       });
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    }catch(e2){ showToast('⚠️ 下書き保存に失敗しました'); }
+    }catch(e2){}
   }
+
+  // 入力から1.5秒後にFirebaseへ自動保存（debounce）
+  if(_autoSaveTimer) clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(()=>{ autoSaveToFirebase(); }, 1500);
+}
+
+function autoSaveToFirebase(){
+  const t = new Date();
+  const timeStr = t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
+  const staff = document.getElementById('staff') ? document.getElementById('staff').value.trim() : '';
+  const simple = {}, sales = {}, nyuka = {};
+  SIMPLE.forEach(it=>{ simple[it.id] = $v('simple_'+it.id); });
+  SALES.forEach(it=>{
+    const stockEl = document.getElementById('stock_'+it.id);
+    sales[it.id]           = stockEl && stockEl.value !== '' ? parseFloat(stockEl.value)||0 : 0;
+    sales[it.id+'_sell']   = $v('sell_'+it.id);
+    sales[it.id+'_free']   = $v('free_'+it.id);
+    nyuka[it.id]           = [...(NYUKA[it.id]||[])];
+  });
+  const h = loadHistory();
+  const idx = h.findIndex(r => r.date === dateStr);
+  const record = {
+    date: dateStr,
+    time: timeStr,
+    staff: staff || '（入力中）',
+    simple, sales, nyuka,
+    simpleItems: SIMPLE.map(it=>({id:it.id,name:it.name})),
+    salesItems:  SALES.map(it=>({id:it.id,name:it.name})),
+    note: document.getElementById('note') ? document.getElementById('note').value.trim() : '',
+    uber: UBER.filter(u=>!u._empty),
+    hasWarn: false,
+    forceCompleted: false,
+    warnItems: [],
+    editLog: idx >= 0 ? (h[idx].editLog||[]) : [],
+    _autoSaved: true, // 自動保存フラグ
+  };
+  if(idx >= 0){
+    h[idx] = {...h[idx], ...record, editLog: h[idx].editLog||[]};
+  } else {
+    h.unshift(record);
+  }
+  localStorage.setItem('zaiko_history', JSON.stringify(h));
+  if(window.firebaseSave) window.firebaseSave(h);
 }
 
 function loadDraft(){
@@ -2911,7 +2956,14 @@ function saveWarabiCarriers(list){
   localStorage.setItem(WARABI_CARRIERS_KEY,JSON.stringify(list));
   if(typeof window.firebaseSaveWarabiMaster==='function') window.firebaseSaveWarabiMaster();
 }
-function loadWarabiRecords(){try{return JSON.parse(localStorage.getItem(WARABI_RECORDS_KEY))||[];}catch(e){return[];}}
+function loadWarabiRecords(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(WARABI_RECORDS_KEY));
+    if(!raw)return[];
+    const arr=Array.isArray(raw)?raw:Object.values(raw);
+    return arr.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  }catch(e){return[];}
+}
 function saveWarabiRecords(list){
   localStorage.setItem(WARABI_RECORDS_KEY,JSON.stringify(list));
   if(typeof window.firebaseSaveWarabiRecords==='function') window.firebaseSaveWarabiRecords(list);
