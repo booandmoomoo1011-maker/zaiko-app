@@ -3236,17 +3236,8 @@ function initTempSection(){
   const monthEl=document.getElementById('temp-hist-month'); if(monthEl)monthEl.value=ym;
   renderTempRecorderList(); renderTempHistory();
 
-  // localStorageに温度記録があればFirebaseへアップロード（他端末への引き継ぎ）
-  const existing = loadTempRecords();
-  if(existing.length > 0 && typeof window.firebaseSaveTempRecords === 'function'){
-    // Firebaseの現在値と比較して、localの方が新しければアップロード
-    setTimeout(()=>{
-      if(typeof window.firebaseSaveTempRecords === 'function'){
-        window.firebaseSaveTempRecords(existing);
-        console.log('温度記録をFirebaseにアップロードしました:', existing.length + '件');
-      }
-    }, 2000); // Firebase初期化完了を待つ
-  }
+  // 起動時の自動アップロードは行わない（他端末データ上書き防止）
+  // FirebaseのonValueで自動的に最新データが受信される
 }
 function renderTempRecorderList(){
   const records=loadTempRecords();
