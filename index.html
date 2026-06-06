@@ -2191,11 +2191,11 @@ function renderHistory(){
     const isYesterday=r.date===ydStr;
 
     // フォントサイズ倍率
-    const nameSz  = isToday?'22px': isYesterday?'18px':'12px';
-    const valSz   = isToday?'22px': isYesterday?'18px':'13px';
-    const subSz   = isToday?'22px': isYesterday?'18px':'12px';
-    const unitSz  = isToday?'18px': isYesterday?'15px':'10px';
-    const labelSz = isToday?'18px': isYesterday?'14px':'11px';
+    const nameSz  = isToday?'22px': isYesterday?'22px':'12px';
+    const valSz   = isToday?'22px': isYesterday?'22px':'13px';
+    const subSz   = isToday?'22px': isYesterday?'22px':'12px';
+    const unitSz  = isToday?'16px': isYesterday?'16px':'10px';
+    const labelSz = isToday?'16px': isYesterday?'16px':'11px';
 
     // 在庫数のみ（サイズ適用）
     let stblT=`<div class="htbl-section"><div class="htbl-label" style="font-size:${labelSz};">在庫数のみ</div><div class="hlist">`;
