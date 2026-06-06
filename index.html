@@ -545,6 +545,36 @@ try {
       .catch((e)=> { console.error('温度記録保存失敗',e); });
   };
 
+  // ── 保存（わらび餅マスター：工場名・運送業者・品目）──
+  window.firebaseSaveWarabiMaster = function(){
+    const master = {
+      factories: JSON.parse(localStorage.getItem('warabi_factories')||'[]'),
+      carriers:  JSON.parse(localStorage.getItem('warabi_carriers') ||'[]'),
+      items:     JSON.parse(localStorage.getItem('warabi_items')    ||'null'),
+    };
+    set(ref(db, 'zaiko/warabi_master'), master)
+      .catch((e)=> { console.error('わらびマスター保存失敗',e); });
+  };
+
+  // ── わらび餅マスターのリアルタイム同期 ──
+  onValue(ref(db, 'zaiko/warabi_master'), (snap) => {
+    const data = snap.val();
+    if(!data) return;
+    if(data.factories && data.factories.length){
+      localStorage.setItem('warabi_factories', JSON.stringify(data.factories));
+    }
+    if(data.carriers && data.carriers.length){
+      localStorage.setItem('warabi_carriers', JSON.stringify(data.carriers));
+    }
+    if(data.items){
+      localStorage.setItem('warabi_items', JSON.stringify(data.items));
+    }
+    // 選択欄を再描画
+    if(typeof renderWarabiFactorySelect==='function') renderWarabiFactorySelect();
+    if(typeof renderWarabiCarrierSelect==='function') renderWarabiCarrierSelect();
+    if(typeof renderWarabiItemSelect==='function') renderWarabiItemSelect();
+  });
+
   // ── 保存（わらび餅入荷）──
   let _skipNextWarabiSync = false;
   window.firebaseSaveWarabiRecords = function(records){
@@ -612,8 +642,9 @@ try {
       get(ref(db, 'zaiko/items')),
       get(ref(db, 'zaiko/history')),
       get(ref(db, 'zaiko/temp_records')),
-      get(ref(db, 'zaiko/warabi_records'))
-    ]).then(([itemsSnap, histSnap, tempSnap, warabiSnap]) => {
+      get(ref(db, 'zaiko/warabi_records')),
+      get(ref(db, 'zaiko/warabi_master'))
+    ]).then(([itemsSnap, histSnap, tempSnap, warabiSnap, masterSnap]) => {
         if(itemsSnap.val()) applyItemsFromFirebase(itemsSnap.val());
         const data = histSnap.val();
         if(data){
@@ -629,6 +660,15 @@ try {
         }
         const warabiData = warabiSnap.val();
         if(warabiData) localStorage.setItem('warabi_records', JSON.stringify(warabiData));
+        const master = masterSnap.val();
+        if(master){
+          if(master.factories&&master.factories.length) localStorage.setItem('warabi_factories', JSON.stringify(master.factories));
+          if(master.carriers&&master.carriers.length)   localStorage.setItem('warabi_carriers',  JSON.stringify(master.carriers));
+          if(master.items)                               localStorage.setItem('warabi_items',     JSON.stringify(master.items));
+          if(typeof renderWarabiFactorySelect==='function') renderWarabiFactorySelect();
+          if(typeof renderWarabiCarrierSelect==='function') renderWarabiCarrierSelect();
+          if(typeof renderWarabiItemSelect==='function') renderWarabiItemSelect();
+        }
         window.setSyncStatus('online');
         if(typeof showToast==='function') showToast('🔄 同期しました・データを復元しました');
       })
@@ -1601,7 +1641,20 @@ function calcStock(id){
   updateWarnBox();
 }
 
-function updateWarnBox(){}
+function updateWarnBox(){
+  const warnItems = SALES.filter(it=>{
+    const el = document.getElementById('diff_'+it.id);
+    return el && el.classList.contains('warn');
+  });
+  const box = document.querySelector('.warn-box');
+  if(!box) return;
+  if(warnItems.length > 0){
+    box.style.display='block';
+    box.textContent = '⚠️ 差異あり：' + warnItems.map(it=>it.name).join('・');
+  } else {
+    box.style.display='none';
+  }
+}
 
 // 全品目のcalcStockを実行
 function refreshAllStock(){
@@ -2163,9 +2216,15 @@ function renderHistory(){
     stbl2+=`</div></div>`;
     const uberTotal=(r.uber&&r.uber.length)?r.uber.reduce((s,u)=>s+u.amount,0):0;
     const uberEntries=r.uber&&r.uber.length?r.uber:[];
+    const isNoTrade = uberEntries.length===1 && uberEntries[0].noTrade;
+    const uberBody = isNoTrade
+      ? '<span style="color:#ce93d8;">🚫 本日取引無し</span>'
+      : uberEntries.length
+        ? uberEntries.map(u=>'¥'+u.amount.toLocaleString()+'('+u.time+')').join(' / ')
+        : '記録なし';
     const uberHtml=`<div style="margin-bottom:4px;padding:5px 10px;background:#1a1a1a;border-radius:8px;font-size:12px;display:flex;align-items:center;gap:8px;">
       <span style="color:#06C167;font-weight:700;">🛵 Uber Eats</span>
-      <span style="color:#ccc;flex:1;">${uberEntries.length?uberEntries.map(u=>'¥'+u.amount.toLocaleString()+'('+u.time+')').join(' / '):'記録なし'}</span>
+      <span style="color:#ccc;flex:1;">${uberBody}</span>
       <strong style="color:#06C167;white-space:nowrap;">合計 ¥${uberTotal.toLocaleString()}</strong>
     </div>`;
     const noteHtml=r.note?`<div class="hist-note">📝 ${esc(r.note)}</div>`:'';
@@ -2244,7 +2303,7 @@ function renderHistory(){
         <button class="hist-edit-btn" onclick="editRecord(${realIdx})">✏️ 編集</button>
       </div>
       ${diffPopupHtml}
-      ${stblT}${stbl2T}${uberHtml}${noteHtml}
+      ${(isToday||isYesterday) ? stblT+stbl2T : stbl+stbl2}${uberHtml}${noteHtml}
     </div></div>`;
   }).join('');
 }
@@ -2589,7 +2648,8 @@ function saveDraft(){
     };
     SIMPLE.forEach(it=>{ draft.simple[it.id] = $v('simple_'+it.id); });
     SALES.forEach(it=>{
-      draft.sales[it.id]         = $v('stock_'+it.id);
+      const stockEl = document.getElementById('stock_'+it.id);
+      draft.sales[it.id]         = stockEl ? stockEl.value : '';
       draft.sales[it.id+'_sell'] = $v('sell_'+it.id);
       draft.sales[it.id+'_free'] = $v('free_'+it.id);
       draft.nyuka[it.id]         = [...(NYUKA[it.id]||[])];
@@ -2797,11 +2857,20 @@ const WARABI_DEFAULT_ITEMS=['わらび餅シート','スティック','釜揚げ
 const WARABI_DEFAULT_CARRIERS=['ヤマト運輸','佐川急便','日本郵便','西濃運輸','福山通運'];
 
 function loadWarabiItems(){try{return JSON.parse(localStorage.getItem(WARABI_ITEMS_KEY))||WARABI_DEFAULT_ITEMS;}catch(e){return WARABI_DEFAULT_ITEMS;}}
-function saveWarabiItems(list){localStorage.setItem(WARABI_ITEMS_KEY,JSON.stringify(list));}
+function saveWarabiItems(list){
+  localStorage.setItem(WARABI_ITEMS_KEY,JSON.stringify(list));
+  if(typeof window.firebaseSaveWarabiMaster==='function') window.firebaseSaveWarabiMaster();
+}
 function loadWarabiFactories(){try{return JSON.parse(localStorage.getItem(WARABI_FACTORIES_KEY))||[];}catch(e){return[];}}
-function saveWarabiFactories(list){localStorage.setItem(WARABI_FACTORIES_KEY,JSON.stringify(list));}
+function saveWarabiFactories(list){
+  localStorage.setItem(WARABI_FACTORIES_KEY,JSON.stringify(list));
+  if(typeof window.firebaseSaveWarabiMaster==='function') window.firebaseSaveWarabiMaster();
+}
 function loadWarabiCarriers(){try{return JSON.parse(localStorage.getItem(WARABI_CARRIERS_KEY))||WARABI_DEFAULT_CARRIERS;}catch(e){return WARABI_DEFAULT_CARRIERS;}}
-function saveWarabiCarriers(list){localStorage.setItem(WARABI_CARRIERS_KEY,JSON.stringify(list));}
+function saveWarabiCarriers(list){
+  localStorage.setItem(WARABI_CARRIERS_KEY,JSON.stringify(list));
+  if(typeof window.firebaseSaveWarabiMaster==='function') window.firebaseSaveWarabiMaster();
+}
 function loadWarabiRecords(){try{return JSON.parse(localStorage.getItem(WARABI_RECORDS_KEY))||[];}catch(e){return[];}}
 function saveWarabiRecords(list){
   localStorage.setItem(WARABI_RECORDS_KEY,JSON.stringify(list));
