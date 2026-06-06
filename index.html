@@ -857,8 +857,8 @@ try {
       <button onclick="closeSettingsModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#fff;opacity:.8;">✕</button>
     </div>
     <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
-      <button onclick="closeSettingsModal();shareToLine();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#06c755;border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">📲</span> LINEで共有
+      <button onclick="closeSettingsModal();showNyukaHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#ede7f6;border:1.5px solid #b39ddb;border-radius:12px;color:#4527a0;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📦</span> 入荷履歴
       </button>
       <button onclick="closeSettingsModal();showUberModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f0ff;border:1.5px solid #99b8f0;border-radius:12px;color:#1a3f8a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🛵</span> 月間売上
@@ -866,25 +866,16 @@ try {
       <button onclick="closeSettingsModal();toggleEditMode();" id="settings-edit-btn" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#f5f5ef;border:1.5px solid var(--border2);border-radius:12px;color:var(--text2);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">✏️</span> 品目編集
       </button>
-      <button onclick="closeSettingsModal();showNyukaHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f7f0;border:1.5px solid #7dd4a8;border-radius:12px;color:#1a5f3a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">📦</span> 入荷履歴
-      </button>
-      <button onclick="closeSettingsModal();changePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff3e0;border:1.5px solid #ffb74d;border-radius:12px;color:#e65100;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">🔑</span> パスワード変更
-      </button>
-      <button onclick="closeSettingsModal();changeLineSharePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff0a0;border:1.5px solid #f5c800;border-radius:12px;color:#5a4000;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">📲</span> LINE共有パスワード変更
-      </button>
       <button onclick="closeSettingsModal();deleteOldRecords();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fce4ec;border:1.5px solid #ef9a9a;border-radius:12px;color:#b71c1c;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🗑</span> 3年以上前の記録を削除
       </button>
-      <div style="border-top:1px solid var(--border2);margin:4px 0;"></div>
-      <div style="font-size:11px;font-weight:700;color:var(--text3);padding:0 2px;">📦 データ引き継ぎ（アプリ更新時に使用）</div>
-      <button onclick="closeSettingsModal();exportAllData();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:12px;color:#1565c0;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">📤</span> データをエクスポート
+
+      <button onclick="closeSettingsModal();changeLineSharePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff0a0;border:1.5px solid #f5c800;border-radius:12px;color:#5a4000;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📲</span> LINE共有パスワード変更
       </button>
-      <button onclick="closeSettingsModal();importAllData();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f5e9;border:1.5px solid #81c784;border-radius:12px;color:#2e7d32;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
-        <span style="font-size:20px;">📥</span> データをインポート
+
+      <button onclick="closeSettingsModal();shareToLine();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#06c755;border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">📲</span> LINEで共有
       </button>
 
     </div>
@@ -903,10 +894,12 @@ try {
     <!-- フィルター -->
     <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;background:var(--surface);">
       <input type="month" id="nyuka-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderNyukaHistory()">
-      <select id="nyuka-history-item" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderNyukaHistory()">
+      <select id="nyuka-history-item" style="display:none;" onchange="renderNyukaHistory()">
         <option value="">全品目</option>
       </select>
     </div>
+    <!-- 品目選択ボタン（縦並び） -->
+    <div id="nyuka-item-buttons" style="padding:10px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surface);border-bottom:1px solid var(--border2);max-height:40vh;overflow-y:auto;"></div>
     <div id="nyuka-history-content" style="padding:14px 16px 20px;"></div>
   </div>
 </div>
@@ -1908,6 +1901,45 @@ function showNyukaHistoryModal(){
     op.value = it.id; op.textContent = it.name;
     sel.appendChild(op);
   });
+  // 品目ボタンを生成して表示
+  renderNyukaItemButtons();
+  renderNyukaHistory();
+}
+
+function renderNyukaItemButtons(){
+  const container = document.getElementById('nyuka-item-buttons');
+  if(!container) return;
+  const currentVal = document.getElementById('nyuka-history-item').value;
+
+  const btnStyle = (active, bg, activeBg, color, activeColor) =>
+    `width:100%;padding:12px 16px;border-radius:10px;border:1.5px solid ${active?'transparent':bg};font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left;${active?'background:'+activeBg+';color:'+activeColor+';':'background:var(--surface);color:'+color+';'}`;
+
+  // わらび餅品目（一番上）
+  const warabiItems = loadWarabiItems && loadWarabiItems() || WARABI_DEFAULT_ITEMS;
+  let html = '';
+  warabiItems.forEach(name => {
+    const id = 'warabi::' + name;
+    const active = currentVal === id;
+    html += `<button onclick="selectNyukaItem('${id}')" style="${btnStyle(active,'#b39ddb','#4527a0','#4527a0','#fff')}">🟣 ${esc(name)}</button>`;
+  });
+
+  // 区切り
+  html += `<div style="border-top:1px solid var(--border2);margin:4px 0;"></div>`;
+
+  // 在庫品目（ストラップのみ）
+  const allActive = currentVal === '';
+  html += `<button onclick="selectNyukaItem('')" style="${btnStyle(allActive,'var(--border2)','#1a5f3a','var(--text2)','#fff')}">📋 全品目</button>`;
+  SALES.filter(it => it.name.includes('ストラップ')).forEach(it => {
+    const active = currentVal === it.id;
+    html += `<button onclick="selectNyukaItem('${it.id}')" style="${btnStyle(active,'#7dd4a8','#1a5f3a','#1a5f3a','#fff')}">🟢 ${esc(it.name)}</button>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function selectNyukaItem(id){
+  document.getElementById('nyuka-history-item').value = id;
+  renderNyukaItemButtons();
   renderNyukaHistory();
 }
 
@@ -1923,9 +1955,45 @@ function renderNyukaHistory(){
   const fm = ym.replace('-','/');
   const [y, m] = ym.split('-').map(Number);
   const monthLabel = y + '年' + m + '月';
+  const el = document.getElementById('nyuka-history-content');
+
+  // わらび餅品目が選択された場合
+  if(filterItem && filterItem.startsWith('warabi::')){
+    const warabiName = filterItem.replace('warabi::','');
+    const allW = loadWarabiRecords ? loadWarabiRecords() : [];
+    const filtered = allW.filter(r => r.item === warabiName && r.date && r.date.startsWith(ym.replace('-','-')));
+    if(!filtered.length){
+      el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px;">${monthLabel}の${esc(warabiName)}の入荷記録はありません</div>`;
+      return;
+    }
+    const total = filtered.reduce((s,r)=>s+(r.qty||0),0);
+    let html = `<div style="background:#ede7f6;border:1px solid #b39ddb;border-radius:12px;padding:12px 16px;margin-bottom:14px;text-align:center;">
+      <div style="font-size:12px;color:#4527a0;font-weight:700;">合計入荷数</div>
+      <div style="font-size:28px;font-weight:700;color:#4527a0;">${total}<span style="font-size:14px;">個</span></div>
+    </div>`;
+    filtered.forEach(r => {
+      const dp = r.date.split('-');
+      const dateLabel = dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
+      html += `<div style="background:var(--surface);border:1px solid #b39ddb;border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+        <div style="font-weight:700;font-size:13px;color:#4527a0;margin-bottom:8px;">📅 ${dateLabel}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+          <span style="background:#ede7f6;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:#4527a0;">${esc(r.item||'')}</span>
+          <span style="background:#4527a0;border-radius:6px;padding:3px 12px;font-size:14px;font-weight:700;color:#fff;">${r.qty||0}個</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);">
+          ${r.inspector?`<div>👤 検品者：<b>${esc(r.inspector)}</b></div>`:''}
+          ${r.factory?`<div>🏭 工場名：<b>${esc(r.factory)}</b></div>`:''}
+          ${r.carrier?`<div>🚚 運送会社：<b>${esc(r.carrier)}</b></div>`:''}
+          ${r.inquiry?`<div>📞 問い合わせ番号：<b>${esc(r.inquiry)}</b></div>`:''}
+        </div>
+      </div>`;
+    });
+    el.innerHTML = html;
+    return;
+  }
+
   const allH = loadHistory();
   const monthH = allH.filter(r => r.date.startsWith(fm));
-  const el = document.getElementById('nyuka-history-content');
 
   // 今日分も含めた全エントリを収集: [{itemId, itemName, date(ISO), qty, staff, src:'today'|'hist', histDate, entryIdx}]
   const allEntries = [];
