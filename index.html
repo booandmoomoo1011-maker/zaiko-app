@@ -543,13 +543,13 @@ import { initializeApp }                           from 'firebase/app';
 import { getDatabase, ref, set, get, onValue }    from 'firebase/database';
 
 const firebaseConfig = {
-  apiKey:            "AIzaSyDt5MmHphP1PPjKtDq9ZgLMpbWbrQ_NtXs",
-  authDomain:        "kamakura-zaiko-3bd31.firebaseapp.com",
-  databaseURL:       "https://kamakura-zaiko-3bd31-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:         "kamakura-zaiko-3bd31",
-  storageBucket:     "kamakura-zaiko-3bd31.firebasestorage.app",
-  messagingSenderId: "911334956899",
-  appId:             "1:911334956899:web:30e1a31b2218a974b46f3a"
+  apiKey:            "AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo",
+  authDomain:        "zaiko2017inb.firebaseapp.com",
+  databaseURL:       "https://zaiko2017inb-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "zaiko2017inb",
+  storageBucket:     "zaiko2017inb.firebasestorage.app",
+  messagingSenderId: "705085250436",
+  appId:             "1:705085250436:web:5bda2efcc70e4ffca25bd1"
 };
 
 try {
@@ -561,28 +561,20 @@ try {
     window.setSyncStatus(snap.val() === true ? 'online' : 'offline');
   });
 
-  // ── 保存（履歴）── 配列をそのまま保存、タイムスタンプで自己書き込みを識別
-  let _lastHistoryWriteTs = 0;
+  // ── 保存（履歴）──
   window.firebaseSave = function(history){
-    _lastHistoryWriteTs = Date.now();
     window.setSyncStatus('syncing');
     set(ref(db, 'zaiko/history'), history)
       .then(()  => { window.setSyncStatus('online'); })
-      .catch((e)=> { window.setSyncStatus('error', e.code||''); console.error('保存失敗',e); _lastHistoryWriteTs=0; });
+      .catch((e)=> { window.setSyncStatus('error', e.code||''); console.error('保存失敗',e); });
   };
 
-  // ── 保存（温度記録）── deviceIdで自分の書き込みを識別し競合を防ぐ
-  if(!localStorage.getItem('_deviceId')){
-    localStorage.setItem('_deviceId', 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
-  }
-  const _deviceId = localStorage.getItem('_deviceId');
-  let _lastTempWriteTs = 0; // 自分の保存タイムスタンプ
+  // ── 保存（温度記録）──
   window.firebaseSaveTempRecords = function(records){
-    _lastTempWriteTs = Date.now();
     const obj = {};
     (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||i] = r; });
     set(ref(db, 'zaiko/temp_records'), obj)
-      .catch((e)=> { console.error('温度記録保存失敗',e); _lastTempWriteTs=0; });
+      .catch((e)=> { console.error('温度記録保存失敗',e); });
   };
 
   // ── 保存（わらび餅マスター：工場名・運送業者・品目）──
@@ -615,19 +607,16 @@ try {
     if(typeof renderWarabiItemSelect==='function') renderWarabiItemSelect();
   });
 
-  // ── 保存（わらび餅入荷）── deviceIdで自分の書き込みを識別
-  let _lastWarabiWriteTs = 0; // 自分の保存タイムスタンプ（3秒以内はスキップ）
+  // ── 保存（わらび餅入荷）──
   window.firebaseSaveWarabiRecords = function(records){
-    _lastWarabiWriteTs = Date.now();
     const obj = {};
     (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||('r'+i)] = r; });
     set(ref(db, 'zaiko/warabi_records'), obj)
-      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); _lastWarabiWriteTs=0; });
+      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); });
   };
 
-  // ── 温度記録のリアルタイム同期 ── 3秒以内の自分の書き込みはスキップ
+  // ── 温度記録のリアルタイム同期 ──
   onValue(ref(db, 'zaiko/temp_records'), (snap) => {
-    if(Date.now() - _lastTempWriteTs < 3000){ return; }
     const raw = snap.val();
     if(!raw) return;
     const data = Array.isArray(raw) ? raw : Object.values(raw);
@@ -653,12 +642,10 @@ try {
     }
   });
 
-  // ── わらび餅入荷のリアルタイム同期 ── 3秒以内の自分の書き込みはスキップ
+  // ── わらび餅入荷のリアルタイム同期 ──
   onValue(ref(db, 'zaiko/warabi_records'), (snap) => {
     const raw = snap.val();
     if(!raw) return;
-    // 自分が保存してから3秒以内のコールバックは無視
-    if(Date.now() - _lastWarabiWriteTs < 3000){ return; }
     if(raw){
       const data = Array.isArray(raw) ? raw : Object.values(raw);
       data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -775,8 +762,6 @@ try {
   let firstLoad = true;
 
   onValue(ref(db, 'zaiko/history'), (snap) => {
-    // 自分が保存してから3秒以内のコールバックは無視
-    if(Date.now() - _lastHistoryWriteTs < 3000){ window.setSyncStatus('online'); return; }
     const raw = snap.val();
     if(raw){
       const arr = Array.isArray(raw) ? raw : Object.values(raw);
