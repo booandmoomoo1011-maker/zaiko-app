@@ -1,4 +1,37 @@
 <!DOCTYPE html>
+<!--
+=============================================================================
+【AI・開発者向け 絶対禁止ルール】
+このファイルは実運用中のアプリです。以下のルールを必ず守ること。
+
+禁止事項：
+  1. Firebaseへの保存形式を変更しない
+       - zaiko/history       → 配列をそのまま保存（形式変更禁止）
+       - zaiko/warabi_records → {id: record} のオブジェクト形式（形式変更禁止）
+       - zaiko/temp_records   → {id: record} のオブジェクト形式（形式変更禁止）
+       - _meta や writtenBy などのキーをデータに混入させない
+
+  2. 起動時にlocalStorageのデータをFirebaseへ自動アップロードしない
+       - initWarabiSection・initTempSection での自動アップロード禁止
+       - 他端末のデータを上書きする危険があるため
+
+  3. onValue・firebaseSave などの同期ロジックのコア部分を変更しない
+       - 「改善」目的でも変更すると既存データが消える危険がある
+
+  4. 動作確認なしで複数箇所を同時に修正しない
+       - 修正は1箇所ずつ・最小限に
+
+  5. このコメント自体を削除・変更しない
+
+バグ修正時の原則：
+  - 既存の保存形式・データ構造は一切変えない
+  - UIや表示ロジックのみ修正する
+  - Firebase関連コードは触る前に必ずユーザーに確認を取る
+  - 「同期の改善」「最適化」などは行わない
+
+このルールを破ると運用中のデータが失われます。
+=============================================================================
+-->
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -528,17 +561,14 @@ try {
     window.setSyncStatus(snap.val() === true ? 'online' : 'offline');
   });
 
-  // ── 保存（履歴）── deviceIdで自分の書き込みを識別
-  let _lastHistoryWriteId = null;
+  // ── 保存（履歴）── 配列をそのまま保存、タイムスタンプで自己書き込みを識別
+  let _lastHistoryWriteTs = 0;
   window.firebaseSave = function(history){
-    const writeId = _deviceId + '_h_' + Date.now();
-    _lastHistoryWriteId = writeId;
+    _lastHistoryWriteTs = Date.now();
     window.setSyncStatus('syncing');
-    // _metaを付与してwrittenByを記録
-    const payload = { _meta: { writtenBy: writeId }, records: history };
-    set(ref(db, 'zaiko/history'), payload)
+    set(ref(db, 'zaiko/history'), history)
       .then(()  => { window.setSyncStatus('online'); })
-      .catch((e)=> { window.setSyncStatus('error', e.code||''); console.error('保存失敗',e); _lastHistoryWriteId=null; });
+      .catch((e)=> { window.setSyncStatus('error', e.code||''); console.error('保存失敗',e); _lastHistoryWriteTs=0; });
   };
 
   // ── 保存（温度記録）── deviceIdで自分の書き込みを識別し競合を防ぐ
@@ -546,14 +576,13 @@ try {
     localStorage.setItem('_deviceId', 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
   }
   const _deviceId = localStorage.getItem('_deviceId');
-  let _lastTempWriteId = null;
+  let _lastTempWriteTs = 0; // 自分の保存タイムスタンプ
   window.firebaseSaveTempRecords = function(records){
-    const writeId = _deviceId + '_' + Date.now();
-    _lastTempWriteId = writeId;
-    const obj = { _meta: { writtenBy: writeId } };
+    _lastTempWriteTs = Date.now();
+    const obj = {};
     (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||i] = r; });
     set(ref(db, 'zaiko/temp_records'), obj)
-      .catch((e)=> { console.error('温度記録保存失敗',e); _lastTempWriteId = null; });
+      .catch((e)=> { console.error('温度記録保存失敗',e); _lastTempWriteTs=0; });
   };
 
   // ── 保存（わらび餅マスター：工場名・運送業者・品目）──
@@ -587,30 +616,21 @@ try {
   });
 
   // ── 保存（わらび餅入荷）── deviceIdで自分の書き込みを識別
-  let _lastWarabiWriteId = null;
+  let _lastWarabiWriteTs = 0; // 自分の保存タイムスタンプ（3秒以内はスキップ）
   window.firebaseSaveWarabiRecords = function(records){
-    const writeId = _deviceId + '_w_' + Date.now();
-    _lastWarabiWriteId = writeId;
-    const obj = { _meta: { writtenBy: writeId } };
+    _lastWarabiWriteTs = Date.now();
+    const obj = {};
     (Array.isArray(records)?records:[]).forEach((r,i)=>{ obj[r.id||('r'+i)] = r; });
     set(ref(db, 'zaiko/warabi_records'), obj)
-      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); _lastWarabiWriteId=null; });
+      .catch((e)=> { console.error('わらび餅入荷保存失敗',e); _lastWarabiWriteTs=0; });
   };
 
-  // ── 温度記録のリアルタイム同期 ── 自分の書き込みはwrittenByで識別してスキップ
+  // ── 温度記録のリアルタイム同期 ── 3秒以内の自分の書き込みはスキップ
   onValue(ref(db, 'zaiko/temp_records'), (snap) => {
+    if(Date.now() - _lastTempWriteTs < 3000){ return; }
     const raw = snap.val();
     if(!raw) return;
-    // _metaキーで自分の書き込みかチェック
-    if(raw._meta && raw._meta.writtenBy === _lastTempWriteId){
-      _lastTempWriteId = null; // 自分の書き込みなのでスキップ
-      return;
-    }
-    _lastTempWriteId = null;
-    // _metaを除いたレコードのみ抽出
-    const data = Object.entries(raw)
-      .filter(([k]) => k !== '_meta')
-      .map(([,v]) => v);
+    const data = Array.isArray(raw) ? raw : Object.values(raw);
     data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     localStorage.setItem('temp_records', JSON.stringify(data));
     if(typeof renderTempHistory==='function') renderTempHistory();
@@ -633,17 +653,14 @@ try {
     }
   });
 
-  // ── わらび餅入荷のリアルタイム同期 ── deviceIdで自分の書き込みをスキップ
+  // ── わらび餅入荷のリアルタイム同期 ── 3秒以内の自分の書き込みはスキップ
   onValue(ref(db, 'zaiko/warabi_records'), (snap) => {
     const raw = snap.val();
     if(!raw) return;
-    if(raw._meta && raw._meta.writtenBy === _lastWarabiWriteId){
-      _lastWarabiWriteId = null;
-      return;
-    }
-    _lastWarabiWriteId = null;
+    // 自分が保存してから3秒以内のコールバックは無視
+    if(Date.now() - _lastWarabiWriteTs < 3000){ return; }
     if(raw){
-      const data = Array.isArray(raw) ? raw : Object.entries(raw).filter(([k])=>k!=='_meta').map(([,v])=>v);
+      const data = Array.isArray(raw) ? raw : Object.values(raw);
       data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('warabi_records', JSON.stringify(data));
       if(typeof NYUKA !== 'undefined' && typeof WARABI_ITEM_MAP !== 'undefined'){
@@ -708,31 +725,26 @@ try {
       get(ref(db, 'zaiko/warabi_master'))
     ]).then(([itemsSnap, histSnap, tempSnap, warabiSnap, masterSnap]) => {
         if(itemsSnap.val()) applyItemsFromFirebase(itemsSnap.val());
-        // 履歴: 新形式{_meta,records}と旧形式(配列)の両方に対応
+        // 履歴: 配列またはFirebaseが変換したオブジェクト形式に対応
         const rawHist = histSnap.val();
-        const histArr = rawHist && rawHist.records ? rawHist.records
-                      : rawHist && Array.isArray(rawHist) ? rawHist
-                      : rawHist ? Object.entries(rawHist).filter(([k])=>k!=='_meta').map(([,v])=>v)
-                      : null;
-        if(histArr){
+        if(rawHist){
+          const histArr = Array.isArray(rawHist) ? rawHist : Object.values(rawHist);
           localStorage.setItem('zaiko_history', JSON.stringify(histArr));
           if(typeof renderAll==='function') renderAll();
           if(typeof renderHistory==='function') renderHistory();
           if(typeof restoreLastValues==='function') restoreLastValues();
         }
-        // 温度記録: _metaを除外
+        // 温度記録
         const tempData = tempSnap.val();
         if(tempData){
-          const tempArr = Array.isArray(tempData) ? tempData
-                        : Object.entries(tempData).filter(([k])=>k!=='_meta').map(([,v])=>v);
+          const tempArr = Array.isArray(tempData) ? tempData : Object.values(tempData);
           localStorage.setItem('temp_records', JSON.stringify(tempArr));
           if(typeof renderTempHistory==='function') renderTempHistory();
         }
-        // わらび餅: _metaを除外
+        // わらび餅入荷
         const rawWarabi = warabiSnap.val();
         if(rawWarabi){
-          const warabiArr = Array.isArray(rawWarabi) ? rawWarabi
-                          : Object.entries(rawWarabi).filter(([k])=>k!=='_meta').map(([,v])=>v);
+          const warabiArr = Array.isArray(rawWarabi) ? rawWarabi : Object.values(rawWarabi);
           localStorage.setItem('warabi_records', JSON.stringify(warabiArr));
         }
         const master = masterSnap.val();
@@ -761,21 +773,13 @@ try {
 
   // ── 初回ロード＆リアルタイム受信（履歴）──
   let firstLoad = true;
+
   onValue(ref(db, 'zaiko/history'), (snap) => {
+    // 自分が保存してから3秒以内のコールバックは無視
+    if(Date.now() - _lastHistoryWriteTs < 3000){ window.setSyncStatus('online'); return; }
     const raw = snap.val();
-    // _metaとrecordsの新形式、または旧形式(配列)の両方に対応
-    const writtenBy = raw && raw._meta ? raw._meta.writtenBy : null;
-    // 自分の書き込みによるコールバックはスキップ
-    if(writtenBy && writtenBy === _lastHistoryWriteId){
-      _lastHistoryWriteId = null;
-      window.setSyncStatus('online');
-      return;
-    }
-    _lastHistoryWriteId = null;
-    // 新形式: {_meta, records} / 旧形式: 配列
-    const data = raw && raw.records ? raw.records : raw;
-    if(data && (Array.isArray(data) || typeof data === 'object')){
-      const arr = Array.isArray(data) ? data : Object.values(data);
+    if(raw){
+      const arr = Array.isArray(raw) ? raw : Object.values(raw);
       localStorage.setItem('zaiko_history', JSON.stringify(arr));
       // renderAll を先に呼んでDOMを確実に作ってから値を流し込む
       if(typeof renderAll==='function') renderAll();
@@ -3034,18 +3038,8 @@ function initWarabiSection(){
   renderWarabiItemSelect(); renderWarabiFactorySelect(); renderWarabiCarrierSelect();
   renderWarabiInspectorList(); renderWarabiFilterSelect(); renderWarabiHistory();
 
-  // localStorageのわらび餅データをFirebaseへアップロード（他端末引き継ぎ）
-  setTimeout(()=>{
-    const factories = loadWarabiFactories();
-    const carriers  = loadWarabiCarriers();
-    const records   = loadWarabiRecords();
-    if(typeof window.firebaseSaveWarabiMaster === 'function' && (factories.length || carriers.length)){
-      window.firebaseSaveWarabiMaster();
-    }
-    if(typeof window.firebaseSaveWarabiRecords === 'function' && records.length){
-      window.firebaseSaveWarabiRecords(records);
-    }
-  }, 2500);
+  // 起動時の自動アップロードは無効化（他端末データ上書き防止）
+  // Firebaseからの onValue で自動同期されるため不要
 }
 function renderWarabiItemSelect(){const items=loadWarabiItems();const sel=document.getElementById('warabi-item');if(sel)sel.innerHTML=items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');}
 function renderWarabiFilterSelect(){const items=loadWarabiItems();const sel=document.getElementById('warabi-hist-filter');if(sel)sel.innerHTML='<option value="">全品目</option>'+items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');}
@@ -3294,37 +3288,8 @@ function initTempSection(){
   const monthEl=document.getElementById('temp-hist-month'); if(monthEl)monthEl.value=ym;
   renderTempRecorderList(); renderTempHistory();
 
-  // localStorageに温度記録があればFirebaseと比較し、localが新しい場合のみアップロード
-  // （他端末のデータを起動時に上書きしないようにマージ型で処理）
-  const existing = loadTempRecords();
-  if(existing.length > 0 && typeof window.firebaseSaveTempRecords === 'function'){
-    setTimeout(()=>{
-      import('firebase/database').then(({get, ref: dbRef})=>{
-        // Firebase側の最新件数・最新日付を確認
-      }).catch(()=>{});
-      // Firebase onValue で既に最新データを受信済みの場合は上書きしない
-      // localのデータが Firebase より多い or Firebaseが空の場合のみ送信
-      const localJson = localStorage.getItem('temp_records');
-      const localCount = existing.length;
-      const localLatest = existing[0] ? (existing[0].date||'') : '';
-      // Firebaseへ送信前に現在のFirebaseデータと比較するため get() を使用
-      if(typeof window._db !== 'undefined'){
-        // _db が公開されている場合（将来の拡張用）
-      } else {
-        // Firebase onValue で同期済みの場合、重複送信を避けるためタイムスタンプで判断
-        const lastUpload = localStorage.getItem('_tempLastUploadDate');
-        const today = new Date().toISOString().slice(0,10);
-        if(lastUpload !== today){
-          // 本日まだアップロードしていない場合のみ送信（初回起動時の引き継ぎ用）
-          if(typeof window.firebaseSaveTempRecords === 'function'){
-            window.firebaseSaveTempRecords(existing);
-            localStorage.setItem('_tempLastUploadDate', today);
-            console.log('温度記録をFirebaseにアップロードしました:', localCount + '件');
-          }
-        }
-      }
-    }, 3000); // Firebase初期化完了・onValue初回受信完了を待つ
-  }
+  // 起動時の自動アップロードは無効化（他端末データ上書き防止）
+  // Firebaseからの onValue で自動同期されるため不要
 }
 function renderTempRecorderList(){
   const records=loadTempRecords();
