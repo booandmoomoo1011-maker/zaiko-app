@@ -2185,6 +2185,53 @@ function renderHistory(){
     }
     const hasEdit=r.editLog&&r.editLog.length&&r.editLog.some(e=>e.diff&&e.diff.length);
     const isToday=r.date===dateStr;
+    // 前日判定
+    const yd=new Date(); yd.setDate(yd.getDate()-1);
+    const ydStr=yd.getFullYear()+'/'+(yd.getMonth()+1).toString().padStart(2,'0')+'/'+yd.getDate().toString().padStart(2,'0');
+    const isYesterday=r.date===ydStr;
+
+    // フォントサイズ倍率
+    const nameSz  = isToday?'22px': isYesterday?'18px':'12px';
+    const valSz   = isToday?'22px': isYesterday?'18px':'13px';
+    const subSz   = isToday?'22px': isYesterday?'18px':'12px';
+    const unitSz  = isToday?'18px': isYesterday?'15px':'10px';
+    const labelSz = isToday?'18px': isYesterday?'14px':'11px';
+
+    // 在庫数のみ（サイズ適用）
+    let stblT=`<div class="htbl-section"><div class="htbl-label" style="font-size:${labelSz};">在庫数のみ</div><div class="hlist">`;
+    si.forEach(it=>{
+      const qty=r.simple[it.id]||0;
+      const warn=isLowStock(it.name,qty)?'stock-low':'';
+      stblT+=`<div class="hlist-row"><span class="hlist-name" style="font-size:${nameSz};">${esc(it.name)}</span><span class="hlist-val ${warn}" style="font-size:${valSz};">${qty}<span class="hlist-unit" style="font-size:${unitSz};">個</span></span></div>`;
+    });
+    stblT+=`</div></div>`;
+
+    // 販売・無料（サイズ適用）
+    let stbl2T=`<div class="htbl-section"><div class="htbl-label" style="font-size:${labelSz};">販売・無料</div><div class="hlist-head" style="font-size:${unitSz};"><span class="hlist-name"></span><span class="hlist-cols"><span>在庫</span><span>販売</span><span>無料</span><span>差異</span></span></div><div class="hlist">`;
+    sa.forEach(it=>{
+      const s=r.sales[it.id]||0,sell=r.sales[it.id+'_sell']||0,free=r.sales[it.id+'_free']||0;
+      const nyukaTotal=(r.nyuka&&r.nyuka[it.id])?r.nyuka[it.id].reduce((a,n)=>a+n.qty,0):0;
+      const h2=loadHistory();
+      const prev2=h2.find(rec=>rec.date<r.date&&rec.sales&&rec.sales[it.id]!==undefined);
+      const prevS=prev2?(prev2.sales[it.id]||0):null;
+      const displayStock = prevS!==null ? prevS+nyukaTotal : s+sell+free;
+      const diff = prevS!==null ? (prevS+nyukaTotal)-(sell+free+s) : 0;
+      const sWarn=isLowStock(it.name,displayStock)?'stock-low':'';
+      const ny=(r.nyuka&&r.nyuka[it.id]&&r.nyuka[it.id].length)?`<span style="color:var(--blue);font-size:${unitSz};margin-left:4px;">入荷${nyukaTotal}</span>`:'';
+      const dc=diff===0?'diff-ok':'diff-warn';
+      const isWarnRow=r.forceCompleted&&r.warnItems&&r.warnItems.includes(it.id);
+      stbl2T+=`<div class="hlist-row${isWarnRow?' warn-row':''}">
+        <span class="hlist-name" style="font-size:${nameSz};">${esc(it.name)}${ny}</span>
+        <span class="hlist-cols">
+          <span class="hlist-val ${sWarn}" style="font-size:${subSz};">${displayStock}</span>
+          <span class="hlist-sub" style="font-size:${subSz};">${sell}</span>
+          <span class="hlist-sub" style="font-size:${subSz};">${free}</span>
+          <span class="hlist-diff ${dc}" style="font-size:${subSz};">${diff>0?'+':''}${diff}</span>
+        </span>
+      </div>`;
+    });
+    stbl2T+=`</div></div>`;
+
     return`<div class="hist-card-wrap${isToday?' hist-card-today':''}" style="margin-bottom:12px;">
     <div class="hist-row${r.forceCompleted?' force-completed':''}${isToday?' hist-today':''}">
       <div class="hist-meta">
@@ -2197,7 +2244,7 @@ function renderHistory(){
         <button class="hist-edit-btn" onclick="editRecord(${realIdx})">✏️ 編集</button>
       </div>
       ${diffPopupHtml}
-      ${stbl}${stbl2}${uberHtml}${noteHtml}
+      ${stblT}${stbl2T}${uberHtml}${noteHtml}
     </div></div>`;
   }).join('');
 }
