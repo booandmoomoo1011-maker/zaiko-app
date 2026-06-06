@@ -2191,11 +2191,11 @@ function renderHistory(){
     const isYesterday=r.date===ydStr;
 
     // フォントサイズ倍率
-    const nameSz  = isToday?'22px': isYesterday?'22px':'12px';
-    const valSz   = isToday?'22px': isYesterday?'22px':'13px';
-    const subSz   = isToday?'22px': isYesterday?'22px':'12px';
-    const unitSz  = isToday?'16px': isYesterday?'16px':'10px';
-    const labelSz = isToday?'16px': isYesterday?'16px':'11px';
+    const nameSz  = isToday?'20px': isYesterday?'20px':'12px';
+    const valSz   = isToday?'24px': isYesterday?'24px':'13px';
+    const subSz   = isToday?'24px': isYesterday?'24px':'12px';
+    const unitSz  = isToday?'18px': isYesterday?'18px':'10px';
+    const labelSz = isToday?'18px': isYesterday?'18px':'11px';
 
     // 在庫数のみ（サイズ適用）
     let stblT=`<div class="htbl-section"><div class="htbl-label" style="font-size:${labelSz};">在庫数のみ</div><div class="hlist">`;
@@ -2223,7 +2223,7 @@ function renderHistory(){
       stbl2T+=`<div class="hlist-row${isWarnRow?' warn-row':''}">
         <span class="hlist-name" style="font-size:${nameSz};">${esc(it.name)}${ny}</span>
         <span class="hlist-cols">
-          <span class="hlist-val ${sWarn}" style="font-size:${subSz};">${displayStock}</span>
+          <span class="hlist-val ${sWarn}" style="font-size:${subSz};${(isToday||isYesterday)&&!sWarn?'color:#1565c0;font-weight:700;':''}">${displayStock}</span>
           <span class="hlist-sub" style="font-size:${subSz};">${sell}</span>
           <span class="hlist-sub" style="font-size:${subSz};">${free}</span>
           <span class="hlist-diff ${dc}" style="font-size:${subSz};">${diff>0?'+':''}${diff}</span>
