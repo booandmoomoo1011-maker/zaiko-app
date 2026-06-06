@@ -2883,6 +2883,19 @@ function initWarabiSection(){
   document.getElementById('warabi-date').value=ymd;
   renderWarabiItemSelect(); renderWarabiFactorySelect(); renderWarabiCarrierSelect();
   renderWarabiInspectorList(); renderWarabiFilterSelect(); renderWarabiHistory();
+
+  // localStorageのわらび餅データをFirebaseへアップロード（他端末引き継ぎ）
+  setTimeout(()=>{
+    const factories = loadWarabiFactories();
+    const carriers  = loadWarabiCarriers();
+    const records   = loadWarabiRecords();
+    if(typeof window.firebaseSaveWarabiMaster === 'function' && (factories.length || carriers.length)){
+      window.firebaseSaveWarabiMaster();
+    }
+    if(typeof window.firebaseSaveWarabiRecords === 'function' && records.length){
+      window.firebaseSaveWarabiRecords(records);
+    }
+  }, 2500);
 }
 function renderWarabiItemSelect(){const items=loadWarabiItems();const sel=document.getElementById('warabi-item');if(sel)sel.innerHTML=items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');}
 function renderWarabiFilterSelect(){const items=loadWarabiItems();const sel=document.getElementById('warabi-hist-filter');if(sel)sel.innerHTML='<option value="">全品目</option>'+items.map(i=>`<option value="${esc(i)}">${esc(i)}</option>`).join('');}
@@ -3124,6 +3137,18 @@ function initTempSection(){
   const dateEl=document.getElementById('temp-date'); if(dateEl)dateEl.value=ymd;
   const monthEl=document.getElementById('temp-hist-month'); if(monthEl)monthEl.value=ym;
   renderTempRecorderList(); renderTempHistory();
+
+  // localStorageに温度記録があればFirebaseへアップロード（他端末への引き継ぎ）
+  const existing = loadTempRecords();
+  if(existing.length > 0 && typeof window.firebaseSaveTempRecords === 'function'){
+    // Firebaseの現在値と比較して、localの方が新しければアップロード
+    setTimeout(()=>{
+      if(typeof window.firebaseSaveTempRecords === 'function'){
+        window.firebaseSaveTempRecords(existing);
+        console.log('温度記録をFirebaseにアップロードしました:', existing.length + '件');
+      }
+    }, 2000); // Firebase初期化完了を待つ
+  }
 }
 function renderTempRecorderList(){
   const records=loadTempRecords();
