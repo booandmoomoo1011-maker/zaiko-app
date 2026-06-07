@@ -1097,7 +1097,7 @@ function exportAnnual(fiscal, storeId){
   const wb = XLSX.utils.book_new();
   const headers=['商品名','カテゴリ','在庫数','単位','仕入単価（円）','在庫金額（円）'];
   const rows = storeData.items.map(i=>[i.name,i.cat,i.qty,i.unit,i.price,Math.round(i.qty*i.price)]);
-  rows.push(['合計','','','','',storeData.items.reduce((s,i)=>s+i.qty*i.price,0)]);
+  rows.push(['合計','','','','',Math.round(storeData.items.reduce((s,i)=>s+i.qty*i.price,0))]);
   const ws = XLSX.utils.aoa_to_sheet([headers,...rows]);
   ws['!cols']=[{wch:20},{wch:14},{wch:10},{wch:8},{wch:16},{wch:16}];
   XLSX.utils.book_append_sheet(wb,ws,storeData.storeName.slice(0,28));
@@ -1114,7 +1114,7 @@ function exportAnnualAll(fiscal){
 
   Object.values(yearData).forEach(s=>{
     const rows = s.items.map(i=>[i.name,i.cat,i.qty,i.unit,i.price,Math.round(i.qty*i.price)]);
-    rows.push(['合計','','','','',s.items.reduce((sum,i)=>sum+i.qty*i.price,0)]);
+    rows.push(['合計','','','','',Math.round(s.items.reduce((sum,i)=>sum+i.qty*i.price,0))]);
     const ws = XLSX.utils.aoa_to_sheet([headers,...rows]);
     ws['!cols']=[{wch:20},{wch:14},{wch:10},{wch:8},{wch:16},{wch:16}];
     XLSX.utils.book_append_sheet(wb,ws,s.storeName.slice(0,28));
@@ -1122,7 +1122,7 @@ function exportAnnualAll(fiscal){
 
   // サマリーシート
   const summary=[['店舗名','品目数','在庫総額（円）'],...Object.values(yearData).map(s=>[
-    s.storeName, s.items.length, s.items.reduce((sum,i)=>sum+i.qty*i.price,0)
+    s.storeName, s.items.length, Math.round(s.items.reduce((sum,i)=>sum+i.qty*i.price,0))
   ])];
   const ws2=XLSX.utils.aoa_to_sheet(summary);
   ws2['!cols']=[{wch:16},{wch:10},{wch:16}];
