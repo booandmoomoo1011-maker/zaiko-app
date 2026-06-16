@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v9.8';
+window.APP_VERSION = 'v10.2';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -375,6 +375,9 @@ function deleteOldRecords(){
     `合計 ${total}件を削除します。\nこの操作は元に戻せません。よろしいですか？`
   )) return;
 
+  // 削除前にバックアップ保存
+  saveDeleteBackup();
+
   // 削除実行
   const newH = h.filter(r=>r.date >= cutoffDate);
   saveHistory(newH);
@@ -384,7 +387,106 @@ function deleteOldRecords(){
   saveWarabiRecords(warabiRecs.filter(r=>r.date >= cutoffStr));
 
   renderHistory();
-  showToast(`🗑 ${total}件の古い記録を削除しました`);
+  showToast(`🗑 ${total}件の古い記録を削除しました（設定画面から元に戻せます）`);
+}
+
+// ── 自動バックアップ（起動時・30分ごと）──
+function saveAutoBackup(){
+  const h = localStorage.getItem('zaiko_history')  || '[]';
+  const t = localStorage.getItem('temp_records')   || '[]';
+  const w = localStorage.getItem('warabi_records') || '[]';
+  const draftKey = 'zaiko_draft_' + dateStr.replace(/\//g,'-');
+  const dr = localStorage.getItem(draftKey) || 'null';
+  // ドラフトか履歴のどちらかにデータがあるときだけ保存
+  const hasData = (JSON.parse(h).length > 0) || (JSON.parse(t).length > 0)
+               || (JSON.parse(w).length > 0) || (JSON.parse(dr) !== null);
+  if(!hasData) return;
+  const backup = {
+    savedAt:        new Date().toISOString(),
+    zaiko_history:  h,
+    temp_records:   t,
+    warabi_records: w,
+    draft:          dr,
+    draftKey:       draftKey
+  };
+  localStorage.setItem('zaiko_auto_backup', JSON.stringify(backup));
+  updateRestoreButtonVisibility();
+}
+function restoreFromAutoBackup(){
+  const raw = localStorage.getItem('zaiko_auto_backup');
+  if(!raw){ alert('自動バックアップがありません'); return; }
+  const backup = JSON.parse(raw);
+  const d = new Date(backup.savedAt);
+  const label = d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '
+    +String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  if(!confirm(`${label} 時点の自動保存データに戻しますか？\n（在庫・温度・入荷記録を含む）\n\n現在のデータは上書きされます。`)) return;
+  localStorage.setItem('zaiko_history',  backup.zaiko_history);
+  localStorage.setItem('temp_records',   backup.temp_records);
+  localStorage.setItem('warabi_records', backup.warabi_records);
+  // 本日のドラフト（在庫数字）も復元
+  if(backup.draft && backup.draft !== 'null' && backup.draftKey){
+    localStorage.setItem(backup.draftKey, backup.draft);
+    if(typeof restoreDraft==='function') restoreDraft();
+    SALES.forEach(it=>{ if(typeof calcStock==='function') calcStock(it.id); });
+    if(typeof renderNyuka==='function') SALES.forEach(it=>renderNyuka(it.id));
+  }
+  renderHistory();
+  if(typeof renderTempHistory==='function') renderTempHistory();
+  if(typeof renderWarabiHistory==='function') renderWarabiHistory();
+  closeSettingsModal();
+  showToast('✅ 自動バックアップから復元しました（在庫数も含む）');
+}
+
+function saveDeleteBackup(){
+  const backup = {
+    savedAt: new Date().toISOString(),
+    zaiko_history:  localStorage.getItem('zaiko_history')  || '[]',
+    temp_records:   localStorage.getItem('temp_records')   || '[]',
+    warabi_records: localStorage.getItem('warabi_records') || '[]'
+  };
+  localStorage.setItem('zaiko_delete_backup', JSON.stringify(backup));
+  updateRestoreButtonVisibility();
+}
+
+function restoreFromBackup(){
+  const raw = localStorage.getItem('zaiko_delete_backup');
+  if(!raw){ alert('バックアップがありません'); return; }
+  const backup = JSON.parse(raw);
+  const d = new Date(backup.savedAt);
+  const label = d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '
+    +String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  if(!confirm(`${label} の削除直前の状態に戻しますか？\n\n現在のデータは上書きされます。`)) return;
+  localStorage.setItem('zaiko_history',  backup.zaiko_history);
+  localStorage.setItem('temp_records',   backup.temp_records);
+  localStorage.setItem('warabi_records', backup.warabi_records);
+  localStorage.removeItem('zaiko_delete_backup');
+  updateRestoreButtonVisibility();
+  renderHistory();
+  if(typeof renderTempHistory==='function') renderTempHistory();
+  if(typeof renderWarabiHistory==='function') renderWarabiHistory();
+  closeSettingsModal();
+  showToast('✅ 削除前のデータに戻しました');
+}
+function updateRestoreButtonVisibility(){
+  const btn = document.getElementById('restore-backup-btn');
+  if(btn){
+    const exists = !!localStorage.getItem('zaiko_delete_backup');
+    btn.style.display = exists ? 'flex' : 'none';
+  }
+  const autoBtn = document.getElementById('restore-auto-backup-btn');
+  if(autoBtn){
+    const raw = localStorage.getItem('zaiko_auto_backup');
+    if(raw){
+      const d = new Date(JSON.parse(raw).savedAt);
+      const label = (d.getMonth()+1)+'/'+ d.getDate()+' '
+        +String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      autoBtn.style.display = 'flex';
+      const span = autoBtn.querySelector('.auto-backup-label');
+      if(span) span.textContent = '自動保存データから復元（'+label+'）';
+    } else {
+      autoBtn.style.display = 'none';
+    }
+  }
 }
 
 function exportAllData(){
@@ -870,6 +972,12 @@ try {
       </button>
       <button onclick="closeSettingsModal();deleteOldRecords();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fce4ec;border:1.5px solid #ef9a9a;border-radius:12px;color:#b71c1c;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🗑</span> 3年以上前の記録を削除
+      </button>
+      <button id="restore-backup-btn" onclick="restoreFromBackup();" style="display:none;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:12px;color:#1b5e20;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">↩️</span> 削除前のデータに戻す
+      </button>
+      <button id="restore-auto-backup-btn" onclick="restoreFromAutoBackup();" style="display:none;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e3f2fd;border:1.5px solid #90caf9;border-radius:12px;color:#0d47a1;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🔄</span> <span class="auto-backup-label">自動保存データから復元</span>
       </button>
       <button onclick="closeSettingsModal();changeLineSharePasscode();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fff0a0;border:1.5px solid #f5c800;border-radius:12px;color:#5a4000;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">📲</span> LINE共有パスワード変更
@@ -2107,6 +2215,7 @@ function deleteNyukaHistRow(itemId, src, histDate, entryIdx, uid){
 }
 
 function execDeleteNyukaHistRow(itemId, src, histDate, entryIdx, uid){
+  saveDeleteBackup();
   if(src === 'today'){
     if(!NYUKA[itemId] || !NYUKA[itemId][entryIdx]){ showToast('⚠️ 記録が見つかりません'); return; }
     const qty = NYUKA[itemId][entryIdx].qty;
@@ -2565,6 +2674,7 @@ function openPasscodeSettings(){
 // ===== 設定モーダル =====
 function openSettingsModal(){
   document.getElementById('settings-modal').style.display='block';
+  updateRestoreButtonVisibility();
 }
 function closeSettingsModal(e){
   if(e&&e.target!==document.getElementById('settings-modal'))return;
@@ -3131,6 +3241,7 @@ function renderWarabiHistory(){
 
 function deleteWarabiRecord(id){
   if(!confirm('この入荷記録を削除しますか？\n在庫の入荷数からも取り除かれます。'))return;
+  saveDeleteBackup();
   const records = loadWarabiRecords();
   const rec = records.find(r=>r.id===id);
   if(!rec){ saveWarabiRecords(records.filter(r=>r.id!==id)); renderWarabiHistory(); return; }
@@ -3665,7 +3776,7 @@ function renderTempHistory(){
   }).join('');
 }
 
-function deleteTempRecord(id){if(!confirm('この温度記録を削除しますか？'))return;saveTempRecords(loadTempRecords().filter(r=>r.id!==id));renderTempHistory();showToast('削除しました');}
+function deleteTempRecord(id){if(!confirm('この温度記録を削除しますか？'))return;saveDeleteBackup();saveTempRecords(loadTempRecords().filter(r=>r.id!==id));renderTempHistory();showToast('削除しました');}
 
 function openTempEditModal(id){
   const r=loadTempRecords().find(x=>x.id===id);if(!r)return;
@@ -3718,6 +3829,10 @@ setInterval(function(){
 }, 30000);
 try{ initTempSection(); }catch(e){ console.warn('initTempSection:', e); }
 try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
+// 起動時に自動バックアップ保存（データがある場合のみ）
+setTimeout(function(){ try{ saveAutoBackup(); }catch(e){} }, 3000);
+// 30分ごとに自動バックアップ更新
+setInterval(function(){ try{ saveAutoBackup(); }catch(e){} }, 30*60*1000);
 </script>
 
 <!-- 販売記録モーダル -->
