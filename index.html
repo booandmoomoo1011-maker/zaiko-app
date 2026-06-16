@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v9.6';
+window.APP_VERSION = 'v9.7';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1107,6 +1107,20 @@ try {
         </div>
         <div class="warabi-field" style="grid-column:1/-1;"><div class="warabi-label">運送会社</div>
           <select id="warabi-carrier" class="warabi-select" style="width:100%;"></select>
+        </div>
+        <div class="warabi-field" style="grid-column:1/-1;">
+          <div class="warabi-label">発注明細番号</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <div style="display:flex;gap:4px;">
+              <button id="warabi-prefix-w" type="button" onclick="setWarabiPrefix('W')" style="padding:6px 10px;border-radius:8px;border:1.5px solid #8a5fcf;background:#8a5fcf;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">W-</button>
+              <button id="warabi-prefix-k" type="button" onclick="setWarabiPrefix('K')" style="padding:6px 10px;border-radius:8px;border:1.5px solid #c9a8f0;background:#f3eeff;color:#6a3faf;font-weight:700;font-size:13px;cursor:pointer;">K-</button>
+              <button id="warabi-prefix-s" type="button" onclick="setWarabiPrefix('S')" style="padding:6px 10px;border-radius:8px;border:1.5px solid #c9a8f0;background:#f3eeff;color:#6a3faf;font-weight:700;font-size:13px;cursor:pointer;">S-</button>
+            </div>
+            <div style="flex:1;display:flex;align-items:center;border:1.5px solid #c9a8f0;border-radius:8px;overflow:hidden;background:#fff;">
+              <span id="warabi-prefix-display" style="padding:0 8px;background:#ede6ff;color:#6a3faf;font-weight:700;font-size:14px;white-space:nowrap;line-height:36px;border-right:1px solid #c9a8f0;">W-</span>
+              <input type="text" id="warabi-order-num" placeholder="番号を入力" inputmode="numeric" style="border:none;flex:1;min-width:0;outline:none;padding:0 8px;font-size:14px;background:transparent;">
+            </div>
+          </div>
         </div>
       </div>
       <button class="warabi-btn-sm" onclick="openWarabiManageModal()" style="align-self:flex-start;background:#e8d8ff;border-color:#c9a8f0;color:#6a3faf;padding:5px 14px;">⚙️ 品目・工場・運送会社を管理</button>
@@ -3030,6 +3044,9 @@ function saveWarabiRecord(){
   const factory=document.getElementById('warabi-factory').value.trim();
   const inquiry=document.getElementById('warabi-inquiry').value.trim();
   const carrier=document.getElementById('warabi-carrier').value.trim();
+  const orderPrefix=document.getElementById('warabi-prefix-display').textContent.trim();
+  const orderNum=document.getElementById('warabi-order-num').value.trim();
+  const orderNo=orderNum?(orderPrefix+orderNum):'';
   if(!date){showToast('入荷日を入力してください');return;}
   if(!item){showToast('品目を選択してください');return;}
   if(qty<=0){showToast('個数を入力してください');return;}
@@ -3038,7 +3055,7 @@ function saveWarabiRecord(){
   // わらび餅入荷記録に保存
   const records=loadWarabiRecords();
   const recordId=uid();
-  records.unshift({id:recordId,date,item,qty,inspector,factory,inquiry,carrier,createdAt:new Date().toISOString()});
+  records.unshift({id:recordId,date,item,qty,inspector,factory,inquiry,carrier,orderNo,createdAt:new Date().toISOString()});
   saveWarabiRecords(records);
 
   // 在庫のNYUKAに反映（今日の記録のみ即反映・過去日は履歴に保存）
@@ -3070,6 +3087,7 @@ function saveWarabiRecord(){
   // フォームリセット
   document.getElementById('warabi-inspector').value='';
   document.getElementById('warabi-inquiry').value='';
+  document.getElementById('warabi-order-num').value='';setWarabiPrefix('W');
   document.getElementById('warabi-qty').value='';
   renderWarabiInspectorList(); renderWarabiHistory();
   showToast('📥 入荷記録を保存しました');
@@ -3104,6 +3122,7 @@ function renderWarabiHistory(){
           ${r.factory?`<span>🏭${esc(r.factory)}</span>`:''}
           ${r.carrier?`<span>🚚${esc(r.carrier)}</span>`:''}
           ${r.inquiry?`<span>📞${esc(r.inquiry)}</span>`:''}
+          ${r.orderNo?`<span style="background:#ede6ff;border-radius:5px;padding:1px 6px;font-weight:700;color:#6a3faf;">📋${esc(r.orderNo)}</span>`:''}
         </div>
       </div>
     </div>`;
@@ -3152,6 +3171,26 @@ function deleteWarabiRecord(id){
   showToast('削除しました');
 }
 
+function setWarabiPrefix(p){
+  ['w','k','s'].forEach(x=>{
+    const b=document.getElementById('warabi-prefix-'+x);if(!b)return;
+    const active=(x===p.toLowerCase());
+    b.style.background=active?'#8a5fcf':'#f3eeff';
+    b.style.color=active?'#fff':'#6a3faf';
+    b.style.borderColor=active?'#8a5fcf':'#c9a8f0';
+  });
+  const d=document.getElementById('warabi-prefix-display');if(d)d.textContent=p+'-';
+}
+function setWarabiEditPrefix(p){
+  ['w','k','s'].forEach(x=>{
+    const b=document.getElementById('warabi-edit-prefix-'+x);if(!b)return;
+    const active=(x===p.toLowerCase());
+    b.style.background=active?'#8a5fcf':'#f3eeff';
+    b.style.color=active?'#fff':'#6a3faf';
+    b.style.borderColor=active?'#8a5fcf':'#c9a8f0';
+  });
+  const d=document.getElementById('warabi-edit-prefix-display');if(d)d.textContent=p+'-';
+}
 function toggleWarabiSection(){const body=document.getElementById('warabi-body');const arrow=document.getElementById('warabi-arrow');const isOpen=body.style.display!=='none';body.style.display=isOpen?'none':'flex';arrow.classList.toggle('open',!isOpen);}
 
 function openWarabiManageModal(){document.getElementById('warabi-manage-modal').style.display='flex';renderWarabiManageLists();}
@@ -3206,6 +3245,11 @@ function openWarabiEditModal(id){
   const carSel=document.getElementById('warabi-edit-carrier');
   carSel.innerHTML='<option value="">（未選択）</option>'+carriers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
   carSel.value=r.carrier||'';
+  // 発注明細番号をプレフィックスと番号に分解してセット
+  const on=r.orderNo||'';
+  const pm=on.match(/^([WKS])-(.*)$/);
+  if(pm){setWarabiEditPrefix(pm[1]);document.getElementById('warabi-edit-order-num').value=pm[2];}
+  else{setWarabiEditPrefix('W');document.getElementById('warabi-edit-order-num').value=on.replace(/^[WKS]-/,'');}
   document.getElementById('warabi-edit-modal').style.display='flex';
 }
 function closeWarabiEditModal(e){if(e&&e.target!==document.getElementById('warabi-edit-modal'))return;document.getElementById('warabi-edit-modal').style.display='none';}
@@ -3217,11 +3261,14 @@ function saveWarabiEdit(){
   const factory=document.getElementById('warabi-edit-factory').value.trim();
   const inquiry=document.getElementById('warabi-edit-inquiry').value.trim();
   const carrier=document.getElementById('warabi-edit-carrier').value.trim();
+  const editPrefix=document.getElementById('warabi-edit-prefix-display').textContent.trim();
+  const editNum=document.getElementById('warabi-edit-order-num').value.trim();
+  const orderNo=editNum?(editPrefix+editNum):'';
   if(!date){showToast('入荷日を入力してください');return;}
   if(!inspector){showToast('検品者名を入力してください');return;}
   const records=loadWarabiRecords(); const idx=records.findIndex(r=>r.id===id);
   if(idx===-1){showToast('記録が見つかりません');return;}
-  records[idx]={...records[idx],date,inspector,item,factory,inquiry,carrier};
+  records[idx]={...records[idx],date,inspector,item,factory,inquiry,carrier,orderNo};
   saveWarabiRecords(records); document.getElementById('warabi-edit-modal').style.display='none';
   renderWarabiHistory(); showToast('✅ 編集を保存しました');
   btnFeedback(document.querySelector('#warabi-edit-modal .warabi-btn'), '保存完了');
@@ -3691,6 +3738,20 @@ try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
       <div style="display:flex;gap:8px;">
         <div class="warabi-field" style="flex:1;"><div class="warabi-label">お問い合わせ番号</div><input type="text" id="warabi-edit-inquiry" class="warabi-input"></div>
         <div class="warabi-field" style="flex:1;"><div class="warabi-label">運送会社</div><select id="warabi-edit-carrier" class="warabi-select" style="width:100%;"></select></div>
+      </div>
+      <div class="warabi-field">
+        <div class="warabi-label">発注明細番号</div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <div style="display:flex;gap:4px;">
+            <button id="warabi-edit-prefix-w" type="button" onclick="setWarabiEditPrefix('W')" style="padding:6px 10px;border-radius:8px;border:1.5px solid #8a5fcf;background:#8a5fcf;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">W-</button>
+            <button id="warabi-edit-prefix-k" type="button" onclick="setWarabiEditPrefix('K')" style="padding:6px 10px;border-radius:8px;border:1.5px solid #c9a8f0;background:#f3eeff;color:#6a3faf;font-weight:700;font-size:13px;cursor:pointer;">K-</button>
+            <button id="warabi-edit-prefix-s" type="button" onclick="setWarabiEditPrefix('S')" style="padding:6px 10px;border-radius:8px;border:1.5px solid #c9a8f0;background:#f3eeff;color:#6a3faf;font-weight:700;font-size:13px;cursor:pointer;">S-</button>
+          </div>
+          <div style="flex:1;display:flex;align-items:center;border:1.5px solid #c9a8f0;border-radius:8px;overflow:hidden;background:#fff;">
+            <span id="warabi-edit-prefix-display" style="padding:0 8px;background:#ede6ff;color:#6a3faf;font-weight:700;font-size:14px;white-space:nowrap;line-height:36px;border-right:1px solid #c9a8f0;">W-</span>
+            <input type="text" id="warabi-edit-order-num" placeholder="番号を入力" inputmode="numeric" style="border:none;flex:1;min-width:0;outline:none;padding:0 8px;font-size:14px;background:transparent;">
+          </div>
+        </div>
       </div>
       <button class="warabi-btn" onclick="saveWarabiEdit()">💾 保存する</button>
     </div>
