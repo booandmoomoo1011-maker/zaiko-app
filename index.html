@@ -3530,7 +3530,7 @@ function saveTempAM(){
   renderTempRecorderList();renderTempHistory();
   showToast('✅ AMの温度を記録しました');
   btnFeedback(document.querySelector('[onclick="saveTempAM()"]'),'AM完了');
-  setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b&&b.style.display!=='none'){b.style.display='none';if(a)a.classList.remove('open');}},1000);
+  setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b)b.style.display='none';if(a)a.classList.remove('open');},1500);
 }
 
 function saveTempPM(){
@@ -3560,7 +3560,7 @@ function saveTempPM(){
   renderTempRecorderList();renderTempHistory();
   showToast('✅ PMの温度を記録しました');
   btnFeedback(document.querySelector('[onclick="saveTempPM()"]'),'PM完了');
-  setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b&&b.style.display!=='none'){b.style.display='none';if(a)a.classList.remove('open');}},1000);
+  setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b)b.style.display='none';if(a)a.classList.remove('open');},1500);
 }
 
 
