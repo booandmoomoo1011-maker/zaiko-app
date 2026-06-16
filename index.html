@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v9.7';
+window.APP_VERSION = 'v9.8';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -952,7 +952,7 @@ try {
       </div>
 
       <!-- AM -->
-      <div style="background:#d6eeff;border-radius:12px;padding:14px;">
+      <div id="temp-am-section" style="background:#d6eeff;border-radius:12px;padding:14px;">
         <div style="font-size:18px;font-weight:800;color:#1565c0;margin-bottom:12px;text-align:center;background:#fff;border-radius:8px;padding:6px;">AM</div>
         <div style="display:flex;gap:8px;margin-bottom:12px;">
           <div style="flex:1;"><div class="temp-label">記録者 *</div>
@@ -1011,7 +1011,7 @@ try {
       </div>
 
       <!-- PM -->
-      <div style="background:#7ec8f0;border-radius:12px;padding:14px;">
+      <div id="temp-pm-section" style="background:#7ec8f0;border-radius:12px;padding:14px;">
         <div style="font-size:18px;font-weight:800;color:#0a3d7a;margin-bottom:12px;text-align:center;background:#fff;border-radius:8px;padding:6px;">PM</div>
         <div style="display:flex;gap:8px;margin-bottom:12px;">
           <div style="flex:1;"><div class="temp-label" style="color:#0a3d7a;">記録者 *</div>
@@ -3294,8 +3294,59 @@ function toggleTempSection(){
   const isOpen=body.style.display!=="none";
   body.style.display=isOpen?"none":"flex";
   arrow.classList.toggle("open",!isOpen);
+  if(!isOpen) checkTempLockState();
 }
 
+
+function checkTempLockState(){
+  const now2=new Date();
+  const ymd=now2.getFullYear()+'-'+String(now2.getMonth()+1).padStart(2,'0')+'-'+String(now2.getDate()).padStart(2,'0');
+  const records=loadTempRecords();
+  const today=records.find(r=>r.date===ymd);
+
+  function lockSection(sectionId, period, recorder){
+    const sec=document.getElementById(sectionId);
+    if(!sec)return;
+    // 既存のロックバナーを削除して再描画
+    const old=sec.querySelector('.temp-lock-banner');
+    if(old)old.remove();
+    const pfx=period==='AM'?'am':'pm';
+    const bgColor=period==='AM'?'#1565c0':'#0a3d7a';
+    // バナー作成
+    const banner=document.createElement('div');
+    banner.className='temp-lock-banner';
+    banner.style.cssText='background:'+bgColor+';color:#fff;border-radius:8px;padding:14px 12px;text-align:center;font-size:15px;font-weight:700;margin-top:4px;';
+    banner.innerHTML='✅ 本日の'+period+'は記録済みです<br><span style="font-size:12px;font-weight:400;opacity:0.85;">記録者：'+esc(recorder)+'</span><br><span style="font-size:11px;font-weight:400;opacity:0.7;margin-top:4px;display:block;">修正する場合は下の履歴から ✏️ で編集できます</span>';
+    // 入力欄・ボタンをすべて無効化
+    sec.querySelectorAll('input:not([type="hidden"]),button').forEach(el=>{
+      el.disabled=true;
+      el.style.opacity='0.4';
+      el.style.cursor='not-allowed';
+    });
+    sec.appendChild(banner);
+  }
+
+  function unlockSection(sectionId){
+    const sec=document.getElementById(sectionId);
+    if(!sec)return;
+    const old=sec.querySelector('.temp-lock-banner');
+    if(old)old.remove();
+    sec.querySelectorAll('input:not([type="hidden"]),button').forEach(el=>{
+      el.disabled=false;
+      el.style.opacity='';
+      el.style.cursor='';
+    });
+  }
+
+  const amDone=today&&today.amRecorder&&today.amRecorder.trim()!=='';
+  const pmDone=today&&today.pmRecorder&&today.pmRecorder.trim()!=='';
+
+  if(amDone) lockSection('temp-am-section','AM',today.amRecorder);
+  else unlockSection('temp-am-section');
+
+  if(pmDone) lockSection('temp-pm-section','PM',today.pmRecorder);
+  else unlockSection('temp-pm-section');
+}
 
 function initTempSection(){
   const now2=new Date();
@@ -3304,6 +3355,7 @@ function initTempSection(){
   const dateEl=document.getElementById('temp-date'); if(dateEl)dateEl.value=ymd;
   const monthEl=document.getElementById('temp-hist-month'); if(monthEl)monthEl.value=ym;
   renderTempRecorderList(); renderTempHistory();
+  checkTempLockState();
 
   // 起動時の自動アップロードは行わない（他端末データ上書き防止）
 }
@@ -3529,6 +3581,7 @@ function saveTempAM(){
   document.getElementById('temp-am-recorder').value='';
   renderTempRecorderList();renderTempHistory();
   showToast('✅ AMの温度を記録しました');
+  checkTempLockState();
   btnFeedback(document.querySelector('[onclick="saveTempAM()"]'),'AM完了');
   setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b)b.style.display='none';if(a)a.classList.remove('open');},1500);
 }
@@ -3559,6 +3612,7 @@ function saveTempPM(){
   document.getElementById('temp-pm-recorder').value='';
   renderTempRecorderList();renderTempHistory();
   showToast('✅ PMの温度を記録しました');
+  checkTempLockState();
   btnFeedback(document.querySelector('[onclick="saveTempPM()"]'),'PM完了');
   setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b)b.style.display='none';if(a)a.classList.remove('open');},1500);
 }
