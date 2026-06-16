@@ -127,8 +127,6 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 
 @keyframes blink-hint{0%,100%{opacity:1;}50%{opacity:0.25;}}
 @keyframes blink-red{0%,100%{opacity:1;}50%{opacity:0.2;}}
-@keyframes btn-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.7;transform:scale(0.97);}}
-.btn-pulse{animation:btn-pulse 1.4s ease-in-out infinite;}
 .staff-hint{animation:blink-red 1.2s ease-in-out infinite;color:#d00000;font-size:12px;font-weight:700;white-space:normal;width:100%;display:block;}
 .nyuka-hint{display:none;}
 .scol-readonly{background:var(--bg);}
@@ -284,7 +282,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v9.5';
+window.APP_VERSION = 'v9.6';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -947,7 +945,7 @@ try {
     <div class="temp-body" id="temp-body" style="display:none;">
       <div style="display:flex;gap:8px;">
         <div style="flex:1;"><div class="temp-label">記録日 *</div>
-          <input type="date" id="temp-date" class="temp-input" readonly style="background:#f0f0f0;color:#888;cursor:not-allowed;">
+          <input type="date" id="temp-date" class="temp-input">
         </div>
       </div>
 
@@ -1007,7 +1005,7 @@ try {
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
           <button id="temp-r4-am-df-btn" onclick="setRowDF('temp-r4-am-input','temp-r4-am-temp','temp-r4-am-df-btn')"
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
-        </div>        <button class="temp-save-btn btn-pulse" onclick="saveTempAM()" style="background:#1565c0;font-size:17px;padding:16px;margin-top:4px;">✅ AM を記録する</button>
+        </div>        <button class="temp-save-btn" onclick="saveTempAM()" style="background:#1565c0;font-size:17px;padding:16px;margin-top:4px;">✅ AM を記録する</button>
       </div>
 
       <!-- PM -->
@@ -1066,7 +1064,7 @@ try {
             style="padding:10px 14px;background:#e3f2fd;border:2px solid #90caf9;border-radius:8px;font-size:16px;font-weight:700;color:#1565c0;cursor:pointer;font-family:inherit;flex-shrink:0;">−</button>
           <button id="temp-r4-pm-df-btn" onclick="setRowDF('temp-r4-pm-input','temp-r4-pm-temp','temp-r4-pm-df-btn')"
             style="padding:10px 10px;background:#fff3e0;border:2px solid #ffb74d;border-radius:8px;font-size:13px;font-weight:700;color:#e65100;cursor:pointer;font-family:inherit;flex-shrink:0;">DF</button>
-        </div>        <button class="temp-save-btn btn-pulse" onclick="saveTempPM()" style="background:#0a3d7a;font-size:17px;padding:16px;margin-top:4px;">✅ PM を記録する</button>
+        </div>        <button class="temp-save-btn" onclick="saveTempPM()" style="background:#0a3d7a;font-size:17px;padding:16px;margin-top:4px;">✅ PM を記録する</button>
       </div>
       <div style="border-top:1px solid #90caf9;padding-top:10px;margin-top:2px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -1110,7 +1108,7 @@ try {
         </div>
       </div>
       <button class="warabi-btn-sm" onclick="openWarabiManageModal()" style="align-self:flex-start;background:#e8d8ff;border-color:#c9a8f0;color:#6a3faf;padding:5px 14px;">⚙️ 品目・工場・運送会社を管理</button>
-      <button class="warabi-btn btn-pulse" onclick="saveWarabiRecord()">📥 入荷を記録する</button>
+      <button class="warabi-btn" onclick="saveWarabiRecord()">📥 入荷を記録する</button>
       <div style="border-top:1px solid #c9a8f0;padding-top:10px;margin-top:2px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <span style="font-size:12px;font-weight:700;color:#6a3faf;white-space:nowrap;">📋 入荷履歴</span>
@@ -1159,7 +1157,7 @@ try {
     <div class="note-label">備考</div>
     <div style="display:flex;gap:8px;align-items:stretch;">
       <textarea id="note" rows="1" placeholder="備考（任意）" style="flex:0 0 40%;font-size:12px;padding:6px 8px;resize:none;min-height:48px;" oninput="saveDraft()"></textarea>
-      <button class="complete-inline-btn btn-pulse" id="complete-btn" onclick="confirmComplete()" style="flex:1;font-size:16px;padding:0 10px;min-height:48px;border-radius:12px;">☑️ 最終確認・完了</button>
+      <button class="complete-inline-btn" id="complete-btn" onclick="confirmComplete()" style="flex:1;font-size:16px;padding:0 10px;min-height:48px;border-radius:12px;">☑️ 最終確認・完了</button>
     </div>
 
   </div>
@@ -3483,6 +3481,7 @@ function saveTempAM(){
   renderTempRecorderList();renderTempHistory();
   showToast('✅ AMの温度を記録しました');
   btnFeedback(document.querySelector('[onclick="saveTempAM()"]'),'AM完了');
+  setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b&&b.style.display!=='none'){b.style.display='none';if(a)a.classList.remove('open');}},1000);
 }
 
 function saveTempPM(){
@@ -3512,6 +3511,7 @@ function saveTempPM(){
   renderTempRecorderList();renderTempHistory();
   showToast('✅ PMの温度を記録しました');
   btnFeedback(document.querySelector('[onclick="saveTempPM()"]'),'PM完了');
+  setTimeout(()=>{const b=document.getElementById('temp-body');const a=document.getElementById('temp-arrow');if(b&&b.style.display!=='none'){b.style.display='none';if(a)a.classList.remove('open');}},1000);
 }
 
 
@@ -3730,7 +3730,7 @@ try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
 
 <!-- 冷蔵庫温度記録編集モーダル -->
 <div id="temp-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2200;align-items:center;justify-content:center;padding:16px;" onclick="closeTempEditModal(event)">
-  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;overflow-x:hidden;" onclick="event.stopPropagation()">
+  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;" onclick="event.stopPropagation()">
     <div style="background:#1565c0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
       <div style="color:#fff;font-size:16px;font-weight:700;">✏️ 温度記録を編集</div>
       <button onclick="closeTempEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;line-height:1;">✕</button>
@@ -3741,19 +3741,22 @@ try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
         <div style="flex:1;"><div class="temp-label">記録者 *</div><input type="text" id="temp-edit-recorder" class="temp-input"></div>
         <div style="flex:1;"><div class="temp-label">記録日 *</div><input type="date" id="temp-edit-date" class="temp-input"></div>
       </div>
-      <div style="background:#d6eeff;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;">
-        <div style="font-weight:700;color:#1565c0;font-size:13px;margin-bottom:2px;">AM</div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">①冷蔵</span><input type="time" id="temp-edit-r1-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r1-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">②冷蔵兼用</span><input type="time" id="temp-edit-r2-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r2-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">③冷凍兼用</span><input type="time" id="temp-edit-r3-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r3-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">④冷凍</span><input type="time" id="temp-edit-r4-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r4-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
+      <div style="display:flex;gap:6px;"><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">①</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">②冷蔵兼用</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">③冷凍兼用</div><div style="flex:1;text-align:center;font-size:11px;font-weight:700;color:#1565c0;">④</div></div>
+      <div style="background:#d6eeff;border-radius:8px;padding:8px;"><div class="temp-ampm-label" style="text-align:left;margin-bottom:6px;">AM</div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><input type="time" id="temp-edit-r1-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r1-am-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r2-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r2-am-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r3-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r3-am-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r4-am-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r4-am-temp" class="temp-input"></div>
+        </div>
       </div>
-      <div style="background:#7ec8f0;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;">
-        <div style="font-weight:700;color:#0a3d7a;font-size:13px;margin-bottom:2px;">PM</div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">①冷蔵</span><input type="time" id="temp-edit-r1-pm-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r1-pm-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">②冷蔵兼用</span><input type="time" id="temp-edit-r2-pm-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r2-pm-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">③冷凍兼用</span><input type="time" id="temp-edit-r3-pm-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r3-pm-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#0a3d7a;flex-shrink:0;">④冷凍</span><input type="time" id="temp-edit-r4-pm-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r4-pm-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
+      <div style="background:#7ec8f0;border-radius:8px;padding:8px;"><div class="temp-ampm-label pm" style="text-align:left;margin-bottom:6px;">PM</div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><input type="time" id="temp-edit-r1-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r1-pm-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r2-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r2-pm-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r3-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r3-pm-temp" class="temp-input"></div>
+          <div style="flex:1;"><input type="time" id="temp-edit-r4-pm-time" class="temp-input" style="margin-bottom:3px;"><input type="text" id="temp-edit-r4-pm-temp" class="temp-input"></div>
+        </div>
       </div>
       <button class="temp-save-btn" onclick="saveTempEdit()">💾 保存する</button>
     </div>
