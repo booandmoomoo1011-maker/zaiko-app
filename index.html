@@ -3314,10 +3314,16 @@ function checkTempLockState(){
     // バナー作成
     const banner=document.createElement('div');
     banner.className='temp-lock-banner';
-    banner.style.cssText='background:'+bgColor+';color:#fff;border-radius:8px;padding:16px 12px;text-align:center;font-size:15px;font-weight:700;margin-top:8px;';
+    banner.style.cssText='background:'+bgColor+';color:#fff;border-radius:8px;padding:16px 12px;text-align:center;font-size:15px;font-weight:700;margin-top:8px;box-sizing:border-box;';
     banner.innerHTML='✅ 本日の'+period+'は記録済みです<br><span style="font-size:12px;font-weight:400;opacity:0.85;">記録者：'+esc(recorder)+'</span><br><span style="font-size:11px;font-weight:400;opacity:0.7;margin-top:4px;display:block;">修正する場合は下の履歴から ✏️ で編集できます</span>';
-    // タイトルdiv（最初の子）以外をすべて非表示
-    Array.from(sec.children).forEach((child,i)=>{if(i>0)child.style.display='none';});
+    // タイトルdiv（最初の子）以外を非表示（元のdisplay値を属性に保存）
+    Array.from(sec.children).forEach((child,i)=>{
+      if(i===0)return;
+      if(child.hasAttribute('data-temp-locked'))return; // 既にロック済みはスキップ
+      child.setAttribute('data-temp-locked','1');
+      child.setAttribute('data-temp-orig-display', child.style.display);
+      child.style.display='none';
+    });
     sec.appendChild(banner);
   }
 
@@ -3326,8 +3332,14 @@ function checkTempLockState(){
     if(!sec)return;
     const old=sec.querySelector('.temp-lock-banner');
     if(old)old.remove();
-    // すべての子要素を元に戻す
-    Array.from(sec.children).forEach(child=>{child.style.display='';});
+    // ロック済み要素のみ元のdisplay値に復元
+    Array.from(sec.children).forEach(child=>{
+      if(child.hasAttribute('data-temp-locked')){
+        child.style.display=child.getAttribute('data-temp-orig-display')||'';
+        child.removeAttribute('data-temp-locked');
+        child.removeAttribute('data-temp-orig-display');
+      }
+    });
   }
 
   const amDone=today&&today.amRecorder&&today.amRecorder.trim()!=='';
