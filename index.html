@@ -3307,22 +3307,17 @@ function checkTempLockState(){
   function lockSection(sectionId, period, recorder){
     const sec=document.getElementById(sectionId);
     if(!sec)return;
-    // 既存のロックバナーを削除して再描画
+    // 既存のロックバナーを削除
     const old=sec.querySelector('.temp-lock-banner');
     if(old)old.remove();
-    const pfx=period==='AM'?'am':'pm';
     const bgColor=period==='AM'?'#1565c0':'#0a3d7a';
     // バナー作成
     const banner=document.createElement('div');
     banner.className='temp-lock-banner';
-    banner.style.cssText='background:'+bgColor+';color:#fff;border-radius:8px;padding:14px 12px;text-align:center;font-size:15px;font-weight:700;margin-top:4px;';
+    banner.style.cssText='background:'+bgColor+';color:#fff;border-radius:8px;padding:16px 12px;text-align:center;font-size:15px;font-weight:700;margin-top:8px;';
     banner.innerHTML='✅ 本日の'+period+'は記録済みです<br><span style="font-size:12px;font-weight:400;opacity:0.85;">記録者：'+esc(recorder)+'</span><br><span style="font-size:11px;font-weight:400;opacity:0.7;margin-top:4px;display:block;">修正する場合は下の履歴から ✏️ で編集できます</span>';
-    // 入力欄・ボタンをすべて無効化
-    sec.querySelectorAll('input:not([type="hidden"]),button').forEach(el=>{
-      el.disabled=true;
-      el.style.opacity='0.4';
-      el.style.cursor='not-allowed';
-    });
+    // タイトルdiv（最初の子）以外をすべて非表示
+    Array.from(sec.children).forEach((child,i)=>{if(i>0)child.style.display='none';});
     sec.appendChild(banner);
   }
 
@@ -3331,11 +3326,8 @@ function checkTempLockState(){
     if(!sec)return;
     const old=sec.querySelector('.temp-lock-banner');
     if(old)old.remove();
-    sec.querySelectorAll('input:not([type="hidden"]),button').forEach(el=>{
-      el.disabled=false;
-      el.style.opacity='';
-      el.style.cursor='';
-    });
+    // すべての子要素を元に戻す
+    Array.from(sec.children).forEach(child=>{child.style.display='';});
   }
 
   const amDone=today&&today.amRecorder&&today.amRecorder.trim()!=='';
