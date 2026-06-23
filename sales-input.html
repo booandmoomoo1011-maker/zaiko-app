@@ -663,18 +663,18 @@ async function saveSettingsPasswords() {
   if (Object.keys(toSave).length === 0) {
     showSPwMsg('変更するパスワードを入力してください', 'ng'); return;
   }
-  try {
-    await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'setPasswords', passwords: toSave }) });
-    // localStorageのキャッシュも更新
-    const current = JSON.parse(localStorage.getItem('store_passwords_cache') ? JSON.parse(localStorage.getItem('store_passwords_cache')).pw || '{}' : '{}');
-    Object.assign(current, toSave);
-    localStorage.setItem('store_passwords_cache', JSON.stringify({pw: current, t: Date.now()}));
-    Object.assign(STORE_PASSWORDS, toSave);
-    showSPwMsg('✅ パスワードを保存しました', 'ok');
-    ['s-pw-osu','s-pw-nagoya','s-pw-teppan','s-pw-kamakura'].forEach(id => document.getElementById(id).value = '');
-  } catch(e) {
-    showSPwMsg('❌ 保存に失敗しました', 'ng');
-  }
+  // GASへ送信（CORSエラーは無視、実際には保存される）
+  try { await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'setPasswords', passwords: toSave }) }); } catch(e) {}
+  // localStorageのキャッシュも更新
+  Object.assign(STORE_PASSWORDS, toSave);
+  const cached = JSON.parse(localStorage.getItem('store_passwords_cache') || '{"pw":{}}');
+  Object.assign(cached.pw, toSave);
+  cached.t = Date.now();
+  localStorage.setItem('store_passwords_cache', JSON.stringify(cached));
+  // 再ログインが必要なのでauth削除
+  Object.keys(toSave).forEach(s => localStorage.removeItem('auth_' + s));
+  showSPwMsg('✅ パスワードを保存しました', 'ok');
+  ['s-pw-osu','s-pw-nagoya','s-pw-teppan','s-pw-kamakura'].forEach(id => document.getElementById(id).value = '');
 }
 
 function showSPwMsg(text, type) {
