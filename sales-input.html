@@ -165,7 +165,7 @@
     .cal-day.past { background:#f3f4ff; color:#3949ab; font-weight:600; }
     .cal-day.past:active { background:#c5cae9; }
     .cal-day.today { background:#1a237e; color:white; font-weight:800; }
-    .cal-day.future { color:#ccc; cursor:default; }
+    .cal-day.future { color:#bbb; cursor:pointer; }
     .cal-day.sunday { color:#e53935; }
     .cal-day.saturday { color:#1565c0; }
     .cal-day.today { color:white !important; }
@@ -714,11 +714,12 @@ function checkPassword() {
 })();
 
 // URLパラメータで店舗を自動選択（例: ?store=那古野）
+let urlParamStore = '';
 (function() {
   const p = new URLSearchParams(location.search);
   const s = p.get('store');
   if (['那古野','大須','鉄板','鎌倉'].includes(s)) {
-    document.getElementById('store-bar').style.display = 'none';
+    urlParamStore = s;
     trySelectStore(s);
   }
 })();
@@ -732,6 +733,11 @@ const STORE_CLASS = {
 
 function selectStore(s) {
   currentStore = s;
+
+  // URLパラメータで指定された店舗の場合のみ店舗バーを非表示
+  if (urlParamStore && urlParamStore === s) {
+    document.getElementById('store-bar').style.display = 'none';
+  }
 
   // ヘッダー色を切り替え
   const header = document.querySelector('.header');
@@ -884,7 +890,7 @@ function renderCalendar() {
     const dot = isEntered && !isHoliday ? '<span class="cal-dot entered"></span>'
                : '<span class="cal-dot"></span>';
 
-    const click = (isToday || isPast) ? 'onclick="calSelectDay(\'' + dateStr + '\')"' : '';
+    const click = !isFuture || isHoliday ? 'onclick="calSelectDay(\'' + dateStr + '\')"' : 'onclick="calSelectDay(\'' + dateStr + '\')"';
     html += '<div class="' + cls + '" id="calday-' + dateStr + '" ' + click + '>' + d + dot + '</div>';
   }
 
@@ -917,12 +923,15 @@ function calSelectDay(dateStr) {
   const isEntered = !!getEntered()[dateStr];
   const today = new Date().toISOString().slice(0,10);
 
+  const isFutureDate = dateStr > today;
+
   // ポップアップの内容を設定
   document.getElementById('cal-popup-date').textContent = dateStr;
   // 休み登録ボタン：すでに休みの場合のみ非表示
   document.getElementById('cal-popup-holiday-on').style.display  = isHoliday ? 'none' : 'flex';
   document.getElementById('cal-popup-holiday-off').style.display = isHoliday ? 'flex' : 'none';
-  document.getElementById('cal-popup-edit').style.display = 'flex';
+  // 入力・編集は未来日には表示しない
+  document.getElementById('cal-popup-edit').style.display = isFutureDate ? 'none' : 'flex';
 
   // ポップアップ位置をタップした日付セルの近くに表示
   const popup = document.getElementById('cal-popup');
