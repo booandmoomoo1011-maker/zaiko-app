@@ -32,11 +32,19 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10;
     }
     .store-btn {
-      flex: 1; padding: 12px 4px; text-align: center;
-      font-size: 14px; font-weight: 500; cursor: pointer; color: #888;
-      border-bottom: 3px solid transparent; transition: all 0.2s; user-select: none;
+      flex: 1; margin: 8px 4px; padding: 10px 4px; text-align: center;
+      font-size: 13px; font-weight: 700; cursor: pointer; color: #555;
+      border-radius: 8px; border: 2px solid transparent;
+      transition: all 0.2s; user-select: none;
     }
-    .store-btn.active { color: #1a237e; border-bottom-color: #1a237e; font-weight: 700; }
+    .store-btn.btn-osu      { background:#fce4ec; border-color:#f8bbd0; color:#333; }
+    .store-btn.btn-nagoya   { background:#fffde7; border-color:#fff176; color:#333; }
+    .store-btn.btn-teppan   { background:#e1f5fe; border-color:#b3e5fc; color:#333; }
+    .store-btn.btn-kamakura { background:#f3e5f5; border-color:#e1bee7; color:#333; }
+    .store-btn.btn-osu.active      { border-color:#e91e63; box-shadow:0 0 0 2px #e91e6366; }
+    .store-btn.btn-nagoya.active   { border-color:#f9a825; box-shadow:0 0 0 2px #f9a82566; }
+    .store-btn.btn-teppan.active   { border-color:#0288d1; box-shadow:0 0 0 2px #0288d166; }
+    .store-btn.btn-kamakura.active { border-color:#8e24aa; box-shadow:0 0 0 2px #8e24aa66; }
 
     /* メインエリア */
     .wrap { padding: 12px; max-width: 520px; margin: 0 auto; }
@@ -163,8 +171,20 @@
       margin:2px auto 0;
     }
     .cal-day .cal-dot.entered { background:#43a047; }
-    .cal-day .cal-dot.holiday { background:#ff7043; }
+    .cal-day .cal-dot.holiday { background:#26c6da; }
     .cal-day.selected { outline:2px solid #f9c500; outline-offset:1px; }
+    .cal-day.holiday-day { background:#b2ebf2 !important; color:#006064 !important; }
+    .cal-day.holiday-day.today { background:#1a237e !important; color:white !important; }
+    #cal-card { position:relative; overflow:visible; }
+    #cal-popup {
+      display:none; position:absolute; z-index:200;
+      background:white; border:1px solid #c5cae9; border-radius:12px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.18); padding:8px; min-width:160px;
+    }
+    .cal-popup-date { font-size:12px; color:#888; text-align:center; padding:4px 0 8px; border-bottom:1px solid #eee; margin-bottom:4px; }
+    .cal-popup-btn { display:flex; align-items:center; gap:8px; width:100%; padding:10px 14px; font-size:14px; text-align:left; background:none; border:none; border-radius:8px; cursor:pointer; color:#333; }
+    .cal-popup-btn:active { background:#f3f4ff; }
+    #cal-popup-overlay { display:none; position:fixed; inset:0; z-index:199; }
 
     /* 管理パネル */
     #admin-panel { display:none; }
@@ -223,10 +243,10 @@
 </div>
 
 <div class="store-bar" id="store-bar">
-  <div class="store-btn" onclick="trySelectStore('那古野')">那古野</div>
-  <div class="store-btn" onclick="trySelectStore('大須')">大須</div>
-  <div class="store-btn" onclick="trySelectStore('鉄板')">鉄板</div>
-  <div class="store-btn" onclick="trySelectStore('鎌倉')">鎌倉</div>
+  <div class="store-btn btn-osu"      onclick="trySelectStore('大須')">大須</div>
+  <div class="store-btn btn-nagoya"   onclick="trySelectStore('那古野')">那古野</div>
+  <div class="store-btn btn-teppan"   onclick="trySelectStore('鉄板')">鉄板</div>
+  <div class="store-btn btn-kamakura" onclick="trySelectStore('鎌倉')">鎌倉</div>
 </div>
 
 <div class="wrap">
@@ -250,6 +270,13 @@
 
     <!-- 月カレンダー -->
     <div class="card" id="cal-card">
+      <div id="cal-popup-overlay" onclick="closeCalPopup()"></div>
+      <div id="cal-popup">
+        <div class="cal-popup-date" id="cal-popup-date"></div>
+        <button class="cal-popup-btn" id="cal-popup-holiday-on" onclick="calActionHolidayOn()">🔵 休みを登録</button>
+        <button class="cal-popup-btn" id="cal-popup-holiday-off" onclick="calActionHolidayOff()">✅ 休みを解除</button>
+        <button class="cal-popup-btn" id="cal-popup-edit" onclick="calActionEdit()">✏️ 入力・編集</button>
+      </div>
       <div class="cal-header">
         <button class="cal-nav" onclick="calPrev()">‹</button>
         <span class="cal-title" id="cal-title"></span>
@@ -257,7 +284,7 @@
       </div>
       <div class="cal-grid" id="cal-grid"></div>
       <p style="font-size:11px;color:#aaa;margin-top:8px;text-align:center;">
-        🟢 入力済み　🟠 休み　タップで日付を選択
+        🟢 入力済み　🔵 休み　タップで日付を選択
       </p>
     </div>
 
@@ -385,18 +412,18 @@
     </div>
 
     <button class="btn-submit" id="btn" onclick="submitData()">📤 スプレッドシートに送信</button>
-    <button onclick="registerTodayHoliday()"
-      style="width:100%;padding:12px;background:#fff;color:#e64a19;border:2px solid #e64a19;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">
-      🏖️ 本日を休みとして登録
+    <button id="btn-revert" onclick="revertToOriginal()"
+      style="display:none;width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">
+      ↩️ 読み込んだデータに戻す
     </button>
     <div id="msg"></div>
 
     <!-- 過去データの入力・修正（一番下） -->
     <div class="card" style="margin-top:20px;border:2px dashed #c5cae9;">
       <h2 style="color:#5c6bc0;">🔧 過去データの入力・修正</h2>
-      <p style="font-size:13px;color:#777;margin-bottom:12px;">カレンダーの日付をタップするか、日付を選んで「読み込む」を押してください。</p>
+      <p style="font-size:13px;color:#777;margin-bottom:12px;">当月はカレンダーの日付をタップしてください。先月以前はこちらから日付を選んで「読み込む」を押してください。</p>
       <div class="row" style="margin-bottom:10px;">
-        <div class="lbl" style="font-size:13px;color:#555;">対象日付</div>
+        <div class="lbl" style="font-size:13px;color:#555;">対象日付<br><span style="font-size:11px;color:#aaa;">（先月以前）</span></div>
         <div class="inp">
           <input type="date" id="edit-date"
             style="width:100%;padding:9px 10px;border:1.5px solid #c5cae9;border-radius:7px;font-size:15px;background:#fafafa;">
@@ -404,12 +431,8 @@
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <button id="btn-load" onclick="loadData()"
-          style="flex:1;padding:10px;background:#fff;color:#5c6bc0;border:2px solid #5c6bc0;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;">
-          📖 読み込む
-        </button>
-        <button onclick="registerHoliday()"
-          style="flex:1;padding:10px;background:#fff;color:#e64a19;border:2px solid #e64a19;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;">
-          🏖️ 休み登録
+          style="width:100%;padding:10px;background:#fff;color:#5c6bc0;border:2px solid #5c6bc0;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;">
+          📖 この日の入力済みデータを読み込む（修正用）
         </button>
       </div>
       <div id="load-msg" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;text-align:center;"></div>
@@ -537,16 +560,7 @@ function showAdmMsg(text, type) {
 
 // ---- パスワード認証 ----
 function trySelectStore(s) {
-  if (localStorage.getItem('auth_' + s) === '1') {
-    selectStore(s);
-  } else {
-    pendingStore = s;
-    document.getElementById('pw-store-name').textContent = s + '店のパスワードを入力してください';
-    document.getElementById('pw-msg').textContent = '';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-overlay').style.display = 'flex';
-    setTimeout(() => document.getElementById('pw-input').focus(), 100);
-  }
+  selectStore(s);
 }
 
 function checkPassword() {
@@ -571,10 +585,10 @@ function checkPassword() {
     y + '年' + m + '月' + day + '日（' + dow + '）';
   const todayStr = y + '-' + String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
   document.getElementById('date').value = todayStr;
-  // 修正用日付の上限を昨日に設定
-  const yest = new Date(d); yest.setDate(yest.getDate() - 1);
+  // 修正用日付の上限を「先月末」に設定（当月はカレンダーから選択）
+  const lastDayOfPrevMonth = new Date(d.getFullYear(), d.getMonth(), 0);
   document.getElementById('edit-date').max =
-    yest.getFullYear() + '-' + String(yest.getMonth()+1).padStart(2,'0') + '-' + String(yest.getDate()).padStart(2,'0');
+    lastDayOfPrevMonth.getFullYear() + '-' + String(lastDayOfPrevMonth.getMonth()+1).padStart(2,'0') + '-' + String(lastDayOfPrevMonth.getDate()).padStart(2,'0');
 })();
 
 // URLパラメータで店舗を自動選択（例: ?store=那古野）
@@ -673,6 +687,8 @@ async function loadData() {
       // 送信ボタンを修正モード表示に
       document.getElementById('btn').textContent = '✏️ 修正内容を送信（上書き保存）';
       document.getElementById('btn').style.background = '#5c6bc0';
+      // 戻るボタンを表示
+      document.getElementById('btn-revert').style.display = 'block';
       showLoadMsg('✅ データを読み込みました。上のフォームで修正して送信してください。', 'ok');
       updateSummary();
       // フォーム先頭にスクロール
@@ -741,9 +757,9 @@ function renderCalendar() {
     else cls += ' past';
     if (dow === 0) cls += ' sunday';
     if (dow === 6) cls += ' saturday';
+    if (isHoliday) cls += ' holiday-day';
 
-    const dot = isHoliday ? '<span class="cal-dot holiday"></span>'
-               : isEntered ? '<span class="cal-dot entered"></span>'
+    const dot = isEntered && !isHoliday ? '<span class="cal-dot entered"></span>'
                : '<span class="cal-dot"></span>';
 
     const click = (isToday || isPast) ? 'onclick="calSelectDay(\'' + dateStr + '\')"' : '';
@@ -766,23 +782,81 @@ function calNext() {
   renderCalendar();
 }
 
+let calPopupDate = '';
+
 function calSelectDay(dateStr) {
   // 選択状態をハイライト
   document.querySelectorAll('.cal-day.selected').forEach(el => el.classList.remove('selected'));
   const el = document.getElementById('calday-' + dateStr);
   if (el) el.classList.add('selected');
 
+  calPopupDate = dateStr;
+  const isHoliday = !!getHolidays()[dateStr];
+  const isEntered = !!getEntered()[dateStr];
   const today = new Date().toISOString().slice(0,10);
-  if (dateStr === today) {
-    // 今日 → 通常入力へスクロール
+
+  // ポップアップの内容を設定
+  document.getElementById('cal-popup-date').textContent = dateStr;
+  // 休み登録ボタン：すでに休みの場合のみ非表示
+  document.getElementById('cal-popup-holiday-on').style.display  = isHoliday ? 'none' : 'flex';
+  document.getElementById('cal-popup-holiday-off').style.display = isHoliday ? 'flex' : 'none';
+  document.getElementById('cal-popup-edit').style.display = 'flex';
+
+  // ポップアップ位置をタップした日付セルの近くに表示
+  const popup = document.getElementById('cal-popup');
+  const calCard = document.getElementById('cal-card');
+  if (el) {
+    const cellRect = el.getBoundingClientRect();
+    const cardRect = calCard.getBoundingClientRect();
+    let top = cellRect.bottom - cardRect.top + 4;
+    let left = cellRect.left - cardRect.left;
+    // 右端はみ出し防止
+    if (left + 170 > calCard.offsetWidth) left = calCard.offsetWidth - 175;
+    if (left < 0) left = 0;
+    popup.style.top  = top + 'px';
+    popup.style.left = left + 'px';
+  }
+  popup.style.display = 'block';
+  document.getElementById('cal-popup-overlay').style.display = 'block';
+}
+
+function closeCalPopup() {
+  document.getElementById('cal-popup').style.display = 'none';
+  document.getElementById('cal-popup-overlay').style.display = 'none';
+}
+
+async function calActionHolidayOn() {
+  closeCalPopup();
+  const staffName = document.getElementById('staff-name').value.trim();
+  if (!staffName) { showMsg('担当者名がないと送信できません', 'ng'); return; }
+  // 入力済みの場合は追加警告
+  if (getEntered()[calPopupDate]) {
+    if (!confirm('⚠️ ' + calPopupDate + ' はデータが入力済みです。\n休みとして登録すると入力データが0に上書きされます。\nよろしいですか？')) return;
+  } else {
+    if (!confirm(calPopupDate + ' を休みとして登録しますか？')) return;
+  }
+  await sendHoliday(calPopupDate, staffName);
+}
+
+function calActionHolidayOff() {
+  closeCalPopup();
+  if (!confirm(calPopupDate + ' の休みを取り消しますか？')) return;
+  unmarkHoliday(calPopupDate);
+  showMsg('✅ ' + calPopupDate + ' の休みを取り消しました', 'ok');
+}
+
+function calActionEdit() {
+  closeCalPopup();
+  const today = new Date().toISOString().slice(0,10);
+  if (calPopupDate === today) {
     editMode = false;
     originalData = null;
     document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     return;
   }
-  // 過去 → edit-dateにセットして読み込む
-  document.getElementById('edit-date').value = dateStr;
-  document.getElementById('edit-date').scrollIntoView({behavior:'smooth'});
+  // 当月・先月以前どちらも edit-date にセットして読み込む
+  // loadData() が成功時に自動で上（form-area）にスクロールする
+  document.getElementById('edit-date').value = calPopupDate;
   loadData();
 }
 
@@ -813,7 +887,7 @@ function markEntered(dateStr) {
 async function registerTodayHoliday() {
   if (!currentStore) { alert('店舗を選択してください'); return; }
   const staffName = document.getElementById('staff-name').value.trim();
-  if (!staffName) { showMsg('担当者名を入力してください', 'ng'); return; }
+  if (!staffName) { showMsg('担当者名がないと送信できません', 'ng'); return; }
   const dateStr = document.getElementById('date').value;
   if (!confirm(dateStr + ' を休みとして登録しますか？')) return;
   await sendHoliday(dateStr, staffName);
@@ -823,7 +897,7 @@ async function registerTodayHoliday() {
 async function registerHoliday() {
   if (!currentStore) { alert('店舗を選択してください'); return; }
   const staffName = document.getElementById('staff-name').value.trim();
-  if (!staffName) { showLoadMsg('担当者名を入力してください', 'ng'); return; }
+  if (!staffName) { showLoadMsg('担当者名がないと送信できません', 'ng'); return; }
   const dateStr = document.getElementById('edit-date').value;
   if (!dateStr) { showLoadMsg('日付を選択してください', 'ng'); return; }
 
@@ -847,8 +921,8 @@ async function sendHoliday(dateStr, staffName) {
     await fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload) });
   } catch(e) {}
   markHoliday(dateStr);
-  showLoadMsg('🏖️ ' + dateStr + ' を休みとして登録しました', 'ok');
-  showMsg('🏖️ ' + dateStr + ' を休みとして登録しました', 'ok');
+  showLoadMsg('🔵 ' + dateStr + ' を休みとして登録しました', 'ok');
+  showMsg('🔵 ' + dateStr + ' を休みとして登録しました', 'ok');
 }
 
 // ---- 入力データの自動保存・復元（スワイプ対策） ----
@@ -1028,7 +1102,7 @@ function s(id) { return document.getElementById(id).value.trim(); }
 async function submitData() {
   if (!currentStore) { showMsg('店舗を選択してください', 'ng'); return; }
   const staffName = s('staff-name');
-  if (!staffName) { showMsg('担当者名を入力してください', 'ng'); return; }
+  if (!staffName) { showMsg('担当者名がないと送信できません', 'ng'); return; }
   // 修正モードなら edit-date、通常は今日の日付
   const date = editMode
     ? document.getElementById('edit-date').value
@@ -1117,8 +1191,37 @@ function resetEditMode() {
   originalData = null;
   document.getElementById('btn').textContent = '📤 スプレッドシートに送信';
   document.getElementById('btn').style.background = '#c62828';
+  document.getElementById('btn-revert').style.display = 'none';
   document.getElementById('edit-date').value = '';
   showLoadMsg('', '');
+}
+
+function revertToOriginal() {
+  if (!originalData) return;
+  if (!confirm('読み込んだデータに戻しますか？\n（現在の入力内容は消えます）')) return;
+  const setN = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (val === '' || val === null || val === undefined) ? '' : val;
+  };
+  setN('kumi',       originalData.kumi);
+  setN('male',       originalData.male);
+  setN('female',     originalData.female);
+  setN('netSales',   originalData.netSales);
+  setN('sales10',    originalData.sales10);
+  setN('tax10',      originalData.tax10);
+  setN('sales8',     originalData.sales8);
+  setN('tax8',       originalData.tax8);
+  setN('credit',     originalData.credit);
+  setN('point',      originalData.point);
+  setN('emoney',     originalData.emoney);
+  setN('coupon',     originalData.coupon);
+  setN('buhin',      originalData.buhin);
+  setN('buhinCash',  originalData.buhinCash);
+  setN('buhinOther', originalData.buhinOther);
+  setN('buhinBrand', originalData.buhinBrand);
+  setN('weather',    originalData.weather);
+  updateSummary();
+  showMsg('↩️ 読み込んだデータに戻しました', 'ok');
 }
 
 function clearForm() {
