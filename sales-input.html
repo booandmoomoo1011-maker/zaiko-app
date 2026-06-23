@@ -35,19 +35,20 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10;
     }
     .store-btn {
-      flex: 1; margin: 6px 3px; padding: 8px 2px; text-align: center;
-      font-size: 12px; font-weight: 700; cursor: pointer; color: #555;
-      border-radius: 8px; border: 2px solid transparent;
+      flex: 1; margin: 5px 3px; padding: 10px 2px; text-align: center;
+      font-size: 13px; font-weight: 800; cursor: pointer; color: #222;
+      border-radius: 8px; border: 2px solid #ddd;
       transition: all 0.2s; user-select: none; min-width: 0;
+      line-height: 1.2;
     }
-    .store-btn.btn-osu      { background:#fce4ec; border-color:#f8bbd0; color:#333; }
-    .store-btn.btn-nagoya   { background:#fffde7; border-color:#fff176; color:#333; }
-    .store-btn.btn-teppan   { background:#e1f5fe; border-color:#b3e5fc; color:#333; }
-    .store-btn.btn-kamakura { background:#f3e5f5; border-color:#e1bee7; color:#333; }
-    .store-btn.btn-osu.active      { border-color:#e91e63; box-shadow:0 0 0 2px #e91e6366; }
-    .store-btn.btn-nagoya.active   { border-color:#f9a825; box-shadow:0 0 0 2px #f9a82566; }
-    .store-btn.btn-teppan.active   { border-color:#0288d1; box-shadow:0 0 0 2px #0288d166; }
-    .store-btn.btn-kamakura.active { border-color:#8e24aa; box-shadow:0 0 0 2px #8e24aa66; }
+    .store-btn.btn-osu      { background:#fce4ec; border-color:#f48fb1; color:#880e4f; }
+    .store-btn.btn-nagoya   { background:#fff9c4; border-color:#f9a825; color:#5a3e00; }
+    .store-btn.btn-teppan   { background:#e1f5fe; border-color:#4fc3f7; color:#01579b; }
+    .store-btn.btn-kamakura { background:#f3e5f5; border-color:#ce93d8; color:#4a148c; }
+    .store-btn.btn-osu.active      { background:#f8bbd0; border-color:#e91e63; box-shadow:0 0 0 2px #e91e6366; }
+    .store-btn.btn-nagoya.active   { background:#fff176; border-color:#f9a825; box-shadow:0 0 0 2px #f9a82566; }
+    .store-btn.btn-teppan.active   { background:#b3e5fc; border-color:#0288d1; box-shadow:0 0 0 2px #0288d166; }
+    .store-btn.btn-kamakura.active { background:#e1bee7; border-color:#8e24aa; box-shadow:0 0 0 2px #8e24aa66; }
 
     /* メインエリア */
     .wrap { padding: 12px; max-width: 520px; margin: 0 auto; }
@@ -686,15 +687,16 @@ function showSPwMsg(text, type) {
 }
 
 function checkPassword() {
-  const pw = document.getElementById('pw-input').value;
-  if (pw === STORE_PASSWORDS[pendingStore]) {
+  const pw = document.getElementById('pw-input').value.trim();
+  if (pw && pw === String(STORE_PASSWORDS[pendingStore])) {
     localStorage.setItem('auth_' + pendingStore, '1');
     document.getElementById('pw-overlay').style.display = 'none';
     selectStore(pendingStore);
   } else {
-    document.getElementById('pw-msg').textContent = '❌ パスワードが違います';
+    document.getElementById('pw-overlay').style.display = 'flex';
+    document.getElementById('pw-msg').textContent = '❌ パスワードが違います。もう一度入力してください';
     document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
+    setTimeout(() => document.getElementById('pw-input').focus(), 100);
   }
 }
 
@@ -713,14 +715,21 @@ function checkPassword() {
     lastDayOfPrevMonth.getFullYear() + '-' + String(lastDayOfPrevMonth.getMonth()+1).padStart(2,'0') + '-' + String(lastDayOfPrevMonth.getDate()).padStart(2,'0');
 })();
 
-// URLパラメータで店舗を自動選択（例: ?store=那古野）
+// URLパラメータで店舗を自動選択 or 前回の店舗を復元
 let urlParamStore = '';
 (function() {
   const p = new URLSearchParams(location.search);
   const s = p.get('store');
   if (['那古野','大須','鉄板','鎌倉'].includes(s)) {
+    // URLに店舗指定あり
     urlParamStore = s;
     trySelectStore(s);
+  } else {
+    // 前回選んだ店舗を自動復元
+    const last = localStorage.getItem('last_store');
+    if (last && ['那古野','大須','鉄板','鎌倉'].includes(last)) {
+      trySelectStore(last);
+    }
   }
 })();
 
@@ -733,6 +742,9 @@ const STORE_CLASS = {
 
 function selectStore(s) {
   currentStore = s;
+
+  // 最後に選んだ店舗を記憶
+  localStorage.setItem('last_store', s);
 
   // URLパラメータで指定された店舗の場合のみ店舗バーを非表示
   if (urlParamStore && urlParamStore === s) {
@@ -958,15 +970,13 @@ function closeCalPopup() {
 
 async function calActionHolidayOn() {
   closeCalPopup();
-  const staffName = document.getElementById('staff-name').value.trim();
-  if (!staffName) { showMsg('担当者名がないと送信できません', 'ng'); return; }
   // 入力済みの場合は追加警告
   if (getEntered()[calPopupDate]) {
     if (!confirm('⚠️ ' + calPopupDate + ' はデータが入力済みです。\n休みとして登録すると入力データが0に上書きされます。\nよろしいですか？')) return;
   } else {
     if (!confirm(calPopupDate + ' を休みとして登録しますか？')) return;
   }
-  await sendHoliday(calPopupDate, staffName);
+  await sendHoliday(calPopupDate, '休み登録');
 }
 
 function calActionHolidayOff() {
