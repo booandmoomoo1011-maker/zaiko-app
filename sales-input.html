@@ -227,20 +227,6 @@
   </div>
 </div>
 
-<!-- 更新番号確認オーバーレイ -->
-<div id="update-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:16px;padding:28px 24px;width:88%;max-width:340px;text-align:center;">
-    <div style="font-size:36px;margin-bottom:8px;">🔄</div>
-    <h2 style="font-size:17px;font-weight:800;margin-bottom:8px;color:#1a237e;">アプリが更新されました</h2>
-    <p style="font-size:13px;color:#777;margin-bottom:16px;">管理者から送られた<br>更新番号を入力してください</p>
-    <input type="text" id="update-code-input" inputmode="numeric" placeholder="更新番号"
-      style="width:100%;padding:12px;font-size:18px;text-align:center;border:2px solid #c5cae9;border-radius:8px;margin-bottom:12px;"
-      onkeydown="if(event.key==='Enter')checkUpdateCode()">
-    <button onclick="checkUpdateCode()" style="width:100%;padding:12px;background:#1a237e;color:white;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">確認</button>
-    <div id="update-code-msg" style="margin-top:8px;font-size:13px;color:#c62828;"></div>
-  </div>
-</div>
-
 <!-- パスワード認証オーバーレイ -->
 <div id="pw-overlay">
   <div id="pw-box">
@@ -268,19 +254,9 @@
     <button onclick="closeSettings()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">✕</button>
   </div>
 
-  <!-- 更新番号 -->
-  <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:14px;margin-bottom:20px;">
-    <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:6px;">🔄 現在の更新番号</p>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span id="display-change-code" style="font-size:22px;font-weight:800;color:#1a237e;letter-spacing:4px;"></span>
-      <button onclick="copyChangeCode()" style="padding:6px 12px;background:#1a237e;color:white;border:none;border-radius:6px;font-size:12px;cursor:pointer;">コピー</button>
-    </div>
-    <p style="font-size:11px;color:#888;margin-top:6px;">更新時はこの番号をLINEでスタッフに送ってください</p>
-  </div>
-
-  <!-- LINE共有 -->
+  <!-- URLコピー -->
   <div style="margin-bottom:24px;">
-    <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:10px;">📲 LINEで店舗URLを共有</p>
+    <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:10px;">📋 店舗URLをコピー（LINEに貼り付けて送る）</p>
     <div id="line-share-btns"></div>
   </div>
 
@@ -518,28 +494,6 @@
 // ============================================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUUbcAkNo1czgDCamnPhdRicP8BTH3ePex9fbyoYAooratkz70oTrmDLNu-8J8Xc/exec';
 
-// ★ 更新するたびにここの番号を変えてください（スタッフ全員が更新番号の入力を求められます）
-const APP_CHANGE_CODE = '001';
-
-// 起動時に更新番号チェック
-(function() {
-  const saved = localStorage.getItem('app_change_code');
-  if (saved !== APP_CHANGE_CODE) {
-    document.getElementById('update-overlay').style.display = 'flex';
-  }
-})();
-
-function checkUpdateCode() {
-  const input = document.getElementById('update-code-input').value.trim();
-  if (input === APP_CHANGE_CODE) {
-    localStorage.setItem('app_change_code', APP_CHANGE_CODE);
-    document.getElementById('update-overlay').style.display = 'none';
-  } else {
-    document.getElementById('update-code-msg').textContent = '❌ 番号が違います';
-    document.getElementById('update-code-input').value = '';
-    document.getElementById('update-code-input').focus();
-  }
-}
 // ============================================================
 
 // パスワードのデフォルト（GAS未設定時のフォールバック）
@@ -670,22 +624,25 @@ const STORES_ORDER = ['大須','那古野','鉄板','鎌倉'];
 const STORE_PARAMS = {'大須':'osu','那古野':'nagoya','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLORS = {'大須':'#e91e63','那古野':'#f9a825','鉄板':'#0288d1','鎌倉':'#8e24aa'};
 
-function copyChangeCode() {
-  navigator.clipboard.writeText(APP_CHANGE_CODE).then(() => alert('更新番号「' + APP_CHANGE_CODE + '」をコピーしました'));
-}
-
 function openSettings() {
-  document.getElementById('display-change-code').textContent = APP_CHANGE_CODE;
-  // LINE共有ボタンを生成
+  // URLコピーボタンを生成
   const container = document.getElementById('line-share-btns');
   container.innerHTML = STORES_ORDER.map(s => {
-    const url = encodeURIComponent(APP_URL + '?store=' + encodeURIComponent(s));
-    const lineUrl = 'https://social-plugins.line.me/lineit/share?url=' + url;
-    return '<a href="' + lineUrl + '" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;background:#06c755;color:white;border-radius:8px;text-decoration:none;font-size:14px;font-weight:700;">' +
-      '<span style="font-size:20px;">✉️</span>' + s + '店のURLをLINEで送る</a>';
+    const url = APP_URL + '?store=' + encodeURIComponent(s);
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
+      '<span style="flex:1;font-size:13px;font-weight:700;color:#333;">' + s + '店</span>' +
+      '<button onclick="copyStoreUrl(\'' + s + '\')" style="padding:8px 14px;background:#1a237e;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📋 URLをコピー</button>' +
+      '</div>';
   }).join('');
   document.getElementById('settings-panel').style.display = 'block';
   document.getElementById('settings-overlay').style.display = 'block';
+}
+
+function copyStoreUrl(store) {
+  const url = APP_URL + '?store=' + encodeURIComponent(store);
+  navigator.clipboard.writeText(url).then(() => {
+    alert(store + '店のURLをコピーしました。\nLINEに貼り付けて送ってください。');
+  });
 }
 
 function closeSettings() {
