@@ -35,10 +35,10 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10;
     }
     .store-btn {
-      flex: 1; margin: 8px 4px; padding: 10px 4px; text-align: center;
-      font-size: 13px; font-weight: 700; cursor: pointer; color: #555;
+      flex: 1; margin: 6px 3px; padding: 8px 2px; text-align: center;
+      font-size: 12px; font-weight: 700; cursor: pointer; color: #555;
       border-radius: 8px; border: 2px solid transparent;
-      transition: all 0.2s; user-select: none;
+      transition: all 0.2s; user-select: none; min-width: 0;
     }
     .store-btn.btn-osu      { background:#fce4ec; border-color:#f8bbd0; color:#333; }
     .store-btn.btn-nagoya   { background:#fffde7; border-color:#fff176; color:#333; }
@@ -240,10 +240,10 @@
   </div>
 </div>
 
-<div class="header" style="position:relative;">
+<div class="header" style="position:relative;padding-right:52px;">
   <h1>📊 売上入力システム</h1>
   <div class="sub" id="hdr-store">↓ 下から店舗を選択してください</div>
-  <button onclick="openSettings()" style="position:absolute;top:50%;right:12px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:6px 10px;font-size:18px;cursor:pointer;color:white;">⚙️</button>
+  <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
 <!-- 設定パネル -->
