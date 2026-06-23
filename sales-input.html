@@ -635,7 +635,7 @@ function trySelectStore(s) {
 }
 
 // ====== 設定パネル ======
-const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html';
+const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html?v=2';
 const STORES_ORDER = ['大須','那古野','鉄板','鎌倉'];
 const STORE_PARAMS = {'大須':'osu','那古野':'nagoya','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLORS = {'大須':'#e91e63','那古野':'#f9a825','鉄板':'#0288d1','鎌倉':'#8e24aa'};
@@ -644,7 +644,7 @@ function openSettings() {
   // URLコピーボタンを生成
   const container = document.getElementById('line-share-btns');
   container.innerHTML = STORES_ORDER.map(s => {
-    const url = APP_URL + '?store=' + encodeURIComponent(s);
+    const url = APP_URL + '&store=' + encodeURIComponent(s);
     return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">' +
       '<span style="flex:1;font-size:13px;font-weight:700;color:#333;">' + s + '店</span>' +
       '<button onclick="copyStoreUrl(\'' + s + '\')" style="padding:8px 14px;background:#1a237e;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">📋 URLをコピー</button>' +
@@ -655,7 +655,7 @@ function openSettings() {
 }
 
 function copyStoreUrl(store) {
-  const url = APP_URL + '?store=' + encodeURIComponent(store);
+  const url = APP_URL + '&store=' + encodeURIComponent(store);
   navigator.clipboard.writeText(url).then(() => {
     alert(store + '店のURLをコピーしました。\nLINEに貼り付けて送ってください。');
   });
