@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>売上入力</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: #f0f2f5; color: #333; font-size: 16px;
+    }
+
+    /* ヘッダー */
+    .header {
+      background: linear-gradient(135deg, #1a237e, #283593);
+      color: white; padding: 14px 16px; text-align: center;
+      transition: background 0.3s;
+    }
+    .header h1 { font-size: 13px; font-weight: 400; opacity: 0.75; }
+    .header .sub { font-size: 22px; font-weight: 800; margin-top: 4px; letter-spacing: 0.5px; }
+
+    /* 店舗別ヘッダー色 */
+    .header.store-nagoya  { background: linear-gradient(135deg, #f9c500, #f5b800); color: #5a3e00; }
+    .header.store-osu     { background: linear-gradient(135deg, #ffb6c1, #ff9aaa); color: #6b0020; }
+    .header.store-teppan  { background: linear-gradient(135deg, #b2ebf2, #80d8e8); color: #004d5c; }
+    .header.store-kamakura{ background: linear-gradient(135deg, #e1bee7, #ce93d8); color: #4a0072; }
+
+    /* 店舗選択バー */
+    .store-bar {
+      display: flex; background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 10;
+    }
+    .store-btn {
+      flex: 1; padding: 12px 4px; text-align: center;
+      font-size: 14px; font-weight: 500; cursor: pointer; color: #888;
+      border-bottom: 3px solid transparent; transition: all 0.2s; user-select: none;
+    }
+    .store-btn.active { color: #1a237e; border-bottom-color: #1a237e; font-weight: 700; }
+
+    /* メインエリア */
+    .wrap { padding: 12px; max-width: 520px; margin: 0 auto; }
+
+    /* カード */
+    .card {
+      background: white; border-radius: 10px; padding: 14px 16px;
+      margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-size: 12px; font-weight: 700; color: #1a237e;
+      margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e8eaf6;
+      letter-spacing: 0.8px; text-transform: uppercase;
+    }
+
+    /* 入力行 */
+    .row { display: flex; align-items: center; margin-bottom: 10px; gap: 8px; }
+    .row:last-child { margin-bottom: 0; }
+    .lbl { width: 130px; font-size: 13px; color: #555; flex-shrink: 0; line-height: 1.3; }
+    .inp { flex: 1; }
+    .inp input, .inp select {
+      width: 100%; padding: 9px 10px; border: 1.5px solid #ddd; border-radius: 7px;
+      font-size: 15px; color: #333; background: #fafafa;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-appearance: none; appearance: none;
+    }
+    .inp input:focus, .inp select:focus {
+      border-color: #3949ab; background: white; outline: none;
+      box-shadow: 0 0 0 3px rgba(57,73,171,0.1);
+    }
+
+    /* 送信ボタン */
+    .btn-submit {
+      width: 100%; padding: 15px; background: #c62828; color: white; border: none;
+      border-radius: 10px; font-size: 17px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 10px rgba(198,40,40,0.3); transition: all 0.15s; margin-top: 4px;
+    }
+    .btn-submit:active { transform: scale(0.98); box-shadow: 0 2px 5px rgba(198,40,40,0.3); }
+    .btn-submit:disabled { background: #bbb; box-shadow: none; cursor: not-allowed; }
+
+    /* メッセージ */
+    .msg {
+      padding: 13px 16px; border-radius: 8px; margin-top: 12px;
+      text-align: center; font-size: 15px; font-weight: 600;
+    }
+    .msg.ok { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+    .msg.ng { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+
+    /* プレースホルダー案内 */
+    .select-prompt {
+      text-align: center; padding: 40px 20px; color: #888; font-size: 15px;
+    }
+    .select-prompt .arrow { font-size: 30px; display: block; margin-bottom: 12px; }
+
+    .hidden { display: none !important; }
+    .spacer { height: 40px; }
+
+    /* 確認まとめ */
+    .sum-section { margin-bottom: 10px; }
+    .sum-section:last-child { margin-bottom: 0; }
+    .sum-title {
+      font-size: 11px; font-weight: 700; color: #888;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      padding-bottom: 4px; border-bottom: 1px solid #eee; margin-bottom: 4px;
+    }
+    .sum-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 3px 0; gap: 8px;
+    }
+    .sum-key { font-size: 12px; color: #777; flex-shrink: 0; }
+    .sum-val {
+      font-size: 13px; font-weight: 700; color: #222;
+      text-align: right; word-break: break-all;
+    }
+    .sum-val.empty { color: #ccc; font-weight: 400; }
+
+    /* パスワードオーバーレイ */
+    #pw-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65); z-index: 200;
+      justify-content: center; align-items: center;
+    }
+    #pw-box {
+      background: white; border-radius: 16px; padding: 30px 24px;
+      width: 88%; max-width: 340px; text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    #pw-box h2 { font-size: 20px; margin-bottom: 6px; }
+    #pw-box p { color: #666; font-size: 14px; margin-bottom: 18px; }
+    #pw-input {
+      width: 100%; padding: 13px; border: 1.5px solid #ddd; border-radius: 9px;
+      font-size: 20px; text-align: center; letter-spacing: 6px; margin-bottom: 12px;
+      -webkit-appearance: none; appearance: none;
+    }
+    #pw-input:focus { border-color: #3949ab; outline: none; box-shadow: 0 0 0 3px rgba(57,73,171,0.12); }
+    #pw-btn {
+      width: 100%; padding: 13px; background: #1a237e; color: white;
+      border: none; border-radius: 9px; font-size: 16px; font-weight: 700; cursor: pointer;
+    }
+    #pw-msg { color: #c62828; font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+    /* 管理パネル */
+    #admin-panel { display:none; }
+    .admin-header {
+      background: linear-gradient(135deg, #37474f, #263238);
+      color: white; padding: 14px 16px; text-align: center;
+    }
+    .admin-header h1 { font-size: 13px; opacity: 0.7; }
+    .admin-header .sub { font-size: 20px; font-weight: 800; margin-top: 4px; }
+    .admin-pw-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+    .admin-pw-row label { width:80px; font-size:13px; color:#555; flex-shrink:0; }
+    .admin-pw-row input {
+      flex:1; padding:9px 10px; border:1.5px solid #ddd; border-radius:7px;
+      font-size:15px; -webkit-appearance:none; appearance:none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 管理パネル（?adminのときのみ表示） -->
+<div id="admin-panel">
+  <div class="admin-header">
+    <h1>⚙️ 管理者メニュー</h1>
+    <div class="sub">パスワード管理</div>
+  </div>
+  <div class="wrap" style="max-width:420px;">
+    <div class="card" style="margin-top:16px;">
+      <h2>🔑 店舗別パスワード変更</h2>
+      <p style="font-size:12px;color:#888;margin-bottom:14px;">変更後「保存する」を押してください。全スタッフのスマホに反映されます。</p>
+      <div class="admin-pw-row"><label>那古野</label><input type="text" id="adm-pw-nagoya" inputmode="numeric"></div>
+      <div class="admin-pw-row"><label>大須</label><input type="text" id="adm-pw-osu" inputmode="numeric"></div>
+      <div class="admin-pw-row"><label>鉄板</label><input type="text" id="adm-pw-teppan" inputmode="numeric"></div>
+      <div class="admin-pw-row"><label>鎌倉</label><input type="text" id="adm-pw-kamakura" inputmode="numeric"></div>
+      <button class="btn-submit" onclick="saveAdminPasswords()" style="margin-top:8px;">💾 保存する</button>
+      <div id="adm-msg" style="display:none;margin-top:10px;padding:10px;border-radius:7px;text-align:center;font-size:14px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- パスワード認証オーバーレイ -->
+<div id="pw-overlay">
+  <div id="pw-box">
+    <h2>🔒 パスワード確認</h2>
+    <p id="pw-store-name"></p>
+    <input type="password" id="pw-input" placeholder="パスワードを入力"
+      inputmode="numeric"
+      onkeydown="if(event.key==='Enter')checkPassword()">
+    <button id="pw-btn" onclick="checkPassword()">確認</button>
+    <div id="pw-msg"></div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>📊 売上入力システム</h1>
+  <div class="sub" id="hdr-store">↓ 下から店舗を選択してください</div>
+</div>
+
+<div class="store-bar" id="store-bar">
+  <div class="store-btn" onclick="trySelectStore('那古野')">那古野</div>
+  <div class="store-btn" onclick="trySelectStore('大須')">大須</div>
+  <div class="store-btn" onclick="trySelectStore('鉄板')">鉄板</div>
+  <div class="store-btn" onclick="trySelectStore('鎌倉')">鎌倉</div>
+</div>
+
+<div class="wrap">
+
+  <!-- 店舗未選択の案内 -->
+  <div class="select-prompt" id="prompt">
+    <span class="arrow">☝️</span>
+    上のボタンから店舗を選択してください
+  </div>
+
+  <!-- フォーム（店舗選択後に表示） -->
+  <div id="form-area" class="hidden">
+
+    <!-- 日付（今日固定） -->
+    <div class="card">
+      <h2>📅 本日の日付</h2>
+      <div id="today-display"
+        style="font-size:19px;font-weight:800;padding:8px 4px;color:#222;"></div>
+      <input type="hidden" id="date">
+    </div>
+
+    <!-- 担当者名（必須） -->
+    <div class="card">
+      <h2>👤 担当者名</h2>
+      <div class="row">
+        <div class="lbl">担当者名 <span style="color:#c62828;font-size:12px">※必須</span></div>
+        <div class="inp"><input type="text" id="staff-name" placeholder="名前を入力してください"></div>
+      </div>
+    </div>
+
+    <!-- 天気（全店舗共通・日付の直下） -->
+    <div class="card">
+      <h2>🌤️ 天気</h2>
+      <div class="row">
+        <div class="lbl">天気</div>
+        <div class="inp">
+          <select id="weather">
+            <option value="">選択してください</option>
+            <option value="晴れ">☀️ 晴れ</option>
+            <option value="晴れ時々曇り">⛅ 晴れ時々曇り</option>
+            <option value="曇り">☁️ 曇り</option>
+            <option value="曇り時々雨">🌦️ 曇り時々雨</option>
+            <option value="雨">🌧️ 雨</option>
+            <option value="雪">❄️ 雪</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 客数 -->
+    <div class="card">
+      <h2>👥 客数</h2>
+      <div class="row">
+        <div class="lbl">組数</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="kumi" inputmode="numeric" placeholder="0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">男性人数</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="male" inputmode="numeric" placeholder="0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">女性人数</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="female" inputmode="numeric" placeholder="0" min="0"></div>
+      </div>
+    </div>
+
+    <!-- 売上 -->
+    <div class="card">
+      <h2>💴 売上金額</h2>
+      <div class="row">
+        <div class="lbl">純売上</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="netSales" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">売上（10%対象）</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales10" inputmode="numeric" placeholder="¥ 0" min="0" oninput="calcTax10()"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">消費税 10%</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax10" inputmode="numeric" placeholder="自動計算" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">売上（8%対象）</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales8" inputmode="numeric" placeholder="¥ 0" min="0" oninput="calcTax8()"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">消費税 8%</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax8" inputmode="numeric" placeholder="自動計算" min="0"></div>
+      </div>
+    </div>
+
+    <!-- 支払い方法 -->
+    <div class="card">
+      <h2>💳 支払い方法</h2>
+      <div class="row">
+        <div class="lbl">クレジット</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="credit" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">ポイント</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="point" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">電子マネー</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="emoney" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">商品券</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="coupon" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+    </div>
+
+    <!-- 物販シンプル（那古野・鉄板） -->
+    <div class="card hidden" id="card-buhin-simple">
+      <h2>🛍️ 物販</h2>
+      <div class="row">
+        <div class="lbl">物販</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhin" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+    </div>
+
+    <!-- 物販詳細（大須・鎌倉） -->
+    <div class="card hidden" id="card-buhin-detail">
+      <h2>🛍️ 物販</h2>
+      <div class="row">
+        <div class="lbl">物販（現金）</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhinCash" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">物販（現金以外）</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhinOther" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="lbl">ブランド名</div>
+        <div class="inp"><input type="text" id="buhinBrand" placeholder="paypay、VISA など"></div>
+      </div>
+    </div>
+
+    <!-- 入力内容の確認まとめ -->
+    <div class="card" id="summary-card" style="display:none;border:2px solid #e8eaf6;">
+      <h2 style="color:#3949ab;">📋 入力内容の確認</h2>
+      <div id="summary-content"></div>
+    </div>
+
+    <button class="btn-submit" id="btn" onclick="submitData()">📤 スプレッドシートに送信</button>
+    <div id="msg"></div>
+
+    <!-- 過去データの修正（一番下） -->
+    <div class="card" style="margin-top:20px;border:2px dashed #c5cae9;">
+      <h2 style="color:#5c6bc0;">🔧 過去データの修正</h2>
+      <p style="font-size:13px;color:#777;margin-bottom:12px;">修正したい日付を選んで「読み込む」を押してください。データが上のフォームに表示されます。修正して送信すると上書き保存されます。</p>
+      <div class="row" style="margin-bottom:10px;">
+        <div class="lbl" style="font-size:13px;color:#555;">修正する日付</div>
+        <div class="inp">
+          <input type="date" id="edit-date"
+            style="width:100%;padding:9px 10px;border:1.5px solid #c5cae9;border-radius:7px;font-size:15px;background:#fafafa;">
+        </div>
+      </div>
+      <button id="btn-load" onclick="loadData()"
+        style="width:100%;padding:10px;background:#fff;color:#5c6bc0;border:2px solid #5c6bc0;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;">
+        📖 読み込む
+      </button>
+      <div id="load-msg" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;text-align:center;"></div>
+    </div>
+
+  </div><!-- /form-area -->
+
+  <div class="spacer"></div>
+</div>
+
+<script>
+// ============================================================
+// ★ GASのURLをここに貼り付けてください（GASデプロイ後に取得）
+// ============================================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUUbcAkNo1czgDCamnPhdRicP8BTH3ePex9fbyoYAooratkz70oTrmDLNu-8J8Xc/exec';
+// ============================================================
+
+// パスワードのデフォルト（GAS未設定時のフォールバック）
+let STORE_PASSWORDS = {
+  '那古野': '1001',
+  '大須':   '2002',
+  '鉄板':   '3003',
+  '鎌倉':   '4004'
+};
+
+let currentStore = '';
+let editMode = false;   // true = 過去データ修正中
+let pendingStore = '';  // パスワード確認待ちの店舗名
+let originalData = null; // 修正前の読み込み値（差分表示用）
+
+// ---- GASからパスワードを取得・キャッシュ ----
+(async function loadPasswords() {
+  if (GAS_URL === 'YOUR_GAS_URL_HERE') return; // 未設定時はデフォルト使用
+  try {
+    // キャッシュチェック（1時間有効）
+    const cached = localStorage.getItem('pw_cache');
+    const cacheTime = parseInt(localStorage.getItem('pw_cache_time') || '0');
+    if (cached && Date.now() - cacheTime < 3600000) {
+      STORE_PASSWORDS = JSON.parse(cached); return;
+    }
+    const res = await fetch(GAS_URL + '?action=getPasswords');
+    const result = await res.json();
+    if (result.success && result.passwords) {
+      STORE_PASSWORDS = result.passwords;
+      localStorage.setItem('pw_cache', JSON.stringify(result.passwords));
+      localStorage.setItem('pw_cache_time', Date.now().toString());
+    }
+  } catch(e) { /* GAS未設定またはエラー時はデフォルト使用 */ }
+})();
+
+// ---- 管理パネル ----
+(function() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('admin') !== null) {
+    document.getElementById('admin-panel').style.display = 'block';
+    document.querySelector('.header').style.display = 'none';
+    document.getElementById('store-bar').style.display = 'none';
+    document.getElementById('prompt').style.display = 'none';
+    document.getElementById('form-area').style.display = 'none';
+    // 現在のパスワードを表示
+    loadAdminPasswords();
+  }
+})();
+
+async function loadAdminPasswords() {
+  if (GAS_URL === 'YOUR_GAS_URL_HERE') {
+    setAdminInputs(STORE_PASSWORDS); return;
+  }
+  try {
+    const res = await fetch(GAS_URL + '?action=getPasswords');
+    const result = await res.json();
+    if (result.success) setAdminInputs(result.passwords);
+  } catch(e) { setAdminInputs(STORE_PASSWORDS); }
+}
+
+function setAdminInputs(pw) {
+  document.getElementById('adm-pw-nagoya').value   = pw['那古野'] || '';
+  document.getElementById('adm-pw-osu').value      = pw['大須']   || '';
+  document.getElementById('adm-pw-teppan').value   = pw['鉄板']   || '';
+  document.getElementById('adm-pw-kamakura').value = pw['鎌倉']   || '';
+}
+
+async function saveAdminPasswords() {
+  const passwords = {
+    '那古野': document.getElementById('adm-pw-nagoya').value.trim(),
+    '大須':   document.getElementById('adm-pw-osu').value.trim(),
+    '鉄板':   document.getElementById('adm-pw-teppan').value.trim(),
+    '鎌倉':   document.getElementById('adm-pw-kamakura').value.trim()
+  };
+  if (Object.values(passwords).some(v => !v)) {
+    showAdmMsg('全店舗のパスワードを入力してください', 'ng'); return;
+  }
+  if (GAS_URL === 'YOUR_GAS_URL_HERE') {
+    showAdmMsg('GAS URLが設定されていません', 'ng'); return;
+  }
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'setPasswords', passwords })
+    });
+    const result = await res.json();
+    if (result.success) {
+      // キャッシュ更新
+      localStorage.setItem('pw_cache', JSON.stringify(passwords));
+      localStorage.setItem('pw_cache_time', Date.now().toString());
+      // 認証済みキャッシュをクリア（新パスワードで再認証が必要になる）
+      ['那古野','大須','鉄板','鎌倉'].forEach(s => localStorage.removeItem('auth_' + s));
+      showAdmMsg('✅ 保存しました。次回から新しいパスワードが適用されます。', 'ok');
+    } else {
+      showAdmMsg('❌ ' + (result.error || '保存に失敗しました'), 'ng');
+    }
+  } catch(e) {
+    showAdmMsg('📤 保存しました。スプレッドシートで確認してください。', 'ok');
+  }
+}
+
+function showAdmMsg(text, type) {
+  const el = document.getElementById('adm-msg');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = type === 'ok' ? '#e8f5e9' : '#ffebee';
+  el.style.color      = type === 'ok' ? '#1b5e20' : '#b71c1c';
+  el.style.border     = '1px solid ' + (type === 'ok' ? '#a5d6a7' : '#ef9a9a');
+}
+
+// ---- パスワード認証 ----
+function trySelectStore(s) {
+  if (localStorage.getItem('auth_' + s) === '1') {
+    selectStore(s);
+  } else {
+    pendingStore = s;
+    document.getElementById('pw-store-name').textContent = s + '店のパスワードを入力してください';
+    document.getElementById('pw-msg').textContent = '';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-overlay').style.display = 'flex';
+    setTimeout(() => document.getElementById('pw-input').focus(), 100);
+  }
+}
+
+function checkPassword() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === STORE_PASSWORDS[pendingStore]) {
+    localStorage.setItem('auth_' + pendingStore, '1');
+    document.getElementById('pw-overlay').style.display = 'none';
+    selectStore(pendingStore);
+  } else {
+    document.getElementById('pw-msg').textContent = '❌ パスワードが違います';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+// 今日の日付を表示・セット、edit-dateの最大値を昨日に設定
+(function() {
+  const d = new Date();
+  const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  document.getElementById('today-display').textContent =
+    y + '年' + m + '月' + day + '日（' + dow + '）';
+  const todayStr = y + '-' + String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+  document.getElementById('date').value = todayStr;
+  // 修正用日付の上限を昨日に設定
+  const yest = new Date(d); yest.setDate(yest.getDate() - 1);
+  document.getElementById('edit-date').max =
+    yest.getFullYear() + '-' + String(yest.getMonth()+1).padStart(2,'0') + '-' + String(yest.getDate()).padStart(2,'0');
+})();
+
+// URLパラメータで店舗を自動選択（例: ?store=那古野）
+(function() {
+  const p = new URLSearchParams(location.search);
+  const s = p.get('store');
+  if (['那古野','大須','鉄板','鎌倉'].includes(s)) {
+    document.getElementById('store-bar').style.display = 'none';
+    trySelectStore(s);
+  }
+})();
+
+const STORE_CLASS = {
+  '那古野': 'store-nagoya',
+  '大須':   'store-osu',
+  '鉄板':   'store-teppan',
+  '鎌倉':   'store-kamakura'
+};
+
+function selectStore(s) {
+  currentStore = s;
+
+  // ヘッダー色を切り替え
+  const header = document.querySelector('.header');
+  header.className = 'header ' + (STORE_CLASS[s] || '');
+  document.getElementById('hdr-store').textContent = s + '店 売上入力';
+
+  // タブ表示更新
+  document.querySelectorAll('.store-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === s);
+  });
+
+  // フォーム表示
+  document.getElementById('prompt').classList.add('hidden');
+  document.getElementById('form-area').classList.remove('hidden');
+
+  // 店舗別セクション切り替え（物販のみ）
+  const isDetail = (s === '大須' || s === '鎌倉');
+  toggle('card-buhin-simple', !isDetail);
+  toggle('card-buhin-detail', isDetail);
+
+  clearMsg();
+}
+
+function toggle(id, show) {
+  document.getElementById(id).classList.toggle('hidden', !show);
+}
+
+// 10%消費税 自動計算（売上÷11）
+// 既存データの読み込み（修正用）
+async function loadData() {
+  if (!currentStore) { showLoadMsg('店舗を選択してください', 'ng'); return; }
+  const date = document.getElementById('edit-date').value;
+  if (!date) { showLoadMsg('修正する日付を選択してください', 'ng'); return; }
+
+  const btn = document.getElementById('btn-load');
+  btn.textContent = '⏳ 読み込み中...';
+  btn.disabled = true;
+  showLoadMsg('', '');
+
+  try {
+    const url = GAS_URL + '?action=read&store=' + encodeURIComponent(currentStore) + '&date=' + date;
+    const res = await fetch(url);
+    const result = await res.json();
+
+    if (result.success) {
+      const d = result.data;
+      // フォームに値をセット
+      const setN = (id, val) => { document.getElementById(id).value = (val === '' || val === null || val === undefined) ? '' : val; };
+      setN('kumi',       d.kumi);
+      setN('male',       d.male);
+      setN('female',     d.female);
+      setN('netSales',   d.netSales);
+      setN('sales10',    d.sales10);
+      setN('tax10',      d.tax10);
+      setN('sales8',     d.sales8);
+      setN('tax8',       d.tax8);
+      setN('credit',     d.credit);
+      setN('point',      d.point);
+      setN('emoney',     d.emoney);
+      setN('coupon',     d.coupon);
+      setN('buhin',      d.buhin);
+      setN('buhinCash',  d.buhinCash);
+      setN('buhinOther', d.buhinOther);
+      document.getElementById('buhinBrand').value = d.buhinBrand || '';
+      document.getElementById('weather').value    = d.weather || '';
+      editMode = true;
+      // 修正前データを保存（差分表示用）
+      originalData = Object.assign({}, d);
+      // 送信ボタンを修正モード表示に
+      document.getElementById('btn').textContent = '✏️ 修正内容を送信（上書き保存）';
+      document.getElementById('btn').style.background = '#5c6bc0';
+      showLoadMsg('✅ データを読み込みました。上のフォームで修正して送信してください。', 'ok');
+      updateSummary();
+      // フォーム先頭にスクロール
+      document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
+    } else {
+      showLoadMsg('❌ ' + result.error, 'ng');
+    }
+  } catch(err) {
+    showLoadMsg('❌ 読み込みに失敗しました: ' + err.message, 'ng');
+  }
+
+  btn.textContent = '📖 この日の入力済みデータを読み込む（修正用）';
+  btn.disabled = false;
+}
+
+function showLoadMsg(text, type) {
+  const el = document.getElementById('load-msg');
+  el.textContent = text;
+  el.style.display = text ? 'block' : 'none';
+  el.style.background = type === 'ok' ? '#e8f5e9' : '#ffebee';
+  el.style.color      = type === 'ok' ? '#1b5e20' : '#b71c1c';
+  el.style.border     = '1px solid ' + (type === 'ok' ? '#a5d6a7' : '#ef9a9a');
+}
+
+// フォーム全体の入力・変更を監視して確認まとめを更新
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('form-area').addEventListener('input',  updateSummary);
+  document.getElementById('form-area').addEventListener('change', updateSummary);
+});
+
+// 確認まとめを更新する
+function updateSummary() {
+  const card = document.getElementById('summary-card');
+  const dateVal = editMode
+    ? document.getElementById('edit-date').value
+    : document.getElementById('date').value;
+
+  // 1項目でも入力があれば表示
+  const fields = ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
+                  'credit','point','emoney','coupon','buhin','buhinCash','buhinOther'];
+  const anyFilled = dateVal || fields.some(id => document.getElementById(id).value !== '') ||
+                    document.getElementById('weather').value || document.getElementById('buhinBrand').value;
+
+  if (!anyFilled || !currentStore) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  // 数値フォーマット（¥記号 + カンマ）
+  const yen = id => {
+    const v = document.getElementById(id).value;
+    if (v === '' || v === '0') return row(id, '-', true);
+    return row(id, '¥ ' + Number(v).toLocaleString());
+  };
+  const ppl = (id, unit) => {
+    const v = document.getElementById(id).value;
+    if (v === '') return row(id, '-', true);
+    return row(id, v + ' ' + unit);
+  };
+
+  const LABELS = {
+    date:'日付', weather:'天気',
+    kumi:'組数', male:'男性', female:'女性',
+    netSales:'純売上', sales10:'売上(10%)', tax10:'消費税10%',
+    sales8:'売上(8%)', tax8:'消費税8%',
+    credit:'クレジット', point:'ポイント', emoney:'電子マネー', coupon:'商品券',
+    buhin:'物販', buhinCash:'物販(現金)', buhinOther:'物販(現金以外)', buhinBrand:'ブランド名'
+  };
+
+  function row(id, val, isEmpty) {
+    const cls = isEmpty ? ' class="sum-val empty"' : ' class="sum-val"';
+    return '<div class="sum-row"><span class="sum-key">' + LABELS[id] + '</span><span' + cls + '>' + val + '</span></div>';
+  }
+
+  const isDetail = (currentStore === '大須' || currentStore === '鎌倉');
+  const weatherVal  = document.getElementById('weather').value;
+  const brandVal    = document.getElementById('buhinBrand').value;
+  const dateStr     = dateVal ? dateVal.replace(/-/g, '/') : '-';
+  const staffNameVal = (document.getElementById('staff-name') || {}).value || '';
+
+  let html = '';
+
+  // 修正モードのとき：変更差分を最上部に表示
+  if (editMode && originalData) {
+    const DIFF_KEYS = [
+      {id:'kumi',lbl:'組数'},{id:'male',lbl:'男性'},{id:'female',lbl:'女性'},
+      {id:'netSales',lbl:'純売上'},{id:'sales10',lbl:'売上(10%)'},{id:'tax10',lbl:'消費税10%'},
+      {id:'sales8',lbl:'売上(8%)'},{id:'tax8',lbl:'消費税8%'},
+      {id:'credit',lbl:'クレジット'},{id:'point',lbl:'ポイント'},
+      {id:'emoney',lbl:'電子マネー'},{id:'coupon',lbl:'商品券'},
+      {id:'buhin',lbl:'物販'},{id:'buhinCash',lbl:'物販(現金)'},
+      {id:'buhinOther',lbl:'物販(現金以外)'},{id:'buhinBrand',lbl:'ブランド名'},
+      {id:'weather',lbl:'天気'}
+    ];
+    let diffRows = '';
+    DIFF_KEYS.forEach(function(f) {
+      const el = document.getElementById(f.id);
+      if (!el) return;
+      const cur = el.value.trim();
+      const orig = String(originalData[f.id] != null ? originalData[f.id] : '');
+      if (cur !== orig) {
+        diffRows += '<div class="sum-row">' +
+          '<span class="sum-key">' + f.lbl + '</span>' +
+          '<span class="sum-val" style="font-size:12px">' +
+          '<span style="color:#aaa;text-decoration:line-through">' + (orig || '空白') + '</span>' +
+          ' → <span style="color:#c62828;font-weight:800">' + (cur || '空白') + '</span>' +
+          '</span></div>';
+      }
+    });
+    if (!diffRows) diffRows = '<div style="color:#888;font-size:13px;text-align:center">変更なし</div>';
+    html += sec('📝 変更内容（修正モード）', diffRows);
+  }
+
+  // 基本情報
+  html += sec('📅 基本・担当者',
+    '<div class="sum-row"><span class="sum-key">日付</span><span class="sum-val">' + (dateStr || '-') + '</span></div>' +
+    '<div class="sum-row"><span class="sum-key">担当者名</span><span class="' + (staffNameVal ? 'sum-val' : 'sum-val empty') + '">' + (staffNameVal || '未入力') + '</span></div>' +
+    '<div class="sum-row"><span class="sum-key">天気</span><span class="' + (weatherVal ? 'sum-val' : 'sum-val empty') + '">' + (weatherVal || '-') + '</span></div>'
+  );
+
+  // 客数
+  html += sec('👥 客数',
+    ppl('kumi','組') + ppl('male','名') + ppl('female','名')
+  );
+
+  // 売上
+  html += sec('💴 売上',
+    yen('netSales') + yen('sales10') + yen('tax10') + yen('sales8') + yen('tax8')
+  );
+
+  // 支払い
+  html += sec('💳 支払い方法',
+    yen('credit') + yen('point') + yen('emoney') + yen('coupon')
+  );
+
+  // 物販
+  let buhinHtml = '';
+  if (!isDetail) {
+    buhinHtml = yen('buhin');
+  } else {
+    buhinHtml = yen('buhinCash') + yen('buhinOther');
+    buhinHtml += '<div class="sum-row"><span class="sum-key">ブランド名</span><span class="' + (brandVal ? 'sum-val' : 'sum-val empty') + '">' + (brandVal || '-') + '</span></div>';
+  }
+  html += sec('🛍️ 物販', buhinHtml);
+
+  document.getElementById('summary-content').innerHTML = html;
+}
+
+function sec(title, content) {
+  return '<div class="sum-section"><div class="sum-title">' + title + '</div>' + content + '</div>';
+}
+
+function calcTax10() {
+  const v = parseInt(document.getElementById('sales10').value);
+  if (!isNaN(v) && v > 0)
+    document.getElementById('tax10').value = Math.round(v / 11);
+}
+
+// 8%消費税 自動計算（売上×8÷108）
+function calcTax8() {
+  const v = parseInt(document.getElementById('sales8').value);
+  if (!isNaN(v) && v > 0)
+    document.getElementById('tax8').value = Math.round(v * 8 / 108);
+}
+
+function n(id) {
+  const v = document.getElementById(id).value.trim();
+  if (v === '') return '';
+  const num = Number(v);
+  return isNaN(num) ? '' : num;
+}
+function s(id) { return document.getElementById(id).value.trim(); }
+
+async function submitData() {
+  if (!currentStore) { showMsg('店舗を選択してください', 'ng'); return; }
+  const staffName = s('staff-name');
+  if (!staffName) { showMsg('担当者名を入力してください', 'ng'); return; }
+  // 修正モードなら edit-date、通常は今日の日付
+  const date = editMode
+    ? document.getElementById('edit-date').value
+    : document.getElementById('date').value;
+  if (!date) { showMsg('日付が設定されていません', 'ng'); return; }
+
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 送信中...';
+  clearMsg();
+
+  // 送信日時
+  const submitTime = new Date().toLocaleString('ja-JP', {
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit'
+  });
+
+  const payload = {
+    store: currentStore,
+    date:  date,
+    staffName: staffName,
+    submitTime: submitTime,
+    isEdit: editMode,
+    values: {
+      kumi:       n('kumi'),
+      male:       n('male'),
+      female:     n('female'),
+      netSales:   n('netSales'),
+      sales10:    n('sales10'),
+      tax10:      n('tax10'),
+      sales8:     n('sales8'),
+      tax8:       n('tax8'),
+      credit:     n('credit'),
+      point:      n('point'),
+      emoney:     n('emoney'),
+      coupon:     n('coupon'),
+      buhin:      n('buhin'),
+      buhinCash:  n('buhinCash'),
+      buhinOther: n('buhinOther'),
+      buhinBrand: s('buhinBrand'),
+      weather:    s('weather')
+    }
+  };
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.success) {
+      showMsg('✅ ' + result.message, 'ok');
+      resetEditMode();
+      clearForm();
+    } else {
+      showMsg('❌ エラー: ' + result.error, 'ng');
+    }
+  } catch(err) {
+    showMsg('📤 送信しました。スプレッドシートで内容をご確認ください。', 'ok');
+    resetEditMode();
+    clearForm();
+  }
+
+  btn.disabled = false;
+  btn.textContent = editMode ? '✏️ 修正内容を送信（上書き保存）' : '📤 スプレッドシートに送信';
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+}
+function clearMsg() {
+  const el = document.getElementById('msg');
+  el.style.display = 'none';
+  el.textContent = '';
+}
+
+function resetEditMode() {
+  editMode = false;
+  originalData = null;
+  document.getElementById('btn').textContent = '📤 スプレッドシートに送信';
+  document.getElementById('btn').style.background = '#c62828';
+  document.getElementById('edit-date').value = '';
+  showLoadMsg('', '');
+}
+
+function clearForm() {
+  ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
+   'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('weather').value = '';
+  // 日付を今日に戻す
+  const d = new Date();
+  document.getElementById('date').value =
+    d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+  // 確認まとめをリセット
+  document.getElementById('summary-card').style.display = 'none';
+}
+</script>
+</body>
+</html>
