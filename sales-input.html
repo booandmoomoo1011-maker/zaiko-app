@@ -736,8 +736,14 @@ function showAdmMsg(text, type) {
   el.style.border     = '1px solid ' + (type === 'ok' ? '#a5d6a7' : '#ef9a9a');
 }
 
-// ---- パスワード認証（常にパスコード要求） ----
+// ---- パスワード認証（12時間以内の認証はスキップ） ----
+const AUTH_EXPIRE = 24 * 60 * 60 * 1000; // 24時間
 function trySelectStore(s) {
+  const authTime = parseInt(localStorage.getItem('auth_time_' + s) || '0');
+  if (localStorage.getItem('auth_' + s) === '1' && Date.now() - authTime < AUTH_EXPIRE) {
+    selectStore(s);
+    return;
+  }
   pendingStore = s;
   document.getElementById('pw-store-name').textContent = s + '店のパスワードを入力してください';
   document.getElementById('pw-msg').textContent = '';
@@ -828,6 +834,7 @@ function checkPassword() {
   const pw = document.getElementById('pw-input').value.trim();
   if (pw && pw === String(STORE_PASSWORDS[pendingStore])) {
     localStorage.setItem('auth_' + pendingStore, '1');
+    localStorage.setItem('auth_time_' + pendingStore, Date.now().toString());
     document.getElementById('pw-overlay').style.display = 'none';
     selectStore(pendingStore);
   } else {
@@ -1002,6 +1009,16 @@ function showLoadMsg(text, type) {
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('form-area').addEventListener('input',  function() { updateSummary(); autoSave(); });
   document.getElementById('form-area').addEventListener('change', function() { updateSummary(); autoSave(); });
+  // ホーム画面から起動時：前回の店舗が認証済みなら自動選択
+  if (!urlParamStore) {
+    const lastStore = localStorage.getItem('last_store');
+    if (lastStore) {
+      const authTime = parseInt(localStorage.getItem('auth_time_' + lastStore) || '0');
+      if (localStorage.getItem('auth_' + lastStore) === '1' && Date.now() - authTime < AUTH_EXPIRE) {
+        trySelectStore(lastStore);
+      }
+    }
+  }
 });
 
 // ---- カレンダー ----
