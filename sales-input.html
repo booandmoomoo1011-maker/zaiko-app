@@ -951,6 +951,24 @@ async function loadData() {
       document.getElementById('btn-revert').style.display = 'block';
       showLoadMsg('✅ データを読み込みました。上のフォームで修正して送信してください。', 'ok');
       updateSummary();
+      // 日報コメントをlocalStorageの履歴から復元（入力済みの場合はそのまま残す）
+      const mCurrent = document.getElementById('morning-comment').value;
+      const aCurrent = document.getElementById('afternoon-comment').value;
+      if (!mCurrent && !aCurrent) {
+        // コメント未入力の場合のみ履歴から復元
+        let hist = [];
+        try { hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); } catch(e) {}
+        const entry = hist.find(h => h.date === date);
+        if (entry) {
+          if (entry.morningStaff)    document.getElementById('morning-staff').value   = entry.morningStaff;
+          if (entry.morningComment)  { document.getElementById('morning-comment').value  = entry.morningComment;  updateCharCount('morning-comment',   'morning-count'); }
+          if (entry.afternoonStaff)  document.getElementById('afternoon-staff').value  = entry.afternoonStaff;
+          if (entry.afternoonComment){ document.getElementById('afternoon-comment').value = entry.afternoonComment; updateCharCount('afternoon-comment', 'afternoon-count'); }
+        } else {
+          // localStorageの一時保存も確認
+          loadMorningReport(currentStore, date);
+        }
+      }
       document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     } else {
       showLoadMsg('❌ ' + result.error, 'ng');
@@ -1213,34 +1231,42 @@ function renderHistory() {
     const aCmt   = h ? (h.afternoonComment|| '') : '';
     let html = '<div class="history-item">';
     // 日付・売上ヘッダー
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">' +
       '<div class="history-date">' + historyMonth + '/' + day + '（' + dow + '）</div>' +
       (net ? '<div class="history-sales">' + net + '</div>'
            : '<div style="font-size:12px;color:#bbb;">金額未記録</div>') +
       '</div>';
-    // 担当者・送信時刻
-    if (staff) html += '<div style="font-size:12px;color:#555;margin-top:3px;">担当：' + staff + (wx ? '　天気：' + wx : '') + '</div>';
-    // 売上詳細
-    if (h && (h.kumi !== undefined || h.male !== undefined)) {
-      html += '<div style="font-size:11px;color:#888;margin-top:3px;line-height:1.8;">' +
+    if (h) {
+      // 担当者・天気
+      if (staff || wx) {
+        html += '<div style="font-size:12px;color:#555;margin-top:4px;">';
+        if (staff) html += '担当：' + staff;
+        if (wx)    html += (staff ? '　' : '') + '天気：' + wx;
+        html += '</div>';
+      }
+      // 売上詳細（組数・男女）
+      html += '<div style="font-size:11px;color:#888;margin-top:3px;line-height:1.9;">' +
         '組数：' + kumi + '　男：' + male + '　女：' + fem + '</div>';
-    }
-    // 日報
-    if (mStaff || mCmt || aStaff || aCmt) {
-      html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e8eaf6;font-size:11px;color:#666;line-height:1.8;">';
-      if (mStaff || mCmt) {
-        html += '<div style="display:flex;gap:4px;align-items:baseline;">' +
-          '<span style="display:inline-block;width:10px;height:10px;background:#FFD600;border-radius:50%;flex-shrink:0;margin-top:2px;"></span>' +
-          '<span>' + (mStaff ? '【' + mStaff + '】' : '') + (mCmt || '') + '</span></div>';
+      // 日報セクション
+      if (mStaff || mCmt || aStaff || aCmt) {
+        html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e8eaf6;">';
+        // 午前
+        html += '<div style="display:flex;gap:6px;align-items:flex-start;margin-bottom:4px;">' +
+          '<span style="display:inline-block;width:10px;height:10px;min-width:10px;background:#FFD600;border-radius:50%;margin-top:3px;"></span>' +
+          '<div style="font-size:12px;color:#555;line-height:1.6;word-break:break-all;">' +
+          (mStaff ? '<span style="font-weight:700;">【' + mStaff + '】</span>' : '<span style="color:#bbb;">担当未記入</span>') +
+          (mCmt ? '<br>' + mCmt : '') + '</div></div>';
+        // 午後
+        html += '<div style="display:flex;gap:6px;align-items:flex-start;">' +
+          '<span style="display:inline-block;width:10px;height:10px;min-width:10px;background:#E65100;border-radius:50%;margin-top:3px;"></span>' +
+          '<div style="font-size:12px;color:#555;line-height:1.6;word-break:break-all;">' +
+          (aStaff ? '<span style="font-weight:700;">【' + aStaff + '】</span>' : '<span style="color:#bbb;">担当未記入</span>') +
+          (aCmt ? '<br>' + aCmt : '') + '</div></div>';
+        html += '</div>';
       }
-      if (aStaff || aCmt) {
-        html += '<div style="display:flex;gap:4px;align-items:baseline;margin-top:2px;">' +
-          '<span style="display:inline-block;width:10px;height:10px;background:#E65100;border-radius:50%;flex-shrink:0;margin-top:2px;"></span>' +
-          '<span>' + (aStaff ? '【' + aStaff + '】' : '') + (aCmt || '') + '</span></div>';
-      }
-      html += '</div>';
+      // 送信時刻
+      if (time) html += '<div class="history-time" style="margin-top:4px;">送信：' + time + '</div>';
     }
-    if (time) html += '<div class="history-time" style="margin-top:4px;">送信：' + time + '</div>';
     html += '</div>';
     return html;
   }).join('');
