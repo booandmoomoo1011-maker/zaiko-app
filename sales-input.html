@@ -332,7 +332,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.4</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.5</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -400,7 +400,7 @@
   <div class="store-btn btn-kamakura" onclick="trySelectStore('鎌倉')">鎌倉</div>
 </div>
 
-<div class="wrap">
+<div class="wrap" id="main-wrap">
 
   <!-- 店舗未選択の案内 -->
   <div class="select-prompt hidden" id="prompt">
@@ -646,7 +646,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.4';
+const APP_VERSION = 'v2.5';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -945,13 +945,18 @@ let urlParamStore = '';
     urlParamStore = s;
     trySelectStore(s);
   } else if (p.get('admin') === null) {
-    // 店舗指定なし・管理者でもない → エラーメッセージ
-    document.querySelector('.wrap').innerHTML =
-      '<div style="text-align:center;padding:60px 20px;color:#888;">' +
-      '<div style="font-size:48px;margin-bottom:16px;">⚠️</div>' +
-      '<div style="font-size:16px;font-weight:700;color:#555;margin-bottom:8px;">URLが正しくありません</div>' +
-      '<div style="font-size:13px;color:#aaa;">LINEから正しいURLを開いてください</div>' +
-      '</div>';
+    // 店舗指定なし → 店舗ボタンを直接表示
+    var d = document.createElement('div');
+    d.style.padding = '16px';
+    [['大須','#fce4ec','#880e4f','#e91e63'],['那古野','#fff9c4','#5a3e00','#f9a825'],['鉄板','#e1f5fe','#01579b','#0288d1'],['鎌倉','#f3e5f5','#4a148c','#8e24aa']].forEach(function(info, i) {
+      var btn = document.createElement('button');
+      btn.textContent = info[0];
+      btn.style.cssText = 'display:block;width:100%;padding:22px;margin-bottom:12px;background:' + info[1] + ';color:' + info[2] + ';border:2px solid ' + info[3] + ';border-radius:14px;font-size:26px;font-weight:900;cursor:pointer;';
+      btn.onclick = (function(st){ return function(){ trySelectStore(st); }; })(info[0]);
+      d.appendChild(btn);
+    });
+    document.getElementById('main-wrap').innerHTML = '';
+    document.getElementById('main-wrap').appendChild(d);
   }
 })();
 
