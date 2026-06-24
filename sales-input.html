@@ -331,7 +331,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>📊 売上入力システム</h1>
   <div class="sub" id="hdr-store">店舗を選択してください</div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.1</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.2</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -739,10 +739,19 @@ function showAdmMsg(text, type) {
 // ---- パスワード認証（12時間以内の認証はスキップ） ----
 const AUTH_EXPIRE = 24 * 60 * 60 * 1000; // 24時間
 function trySelectStore(s) {
-  const authTime = parseInt(localStorage.getItem('auth_time_' + s) || '0');
-  if (localStorage.getItem('auth_' + s) === '1' && Date.now() - authTime < AUTH_EXPIRE) {
-    selectStore(s);
-    return;
+  if (localStorage.getItem('auth_' + s) === '1') {
+    const authTime = parseInt(localStorage.getItem('auth_time_' + s) || '0');
+    // auth_time_がない場合（旧データ）は今の時刻を設定して通す
+    if (authTime === 0) {
+      localStorage.setItem('auth_time_' + s, Date.now().toString());
+    }
+    if (Date.now() - parseInt(localStorage.getItem('auth_time_' + s)) < AUTH_EXPIRE) {
+      selectStore(s);
+      return;
+    }
+    // 期限切れ：auth_を削除してパスワード要求
+    localStorage.removeItem('auth_' + s);
+    localStorage.removeItem('auth_time_' + s);
   }
   pendingStore = s;
   document.getElementById('pw-store-name').textContent = s + '店のパスワードを入力してください';
@@ -754,7 +763,7 @@ function trySelectStore(s) {
 
 // 店舗選択画面に戻る
 function backToStoreSelect() {
-  ['大須','那古野','鉄板','鎌倉'].forEach(s => localStorage.removeItem('auth_' + s));
+  // ※認証は削除しない（24時間有効を維持）
   document.getElementById('store-select-screen').style.display = 'flex';
   document.getElementById('store-bar').style.display = 'none';
   document.getElementById('btn-back').style.display = 'none';
@@ -1012,11 +1021,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // ホーム画面から起動時：前回の店舗が認証済みなら自動選択
   if (!urlParamStore) {
     const lastStore = localStorage.getItem('last_store');
-    if (lastStore) {
-      const authTime = parseInt(localStorage.getItem('auth_time_' + lastStore) || '0');
-      if (localStorage.getItem('auth_' + lastStore) === '1' && Date.now() - authTime < AUTH_EXPIRE) {
-        trySelectStore(lastStore);
-      }
+    if (lastStore && localStorage.getItem('auth_' + lastStore) === '1') {
+      // store-select-screenを即座に隠す（フラッシュ防止）
+      document.getElementById('store-select-screen').style.display = 'none';
+      trySelectStore(lastStore);
     }
   }
 });
