@@ -797,19 +797,9 @@ function trySelectStore(s) {
   setTimeout(() => document.getElementById('pw-input').focus(), 100);
 }
 
-// 店舗選択画面に戻る
+// 店舗選択画面に戻る（ページをリロード）
 function backToStoreSelect() {
-  // ※認証は削除しない（24時間有効を維持）
-  document.getElementById('store-select-screen').style.display = 'flex';
-  document.getElementById('store-bar').style.display = 'none';
-  document.getElementById('btn-back').style.display = 'none';
-  document.getElementById('form-area').classList.add('hidden');
-  document.getElementById('prompt').classList.add('hidden');
-  document.querySelector('.header').className = 'header';
-  document.getElementById('hdr-store').textContent = '店舗を選択してください';
-  currentStore = '';
-  clearMsg();
-  showLoadMsg('', '');
+  location.reload();
 }
 
 // ====== 設定パネル ======
