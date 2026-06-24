@@ -112,6 +112,9 @@
     }
     .btn-submit:active { transform: scale(0.98); box-shadow: 0 2px 5px rgba(198,40,40,0.3); }
     .btn-submit:disabled { background: #bbb; box-shadow: none; cursor: not-allowed; }
+    .sales-warn { background: #fff8e1; border: 2px solid #f9a825; border-radius: 8px;
+      padding: 10px 14px; font-size: 13px; color: #5a3e00; margin-top: 8px; display: none; line-height: 1.6; }
+    .sales-warn .warn-title { font-weight: 700; font-size: 14px; color: #e65100; margin-bottom: 4px; }
 
     /* メッセージ */
     .msg {
@@ -579,6 +582,10 @@
       </div>
     </div>
 
+    <div class="sales-warn" id="sales-warn">
+      <div class="warn-title">⚠️ 売上金額が合いません</div>
+      <div id="warn-detail"></div>
+    </div>
     <button class="btn-submit" id="btn" onclick="submitData()">📤 スプレッドシートに送信</button>
     <button id="btn-revert" onclick="revertToOriginal()"
       style="display:none;width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">
@@ -1244,9 +1251,22 @@ function renderHistory() {
         if (wx)    html += (staff ? '　' : '') + '天気：' + wx;
         html += '</div>';
       }
-      // 売上詳細（組数・男女）
-      html += '<div style="font-size:11px;color:#888;margin-top:3px;line-height:1.9;">' +
-        '組数：' + kumi + '　男：' + male + '　女：' + fem + '</div>';
+      // 売上詳細（組数・男女・内訳・支払）
+      const s10  = fmtNum(h.sales10); const t10 = fmtNum(h.tax10);
+      const s8   = fmtNum(h.sales8);  const t8  = fmtNum(h.tax8);
+      const cred = fmtNum(h.credit);  const pt  = fmtNum(h.point);
+      const em   = fmtNum(h.emoney);  const cpn = fmtNum(h.coupon);
+      const bh   = fmtNum(h.buhin);   const bhc = fmtNum(h.buhinCash);
+      const bho  = fmtNum(h.buhinOther); const bhb = h.buhinBrand || '';
+      html += '<div style="font-size:11px;color:#888;margin-top:4px;line-height:1.9;">';
+      html += '税抜売上：' + (net || '-') + '　組数：' + kumi + '　男：' + male + '　女：' + fem + '<br>';
+      html += '税10%売上：' + s10 + '　消費税：' + t10 + '<br>';
+      html += '税8%売上：'  + s8  + '　消費税：' + t8  + '<br>';
+      html += 'クレジット：' + cred + '　ポイント：' + pt + '<br>';
+      html += '電子マネー：' + em  + '　クーポン：' + cpn + '<br>';
+      html += '物販合計：'   + bh  + '　現金：' + bhc + '　他：' + bho;
+      if (bhb) html += '　ブランド：' + bhb;
+      html += '</div>';
       // 日報セクション
       if (mStaff || mCmt || aStaff || aCmt) {
         html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e8eaf6;">';
@@ -1413,6 +1433,32 @@ function updateSummary() {
   html += sec('🛍️ 物販', buhinHtml);
 
   document.getElementById('summary-content').innerHTML = html;
+
+  // ── 売上合計チェック ──
+  const warnBox    = document.getElementById('sales-warn');
+  const warnDetail = document.getElementById('warn-detail');
+  const vNet  = parseInt(document.getElementById('netSales').value)  || 0;
+  const vS10  = parseInt(document.getElementById('sales10').value)   || 0;
+  const vT10  = parseInt(document.getElementById('tax10').value)     || 0;
+  const vS8   = parseInt(document.getElementById('sales8').value)    || 0;
+  const vT8   = parseInt(document.getElementById('tax8').value)      || 0;
+  const hasData = vNet > 0 && (vS10 > 0 || vS8 > 0);
+  if (hasData) {
+    const expected = (vS10 - vT10) + (vS8 - vT8);
+    const diff     = vNet - expected;
+    if (Math.abs(diff) > 1) {
+      const sign = diff > 0 ? '+' : '';
+      warnDetail.innerHTML =
+        '純売上：¥' + vNet.toLocaleString() + '<br>' +
+        '（売上10% − 消費税10%）+（売上8% − 消費税8%）= ¥' + expected.toLocaleString() + '<br>' +
+        '差額：<strong>' + sign + diff.toLocaleString() + '円</strong>';
+      warnBox.style.display = 'block';
+    } else {
+      warnBox.style.display = 'none';
+    }
+  } else {
+    warnBox.style.display = 'none';
+  }
 }
 
 function sec(title, content) {
@@ -1503,9 +1549,15 @@ async function submitData() {
       };
       saveHistory(currentStore, {
         date: date, staff: staffName, time: submitTime,
-        netSales:   n('netSales'), kumi: n('kumi'),
+        netSales: n('netSales'), kumi: n('kumi'),
         male: n('male'), female: n('female'),
         weather: s('weather'),
+        sales10: n('sales10'), tax10: n('tax10'),
+        sales8:  n('sales8'),  tax8:  n('tax8'),
+        credit:  n('credit'),  point: n('point'),
+        emoney:  n('emoney'),  coupon: n('coupon'),
+        buhin: n('buhin'), buhinCash: n('buhinCash'),
+        buhinOther: n('buhinOther'), buhinBrand: s('buhinBrand'),
         morningStaff:     nippoPayload.morningStaff,
         morningComment:   nippoPayload.morningComment,
         afternoonStaff:   nippoPayload.afternoonStaff,
@@ -1529,6 +1581,12 @@ async function submitData() {
       netSales: n('netSales'), kumi: n('kumi'),
       male: n('male'), female: n('female'),
       weather: s('weather'),
+      sales10: n('sales10'), tax10: n('tax10'),
+      sales8:  n('sales8'),  tax8:  n('tax8'),
+      credit:  n('credit'),  point: n('point'),
+      emoney:  n('emoney'),  coupon: n('coupon'),
+      buhin: n('buhin'), buhinCash: n('buhinCash'),
+      buhinOther: n('buhinOther'), buhinBrand: s('buhinBrand'),
       morningStaff:     document.getElementById('morning-staff').value.trim(),
       morningComment:   document.getElementById('morning-comment').value.trim(),
       afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
