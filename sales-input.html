@@ -1489,6 +1489,8 @@ async function submitData() {
       clearMorningReport(currentStore, date);
       clearForm();
       clearAutoSave();
+      renderCalendar();
+      renderHistory();
     } else {
       showMsg('❌ エラー: ' + result.error, 'ng');
     }
@@ -1508,6 +1510,8 @@ async function submitData() {
     resetEditMode();
     clearForm();
     clearAutoSave();
+    renderCalendar();
+    renderHistory();
   }
 
   btn.disabled = false;
