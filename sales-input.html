@@ -332,7 +332,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.6</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.7</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -647,7 +647,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.6';
+const APP_VERSION = 'v2.7';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -976,7 +976,7 @@ function selectStore(s) {
   // 店舗選択画面を非表示・store-barも非表示・戻るボタン表示
   document.getElementById('store-select-screen').style.display = 'none';
   document.getElementById('store-bar').style.display = 'none';
-  document.getElementById('btn-back').style.display = 'block';
+  if (!urlParamStore) document.getElementById('btn-back').style.display = 'block';
 
   // ヘッダー色を切り替え
   const header = document.querySelector('.header');
