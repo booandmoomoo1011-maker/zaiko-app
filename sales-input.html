@@ -8,7 +8,6 @@
   <meta http-equiv="Expires" content="0">
   <title>売上入力</title>
   <script>
-    // キャッシュ強制回避：v=2がなければ自動リダイレクト
     (function(){
       var p = new URLSearchParams(location.search);
       if (p.get('v') !== '2') {
@@ -39,9 +38,9 @@
     .header.store-teppan  { background: linear-gradient(135deg, #b2ebf2, #80d8e8); color: #004d5c; }
     .header.store-kamakura{ background: linear-gradient(135deg, #e1bee7, #ce93d8); color: #4a0072; }
 
-    /* 店舗選択バー */
+    /* 店舗選択バー（非表示がデフォルト） */
     .store-bar {
-      display: grid;
+      display: none;
       grid-template-columns: repeat(4, 1fr);
       gap: 5px;
       padding: 6px 6px;
@@ -160,7 +159,7 @@
     }
     #store-select-screen h2 {
       color: white; font-size: 18px; text-align: center;
-      margin-bottom: 24px; opacity: 0.85;
+      margin-bottom: 24px; opacity: 0.85; flex-shrink: 0;
     }
     .store-select-btn {
       flex: 1;
@@ -306,7 +305,7 @@
 <div class="header" style="position:relative;padding-left:52px;padding-right:52px;">
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>📊 売上入力システム</h1>
-  <div class="sub" id="hdr-store">↓ 下から店舗を選択してください</div>
+  <div class="sub" id="hdr-store">店舗を選択してください</div>
   <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.1</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -362,7 +361,7 @@
 <div class="wrap">
 
   <!-- 店舗未選択の案内 -->
-  <div class="select-prompt" id="prompt">
+  <div class="select-prompt hidden" id="prompt">
     <span class="arrow">☝️</span>
     上のボタンから店舗を選択してください
   </div>
@@ -431,15 +430,15 @@
       <h2>👥 客数</h2>
       <div class="row">
         <div class="lbl">組数</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="kumi" inputmode="numeric" placeholder="0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="kumi" placeholder="0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">男性人数</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="male" inputmode="numeric" placeholder="0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="male" placeholder="0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">女性人数</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="female" inputmode="numeric" placeholder="0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="female" placeholder="0" min="0"></div>
       </div>
     </div>
 
@@ -448,23 +447,23 @@
       <h2>💴 売上金額</h2>
       <div class="row">
         <div class="lbl">純売上</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="netSales" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="netSales" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">売上（10%対象）</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales10" inputmode="numeric" placeholder="¥ 0" min="0" oninput="calcTax10()"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales10" placeholder="¥ 0" min="0" oninput="calcTax10()"></div>
       </div>
       <div class="row">
         <div class="lbl">消費税 10%</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax10" inputmode="numeric" placeholder="自動計算" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax10" placeholder="自動計算" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">売上（8%対象）</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales8" inputmode="numeric" placeholder="¥ 0" min="0" oninput="calcTax8()"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales8" placeholder="¥ 0" min="0" oninput="calcTax8()"></div>
       </div>
       <div class="row">
         <div class="lbl">消費税 8%</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax8" inputmode="numeric" placeholder="自動計算" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax8" placeholder="自動計算" min="0"></div>
       </div>
     </div>
 
@@ -473,19 +472,19 @@
       <h2>💳 支払い方法</h2>
       <div class="row">
         <div class="lbl">クレジット</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="credit" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="credit" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">ポイント</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="point" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="point" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">電子マネー</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="emoney" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="emoney" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">商品券</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="coupon" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="coupon" placeholder="¥ 0" min="0"></div>
       </div>
     </div>
 
@@ -494,7 +493,7 @@
       <h2>🛍️ 物販</h2>
       <div class="row">
         <div class="lbl">物販</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhin" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhin" placeholder="¥ 0" min="0"></div>
       </div>
     </div>
 
@@ -503,11 +502,11 @@
       <h2>🛍️ 物販</h2>
       <div class="row">
         <div class="lbl">物販（現金）</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhinCash" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhinCash" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">物販（現金以外）</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhinOther" inputmode="numeric" placeholder="¥ 0" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="buhinOther" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">ブランド名</div>
@@ -554,14 +553,8 @@
 </div>
 
 <script>
-// ============================================================
-// ★ GASのURLをここに貼り付けてください（GASデプロイ後に取得）
-// ============================================================
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUUbcAkNo1czgDCamnPhdRicP8BTH3ePex9fbyoYAooratkz70oTrmDLNu-8J8Xc/exec';
 
-// ============================================================
-
-// パスワードのデフォルト（GAS未設定時のフォールバック）
 let STORE_PASSWORDS = {
   '那古野': '1001',
   '大須':   '2002',
@@ -570,15 +563,14 @@ let STORE_PASSWORDS = {
 };
 
 let currentStore = '';
-let editMode = false;   // true = 過去データ修正中
-let pendingStore = '';  // パスワード確認待ちの店舗名
-let originalData = null; // 修正前の読み込み値（差分表示用）
+let editMode = false;
+let pendingStore = '';
+let originalData = null;
 
 // ---- GASからパスワードを取得・キャッシュ ----
 (async function loadPasswords() {
-  if (GAS_URL === 'YOUR_GAS_URL_HERE') return; // 未設定時はデフォルト使用
+  if (GAS_URL === 'YOUR_GAS_URL_HERE') return;
   try {
-    // キャッシュチェック（1時間有効）
     const cached = localStorage.getItem('pw_cache');
     const cacheTime = parseInt(localStorage.getItem('pw_cache_time') || '0');
     if (cached && Date.now() - cacheTime < 3600000) {
@@ -591,7 +583,7 @@ let originalData = null; // 修正前の読み込み値（差分表示用）
       localStorage.setItem('pw_cache', JSON.stringify(result.passwords));
       localStorage.setItem('pw_cache_time', Date.now().toString());
     }
-  } catch(e) { /* GAS未設定またはエラー時はデフォルト使用 */ }
+  } catch(e) {}
 })();
 
 // ---- 管理パネル ----
@@ -599,11 +591,11 @@ let originalData = null; // 修正前の読み込み値（差分表示用）
   const p = new URLSearchParams(location.search);
   if (p.get('admin') !== null) {
     document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('store-select-screen').style.display = 'none';
     document.querySelector('.header').style.display = 'none';
     document.getElementById('store-bar').style.display = 'none';
     document.getElementById('prompt').style.display = 'none';
     document.getElementById('form-area').style.display = 'none';
-    // 現在のパスワードを表示
     loadAdminPasswords();
   }
 })();
@@ -646,10 +638,8 @@ async function saveAdminPasswords() {
     });
     const result = await res.json();
     if (result.success) {
-      // キャッシュ更新
       localStorage.setItem('pw_cache', JSON.stringify(passwords));
       localStorage.setItem('pw_cache_time', Date.now().toString());
-      // 認証済みキャッシュをクリア（新パスワードで再認証が必要になる）
       ['那古野','大須','鉄板','鎌倉'].forEach(s => localStorage.removeItem('auth_' + s));
       showAdmMsg('✅ 保存しました。次回から新しいパスワードが適用されます。', 'ok');
     } else {
@@ -669,9 +659,8 @@ function showAdmMsg(text, type) {
   el.style.border     = '1px solid ' + (type === 'ok' ? '#a5d6a7' : '#ef9a9a');
 }
 
-// ---- パスワード認証 ----
+// ---- パスワード認証（常にパスコード要求） ----
 function trySelectStore(s) {
-  // 常にパスコードを要求する
   pendingStore = s;
   document.getElementById('pw-store-name').textContent = s + '店のパスワードを入力してください';
   document.getElementById('pw-msg').textContent = '';
@@ -680,18 +669,19 @@ function trySelectStore(s) {
   setTimeout(() => document.getElementById('pw-input').focus(), 100);
 }
 
+// 店舗選択画面に戻る
 function backToStoreSelect() {
-  // 認証キャッシュをクリアして店舗選択画面へ戻る
   ['大須','那古野','鉄板','鎌倉'].forEach(s => localStorage.removeItem('auth_' + s));
   document.getElementById('store-select-screen').style.display = 'flex';
   document.getElementById('store-bar').style.display = 'none';
   document.getElementById('btn-back').style.display = 'none';
   document.getElementById('form-area').classList.add('hidden');
   document.getElementById('prompt').classList.add('hidden');
-  // ヘッダーをリセット
   document.querySelector('.header').className = 'header';
-  document.getElementById('hdr-store').textContent = '↓ 下から店舗を選択してください';
+  document.getElementById('hdr-store').textContent = '店舗を選択してください';
   currentStore = '';
+  clearMsg();
+  showLoadMsg('', '');
 }
 
 // ====== 設定パネル ======
@@ -701,7 +691,6 @@ const STORE_PARAMS = {'大須':'osu','那古野':'nagoya','鉄板':'teppan','鎌
 const STORE_COLORS = {'大須':'#e91e63','那古野':'#f9a825','鉄板':'#0288d1','鎌倉':'#8e24aa'};
 
 function openSettings() {
-  // URLコピーボタンを生成
   const container = document.getElementById('line-share-btns');
   container.innerHTML = STORES_ORDER.map(s => {
     const url = APP_URL + '&store=' + encodeURIComponent(s);
@@ -733,21 +722,18 @@ async function saveSettingsPasswords() {
     '鉄板':   document.getElementById('s-pw-teppan').value.trim(),
     '鎌倉':   document.getElementById('s-pw-kamakura').value.trim(),
   };
-  // 空欄は送らない
   const toSave = {};
   Object.keys(passwords).forEach(k => { if (passwords[k]) toSave[k] = passwords[k]; });
   if (Object.keys(toSave).length === 0) {
     showSPwMsg('変更するパスワードを入力してください', 'ng'); return;
   }
-  // GASへ送信（CORSエラーは無視、実際には保存される）
   try { await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'setPasswords', passwords: toSave }) }); } catch(e) {}
-  // localStorageのキャッシュも更新
   Object.assign(STORE_PASSWORDS, toSave);
+  // Fix: pw_cache キーに統一
   const existingCache = JSON.parse(localStorage.getItem('pw_cache') || '{}');
   Object.assign(existingCache, toSave);
   localStorage.setItem('pw_cache', JSON.stringify(existingCache));
   localStorage.setItem('pw_cache_time', Date.now().toString());
-  // 再ログインが必要なのでauth削除
   Object.keys(toSave).forEach(s => localStorage.removeItem('auth_' + s));
   showSPwMsg('✅ パスワードを保存しました', 'ok');
   ['s-pw-osu','s-pw-nagoya','s-pw-teppan','s-pw-kamakura'].forEach(id => document.getElementById(id).value = '');
@@ -775,7 +761,7 @@ function checkPassword() {
   }
 }
 
-// 今日の日付を表示・セット、edit-dateの最大値を昨日に設定
+// 今日の日付を表示・セット
 (function() {
   const d = new Date();
   const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
@@ -784,25 +770,23 @@ function checkPassword() {
     y + '年' + m + '月' + day + '日（' + dow + '）';
   const todayStr = y + '-' + String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
   document.getElementById('date').value = todayStr;
-  // 修正用日付の上限を「先月末」に設定（当月はカレンダーから選択）
   const lastDayOfPrevMonth = new Date(d.getFullYear(), d.getMonth(), 0);
   document.getElementById('edit-date').max =
     lastDayOfPrevMonth.getFullYear() + '-' + String(lastDayOfPrevMonth.getMonth()+1).padStart(2,'0') + '-' + String(lastDayOfPrevMonth.getDate()).padStart(2,'0');
 })();
 
-// URLパラメータで店舗を自動選択（前回の店舗は自動復元しない）
+// URLパラメータで店舗を自動選択（前回復元なし）
 let urlParamStore = '';
 (function() {
   const p = new URLSearchParams(location.search);
   const s = p.get('store');
   if (['那古野','大須','鉄板','鎌倉'].includes(s)) {
-    // URLに店舗指定あり → パスコード要求
     urlParamStore = s;
+    // store-select-screenを隠してパスコード要求
+    document.getElementById('store-select-screen').style.display = 'none';
     trySelectStore(s);
   }
-  // 店舗未指定の場合は店舗選択画面を表示（store-select-screenがデフォルト表示）
-  // store-barは非表示にする
-  document.getElementById('store-bar').style.display = 'none';
+  // 店舗指定なし → store-select-screenが表示されたまま
 })();
 
 const STORE_CLASS = {
@@ -814,13 +798,11 @@ const STORE_CLASS = {
 
 function selectStore(s) {
   currentStore = s;
-
-  // 最後に選んだ店舗を記憶
   localStorage.setItem('last_store', s);
 
-  // 店舗選択画面を非表示にして店舗バーと戻るボタンを表示
+  // 店舗選択画面を非表示・store-barも非表示・戻るボタン表示
   document.getElementById('store-select-screen').style.display = 'none';
-  document.getElementById('store-bar').style.display = 'grid';
+  document.getElementById('store-bar').style.display = 'none';
   document.getElementById('btn-back').style.display = 'block';
 
   // ヘッダー色を切り替え
@@ -843,9 +825,8 @@ function selectStore(s) {
   toggle('card-buhin-detail', isDetail);
 
   clearMsg();
-  // 自動保存データを復元
+  showLoadMsg('', '');
   restoreAutoSave(s);
-  // カレンダー表示
   calYear  = new Date().getFullYear();
   calMonth = new Date().getMonth();
   renderCalendar();
@@ -855,8 +836,6 @@ function toggle(id, show) {
   document.getElementById(id).classList.toggle('hidden', !show);
 }
 
-// 10%消費税 自動計算（売上÷11）
-// 既存データの読み込み（修正用）
 async function loadData() {
   if (!currentStore) { showLoadMsg('店舗を選択してください', 'ng'); return; }
   const date = document.getElementById('edit-date').value;
@@ -874,7 +853,6 @@ async function loadData() {
 
     if (result.success) {
       const d = result.data;
-      // フォームに値をセット
       const setN = (id, val) => { document.getElementById(id).value = (val === '' || val === null || val === undefined) ? '' : val; };
       setN('kumi',       d.kumi);
       setN('male',       d.male);
@@ -894,16 +872,12 @@ async function loadData() {
       document.getElementById('buhinBrand').value = d.buhinBrand || '';
       document.getElementById('weather').value    = d.weather || '';
       editMode = true;
-      // 修正前データを保存（差分表示用）
       originalData = Object.assign({}, d);
-      // 送信ボタンを修正モード表示に
       document.getElementById('btn').textContent = '✏️ 修正内容を送信（上書き保存）';
       document.getElementById('btn').style.background = '#5c6bc0';
-      // 戻るボタンを表示
       document.getElementById('btn-revert').style.display = 'block';
       showLoadMsg('✅ データを読み込みました。上のフォームで修正して送信してください。', 'ok');
       updateSummary();
-      // フォーム先頭にスクロール
       document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     } else {
       showLoadMsg('❌ ' + result.error, 'ng');
@@ -920,12 +894,13 @@ function showLoadMsg(text, type) {
   const el = document.getElementById('load-msg');
   el.textContent = text;
   el.style.display = text ? 'block' : 'none';
-  el.style.background = type === 'ok' ? '#e8f5e9' : '#ffebee';
-  el.style.color      = type === 'ok' ? '#1b5e20' : '#b71c1c';
-  el.style.border     = '1px solid ' + (type === 'ok' ? '#a5d6a7' : '#ef9a9a');
+  if (text) {
+    el.style.background = type === 'ok' ? '#e8f5e9' : '#ffebee';
+    el.style.color      = type === 'ok' ? '#1b5e20' : '#b71c1c';
+    el.style.border     = '1px solid ' + (type === 'ok' ? '#a5d6a7' : '#ef9a9a');
+  }
 }
 
-// フォーム全体の入力・変更を監視して確認まとめ更新＋自動保存
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('form-area').addEventListener('input',  function() { updateSummary(); autoSave(); });
   document.getElementById('form-area').addEventListener('change', function() { updateSummary(); autoSave(); });
@@ -933,7 +908,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ---- カレンダー ----
 let calYear = new Date().getFullYear();
-let calMonth = new Date().getMonth(); // 0-based
+let calMonth = new Date().getMonth();
 
 function renderCalendar() {
   if (!currentStore) return;
@@ -944,13 +919,12 @@ function renderCalendar() {
   const holidays = getHolidays();
   const entered  = getEntered();
 
-  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
   const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
   const dows = ['日','月','火','水','木','金','土'];
 
   let html = dows.map(d => '<div class="cal-dow">' + d + '</div>').join('');
 
-  // 空白マス
   for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
 
   for (let d = 1; d <= lastDate; d++) {
@@ -959,21 +933,22 @@ function renderCalendar() {
     const dow = date.getDay();
     const isToday   = (date.toDateString() === today.toDateString());
     const isFuture  = date > today;
-    const isPast    = date < today && !isToday;
     const isHoliday = holidays[dateStr];
     const isEntered = entered[dateStr];
 
     let cls = 'cal-day';
-    if (isToday)  cls += ' today';
+    if (isToday)       cls += ' today';
     else if (isFuture) cls += ' future';
-    else cls += ' past';
+    else               cls += ' past';
     if (dow === 0) cls += ' sunday';
     if (dow === 6) cls += ' saturday';
     if (isHoliday) cls += ' holiday-day';
 
-    const dot = isEntered && !isHoliday ? '<span class="cal-dot entered"></span>'
-               : '<span class="cal-dot"></span>';
+    const dot = isEntered && !isHoliday
+      ? '<span class="cal-dot entered"></span>'
+      : '<span class="cal-dot"></span>';
 
+    // Fix: 冗長な条件分岐を整理
     const click = 'onclick="calSelectDay(\'' + dateStr + '\')"';
     html += '<div class="' + cls + '" id="calday-' + dateStr + '" ' + click + '>' + d + dot + '</div>';
   }
@@ -997,27 +972,20 @@ function calNext() {
 let calPopupDate = '';
 
 function calSelectDay(dateStr) {
-  // 選択状態をハイライト
   document.querySelectorAll('.cal-day.selected').forEach(el => el.classList.remove('selected'));
   const el = document.getElementById('calday-' + dateStr);
   if (el) el.classList.add('selected');
 
   calPopupDate = dateStr;
   const isHoliday = !!getHolidays()[dateStr];
-  const isEntered = !!getEntered()[dateStr];
   const today = new Date().toISOString().slice(0,10);
-
   const isFutureDate = dateStr > today;
 
-  // ポップアップの内容を設定
   document.getElementById('cal-popup-date').textContent = dateStr;
-  // 休み登録ボタン：すでに休みの場合のみ非表示
   document.getElementById('cal-popup-holiday-on').style.display  = isHoliday ? 'none' : 'flex';
   document.getElementById('cal-popup-holiday-off').style.display = isHoliday ? 'flex' : 'none';
-  // 入力・編集は未来日には表示しない
   document.getElementById('cal-popup-edit').style.display = isFutureDate ? 'none' : 'flex';
 
-  // ポップアップ位置をタップした日付セルの近くに表示
   const popup = document.getElementById('cal-popup');
   const calCard = document.getElementById('cal-card');
   if (el) {
@@ -1025,7 +993,6 @@ function calSelectDay(dateStr) {
     const cardRect = calCard.getBoundingClientRect();
     let top = cellRect.bottom - cardRect.top + 4;
     let left = cellRect.left - cardRect.left;
-    // 右端はみ出し防止
     if (left + 170 > calCard.offsetWidth) left = calCard.offsetWidth - 175;
     if (left < 0) left = 0;
     popup.style.top  = top + 'px';
@@ -1042,7 +1009,6 @@ function closeCalPopup() {
 
 async function calActionHolidayOn() {
   closeCalPopup();
-  // 入力済みの場合は追加警告
   if (getEntered()[calPopupDate]) {
     if (!confirm('⚠️ ' + calPopupDate + ' はデータが入力済みです。\n休みとして登録すると入力データが0に上書きされます。\nよろしいですか？')) return;
   } else {
@@ -1055,6 +1021,8 @@ function calActionHolidayOff() {
   closeCalPopup();
   if (!confirm(calPopupDate + ' の休みを取り消しますか？')) return;
   unmarkHoliday(calPopupDate);
+  // Fix: 休み削除後にload-msgもクリア
+  showLoadMsg('', '');
   showMsg('✅ ' + calPopupDate + ' の休みを取り消しました', 'ok');
 }
 
@@ -1067,8 +1035,6 @@ function calActionEdit() {
     document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     return;
   }
-  // 当月・先月以前どちらも edit-date にセットして読み込む
-  // loadData() が成功時に自動で上（form-area）にスクロールする
   document.getElementById('edit-date').value = calPopupDate;
   loadData();
 }
@@ -1096,36 +1062,6 @@ function markEntered(dateStr) {
   renderCalendar();
 }
 
-// 今日を休みとして登録
-async function registerTodayHoliday() {
-  if (!currentStore) { alert('店舗を選択してください'); return; }
-  const staffName = document.getElementById('staff-name').value.trim();
-  if (!staffName) { showMsg('担当者名がないと送信できません', 'ng'); return; }
-  const dateStr = document.getElementById('date').value;
-  if (!confirm(dateStr + ' を休みとして登録しますか？')) return;
-  await sendHoliday(dateStr, staffName);
-}
-
-// 過去日付を休みとして登録
-async function registerHoliday() {
-  if (!currentStore) { alert('店舗を選択してください'); return; }
-  const staffName = document.getElementById('staff-name').value.trim();
-  if (!staffName) { showLoadMsg('担当者名がないと送信できません', 'ng'); return; }
-  const dateStr = document.getElementById('edit-date').value;
-  if (!dateStr) { showLoadMsg('日付を選択してください', 'ng'); return; }
-
-  const isHoliday = getHolidays()[dateStr];
-  if (isHoliday) {
-    // すでに休みなら取り消し確認
-    if (!confirm(dateStr + ' の休みを取り消しますか？')) return;
-    unmarkHoliday(dateStr);
-    showLoadMsg('✅ 休みを取り消しました', 'ok');
-    return;
-  }
-  if (!confirm(dateStr + ' を休みとして登録しますか？')) return;
-  await sendHoliday(dateStr, staffName);
-}
-
 async function sendHoliday(dateStr, staffName) {
   const submitTime = new Date().toLocaleString('ja-JP', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   const zero = {kumi:0,male:0,female:0,netSales:0,sales10:0,tax10:0,sales8:0,tax8:0,credit:0,point:0,emoney:0,coupon:0,buhin:0,buhinCash:0,buhinOther:0,buhinBrand:'',weather:''};
@@ -1138,7 +1074,7 @@ async function sendHoliday(dateStr, staffName) {
   showMsg('🔵 ' + dateStr + ' を休みとして登録しました', 'ok');
 }
 
-// ---- 入力データの自動保存・復元（スワイプ対策） ----
+// ---- 自動保存・復元 ----
 const SAVE_FIELDS = ['staff-name','weather','kumi','male','female','netSales',
   'sales10','tax10','sales8','tax8','credit','point','emoney','coupon',
   'buhin','buhinCash','buhinOther','buhinBrand'];
@@ -1158,7 +1094,7 @@ function restoreAutoSave(store) {
     var saved = localStorage.getItem('autosave');
     if (!saved) return;
     var data = JSON.parse(saved);
-    if (data.store !== store) return; // 別の店舗のデータは復元しない
+    if (data.store !== store) return;
     SAVE_FIELDS.forEach(function(id) {
       var el = document.getElementById(id);
       if (el && data[id] !== undefined) el.value = data[id];
@@ -1171,14 +1107,12 @@ function clearAutoSave() {
   localStorage.removeItem('autosave');
 }
 
-// 確認まとめを更新する
 function updateSummary() {
   const card = document.getElementById('summary-card');
   const dateVal = editMode
     ? document.getElementById('edit-date').value
     : document.getElementById('date').value;
 
-  // 1項目でも入力があれば表示
   const fields = ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
                   'credit','point','emoney','coupon','buhin','buhinCash','buhinOther'];
   const anyFilled = dateVal || fields.some(id => document.getElementById(id).value !== '') ||
@@ -1187,16 +1121,15 @@ function updateSummary() {
   if (!anyFilled || !currentStore) { card.style.display = 'none'; return; }
   card.style.display = 'block';
 
-  // 数値フォーマット（¥記号 + カンマ）
   const yen = id => {
     const v = document.getElementById(id).value;
     if (v === '' || v === '0') return row(id, '-', true);
-    return row(id, '¥ ' + Number(v).toLocaleString());
+    return row(id, '¥ ' + Number(v).toLocaleString());
   };
   const ppl = (id, unit) => {
     const v = document.getElementById(id).value;
     if (v === '') return row(id, '-', true);
-    return row(id, v + ' ' + unit);
+    return row(id, v + ' ' + unit);
   };
 
   const LABELS = {
@@ -1221,7 +1154,6 @@ function updateSummary() {
 
   let html = '';
 
-  // 修正モードのとき：変更差分を最上部に表示
   if (editMode && originalData) {
     const DIFF_KEYS = [
       {id:'kumi',lbl:'組数'},{id:'male',lbl:'男性'},{id:'female',lbl:'女性'},
@@ -1252,29 +1184,15 @@ function updateSummary() {
     html += sec('📝 変更内容（修正モード）', diffRows);
   }
 
-  // 基本情報
   html += sec('📅 基本・担当者',
     '<div class="sum-row"><span class="sum-key">日付</span><span class="sum-val">' + (dateStr || '-') + '</span></div>' +
     '<div class="sum-row"><span class="sum-key">担当者名</span><span class="' + (staffNameVal ? 'sum-val' : 'sum-val empty') + '">' + (staffNameVal || '未入力') + '</span></div>' +
     '<div class="sum-row"><span class="sum-key">天気</span><span class="' + (weatherVal ? 'sum-val' : 'sum-val empty') + '">' + (weatherVal || '-') + '</span></div>'
   );
+  html += sec('👥 客数', ppl('kumi','組') + ppl('male','名') + ppl('female','名'));
+  html += sec('💴 売上', yen('netSales') + yen('sales10') + yen('tax10') + yen('sales8') + yen('tax8'));
+  html += sec('💳 支払い方法', yen('credit') + yen('point') + yen('emoney') + yen('coupon'));
 
-  // 客数
-  html += sec('👥 客数',
-    ppl('kumi','組') + ppl('male','名') + ppl('female','名')
-  );
-
-  // 売上
-  html += sec('💴 売上',
-    yen('netSales') + yen('sales10') + yen('tax10') + yen('sales8') + yen('tax8')
-  );
-
-  // 支払い
-  html += sec('💳 支払い方法',
-    yen('credit') + yen('point') + yen('emoney') + yen('coupon')
-  );
-
-  // 物販
   let buhinHtml = '';
   if (!isDetail) {
     buhinHtml = yen('buhin');
@@ -1297,7 +1215,6 @@ function calcTax10() {
     document.getElementById('tax10').value = Math.round(v / 11);
 }
 
-// 8%消費税 自動計算（売上×8÷108）
 function calcTax8() {
   const v = parseInt(document.getElementById('sales8').value);
   if (!isNaN(v) && v > 0)
@@ -1316,7 +1233,6 @@ async function submitData() {
   if (!currentStore) { showMsg('店舗を選択してください', 'ng'); return; }
   const staffName = s('staff-name');
   if (!staffName) { showMsg('担当者名がないと送信できません', 'ng'); return; }
-  // 修正モードなら edit-date、通常は今日の日付
   const date = editMode
     ? document.getElementById('edit-date').value
     : document.getElementById('date').value;
@@ -1327,7 +1243,6 @@ async function submitData() {
   btn.textContent = '⏳ 送信中...';
   clearMsg();
 
-  // 送信日時
   const submitTime = new Date().toLocaleString('ja-JP', {
     year:'numeric', month:'2-digit', day:'2-digit',
     hour:'2-digit', minute:'2-digit'
@@ -1442,16 +1357,16 @@ function clearForm() {
    'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand']
     .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('weather').value = '';
+  // Fix: 送信後に担当者名もクリア
   document.getElementById('staff-name').value = '';
-  // 日付を今日に戻す
   const d = new Date();
   document.getElementById('date').value =
     d.getFullYear() + '-' +
     String(d.getMonth()+1).padStart(2,'0') + '-' +
     String(d.getDate()).padStart(2,'0');
-  // 確認まとめをリセット
   document.getElementById('summary-card').style.display = 'none';
 }
 </script>
 </body>
 </html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
