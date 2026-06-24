@@ -256,6 +256,21 @@
       flex:1; padding:9px 10px; border:1.5px solid #ddd; border-radius:7px;
       font-size:15px; -webkit-appearance:none; appearance:none;
     }
+    /* 日報 */
+    .nippo-section { margin-bottom: 16px; border-top: 1px solid #e8eaf6; padding-top: 14px; }
+    .nippo-section:first-child { border-top: none; padding-top: 0; }
+    .nippo-title { font-size: 13px; font-weight: 700; color: #3949ab; margin-bottom: 10px; }
+    .nippo-saved { font-size: 12px; color: #2e7d32; background: #e8f5e9; padding: 6px 10px; border-radius: 6px; margin-top: 8px; display: none; }
+    .char-count { font-size: 11px; color: #999; text-align: right; margin-top: 2px; }
+    .char-count.over { color: #c62828; }
+    textarea.nippo-comment {
+      width: 100%; padding: 9px 10px;
+      border: 1.5px solid #ddd; border-radius: 7px;
+      font-size: 14px; color: #333; background: #fafafa;
+      resize: none; height: 72px;
+      font-family: inherit; line-height: 1.5;
+    }
+    textarea.nippo-comment:focus { outline: none; border-color: #9fa8da; background: #fff; }
   </style>
 </head>
 <body>
@@ -520,6 +535,43 @@
       <div id="summary-content"></div>
     </div>
 
+    <!-- 日報 -->
+    <div class="card" id="card-nippo">
+      <h2>📝 日報</h2>
+      <!-- 午前 -->
+      <div class="nippo-section">
+        <div class="nippo-title">🌅 午前</div>
+        <div class="row">
+          <div class="lbl">担当者名</div>
+          <div class="inp"><input type="text" id="morning-staff" placeholder="名前を入力"></div>
+        </div>
+        <div class="row" style="align-items:flex-start;">
+          <div class="lbl" style="padding-top:9px;">コメント</div>
+          <div class="inp">
+            <textarea class="nippo-comment" id="morning-comment" maxlength="100" placeholder="午前の状況を入力（最大100文字）" oninput="updateCharCount('morning-comment','morning-count')"></textarea>
+            <div class="char-count" id="morning-count">0 / 100</div>
+          </div>
+        </div>
+        <button onclick="saveMorningReport()" style="width:100%;padding:10px;background:#e8eaf6;color:#3949ab;border:2px solid #9fa8da;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;">💾 午前を保存</button>
+        <div class="nippo-saved" id="morning-saved-msg">✅ 午前のデータを保存しました</div>
+      </div>
+      <!-- 午後 -->
+      <div class="nippo-section">
+        <div class="nippo-title">🌇 午後</div>
+        <div class="row">
+          <div class="lbl">担当者名</div>
+          <div class="inp"><input type="text" id="afternoon-staff" placeholder="名前を入力"></div>
+        </div>
+        <div class="row" style="align-items:flex-start;">
+          <div class="lbl" style="padding-top:9px;">コメント</div>
+          <div class="inp">
+            <textarea class="nippo-comment" id="afternoon-comment" maxlength="100" placeholder="午後の状況を入力（最大100文字）" oninput="updateCharCount('afternoon-comment','afternoon-count')"></textarea>
+            <div class="char-count" id="afternoon-count">0 / 100</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <button class="btn-submit" id="btn" onclick="submitData()">📤 スプレッドシートに送信</button>
     <button id="btn-revert" onclick="revertToOriginal()"
       style="display:none;width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">
@@ -554,6 +606,7 @@
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUUbcAkNo1czgDCamnPhdRicP8BTH3ePex9fbyoYAooratkz70oTrmDLNu-8J8Xc/exec';
+const NIPPO_GAS_URL = 'https://script.google.com/macros/s/AKfycbwRLa71Rdm9tgI5W8GAfiRivdh0TImj3idG7WFOzcIxhVKeTIB09Y7IuudlBXMDzq0/exec';
 
 let STORE_PASSWORDS = {
   '那古野': '1001',
@@ -1285,6 +1338,17 @@ async function submitData() {
       showMsg('✅ ' + result.message, 'ok');
       markEntered(date);
       resetEditMode();
+      // 日報データを日報GASに送信（失敗しても売上送信は成功扱い）
+      const nippoPayload = {
+        store: currentStore,
+        date:  date,
+        morningStaff:     document.getElementById('morning-staff').value.trim(),
+        morningComment:   document.getElementById('morning-comment').value.trim(),
+        afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
+        afternoonComment: document.getElementById('afternoon-comment').value.trim()
+      };
+      fetch(NIPPO_GAS_URL, { method: 'POST', body: JSON.stringify(nippoPayload) }).catch(() => {});
+      clearMorningReport(currentStore, date);
       clearForm();
       clearAutoSave();
     } else {
@@ -1352,6 +1416,42 @@ function revertToOriginal() {
   showMsg('↩️ 読み込んだデータに戻しました', 'ok');
 }
 
+// ---- 日報 ----
+function updateCharCount(taId, countId) {
+  const len = document.getElementById(taId).value.length;
+  const el = document.getElementById(countId);
+  el.textContent = len + ' / 100';
+  el.className = 'char-count' + (len > 100 ? ' over' : '');
+}
+
+function saveMorningReport() {
+  if (!currentStore) { showMsg('先に店舗を選択してください', 'ng'); return; }
+  const date = document.getElementById('date').value;
+  if (!date) { showMsg('日付を先に選択してください', 'ng'); return; }
+  const staff   = document.getElementById('morning-staff').value.trim();
+  const comment = document.getElementById('morning-comment').value.trim();
+  localStorage.setItem('nippo_morning_' + currentStore + '_' + date, JSON.stringify({ staff, comment }));
+  const msg = document.getElementById('morning-saved-msg');
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; }, 3000);
+}
+
+function loadMorningReport(store, date) {
+  const saved = localStorage.getItem('nippo_morning_' + store + '_' + date);
+  if (saved) {
+    try {
+      const d = JSON.parse(saved);
+      document.getElementById('morning-staff').value   = d.staff   || '';
+      document.getElementById('morning-comment').value = d.comment || '';
+      updateCharCount('morning-comment', 'morning-count');
+    } catch(e) {}
+  }
+}
+
+function clearMorningReport(store, date) {
+  localStorage.removeItem('nippo_morning_' + store + '_' + date);
+}
+
 function clearForm() {
   ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
    'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand']
@@ -1365,6 +1465,14 @@ function clearForm() {
     String(d.getMonth()+1).padStart(2,'0') + '-' +
     String(d.getDate()).padStart(2,'0');
   document.getElementById('summary-card').style.display = 'none';
+  // 日報フィールドをクリア
+  document.getElementById('morning-staff').value     = '';
+  document.getElementById('morning-comment').value   = '';
+  document.getElementById('afternoon-staff').value   = '';
+  document.getElementById('afternoon-comment').value = '';
+  document.getElementById('morning-count').textContent   = '0 / 100';
+  document.getElementById('afternoon-count').textContent = '0 / 100';
+  document.getElementById('morning-saved-msg').style.display = 'none';
 }
 </script>
 </body>
