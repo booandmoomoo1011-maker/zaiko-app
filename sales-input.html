@@ -271,6 +271,12 @@
       font-family: inherit; line-height: 1.5;
     }
     textarea.nippo-comment:focus { outline: none; border-color: #9fa8da; background: #fff; }
+    .history-item { padding: 10px 0; border-bottom: 1px solid #e8eaf6; }
+    .history-item:last-child { border-bottom: none; }
+    .history-date { font-size: 14px; font-weight: 700; color: #3949ab; }
+    .history-info { display: flex; justify-content: space-between; margin-top: 3px; font-size: 13px; color: #555; }
+    .history-sales { font-weight: 700; color: #1a237e; }
+    .history-time { font-size: 11px; color: #aaa; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -540,7 +546,7 @@
       <h2>📝 日報</h2>
       <!-- 午前 -->
       <div class="nippo-section">
-        <div class="nippo-title">🌅 午前</div>
+        <div class="nippo-title"><span style="display:inline-block;width:13px;height:13px;background:#FFD600;border-radius:50%;vertical-align:middle;margin-right:6px;"></span>午前</div>
         <div class="row">
           <div class="lbl">担当者名</div>
           <div class="inp"><input type="text" id="morning-staff" placeholder="名前を入力"></div>
@@ -557,7 +563,7 @@
       </div>
       <!-- 午後 -->
       <div class="nippo-section">
-        <div class="nippo-title">🌇 午後</div>
+        <div class="nippo-title"><span style="display:inline-block;width:13px;height:13px;background:#E65100;border-radius:50%;vertical-align:middle;margin-right:6px;"></span>午後</div>
         <div class="row">
           <div class="lbl">担当者名</div>
           <div class="inp"><input type="text" id="afternoon-staff" placeholder="名前を入力"></div>
@@ -597,6 +603,17 @@
         </button>
       </div>
       <div id="load-msg" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;text-align:center;"></div>
+    </div>
+
+    <!-- 入力履歴 -->
+    <div class="card" id="card-history" style="margin-top:20px;border:2px dashed #e8eaf6;">
+      <h2 style="color:#5c6bc0;">📋 入力履歴</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <button onclick="historyPrevMonth()" style="padding:6px 14px;background:#e8eaf6;color:#3949ab;border:none;border-radius:7px;font-size:16px;font-weight:700;cursor:pointer;">◀</button>
+        <span id="history-month-label" style="font-size:15px;font-weight:700;color:#3949ab;"></span>
+        <button onclick="historyNextMonth()" id="btn-history-next" style="padding:6px 14px;background:#e8eaf6;color:#3949ab;border:none;border-radius:7px;font-size:16px;font-weight:700;cursor:pointer;">▶</button>
+      </div>
+      <div id="history-list"></div>
     </div>
 
   </div><!-- /form-area -->
@@ -883,6 +900,9 @@ function selectStore(s) {
   calYear  = new Date().getFullYear();
   calMonth = new Date().getMonth();
   renderCalendar();
+  historyYear  = new Date().getFullYear();
+  historyMonth = new Date().getMonth() + 1;
+  renderHistory();
 }
 
 function toggle(id, show) {
@@ -1114,6 +1134,85 @@ function markEntered(dateStr) {
   localStorage.setItem('entered_' + currentStore, JSON.stringify(e));
   renderCalendar();
 }
+let historyYear  = new Date().getFullYear();
+let historyMonth = new Date().getMonth() + 1;
+
+function saveHistory(store, date, staff, netSales, submitTime) {
+  const key = 'history_' + store;
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+  hist = hist.filter(h => h.date !== date);
+  hist.unshift({ date: date, staff: staff, netSales: netSales || 0, time: submitTime });
+  if (hist.length > 400) hist = hist.slice(0, 400);
+  localStorage.setItem(key, JSON.stringify(hist));
+}
+function historyPrevMonth() {
+  historyMonth--;
+  if (historyMonth < 1) { historyMonth = 12; historyYear--; }
+  renderHistory();
+}
+function historyNextMonth() {
+  const now = new Date();
+  if (historyYear === now.getFullYear() && historyMonth >= now.getMonth() + 1) return;
+  historyMonth++;
+  if (historyMonth > 12) { historyMonth = 1; historyYear++; }
+  renderHistory();
+}
+function renderHistory() {
+  const card = document.getElementById('card-history');
+  const list = document.getElementById('history-list');
+  if (!currentStore) return;
+
+  // 当月に戻る：selectStore時にリセット
+  const label = document.getElementById('history-month-label');
+  label.textContent = historyYear + '年' + historyMonth + '月';
+
+  // ▶ボタン：当月以降は非表示
+  const now = new Date();
+  const btnNext = document.getElementById('btn-history-next');
+  if (btnNext) btnNext.style.visibility =
+    (historyYear === now.getFullYear() && historyMonth >= now.getMonth() + 1) ? 'hidden' : 'visible';
+
+  // entered_[store] から対象月の日付を取得
+  const entered = getEntered();
+  const monthStr = historyYear + '-' + String(historyMonth).padStart(2, '0');
+  const monthDates = Object.keys(entered)
+    .filter(d => d.startsWith(monthStr))
+    .sort()
+    .reverse();
+
+  // history_[store] から詳細（売上・担当者）を取得
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); } catch(e) {}
+  const histMap = {};
+  hist.forEach(h => { histMap[h.date] = h; });
+
+  if (monthDates.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:#bbb;font-size:13px;padding:16px 0;">この月の入力記録はありません</div>';
+    return;
+  }
+
+  const DOW = ['日','月','火','水','木','金','土'];
+  list.innerHTML = monthDates.map(function(date) {
+    const parts = date.split('-');
+    const day   = parseInt(parts[2]);
+    const dow   = DOW[new Date(date).getDay()];
+    const h     = histMap[date];
+    const net   = (h && h.netSales !== '' && h.netSales !== undefined)
+                  ? '¥' + parseInt(h.netSales).toLocaleString() : '';
+    const staff = h ? (h.staff || '') : '';
+    const time  = h ? (h.time  || '') : '';
+    return '<div class="history-item">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<div class="history-date">' + historyMonth + '/' + day + '（' + dow + '）</div>' +
+        (net ? '<div class="history-sales">' + net + '</div>'
+             : '<div style="font-size:12px;color:#bbb;">金額未記録</div>') +
+      '</div>' +
+      (staff ? '<div style="font-size:12px;color:#777;margin-top:2px;">担当：' + staff + '</div>' : '') +
+      (time  ? '<div class="history-time">送信：' + time + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
 
 async function sendHoliday(dateStr, staffName) {
   const submitTime = new Date().toLocaleString('ja-JP', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -1337,11 +1436,10 @@ async function submitData() {
     if (result.success) {
       showMsg('✅ ' + result.message, 'ok');
       markEntered(date);
+      saveHistory(currentStore, date, staffName, n('netSales'), submitTime);
       resetEditMode();
-      // 日報データを日報GASに送信（失敗しても売上送信は成功扱い）
       const nippoPayload = {
-        store: currentStore,
-        date:  date,
+        store: currentStore, date: date,
         morningStaff:     document.getElementById('morning-staff').value.trim(),
         morningComment:   document.getElementById('morning-comment').value.trim(),
         afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
@@ -1357,6 +1455,7 @@ async function submitData() {
   } catch(err) {
     showMsg('📤 送信しました。スプレッドシートで内容をご確認ください。', 'ok');
     markEntered(date);
+    saveHistory(currentStore, date, staffName, n('netSales'), submitTime);
     resetEditMode();
     clearForm();
     clearAutoSave();
@@ -1416,14 +1515,12 @@ function revertToOriginal() {
   showMsg('↩️ 読み込んだデータに戻しました', 'ok');
 }
 
-// ---- 日報 ----
 function updateCharCount(taId, countId) {
   const len = document.getElementById(taId).value.length;
   const el = document.getElementById(countId);
   el.textContent = len + ' / 100';
   el.className = 'char-count' + (len > 100 ? ' over' : '');
 }
-
 function saveMorningReport() {
   if (!currentStore) { showMsg('先に店舗を選択してください', 'ng'); return; }
   const date = document.getElementById('date').value;
@@ -1435,7 +1532,6 @@ function saveMorningReport() {
   msg.style.display = 'block';
   setTimeout(() => { msg.style.display = 'none'; }, 3000);
 }
-
 function loadMorningReport(store, date) {
   const saved = localStorage.getItem('nippo_morning_' + store + '_' + date);
   if (saved) {
@@ -1447,7 +1543,6 @@ function loadMorningReport(store, date) {
     } catch(e) {}
   }
 }
-
 function clearMorningReport(store, date) {
   localStorage.removeItem('nippo_morning_' + store + '_' + date);
 }
@@ -1457,24 +1552,20 @@ function clearForm() {
    'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand']
     .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('weather').value = '';
-  // Fix: 送信後に担当者名もクリア
   document.getElementById('staff-name').value = '';
+  document.getElementById('morning-staff').value = '';
+  document.getElementById('morning-comment').value = '';
+  document.getElementById('afternoon-staff').value = '';
+  document.getElementById('afternoon-comment').value = '';
+  updateCharCount('morning-comment', 'morning-count');
+  updateCharCount('afternoon-comment', 'afternoon-count');
   const d = new Date();
   document.getElementById('date').value =
     d.getFullYear() + '-' +
     String(d.getMonth()+1).padStart(2,'0') + '-' +
     String(d.getDate()).padStart(2,'0');
   document.getElementById('summary-card').style.display = 'none';
-  // 日報フィールドをクリア
-  document.getElementById('morning-staff').value     = '';
-  document.getElementById('morning-comment').value   = '';
-  document.getElementById('afternoon-staff').value   = '';
-  document.getElementById('afternoon-comment').value = '';
-  document.getElementById('morning-count').textContent   = '0 / 100';
-  document.getElementById('afternoon-count').textContent = '0 / 100';
-  document.getElementById('morning-saved-msg').style.display = 'none';
 }
 </script>
 </body>
 </html>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
