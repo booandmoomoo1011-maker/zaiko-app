@@ -150,6 +150,34 @@
     }
     .sum-val.empty { color: #ccc; font-weight: 400; }
 
+    /* 店舗選択画面（起動時） */
+    #store-select-screen {
+      display: flex; flex-direction: column;
+      position: fixed; inset: 0; z-index: 150;
+      background: #1a237e;
+      padding: 24px 20px;
+      box-sizing: border-box;
+    }
+    #store-select-screen h2 {
+      color: white; font-size: 18px; text-align: center;
+      margin-bottom: 24px; opacity: 0.85;
+    }
+    .store-select-btn {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 900;
+      border-radius: 14px; border: none;
+      margin-bottom: 12px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+    .store-select-btn:active { transform: scale(0.97); opacity: 0.85; }
+    .store-select-btn:last-child { margin-bottom: 0; }
+    .ssb-osu      { background:#fce4ec; color:#880e4f; }
+    .ssb-nagoya   { background:#fff9c4; color:#5a3e00; }
+    .ssb-teppan   { background:#e1f5fe; color:#01579b; }
+    .ssb-kamakura { background:#f3e5f5; color:#4a148c; }
+
     /* パスワードオーバーレイ */
     #pw-overlay {
       display: none; position: fixed; inset: 0;
@@ -253,6 +281,15 @@
   </div>
 </div>
 
+<!-- 起動時 店舗選択画面 -->
+<div id="store-select-screen">
+  <h2>📊 売上入力システム<br><span style="font-size:13px;opacity:0.7;">店舗を選択してください</span></h2>
+  <button class="store-select-btn ssb-osu"      onclick="trySelectStore('大須')">大須</button>
+  <button class="store-select-btn ssb-nagoya"   onclick="trySelectStore('那古野')">那古野</button>
+  <button class="store-select-btn ssb-teppan"   onclick="trySelectStore('鉄板')">鉄板</button>
+  <button class="store-select-btn ssb-kamakura" onclick="trySelectStore('鎌倉')">鎌倉</button>
+</div>
+
 <!-- パスワード認証オーバーレイ -->
 <div id="pw-overlay">
   <div id="pw-box">
@@ -266,9 +303,11 @@
   </div>
 </div>
 
-<div class="header" style="position:relative;padding-right:52px;">
+<div class="header" style="position:relative;padding-left:52px;padding-right:52px;">
+  <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>📊 売上入力システム</h1>
   <div class="sub" id="hdr-store">↓ 下から店舗を選択してください</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.1</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -632,16 +671,27 @@ function showAdmMsg(text, type) {
 
 // ---- パスワード認証 ----
 function trySelectStore(s) {
-  if (localStorage.getItem('auth_' + s) === '1') {
-    selectStore(s);
-  } else {
-    pendingStore = s;
-    document.getElementById('pw-store-name').textContent = s + '店のパスワードを入力してください';
-    document.getElementById('pw-msg').textContent = '';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-overlay').style.display = 'flex';
-    setTimeout(() => document.getElementById('pw-input').focus(), 100);
-  }
+  // 常にパスコードを要求する
+  pendingStore = s;
+  document.getElementById('pw-store-name').textContent = s + '店のパスワードを入力してください';
+  document.getElementById('pw-msg').textContent = '';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-input').focus(), 100);
+}
+
+function backToStoreSelect() {
+  // 認証キャッシュをクリアして店舗選択画面へ戻る
+  ['大須','那古野','鉄板','鎌倉'].forEach(s => localStorage.removeItem('auth_' + s));
+  document.getElementById('store-select-screen').style.display = 'flex';
+  document.getElementById('store-bar').style.display = 'none';
+  document.getElementById('btn-back').style.display = 'none';
+  document.getElementById('form-area').classList.add('hidden');
+  document.getElementById('prompt').classList.add('hidden');
+  // ヘッダーをリセット
+  document.querySelector('.header').className = 'header';
+  document.getElementById('hdr-store').textContent = '↓ 下から店舗を選択してください';
+  currentStore = '';
 }
 
 // ====== 設定パネル ======
@@ -693,10 +743,10 @@ async function saveSettingsPasswords() {
   try { await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'setPasswords', passwords: toSave }) }); } catch(e) {}
   // localStorageのキャッシュも更新
   Object.assign(STORE_PASSWORDS, toSave);
-  const cached = JSON.parse(localStorage.getItem('store_passwords_cache') || '{"pw":{}}');
-  Object.assign(cached.pw, toSave);
-  cached.t = Date.now();
-  localStorage.setItem('store_passwords_cache', JSON.stringify(cached));
+  const existingCache = JSON.parse(localStorage.getItem('pw_cache') || '{}');
+  Object.assign(existingCache, toSave);
+  localStorage.setItem('pw_cache', JSON.stringify(existingCache));
+  localStorage.setItem('pw_cache_time', Date.now().toString());
   // 再ログインが必要なのでauth削除
   Object.keys(toSave).forEach(s => localStorage.removeItem('auth_' + s));
   showSPwMsg('✅ パスワードを保存しました', 'ok');
@@ -740,22 +790,19 @@ function checkPassword() {
     lastDayOfPrevMonth.getFullYear() + '-' + String(lastDayOfPrevMonth.getMonth()+1).padStart(2,'0') + '-' + String(lastDayOfPrevMonth.getDate()).padStart(2,'0');
 })();
 
-// URLパラメータで店舗を自動選択 or 前回の店舗を復元
+// URLパラメータで店舗を自動選択（前回の店舗は自動復元しない）
 let urlParamStore = '';
 (function() {
   const p = new URLSearchParams(location.search);
   const s = p.get('store');
   if (['那古野','大須','鉄板','鎌倉'].includes(s)) {
-    // URLに店舗指定あり
+    // URLに店舗指定あり → パスコード要求
     urlParamStore = s;
     trySelectStore(s);
-  } else {
-    // 前回選んだ店舗を自動復元
-    const last = localStorage.getItem('last_store');
-    if (last && ['那古野','大須','鉄板','鎌倉'].includes(last)) {
-      trySelectStore(last);
-    }
   }
+  // 店舗未指定の場合は店舗選択画面を表示（store-select-screenがデフォルト表示）
+  // store-barは非表示にする
+  document.getElementById('store-bar').style.display = 'none';
 })();
 
 const STORE_CLASS = {
@@ -771,10 +818,10 @@ function selectStore(s) {
   // 最後に選んだ店舗を記憶
   localStorage.setItem('last_store', s);
 
-  // URLパラメータで指定された店舗の場合のみ店舗バーを非表示
-  if (urlParamStore && urlParamStore === s) {
-    document.getElementById('store-bar').style.display = 'none';
-  }
+  // 店舗選択画面を非表示にして店舗バーと戻るボタンを表示
+  document.getElementById('store-select-screen').style.display = 'none';
+  document.getElementById('store-bar').style.display = 'grid';
+  document.getElementById('btn-back').style.display = 'block';
 
   // ヘッダー色を切り替え
   const header = document.querySelector('.header');
@@ -927,7 +974,7 @@ function renderCalendar() {
     const dot = isEntered && !isHoliday ? '<span class="cal-dot entered"></span>'
                : '<span class="cal-dot"></span>';
 
-    const click = !isFuture || isHoliday ? 'onclick="calSelectDay(\'' + dateStr + '\')"' : 'onclick="calSelectDay(\'' + dateStr + '\')"';
+    const click = 'onclick="calSelectDay(\'' + dateStr + '\')"';
     html += '<div class="' + cls + '" id="calday-' + dateStr + '" ' + click + '>' + d + dot + '</div>';
   }
 
@@ -1395,6 +1442,7 @@ function clearForm() {
    'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand']
     .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('weather').value = '';
+  document.getElementById('staff-name').value = '';
   // 日付を今日に戻す
   const d = new Date();
   document.getElementById('date').value =
