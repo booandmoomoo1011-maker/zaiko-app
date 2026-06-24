@@ -10,8 +10,8 @@
   <script>
     (function(){
       var p = new URLSearchParams(location.search);
-      if (p.get('v') !== '2') {
-        p.set('v', '2');
+      if (p.get('v') !== '2.3') {
+        p.set('v', '2.3');
         location.replace(location.pathname + '?' + p.toString());
       }
     })();
@@ -161,17 +161,18 @@
       box-sizing: border-box;
     }
     #store-select-screen h2 {
-      color: white; font-size: 18px; text-align: center;
-      margin-bottom: 24px; opacity: 0.85; flex-shrink: 0;
+      color: white; font-size: 16px; text-align: center;
+      margin-bottom: 16px; opacity: 0.85; flex-shrink: 0;
     }
     .store-select-btn {
       flex: 1;
       display: flex; align-items: center; justify-content: center;
-      font-size: 26px; font-weight: 900;
-      border-radius: 14px; border: none;
-      margin-bottom: 12px; cursor: pointer;
+      font-size: 32px; font-weight: 900;
+      border-radius: 16px; border: none;
+      margin-bottom: 10px; cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       transition: transform 0.1s, opacity 0.1s;
+      min-height: 80px;
     }
     .store-select-btn:active { transform: scale(0.97); opacity: 0.85; }
     .store-select-btn:last-child { margin-bottom: 0; }
@@ -306,7 +307,7 @@
 </div>
 
 <!-- 起動時 店舗選択画面 -->
-<div id="store-select-screen">
+<div id="store-select-screen" style="display:none !important;">
   <h2>📊 売上入力システム<br><span style="font-size:13px;opacity:0.7;">店舗を選択してください</span></h2>
   <button class="store-select-btn ssb-osu"      onclick="trySelectStore('大須')">大須</button>
   <button class="store-select-btn ssb-nagoya"   onclick="trySelectStore('那古野')">那古野</button>
@@ -329,9 +330,9 @@
 
 <div class="header" style="position:relative;padding-left:52px;padding-right:52px;">
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
-  <h1>📊 売上入力システム</h1>
-  <div class="sub" id="hdr-store">店舗を選択してください</div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.2</div>
+  <h1>売上入力システム</h1>
+  <div class="sub" id="hdr-store"></div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.4</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -352,6 +353,21 @@
   <!-- パスワード変更 -->
   <div style="border-top:1px solid #eee;padding-top:16px;margin-bottom:16px;">
     <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:10px;">🔑 パスワード変更</p>
+    <!-- 管理者認証 -->
+    <div id="s-admin-auth">
+      <p style="font-size:12px;color:#aaa;margin-bottom:8px;">変更するには管理者パスワードが必要です</p>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="password" id="s-admin-pw" inputmode="numeric" placeholder="管理者パスワード"
+          style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;"
+          onkeydown="if(event.key==='Enter')checkAdminPw()">
+        <button onclick="checkAdminPw()" style="padding:8px 14px;background:#1a237e;color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">確認</button>
+      </div>
+      <div id="s-admin-msg" style="display:none;margin-top:6px;font-size:12px;color:#c62828;"></div>
+    </div>
+    <!-- パスワード変更フォーム（認証後に表示） -->
+    <div id="s-pw-form" style="display:none;">
+    <div id="s-store-select"></div>
+    <div id="s-current-pw"></div>
     <p style="font-size:12px;color:#aaa;margin-bottom:10px;">空欄のまま保存すると変更されません</p>
     <div style="display:flex;flex-direction:column;gap:8px;">
       <div style="display:flex;align-items:center;gap:8px;">
@@ -373,6 +389,7 @@
     </div>
     <button onclick="saveSettingsPasswords()" style="width:100%;margin-top:12px;padding:10px;background:#1a237e;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">💾 パスワードを保存</button>
     <div id="s-pw-msg" style="display:none;margin-top:8px;padding:8px;border-radius:6px;font-size:13px;text-align:center;"></div>
+    </div><!-- /s-pw-form -->
   </div>
 </div>
 
@@ -476,19 +493,19 @@
       </div>
       <div class="row">
         <div class="lbl">売上（10%対象）</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales10" placeholder="¥ 0" min="0" oninput="calcTax10()"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales10" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">消費税 10%</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax10" placeholder="自動計算" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax10" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">売上（8%対象）</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales8" placeholder="¥ 0" min="0" oninput="calcTax8()"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales8" placeholder="¥ 0" min="0"></div>
       </div>
       <div class="row">
         <div class="lbl">消費税 8%</div>
-        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax8" placeholder="自動計算" min="0"></div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax8" placeholder="¥ 0" min="0"></div>
       </div>
     </div>
 
@@ -629,6 +646,25 @@
 </div>
 
 <script>
+const APP_VERSION = 'v2.4';
+
+// ---- 自動バージョンチェック（起動時・5分ごと） ----
+async function checkForUpdate() {
+  try {
+    const base = location.pathname;
+    const res = await fetch(base + '?nocache=' + Date.now(), {cache: 'no-store'});
+    const html = await res.text();
+    const m = html.match(/APP_VERSION = '([^']+)'/);
+    if (m && m[1] && m[1] !== APP_VERSION) {
+      if (confirm('🆕 アプリが更新されました！\n今すぐ最新版に切り替えますか？')) {
+        location.href = location.pathname + '?v=2&t=' + Date.now();
+      }
+    }
+  } catch(e) {}
+}
+checkForUpdate();
+setInterval(checkForUpdate, 5 * 60 * 1000);
+
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUUbcAkNo1czgDCamnPhdRicP8BTH3ePex9fbyoYAooratkz70oTrmDLNu-8J8Xc/exec';
 const NIPPO_GAS_URL = 'https://script.google.com/macros/s/AKfycbwRLa71Rdm9tgI5W8GAfiRivdh0TImj3idG7WFOzcIxhVKeTIB09Y7IuudlBXMDzq0/exec';
 
@@ -777,7 +813,7 @@ function backToStoreSelect() {
 }
 
 // ====== 設定パネル ======
-const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html?v=2';
+const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html?v=2.3';
 const STORES_ORDER = ['大須','那古野','鉄板','鎌倉'];
 const STORE_PARAMS = {'大須':'osu','那古野':'nagoya','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLORS = {'大須':'#e91e63','那古野':'#f9a825','鉄板':'#0288d1','鎌倉':'#8e24aa'};
@@ -805,6 +841,48 @@ function copyStoreUrl(store) {
 function closeSettings() {
   document.getElementById('settings-panel').style.display = 'none';
   document.getElementById('settings-overlay').style.display = 'none';
+  // 認証状態をリセット
+  document.getElementById('s-admin-auth').style.display = 'block';
+  document.getElementById('s-pw-form').style.display = 'none';
+  document.getElementById('s-admin-pw').value = '';
+  document.getElementById('s-admin-msg').style.display = 'none';
+}
+
+function checkAdminPw() {
+  const pw = document.getElementById('s-admin-pw').value.trim();
+  if (pw === '5555') {
+    document.getElementById('s-admin-auth').style.display = 'none';
+    // 店舗選択ボタンを表示
+    const SCOLORS = {'大須':'#fce4ec','那古野':'#fff9c4','鉄板':'#e1f5fe','鎌倉':'#f3e5f5'};
+    const SBORDERS = {'大須':'#e91e63','那古野':'#f9a825','鉄板':'#0288d1','鎌倉':'#8e24aa'};
+    const STEXTC = {'大須':'#880e4f','那古野':'#5a3e00','鉄板':'#01579b','鎌倉':'#4a148c'};
+    document.getElementById('s-store-select').innerHTML =
+      '<p style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">🏪 店舗を選択</p>' +
+      ['大須','那古野','鉄板','鎌倉'].map(function(st) {
+        return '<button onclick="trySelectStore(\'' + st + '\');closeSettings();" ' +
+          'style="width:100%;padding:12px;margin-bottom:8px;background:' + SCOLORS[st] + ';' +
+          'color:' + STEXTC[st] + ';border:2px solid ' + SBORDERS[st] + ';' +
+          'border-radius:8px;font-size:16px;font-weight:800;cursor:pointer;">' + st + '</button>';
+      }).join('') +
+      '<div style="height:1px;background:#eee;margin:4px 0 12px;"></div>';
+    // 現在のパスワードを表示
+    const stores = ['大須','那古野','鉄板','鎌倉'];
+    document.getElementById('s-current-pw').innerHTML =
+      '<p style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">📋 現在のパスワード</p>' +
+      stores.map(s =>
+        '<div style="display:flex;justify-content:space-between;padding:5px 10px;background:#f5f5f5;border-radius:6px;margin-bottom:4px;">' +
+        '<span style="font-size:13px;color:#555;">' + s + '</span>' +
+        '<span style="font-size:15px;font-weight:800;color:#1a237e;letter-spacing:3px;">' + (STORE_PASSWORDS[s] || '-') + '</span>' +
+        '</div>'
+      ).join('') +
+      '<div style="height:1px;background:#eee;margin:10px 0;"></div>';
+    document.getElementById('s-pw-form').style.display = 'block';
+  } else {
+    const msg = document.getElementById('s-admin-msg');
+    msg.textContent = '❌ パスワードが違います';
+    msg.style.display = 'block';
+    document.getElementById('s-admin-pw').value = '';
+  }
 }
 
 async function saveSettingsPasswords() {
@@ -875,11 +953,16 @@ let urlParamStore = '';
   const s = p.get('store');
   if (['那古野','大須','鉄板','鎌倉'].includes(s)) {
     urlParamStore = s;
-    // store-select-screenを隠してパスコード要求
-    document.getElementById('store-select-screen').style.display = 'none';
     trySelectStore(s);
+  } else if (p.get('admin') === null) {
+    // 店舗指定なし・管理者でもない → エラーメッセージ
+    document.querySelector('.wrap').innerHTML =
+      '<div style="text-align:center;padding:60px 20px;color:#888;">' +
+      '<div style="font-size:48px;margin-bottom:16px;">⚠️</div>' +
+      '<div style="font-size:16px;font-weight:700;color:#555;margin-bottom:8px;">URLが正しくありません</div>' +
+      '<div style="font-size:13px;color:#aaa;">LINEから正しいURLを開いてください</div>' +
+      '</div>';
   }
-  // 店舗指定なし → store-select-screenが表示されたまま
 })();
 
 const STORE_CLASS = {
@@ -1019,13 +1102,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('form-area').addEventListener('input',  function() { updateSummary(); autoSave(); });
   document.getElementById('form-area').addEventListener('change', function() { updateSummary(); autoSave(); });
   // ホーム画面から起動時：前回の店舗が認証済みなら自動選択
+  // 起動時は必ず店舗選択画面を表示（自動ジャンプしない）
   if (!urlParamStore) {
-    const lastStore = localStorage.getItem('last_store');
-    if (lastStore && localStorage.getItem('auth_' + lastStore) === '1') {
-      // store-select-screenを即座に隠す（フラッシュ防止）
-      document.getElementById('store-select-screen').style.display = 'none';
-      trySelectStore(lastStore);
-    }
+    // 何もしない：store-select-screenをそのまま表示
   }
 });
 
