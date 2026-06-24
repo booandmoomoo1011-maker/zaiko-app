@@ -414,7 +414,7 @@
       </div>
       <div class="cal-grid" id="cal-grid"></div>
       <p style="font-size:11px;color:#aaa;margin-top:8px;text-align:center;">
-        🟢 入力済み　🔵 休み　タップで日付を選択
+        🟢 入力済み　　タップで日付を選択
       </p>
     </div>
 
@@ -588,7 +588,6 @@
     <!-- 過去データの入力・修正（一番下） -->
     <div class="card" style="margin-top:20px;border:2px dashed #c5cae9;">
       <h2 style="color:#5c6bc0;">🔧 過去データの入力・修正</h2>
-      <p style="font-size:13px;color:#777;margin-bottom:12px;">当月はカレンダーの日付をタップしてください。先月以前はこちらから日付を選んで「読み込む」を押してください。</p>
       <div class="row" style="margin-bottom:10px;">
         <div class="lbl" style="font-size:13px;color:#555;">対象日付<br><span style="font-size:11px;color:#aaa;">（先月以前）</span></div>
         <div class="inp">
@@ -1137,12 +1136,12 @@ function markEntered(dateStr) {
 let historyYear  = new Date().getFullYear();
 let historyMonth = new Date().getMonth() + 1;
 
-function saveHistory(store, date, staff, netSales, submitTime) {
+function saveHistory(store, data) {
   const key = 'history_' + store;
   let hist = [];
   try { hist = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-  hist = hist.filter(h => h.date !== date);
-  hist.unshift({ date: date, staff: staff, netSales: netSales || 0, time: submitTime });
+  hist = hist.filter(h => h.date !== data.date);
+  hist.unshift(data);
   if (hist.length > 400) hist = hist.slice(0, 400);
   localStorage.setItem(key, JSON.stringify(hist));
 }
@@ -1193,24 +1192,56 @@ function renderHistory() {
   }
 
   const DOW = ['日','月','火','水','木','金','土'];
+  function fmtNum(v) { return (v !== '' && v !== undefined && v !== null && !isNaN(parseInt(v))) ? parseInt(v).toLocaleString() : '-'; }
+  function fmtYen(v) { return (v !== '' && v !== undefined && v !== null && !isNaN(parseInt(v))) ? '¥' + parseInt(v).toLocaleString() : ''; }
   list.innerHTML = monthDates.map(function(date) {
     const parts = date.split('-');
     const day   = parseInt(parts[2]);
     const dow   = DOW[new Date(date).getDay()];
     const h     = histMap[date];
-    const net   = (h && h.netSales !== '' && h.netSales !== undefined)
-                  ? '¥' + parseInt(h.netSales).toLocaleString() : '';
+    const net   = h ? fmtYen(h.netSales) : '';
     const staff = h ? (h.staff || '') : '';
     const time  = h ? (h.time  || '') : '';
-    return '<div class="history-item">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-        '<div class="history-date">' + historyMonth + '/' + day + '（' + dow + '）</div>' +
-        (net ? '<div class="history-sales">' + net + '</div>'
-             : '<div style="font-size:12px;color:#bbb;">金額未記録</div>') +
-      '</div>' +
-      (staff ? '<div style="font-size:12px;color:#777;margin-top:2px;">担当：' + staff + '</div>' : '') +
-      (time  ? '<div class="history-time">送信：' + time + '</div>' : '') +
+    const kumi  = h ? fmtNum(h.kumi)   : '-';
+    const male  = h ? fmtNum(h.male)   : '-';
+    const fem   = h ? fmtNum(h.female) : '-';
+    const wx    = h ? (h.weather || '') : '';
+    const mStaff = h ? (h.morningStaff    || '') : '';
+    const mCmt   = h ? (h.morningComment  || '') : '';
+    const aStaff = h ? (h.afternoonStaff  || '') : '';
+    const aCmt   = h ? (h.afternoonComment|| '') : '';
+    let html = '<div class="history-item">';
+    // 日付・売上ヘッダー
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+      '<div class="history-date">' + historyMonth + '/' + day + '（' + dow + '）</div>' +
+      (net ? '<div class="history-sales">' + net + '</div>'
+           : '<div style="font-size:12px;color:#bbb;">金額未記録</div>') +
       '</div>';
+    // 担当者・送信時刻
+    if (staff) html += '<div style="font-size:12px;color:#555;margin-top:3px;">担当：' + staff + (wx ? '　天気：' + wx : '') + '</div>';
+    // 売上詳細
+    if (h && (h.kumi !== undefined || h.male !== undefined)) {
+      html += '<div style="font-size:11px;color:#888;margin-top:3px;line-height:1.8;">' +
+        '組数：' + kumi + '　男：' + male + '　女：' + fem + '</div>';
+    }
+    // 日報
+    if (mStaff || mCmt || aStaff || aCmt) {
+      html += '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e8eaf6;font-size:11px;color:#666;line-height:1.8;">';
+      if (mStaff || mCmt) {
+        html += '<div style="display:flex;gap:4px;align-items:baseline;">' +
+          '<span style="display:inline-block;width:10px;height:10px;background:#FFD600;border-radius:50%;flex-shrink:0;margin-top:2px;"></span>' +
+          '<span>' + (mStaff ? '【' + mStaff + '】' : '') + (mCmt || '') + '</span></div>';
+      }
+      if (aStaff || aCmt) {
+        html += '<div style="display:flex;gap:4px;align-items:baseline;margin-top:2px;">' +
+          '<span style="display:inline-block;width:10px;height:10px;background:#E65100;border-radius:50%;flex-shrink:0;margin-top:2px;"></span>' +
+          '<span>' + (aStaff ? '【' + aStaff + '】' : '') + (aCmt || '') + '</span></div>';
+      }
+      html += '</div>';
+    }
+    if (time) html += '<div class="history-time" style="margin-top:4px;">送信：' + time + '</div>';
+    html += '</div>';
+    return html;
   }).join('');
 }
 
@@ -1436,8 +1467,6 @@ async function submitData() {
     if (result.success) {
       showMsg('✅ ' + result.message, 'ok');
       markEntered(date);
-      saveHistory(currentStore, date, staffName, n('netSales'), submitTime);
-      resetEditMode();
       const nippoPayload = {
         store: currentStore, date: date,
         morningStaff:     document.getElementById('morning-staff').value.trim(),
@@ -1445,6 +1474,17 @@ async function submitData() {
         afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
         afternoonComment: document.getElementById('afternoon-comment').value.trim()
       };
+      saveHistory(currentStore, {
+        date: date, staff: staffName, time: submitTime,
+        netSales:   n('netSales'), kumi: n('kumi'),
+        male: n('male'), female: n('female'),
+        weather: s('weather'),
+        morningStaff:     nippoPayload.morningStaff,
+        morningComment:   nippoPayload.morningComment,
+        afternoonStaff:   nippoPayload.afternoonStaff,
+        afternoonComment: nippoPayload.afternoonComment
+      });
+      resetEditMode();
       fetch(NIPPO_GAS_URL, { method: 'POST', body: JSON.stringify(nippoPayload) }).catch(() => {});
       clearMorningReport(currentStore, date);
       clearForm();
@@ -1455,7 +1495,16 @@ async function submitData() {
   } catch(err) {
     showMsg('📤 送信しました。スプレッドシートで内容をご確認ください。', 'ok');
     markEntered(date);
-    saveHistory(currentStore, date, staffName, n('netSales'), submitTime);
+    saveHistory(currentStore, {
+      date: date, staff: staffName, time: submitTime,
+      netSales: n('netSales'), kumi: n('kumi'),
+      male: n('male'), female: n('female'),
+      weather: s('weather'),
+      morningStaff:     document.getElementById('morning-staff').value.trim(),
+      morningComment:   document.getElementById('morning-comment').value.trim(),
+      afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
+      afternoonComment: document.getElementById('afternoon-comment').value.trim()
+    });
     resetEditMode();
     clearForm();
     clearAutoSave();
