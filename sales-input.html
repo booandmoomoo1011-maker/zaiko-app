@@ -400,6 +400,7 @@
   <div class="store-btn btn-kamakura" onclick="trySelectStore('鎌倉')">鎌倉</div>
 </div>
 
+<div id="store-pick-overlay" style="display:none;padding:16px;"></div>
 <div class="wrap" id="main-wrap">
 
   <!-- 店舗未選択の案内 -->
@@ -945,18 +946,16 @@ let urlParamStore = '';
     urlParamStore = s;
     trySelectStore(s);
   } else if (p.get('admin') === null) {
-    // 店舗指定なし → 店舗ボタンを直接表示
-    var d = document.createElement('div');
-    d.style.padding = '16px';
-    [['大須','#fce4ec','#880e4f','#e91e63'],['那古野','#fff9c4','#5a3e00','#f9a825'],['鉄板','#e1f5fe','#01579b','#0288d1'],['鎌倉','#f3e5f5','#4a148c','#8e24aa']].forEach(function(info, i) {
+    // 店舗指定なし → 専用divに店舗ボタンを表示（main-wrapは触らない）
+    var overlay = document.getElementById('store-pick-overlay');
+    overlay.style.display = 'block';
+    [['大須','#fce4ec','#880e4f','#e91e63'],['那古野','#fff9c4','#5a3e00','#f9a825'],['鉄板','#e1f5fe','#01579b','#0288d1'],['鎌倉','#f3e5f5','#4a148c','#8e24aa']].forEach(function(info) {
       var btn = document.createElement('button');
       btn.textContent = info[0];
       btn.style.cssText = 'display:block;width:100%;padding:22px;margin-bottom:12px;background:' + info[1] + ';color:' + info[2] + ';border:2px solid ' + info[3] + ';border-radius:14px;font-size:26px;font-weight:900;cursor:pointer;';
-      btn.onclick = (function(st){ return function(){ trySelectStore(st); }; })(info[0]);
-      d.appendChild(btn);
+      btn.onclick = (function(st){ return function(){ document.getElementById('store-pick-overlay').style.display='none'; trySelectStore(st); }; })(info[0]);
+      overlay.appendChild(btn);
     });
-    document.getElementById('main-wrap').innerHTML = '';
-    document.getElementById('main-wrap').appendChild(d);
   }
 })();
 
