@@ -352,48 +352,6 @@
     <div id="line-share-btns"></div>
   </div>
 
-  <!-- パスワード変更 -->
-  <div style="border-top:1px solid #eee;padding-top:16px;margin-bottom:16px;">
-    <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:10px;">🔑 パスワード変更</p>
-    <!-- 管理者認証 -->
-    <div id="s-admin-auth">
-      <p style="font-size:12px;color:#aaa;margin-bottom:8px;">変更するには管理者パスワードが必要です</p>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="password" id="s-admin-pw" inputmode="numeric" placeholder="管理者パスワード"
-          style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;"
-          onkeydown="if(event.key==='Enter')checkAdminPw()">
-        <button onclick="checkAdminPw()" style="padding:8px 14px;background:#1a237e;color:white;border:none;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">確認</button>
-      </div>
-      <div id="s-admin-msg" style="display:none;margin-top:6px;font-size:12px;color:#c62828;"></div>
-    </div>
-    <!-- パスワード変更フォーム（認証後に表示） -->
-    <div id="s-pw-form" style="display:none;">
-    <div id="s-store-select"></div>
-    <div id="s-current-pw"></div>
-    <p style="font-size:12px;color:#aaa;margin-bottom:10px;">空欄のまま保存すると変更されません</p>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:60px;font-size:13px;color:#555;">大須</label>
-        <input type="text" id="s-pw-osu" inputmode="numeric" placeholder="新しいパスワード" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:60px;font-size:13px;color:#555;">那古野</label>
-        <input type="text" id="s-pw-nagoya" inputmode="numeric" placeholder="新しいパスワード" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:60px;font-size:13px;color:#555;">鉄板</label>
-        <input type="text" id="s-pw-teppan" inputmode="numeric" placeholder="新しいパスワード" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <label style="width:60px;font-size:13px;color:#555;">鎌倉</label>
-        <input type="text" id="s-pw-kamakura" inputmode="numeric" placeholder="新しいパスワード" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
-      </div>
-    </div>
-    <button onclick="saveSettingsPasswords()" style="width:100%;margin-top:12px;padding:10px;background:#1a237e;color:white;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">💾 パスワードを保存</button>
-    <div id="s-pw-msg" style="display:none;margin-top:8px;padding:8px;border-radius:6px;font-size:13px;text-align:center;"></div>
-    </div><!-- /s-pw-form -->
-  </div>
-
   <!-- 表示項目の設定 -->
   <div id="s-field-settings" style="border-top:1px solid #eee;padding-top:16px;margin-bottom:16px;display:none;">
     <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:6px;">👁️ 表示項目の設定</p>
@@ -445,6 +403,7 @@
         <button class="cal-popup-btn" id="cal-popup-holiday-on" onclick="calActionHolidayOn()">🔵 休みを登録</button>
         <button class="cal-popup-btn" id="cal-popup-holiday-off" onclick="calActionHolidayOff()">✅ 休みを解除</button>
         <button class="cal-popup-btn" id="cal-popup-edit" onclick="calActionEdit()">✏️ 入力・編集</button>
+        <div id="cal-popup-data" style="display:none;border-top:1px solid #eee;margin-top:4px;padding:8px 10px 4px;font-size:12px;color:#333;line-height:1.8;"></div>
       </div>
       <div class="cal-header">
         <button class="cal-nav" onclick="calPrev()">‹</button>
@@ -1309,6 +1268,7 @@ function calSelectDay(dateStr) {
     popup.style.top  = top + 'px';
     popup.style.left = left + 'px';
   }
+  showCalPopupData(dateStr);
   popup.style.display = 'block';
   document.getElementById('cal-popup-overlay').style.display = 'block';
 }
@@ -1316,6 +1276,50 @@ function calSelectDay(dateStr) {
 function closeCalPopup() {
   document.getElementById('cal-popup').style.display = 'none';
   document.getElementById('cal-popup-overlay').style.display = 'none';
+}
+
+function showCalPopupData(dateStr) {
+  const el = document.getElementById('cal-popup-data');
+  if (!el) return;
+  // 入力済みチェック
+  if (!getEntered()[dateStr]) { el.style.display = 'none'; return; }
+  // 履歴から該当日を検索
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); } catch(e) {}
+  if (hist.length === 0) { var ck = _ck_hist_load(currentStore); if (ck.length > 0) hist = ck; }
+  const h = hist.find(x => x.date === dateStr);
+  const fmtY = v => v ? '¥' + Number(v).toLocaleString() : '-';
+  const fmtN = v => (v !== undefined && v !== null && v !== '') ? String(v) : '-';
+  let rows = '';
+  if (h) {
+    rows += '<div style="font-weight:700;color:#1a237e;margin-bottom:4px;">📊 売上</div>';
+    rows += '<div>売上：' + fmtY(h.netSales) + '　天気：' + (h.weather || '-') + '</div>';
+    if (h.staff) rows += '<div>担当：' + h.staff + '</div>';
+    rows += '<div>組数：' + fmtN(h.kumi) + '　男：' + fmtN(h.male) + '　女：' + fmtN(h.female) + '</div>';
+  }
+  // 日報（history優先、なければlocalStorage）
+  const mStaff = (h && h.morningStaff)    || (function(){ try{ var d=JSON.parse(localStorage.getItem('nippo_morning_'+currentStore+'_'+dateStr)||'null'); return d&&d.staff||''; }catch(e){return '';} })();
+  const mCmt   = (h && h.morningComment)  || (function(){ try{ var d=JSON.parse(localStorage.getItem('nippo_morning_'+currentStore+'_'+dateStr)||'null'); return d&&d.comment||''; }catch(e){return '';} })();
+  const aStaff = (h && h.afternoonStaff)  || '';
+  const aCmt   = (h && h.afternoonComment)|| '';
+  if (mStaff || mCmt || aStaff || aCmt) {
+    rows += '<div style="font-weight:700;color:#1a237e;margin-top:6px;margin-bottom:4px;">📝 日報</div>';
+    if (mStaff || mCmt) {
+      rows += '<div><span style="display:inline-block;width:8px;height:8px;background:#FFD600;border-radius:50%;vertical-align:middle;margin-right:4px;"></span>午前';
+      if (mStaff) rows += '　' + mStaff;
+      if (mCmt)   rows += '<br><span style="color:#555;padding-left:12px;">' + mCmt + '</span>';
+      rows += '</div>';
+    }
+    if (aStaff || aCmt) {
+      rows += '<div style="margin-top:2px;"><span style="display:inline-block;width:8px;height:8px;background:#E65100;border-radius:50%;vertical-align:middle;margin-right:4px;"></span>午後';
+      if (aStaff) rows += '　' + aStaff;
+      if (aCmt)   rows += '<br><span style="color:#555;padding-left:12px;">' + aCmt + '</span>';
+      rows += '</div>';
+    }
+  }
+  if (!rows) { el.style.display = 'none'; return; }
+  el.innerHTML = rows;
+  el.style.display = 'block';
 }
 
 async function calActionHolidayOn() {
