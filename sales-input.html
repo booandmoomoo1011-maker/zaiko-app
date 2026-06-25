@@ -622,12 +622,20 @@
   </div><!-- /form-area -->
 
   <!-- 送信完了画面 -->
-  <div id="done-screen" style="display:none;position:fixed;inset:0;z-index:500;background:#1a237e;display:none;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:32px 24px;">
-    <div style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:30px;font-weight:900;color:white;margin-bottom:16px;letter-spacing:3px;line-height:1.5;text-shadow:0 2px 8px rgba(0,0,0,0.2);">🌟<br>お疲れさまでした<br>🌟</div>
-    <div id="done-store" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:20px;font-weight:700;color:rgba(255,255,255,0.9);margin-bottom:6px;"></div>
-    <div id="done-date" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:16px;color:rgba(255,255,255,0.8);margin-bottom:6px;"></div>
-    <div id="done-sales" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:26px;font-weight:900;color:#FFD600;margin-bottom:32px;text-shadow:0 2px 6px rgba(0,0,0,0.2);"></div>
-    <button onclick="closeDoneScreen()" style="font-family:'M PLUS Rounded 1c',sans-serif;background:white;border:none;border-radius:20px;padding:14px 48px;font-size:18px;font-weight:900;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);">閉じる</button>
+  <div id="done-screen" style="display:none;position:fixed;inset:0;z-index:500;background:#1a237e;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:24px 20px;">
+    <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+      <svg width="180" height="180" viewBox="0 0 180 180" style="position:absolute;top:0;left:0;">
+        <defs><path id="done-circle" d="M 90,90 m -72,0 a 72,72 0 1,1 144,0 a 72,72 0 1,1 -144,0"/></defs>
+        <text font-size="13" fill="rgba(255,255,255,0.85)" text-anchor="middle">
+          <textPath href="#done-circle">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</textPath>
+        </text>
+      </svg>
+      <span style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:14px;font-weight:900;color:white;letter-spacing:1px;">お疲れさまでした</span>
+    </div>
+    <div id="done-store" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);margin-bottom:4px;"></div>
+    <div id="done-date" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:4px;"></div>
+    <div id="done-sales" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:20px;font-weight:900;color:#FFD600;margin-bottom:24px;"></div>
+    <button onclick="closeDoneScreen()" style="font-family:'M PLUS Rounded 1c',sans-serif;background:white;border:none;border-radius:16px;padding:10px 36px;font-size:14px;font-weight:900;cursor:pointer;">閉じる</button>
   </div>
 
   <div class="spacer"></div>
