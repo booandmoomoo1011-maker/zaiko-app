@@ -624,13 +624,8 @@
   <!-- 送信完了画面 -->
   <div id="done-screen" style="display:none;position:fixed;inset:0;z-index:500;background:#1a237e;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:24px 20px;">
     <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
-      <svg width="180" height="180" viewBox="0 0 180 180" style="position:absolute;top:0;left:0;">
-        <defs><path id="done-circle" d="M 90,90 m -72,0 a 72,72 0 1,1 144,0 a 72,72 0 1,1 -144,0"/></defs>
-        <text font-size="13" fill="rgba(255,255,255,0.85)" text-anchor="middle">
-          <textPath href="#done-circle">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</textPath>
-        </text>
-      </svg>
-      <span style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:14px;font-weight:900;color:white;letter-spacing:1px;">お疲れさまでした</span>
+      <div id="done-stars" style="position:absolute;inset:0;"></div>
+      <span style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:13px;font-weight:900;color:white;letter-spacing:1px;position:relative;z-index:1;">お疲れさまでした</span>
     </div>
     <div id="done-store" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);margin-bottom:4px;"></div>
     <div id="done-date" style="font-family:'M PLUS Rounded 1c',sans-serif;font-size:13px;color:rgba(255,255,255,0.75);margin-bottom:4px;"></div>
@@ -1368,18 +1363,17 @@ function calActionEdit() {
   if (calPopupDate === today) {
     editMode = false;
     originalData = null;
-    // フォームを今日の状態にリセット
-    clearForm();
-    document.getElementById('edit-date').value = '';
-    document.getElementById('date').value = today;
-    // 今日のautoSaveデータを復元
-    restoreAutoSave(currentStore);
     document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     return;
   }
   // localStorageの履歴からデータを取得してフォームに入れる
   let hist = [];
   try { hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); } catch(e) {}
+  // localStorageが空ならcookieバックアップも確認
+  if (hist.length === 0) {
+    var ck = _ck_hist_load(currentStore);
+    if (ck.length > 0) hist = ck;
+  }
   const entry = hist.find(h => h.date === calPopupDate);
   if (entry) {
     // 履歴からフォームに直接セット
@@ -1803,6 +1797,10 @@ async function submitData() {
     : document.getElementById('date').value;
   if (!date) { showMsg('日付が設定されていません', 'ng'); return; }
 
+  if (editMode) {
+    if (!confirm('📅 ' + date + ' のデータを上書きします。よろしいですか？')) return;
+  }
+
   const btn = document.getElementById('btn');
   btn.disabled = true;
   btn.textContent = '⏳ 送信中...';
@@ -1913,6 +1911,21 @@ async function submitData() {
   btn.textContent = editMode ? '✏️ 修正内容を送信（上書き保存）' : '📤 スプレッドシートに送信';
 }
 
+function renderDoneStars() {
+  const container = document.getElementById('done-stars');
+  if (!container) return;
+  const total = 16, r = 76, cx = 90, cy = 90;
+  let svg = '<svg width="180" height="180" viewBox="0 0 180 180" style="position:absolute;inset:0;">';
+  for (let i = 0; i < total; i++) {
+    const angle = (i / total) * 2 * Math.PI - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    svg += '<text x="' + x + '" y="' + y + '" font-size="11" fill="rgba(255,255,255,0.9)" text-anchor="middle" dominant-baseline="middle">✦</text>';
+  }
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
 function showDoneScreen(store, date, netSales) {
   const colors = {
     '大須':  { bg: '#880e4f', sub: '#fce4ec' },
@@ -1924,6 +1937,7 @@ function showDoneScreen(store, date, netSales) {
   const el = document.getElementById('done-screen');
   el.style.background = c.bg;
   el.style.display = 'flex';
+  renderDoneStars();
   document.getElementById('done-store').textContent = store + '店';
   document.getElementById('done-date').textContent  = date;
   document.getElementById('done-sales').textContent = netSales ? '売上 ¥' + Number(netSales).toLocaleString() : '';
