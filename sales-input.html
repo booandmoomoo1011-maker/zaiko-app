@@ -797,8 +797,8 @@ function showAdmMsg(text, type) {
 // ---- パスワード認証（12時間以内の認証はスキップ） ----
 const AUTH_EXPIRE = 30 * 24 * 60 * 60 * 1000; // 30日間
 function trySelectStore(s) {
-  // パスワード不要：直接選択
-  selectStore(s);
+  // パスワード不要：直接選択（定数初期化後に実行）
+  setTimeout(function() { selectStore(s); }, 0);
 }
 
 // 店舗選択画面に戻る（ページをリロード）
