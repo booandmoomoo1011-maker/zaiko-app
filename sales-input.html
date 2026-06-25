@@ -1360,6 +1360,12 @@ function calActionEdit() {
   if (calPopupDate === today) {
     editMode = false;
     originalData = null;
+    // フォームを今日の状態にリセット
+    clearForm();
+    document.getElementById('edit-date').value = '';
+    document.getElementById('date').value = today;
+    // 今日のautoSaveデータを復元
+    restoreAutoSave(currentStore);
     document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     return;
   }
