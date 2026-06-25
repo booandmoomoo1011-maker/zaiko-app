@@ -1361,8 +1361,49 @@ function calActionEdit() {
   closeCalPopup();
   const today = new Date().toISOString().slice(0,10);
   if (calPopupDate === today) {
-    editMode = false;
-    originalData = null;
+    // 今日の日付：入力済みなら履歴から読み込む
+    const todayEntered = !!getEntered()[today];
+    if (todayEntered) {
+      let hist = [];
+      try { hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); } catch(e) {}
+      if (hist.length === 0) { var ckt = _ck_hist_load(currentStore); if (ckt.length > 0) hist = ckt; }
+      const todayEntry = hist.find(h => h.date === today);
+      if (todayEntry) {
+        const setN = (id, val) => { document.getElementById(id).value = (val === '' || val === null || val === undefined) ? '' : val; };
+        setN('kumi',       todayEntry.kumi);
+        setN('male',       todayEntry.male);
+        setN('female',     todayEntry.female);
+        setN('netSales',   todayEntry.netSales);
+        setN('sales10',    todayEntry.sales10);
+        setN('tax10',      todayEntry.tax10);
+        setN('sales8',     todayEntry.sales8);
+        setN('tax8',       todayEntry.tax8);
+        setN('credit',     todayEntry.credit);
+        setN('point',      todayEntry.point);
+        setN('emoney',     todayEntry.emoney);
+        setN('coupon',     todayEntry.coupon);
+        setN('buhin',      todayEntry.buhin);
+        setN('buhinCash',  todayEntry.buhinCash);
+        setN('buhinOther', todayEntry.buhinOther);
+        document.getElementById('buhinBrand').value = todayEntry.buhinBrand || '';
+        document.getElementById('weather').value    = todayEntry.weather    || '';
+        document.getElementById('staff-name').value = todayEntry.staff      || '';
+        if (todayEntry.morningStaff)    document.getElementById('morning-staff').value    = todayEntry.morningStaff;
+        if (todayEntry.morningComment)  { document.getElementById('morning-comment').value  = todayEntry.morningComment;  updateCharCount('morning-comment','morning-count'); }
+        if (todayEntry.afternoonStaff)  document.getElementById('afternoon-staff').value  = todayEntry.afternoonStaff;
+        if (todayEntry.afternoonComment){ document.getElementById('afternoon-comment').value = todayEntry.afternoonComment; updateCharCount('afternoon-comment','afternoon-count'); }
+        editMode = true;
+        originalData = Object.assign({}, todayEntry);
+        document.getElementById('btn').textContent = '✏️ 修正内容を送信（上書き保存）';
+        document.getElementById('btn').style.background = '#5c6bc0';
+        document.getElementById('btn-revert').style.display = 'block';
+        updateSummary();
+        showLoadMsg('✅ 本日のデータを読み込みました。修正して送信してください。', 'ok');
+      }
+    } else {
+      editMode = false;
+      originalData = null;
+    }
     document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     return;
   }
