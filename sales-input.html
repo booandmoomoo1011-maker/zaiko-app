@@ -619,6 +619,16 @@
 
   </div><!-- /form-area -->
 
+  <!-- 送信完了画面 -->
+  <div id="done-screen" style="display:none;position:fixed;inset:0;z-index:500;background:#1a237e;display:none;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:32px 24px;">
+    <div style="font-size:64px;margin-bottom:16px;">🎉</div>
+    <div style="font-size:28px;font-weight:900;color:white;margin-bottom:8px;">お疲れさまでした！</div>
+    <div id="done-store" style="font-size:16px;color:rgba(255,255,255,0.8);margin-bottom:6px;"></div>
+    <div id="done-date" style="font-size:14px;color:rgba(255,255,255,0.7);margin-bottom:6px;"></div>
+    <div id="done-sales" style="font-size:22px;font-weight:700;color:#FFD600;margin-bottom:32px;"></div>
+    <button onclick="closeDoneScreen()" style="background:white;color:#1a237e;border:none;border-radius:12px;padding:14px 40px;font-size:16px;font-weight:800;cursor:pointer;">閉じる</button>
+  </div>
+
   <div class="spacer"></div>
 </div>
 
@@ -1291,12 +1301,13 @@ function showCalPopupData(dateStr) {
   const h = hist.find(x => x.date === dateStr);
   const fmtY = v => v ? '¥' + Number(v).toLocaleString() : '-';
   const fmtN = v => (v !== undefined && v !== null && v !== '') ? String(v) : '-';
+  const fs = loadFieldSettings(currentStore);
   let rows = '';
   if (h) {
     rows += '<div style="font-weight:700;color:#1a237e;margin-bottom:4px;">📊 売上</div>';
     rows += '<div>売上：' + fmtY(h.netSales) + '　天気：' + (h.weather || '-') + '</div>';
     if (h.staff) rows += '<div>担当：' + h.staff + '</div>';
-    rows += '<div>組数：' + fmtN(h.kumi) + '　男：' + fmtN(h.male) + '　女：' + fmtN(h.female) + '</div>';
+    if (fs.kyakusu) rows += '<div>組数：' + fmtN(h.kumi) + '　男：' + fmtN(h.male) + '　女：' + fmtN(h.female) + '</div>';
   }
   // 日報（history優先、なければlocalStorage）
   const mStaff = (h && h.morningStaff)    || (function(){ try{ var d=JSON.parse(localStorage.getItem('nippo_morning_'+currentStore+'_'+dateStr)||'null'); return d&&d.staff||''; }catch(e){return '';} })();
@@ -1780,7 +1791,6 @@ async function submitData() {
     });
     const result = await res.json();
     if (result.success) {
-      showMsg('✅ ' + result.message, 'ok');
       markEntered(date);
       const nippoPayload = {
         store: currentStore, date: date,
@@ -1812,6 +1822,7 @@ async function submitData() {
       clearAutoSave();
       renderCalendar();
       renderHistory();
+      showDoneScreen(currentStore, date, payload.values.netSales);
     } else {
       showMsg('❌ エラー: ' + result.error, 'ng');
     }
@@ -1839,10 +1850,22 @@ async function submitData() {
     clearAutoSave();
     renderCalendar();
     renderHistory();
+    showDoneScreen(currentStore, date, payload.values.netSales);
   }
 
   btn.disabled = false;
   btn.textContent = editMode ? '✏️ 修正内容を送信（上書き保存）' : '📤 スプレッドシートに送信';
+}
+
+function showDoneScreen(store, date, netSales) {
+  const el = document.getElementById('done-screen');
+  el.style.display = 'flex';
+  document.getElementById('done-store').textContent = store + '店';
+  document.getElementById('done-date').textContent  = date;
+  document.getElementById('done-sales').textContent = netSales ? '売上 ¥' + Number(netSales).toLocaleString() : '';
+}
+function closeDoneScreen() {
+  document.getElementById('done-screen').style.display = 'none';
 }
 
 function showMsg(text, type) {
