@@ -10,8 +10,8 @@
   <script>
     (function(){
       var p = new URLSearchParams(location.search);
-      if (p.get('v') !== '2.13') {
-        p.set('v', '2.13');
+      if (p.get('v') !== '2.14') {
+        p.set('v', '2.14');
         history.replaceState(null, '', location.pathname + '?' + p.toString());
       }
     })();
@@ -332,7 +332,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.13</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.14</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -662,7 +662,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.13';
+const APP_VERSION = 'v2.14';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -835,7 +835,7 @@ function backToStoreSelect() {
 }
 
 // ====== 設定パネル ======
-const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html?v=2.13';
+const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html?v=2.14';
 const STORES_ORDER = ['大須','那古野','鉄板','鎌倉'];
 const STORE_PARAMS = {'大須':'osu','那古野':'nagoya','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLORS = {'大須':'#e91e63','那古野':'#f9a825','鉄板':'#0288d1','鎌倉':'#8e24aa'};
@@ -878,6 +878,55 @@ function closeSettings() {
   document.getElementById('s-pw-form').style.display = 'none';
   document.getElementById('s-admin-pw').value = '';
   document.getElementById('s-admin-msg').style.display = 'none';
+}
+
+// ====== 永続ストレージ（Cookieバックアップ - LINEブラウザ対応） ======
+// LINEがlocalStorageを消しても、Cookieはアプリを閉じても残る
+var _SS = {'那古野':'ng','大須':'os','鉄板':'tp','鎌倉':'km'};
+function _ck_set(name, val, days) {
+  try {
+    var exp = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = name + '=' + encodeURIComponent(val) + '; expires=' + exp + '; path=/; SameSite=Lax';
+  } catch(e) {}
+}
+function _ck_get(name) {
+  try {
+    var key = name + '=', parts = document.cookie.split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var c = parts[i].trim();
+      if (c.indexOf(key) === 0) return decodeURIComponent(c.slice(key.length));
+    }
+  } catch(e) {}
+  return '';
+}
+// 日付セット（entered/holidays）のCookie保存・読込
+function _ck_dates_save(pfx, store, obj) {
+  var dates = Object.keys(obj).sort();
+  if (dates.length > 300) dates = dates.slice(-300); // 直近300件
+  _ck_set(pfx + (_SS[store]||store), dates.join(','), 365);
+}
+function _ck_dates_load(pfx, store) {
+  var r = {}, raw = _ck_get(pfx + (_SS[store]||store));
+  if (raw) raw.split(',').forEach(function(d){ if(d) r[d]=true; });
+  return r;
+}
+// 履歴のコンパクトCookie保存・読込（date|netSales|staff|kumi|male|female|weather）
+function _ck_hist_save(store, arr) {
+  var compact = arr.slice(0, 60).map(function(h){
+    return [h.date||'', h.netSales||0, encodeURIComponent(h.staff||''),
+            h.kumi||0, h.male||0, h.female||0, encodeURIComponent(h.weather||'')].join('|');
+  }).join('~');
+  _ck_set('hs_' + (_SS[store]||store), compact, 365);
+}
+function _ck_hist_load(store) {
+  var raw = _ck_get('hs_' + (_SS[store]||store));
+  if (!raw) return [];
+  return raw.split('~').filter(Boolean).map(function(item){
+    var p = item.split('|');
+    return { date:p[0]||'', netSales:parseInt(p[1])||0, staff:decodeURIComponent(p[2]||''),
+             kumi:parseInt(p[3])||0, male:parseInt(p[4])||0, female:parseInt(p[5])||0,
+             weather:decodeURIComponent(p[6]||'') };
+  });
 }
 
 // ====== Cookie認証ヘルパー（LINEブラウザでlocalStorageが消えても24h記憶） ======
@@ -1329,24 +1378,39 @@ function calActionEdit() {
 
 // 休み管理（localStorage）
 function getHolidays() {
-  try { return JSON.parse(localStorage.getItem('holidays_' + currentStore) || '{}'); } catch(e) { return {}; }
+  try {
+    var fromLS = JSON.parse(localStorage.getItem('holidays_' + currentStore) || 'null');
+    var fromCk = _ck_dates_load('hd_', currentStore);
+    if (fromLS !== null) return Object.assign({}, fromCk, fromLS);
+    if (Object.keys(fromCk).length > 0) localStorage.setItem('holidays_' + currentStore, JSON.stringify(fromCk));
+    return fromCk;
+  } catch(e) { return {}; }
 }
 function getEntered() {
-  try { return JSON.parse(localStorage.getItem('entered_' + currentStore) || '{}'); } catch(e) { return {}; }
+  try {
+    var fromLS = JSON.parse(localStorage.getItem('entered_' + currentStore) || 'null');
+    var fromCk = _ck_dates_load('en_', currentStore);
+    if (fromLS !== null) return Object.assign({}, fromCk, fromLS);
+    if (Object.keys(fromCk).length > 0) localStorage.setItem('entered_' + currentStore, JSON.stringify(fromCk));
+    return fromCk;
+  } catch(e) { return {}; }
 }
 function markHoliday(dateStr) {
   const h = getHolidays(); h[dateStr] = true;
   localStorage.setItem('holidays_' + currentStore, JSON.stringify(h));
+  _ck_dates_save('hd_', currentStore, h);
   renderCalendar();
 }
 function unmarkHoliday(dateStr) {
   const h = getHolidays(); delete h[dateStr];
   localStorage.setItem('holidays_' + currentStore, JSON.stringify(h));
+  _ck_dates_save('hd_', currentStore, h);
   renderCalendar();
 }
 function markEntered(dateStr) {
   const e = getEntered(); e[dateStr] = true;
   localStorage.setItem('entered_' + currentStore, JSON.stringify(e));
+  _ck_dates_save('en_', currentStore, e);
   renderCalendar();
 }
 let historyYear  = new Date().getFullYear();
@@ -1360,6 +1424,7 @@ function saveHistory(store, data) {
   hist.unshift(data);
   if (hist.length > 400) hist = hist.slice(0, 400);
   localStorage.setItem(key, JSON.stringify(hist));
+  _ck_hist_save(store, hist);
 }
 function historyPrevMonth() {
   historyMonth--;
@@ -1399,6 +1464,14 @@ function renderHistory() {
   // history_[store] から詳細（売上・担当者）を取得
   let hist = [];
   try { hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); } catch(e) {}
+  // localStorageが空の場合、Cookieバックアップから復元
+  if (hist.length === 0) {
+    var ck = _ck_hist_load(currentStore);
+    if (ck.length > 0) {
+      hist = ck;
+      try { localStorage.setItem('history_' + currentStore, JSON.stringify(hist)); } catch(e) {}
+    }
+  }
   const histMap = {};
   hist.forEach(h => { histMap[h.date] = h; });
 
