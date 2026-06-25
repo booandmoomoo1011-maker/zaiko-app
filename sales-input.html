@@ -309,7 +309,7 @@
 </div>
 
 <!-- 起動時 店舗選択画面 -->
-<div id="store-select-screen">
+<div id="store-select-screen" style="display:none;">
   <h2>📊 売上入力システム<br><span style="font-size:13px;opacity:0.7;">店舗を選択してください</span></h2>
   <button class="store-select-btn ssb-osu"      onclick="trySelectStore('大須')">大須</button>
   <button class="store-select-btn ssb-nagoya"   onclick="trySelectStore('那古野')">那古野</button>
@@ -1025,9 +1025,10 @@ let urlParamStore = '';
   if (['那古野','大須','鉄板','鎌倉'].includes(s)) {
     urlParamStore = s;
     trySelectStore(s);
-  } else if (p.get('admin') === null) {
-    // 店舗指定なし → store-barを表示
-    // store-bar非表示：LINEの?store=URLで直接アクセスするため不要
+    // store-select-screenはdisplay:noneのまま（一瞬表示しない）
+  } else {
+    // URLにstoreがない場合のみ店舗選択画面を表示
+    document.getElementById('store-select-screen').style.display = 'flex';
   }
 })();
 
