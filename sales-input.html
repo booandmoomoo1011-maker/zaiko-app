@@ -12,8 +12,8 @@
   <script>
     (function(){
       var p = new URLSearchParams(location.search);
-      if (p.get('v') !== '2.18') {
-        p.set('v', '2.18');
+      if (p.get('v') !== '2.19') {
+        p.set('v', '2.19');
         history.replaceState(null, '', location.pathname + '?' + p.toString());
       }
     })();
@@ -287,6 +287,104 @@
     .history-sales { font-weight: 700; color: #1a237e; }
     .history-time { font-size: 11px; color: #aaa; margin-top: 2px; }
   </style>
+
+  <!-- ===== Firebase（端末間データ共有） ===== -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app":      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+    }
+  }
+  </script>
+  <script type="module">
+  import { initializeApp }                        from 'firebase/app';
+  import { getDatabase, ref, set, get, onValue }  from 'firebase/database';
+
+  const firebaseConfig = {
+    apiKey:      "AIzaSyDt5MmHphP1PPjKtDq9ZgLMpbWbrQ_NtXs",
+    authDomain:  "kamakura-zaiko-3bd31.firebaseapp.com",
+    databaseURL: "https://kamakura-zaiko-3bd31-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:   "kamakura-zaiko-3bd31",
+    appId:       "1:911334956899:web:30e1a31b2218a974b46f3a"
+  };
+
+  // stub（初期化前に呼ばれても安全）
+  window.fbWriteEntered  = function(){};
+  window.fbWriteHistory  = function(){};
+  window.fbWriteHolidays = function(){};
+  window.fbSyncStore     = function(){};
+
+  try {
+    const app = initializeApp(firebaseConfig, 'sales-app');
+    const db  = getDatabase(app);
+
+    // 店舗データをFirebaseと同期（読み込み→マージ→再描画）
+    window.fbSyncStore = function(store) {
+      var storeRef = ref(db, 'sales-app/' + encodeURIComponent(store));
+      get(storeRef).then(function(snap) {
+        if (!snap.exists()) return;
+        var fbData = snap.val();
+
+        // ── enteredをマージ（削除しない・両方残す）──
+        if (fbData.entered) {
+          try {
+            var local = JSON.parse(localStorage.getItem('entered_' + store) || '{}');
+            var merged = Object.assign({}, fbData.entered, local);
+            localStorage.setItem('entered_' + store, JSON.stringify(merged));
+          } catch(e) {}
+        }
+
+        // ── historyをマージ（日付ごと・どちらかにあれば残す）──
+        if (fbData.history) {
+          try {
+            var localHist = JSON.parse(localStorage.getItem('history_' + store) || '[]');
+            var histMap = {};
+            // ローカルを先に入れる
+            localHist.forEach(function(h) { if (h.date) histMap[h.date] = h; });
+            // Firebaseのデータでローカルにないものを追加
+            Object.values(fbData.history).forEach(function(h) {
+              if (h.date && !histMap[h.date]) histMap[h.date] = h;
+            });
+            var merged = Object.values(histMap).sort(function(a,b){ return b.date.localeCompare(a.date); });
+            localStorage.setItem('history_' + store, JSON.stringify(merged));
+          } catch(e) {}
+        }
+
+        // ── holidaysをマージ（削除しない・両方残す）──
+        if (fbData.holidays) {
+          try {
+            var localHol = JSON.parse(localStorage.getItem('holidays_' + store) || '{}');
+            var merged = Object.assign({}, fbData.holidays, localHol);
+            localStorage.setItem('holidays_' + store, JSON.stringify(merged));
+          } catch(e) {}
+        }
+
+        // カレンダー・履歴を再描画
+        if (typeof renderCalendar === 'function') renderCalendar();
+        if (typeof renderHistory  === 'function') renderHistory();
+      }).catch(function(e) { console.warn('Firebase読み込みエラー', e); });
+    };
+
+    // enteredをFirebaseに書き込む
+    window.fbWriteEntered = function(store, obj) {
+      set(ref(db, 'sales-app/' + encodeURIComponent(store) + '/entered'), obj).catch(function(e){ console.warn('FB entered書き込みエラー',e); });
+    };
+
+    // historyをFirebaseに書き込む（日付キーのオブジェクトで保存）
+    window.fbWriteHistory = function(store, arr) {
+      var obj = {};
+      arr.forEach(function(h) { if (h.date) obj[h.date.replace(/-/g,'_')] = h; });
+      set(ref(db, 'sales-app/' + encodeURIComponent(store) + '/history'), obj).catch(function(e){ console.warn('FB history書き込みエラー',e); });
+    };
+
+    // holidaysをFirebaseに書き込む
+    window.fbWriteHolidays = function(store, obj) {
+      set(ref(db, 'sales-app/' + encodeURIComponent(store) + '/holidays'), obj).catch(function(e){ console.warn('FB holidays書き込みエラー',e); });
+    };
+
+  } catch(e) { console.warn('Firebase初期化エラー', e); }
+  </script>
 </head>
 <body>
 
@@ -336,7 +434,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.18</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.19</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -637,7 +735,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.18';
+const APP_VERSION = 'v2.19';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -782,7 +880,7 @@ function backToStoreSelect() {
 }
 
 // ====== 設定パネル ======
-const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html?v=2.18';
+const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html?v=2.19';
 const STORES_ORDER = ['大須','那古野','鉄板','鎌倉'];
 const STORE_PARAMS = {'大須':'osu','那古野':'nagoya','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLORS = {'大須':'#e91e63','那古野':'#f9a825','鉄板':'#0288d1','鎌倉':'#8e24aa'};
@@ -1092,6 +1190,8 @@ function selectStore(s) {
   renderHistory();
   // 表示項目設定を適用
   applyFieldSettings(loadFieldSettings(s));
+  // Firebaseと同期（バックグラウンドで実行）
+  if (typeof window.fbSyncStore === 'function') window.fbSyncStore(s);
 }
 
 function toggle(id, show) {
@@ -1481,18 +1581,21 @@ function markHoliday(dateStr) {
   localStorage.setItem('holidays_' + currentStore, JSON.stringify(h));
   _ck_dates_save('hd_', currentStore, h);
   renderCalendar();
+  if (typeof window.fbWriteHolidays === 'function') window.fbWriteHolidays(currentStore, h);
 }
 function unmarkHoliday(dateStr) {
   const h = getHolidays(); delete h[dateStr];
   localStorage.setItem('holidays_' + currentStore, JSON.stringify(h));
   _ck_dates_save('hd_', currentStore, h);
   renderCalendar();
+  if (typeof window.fbWriteHolidays === 'function') window.fbWriteHolidays(currentStore, h);
 }
 function markEntered(dateStr) {
   const e = getEntered(); e[dateStr] = true;
   localStorage.setItem('entered_' + currentStore, JSON.stringify(e));
   _ck_dates_save('en_', currentStore, e);
   renderCalendar();
+  if (typeof window.fbWriteEntered === 'function') window.fbWriteEntered(currentStore, e);
 }
 let historyYear  = new Date().getFullYear();
 let historyMonth = new Date().getMonth() + 1;
@@ -1506,6 +1609,7 @@ function saveHistory(store, data) {
   if (hist.length > 400) hist = hist.slice(0, 400);
   localStorage.setItem(key, JSON.stringify(hist));
   _ck_hist_save(store, hist);
+  if (typeof window.fbWriteHistory === 'function') window.fbWriteHistory(store, hist);
 }
 function historyPrevMonth() {
   historyMonth--;
