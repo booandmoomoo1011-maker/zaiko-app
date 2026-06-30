@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オーナー管理画面</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-height: 100vh; }
+.header {
+  background: linear-gradient(135deg, #1a237e, #283593);
+  color: white; padding: 20px 16px 16px;
+  text-align: center; position: relative;
+}
+.header h1 { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
+.settings-btn {
+  position: absolute; top: 16px; right: 14px;
+  background: rgba(255,255,255,0.18); border: none; border-radius: 8px;
+  color: white; font-size: 20px; width: 38px; height: 38px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.section { padding: 16px; }
+.section-title { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 10px; letter-spacing: 1px; }
+
+/* 店舗ボタン */
+.store-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.store-btn {
+  padding: 18px 10px; border: none; border-radius: 12px;
+  font-family: inherit; font-size: 16px; font-weight: 700;
+  color: white; cursor: pointer; text-align: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transition: transform 0.1s;
+}
+.store-btn:active { transform: scale(0.96); }
+.store-btn .sub { font-size: 10px; font-weight: 400; opacity: 0.85; display: block; margin-top: 4px; }
+
+/* 履歴テーブル */
+.filter-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.filter-btn {
+  padding: 5px 12px; border-radius: 20px; border: 1.5px solid #ccc;
+  background: white; font-family: inherit; font-size: 12px; cursor: pointer;
+}
+.filter-btn.active { background: #1a237e; color: white; border-color: #1a237e; }
+.month-nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.month-nav button { background: none; border: 1.5px solid #ccc; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 13px; }
+.month-label { font-size: 13px; font-weight: 700; }
+
+.history-card {
+  background: white; border-radius: 10px; margin-bottom: 8px;
+  padding: 12px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  display: flex; align-items: center; gap: 12px;
+}
+.history-badge {
+  width: 42px; height: 42px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white; flex-shrink: 0;
+}
+.history-info { flex: 1; }
+.history-date { font-size: 13px; font-weight: 700; color: #222; }
+.history-sub  { font-size: 11px; color: #888; margin-top: 2px; }
+.history-sales { font-size: 15px; font-weight: 900; color: #1a237e; white-space: nowrap; }
+
+#loading { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+#fb-status { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+
+/* 設定パネル */
+#settings-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 100;
+}
+#settings-panel {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0;
+  background: white; border-radius: 20px 20px 0 0;
+  padding: 24px 20px 40px; z-index: 101;
+  max-height: 80vh; overflow-y: auto;
+}
+.settings-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.settings-header h2 { font-size: 16px; font-weight: 900; color: #1a237e; }
+.settings-close {
+  background: none; border: none; font-size: 22px; cursor: pointer; color: #888;
+}
+.url-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.url-store-name {
+  flex: 1; font-size: 15px; font-weight: 700; color: #333;
+}
+.url-copy-btn {
+  padding: 10px 18px; border: none; border-radius: 10px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  color: white; cursor: pointer;
+}
+</style>
+<script type="importmap">
+{ "imports": {
+  "firebase/app":      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+  "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+} }
+</script>
+</head>
+<body>
+
+<div class="header">
+  <h1>👑 オーナー管理画面</h1>
+  <div id="fb-status">Firebase読み込み中...</div>
+  <button class="settings-btn" onclick="openSettings()">⚙️</button>
+</div>
+
+<!-- 店舗選択 -->
+<div class="section">
+  <div class="section-title">▶ 店舗を開く</div>
+  <div class="store-grid">
+    <button class="store-btn" style="background:linear-gradient(135deg,#5a3e00,#8d6e1a);" onclick="openStore('那古野')">
+      那古野<span class="sub">タップして開く</span>
+    </button>
+    <button class="store-btn" style="background:linear-gradient(135deg,#880e4f,#c2185b);" onclick="openStore('大須')">
+      大須<span class="sub">タップして開く</span>
+    </button>
+    <button class="store-btn" style="background:linear-gradient(135deg,#01579b,#0288d1);" onclick="openStore('鉄板')">
+      鉄板<span class="sub">タップして開く</span>
+    </button>
+    <button class="store-btn" style="background:linear-gradient(135deg,#4a148c,#7b1fa2);" onclick="openStore('鎌倉')">
+      鎌倉<span class="sub">タップして開く</span>
+    </button>
+  </div>
+</div>
+
+<!-- 売上履歴 -->
+<div class="section">
+  <div class="section-title">📊 全店舗 売上履歴</div>
+  <div class="filter-row">
+    <button class="filter-btn active" data-store="all" onclick="setFilter('all',this)">全店</button>
+    <button class="filter-btn" data-store="那古野" onclick="setFilter('那古野',this)">那古野</button>
+    <button class="filter-btn" data-store="大須"   onclick="setFilter('大須',this)">大須</button>
+    <button class="filter-btn" data-store="鉄板"   onclick="setFilter('鉄板',this)">鉄板</button>
+    <button class="filter-btn" data-store="鎌倉"   onclick="setFilter('鎌倉',this)">鎌倉</button>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">◀</button>
+      <span class="month-label" id="month-label"></span>
+      <button onclick="changeMonth(1)">▶</button>
+    </div>
+  </div>
+  <div id="loading">読み込み中...</div>
+  <div id="history-list"></div>
+</div>
+
+<!-- 設定オーバーレイ -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-panel">
+  <div class="settings-header">
+    <h2>⚙️ 設定</h2>
+    <button class="settings-close" onclick="closeSettings()">✕</button>
+  </div>
+
+  <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:14px;">📋 店舗URLをコピー（LINEに貼り付けて送る）</p>
+  <div id="url-copy-btns"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, onValue } from 'firebase/database';
+
+const STORE_KEY  = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
+const STORE_COLOR = {
+  '那古野': '#5a3e00',
+  '大須':   '#880e4f',
+  '鉄板':   '#01579b',
+  '鎌倉':   '#4a148c'
+};
+const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html';
+const STORES_ORDER = ['那古野','大須','鉄板','鎌倉'];
+
+// URLコピーボタン生成
+document.getElementById('url-copy-btns').innerHTML = STORES_ORDER.map(s => {
+  const color = STORE_COLOR[s];
+  return `<div class="url-row">
+    <span class="url-store-name">${s}店</span>
+    <button class="url-copy-btn" style="background:${color};" onclick="copyUrl('${s}')">📋 URLをコピー</button>
+  </div>`;
+}).join('');
+
+window.copyUrl = function(store) {
+  const url = APP_URL + '?store=' + encodeURIComponent(store);
+  navigator.clipboard.writeText(url).then(() => {
+    alert(store + '店のURLをコピーしました。\nLINEに貼り付けて送ってください。');
+  });
+};
+
+window.openSettings = function() {
+  document.getElementById('settings-panel').style.display  = 'block';
+  document.getElementById('settings-overlay').style.display = 'block';
+};
+window.closeSettings = function() {
+  document.getElementById('settings-panel').style.display  = 'none';
+  document.getElementById('settings-overlay').style.display = 'none';
+};
+
+try {
+  const app = initializeApp({
+    apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
+    authDomain:       'zaiko2017inb.firebaseapp.com',
+    databaseURL:      'https://zaiko2017inb-default-rtdb.asia-southeast1.firebasedatabase.app',
+    projectId:        'zaiko2017inb',
+    storageBucket:    'zaiko2017inb.firebasestorage.app',
+    messagingSenderId:'705085250436',
+    appId:            '1:705085250436:web:5bda2efcc70e4ffca25bd1'
+  }, 'owner');
+  const db = getDatabase(app);
+
+  onValue(ref(db, '.info/connected'), snap => {
+    const el = document.getElementById('fb-status');
+    if (el) el.textContent = snap.val() ? '🟢 接続中' : '🔴 未接続';
+  });
+
+  const allData = {};
+
+  Object.keys(STORE_KEY).forEach(storeName => {
+    const key = STORE_KEY[storeName];
+    onValue(ref(db, 'zaiko/sales/' + key + '/history'), snap => {
+      if (snap.exists()) {
+        const raw = snap.val();
+        allData[storeName] = Object.values(raw).map(h => ({...h, storeName}));
+      } else {
+        allData[storeName] = [];
+      }
+      renderHistory();
+    });
+  });
+
+} catch(e) {
+  document.getElementById('loading').textContent = 'Firebase接続エラー: ' + e.message;
+}
+
+let currentFilter = 'all';
+let viewYear  = new Date().getFullYear();
+let viewMonth = new Date().getMonth() + 1;
+
+window.setFilter = function(store, btn) {
+  currentFilter = store;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderHistory();
+};
+window.changeMonth = function(diff) {
+  viewMonth += diff;
+  if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+  if (viewMonth < 1)  { viewMonth = 12; viewYear--; }
+  renderHistory();
+};
+window.openStore = function(store) {
+  window.location.href = 'sales-input.html?store=' + encodeURIComponent(store);
+};
+
+function renderHistory() {
+  const label = document.getElementById('month-label');
+  if (label) label.textContent = viewYear + '年' + viewMonth + '月';
+
+  const monthStr = viewYear + '-' + String(viewMonth).padStart(2,'0');
+
+  let rows = [];
+  const stores = currentFilter === 'all' ? Object.keys(STORE_KEY) : [currentFilter];
+  stores.forEach(s => {
+    (allData[s] || []).forEach(h => {
+      if (h.date && h.date.startsWith(monthStr)) rows.push(h);
+    });
+  });
+
+  rows.sort((a, b) => b.date.localeCompare(a.date));
+
+  const list = document.getElementById('history-list');
+  const loading = document.getElementById('loading');
+  loading.style.display = 'none';
+
+  if (rows.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#aaa;font-size:13px;">データがありません</div>';
+    return;
+  }
+
+  list.innerHTML = rows.map(h => {
+    const color = STORE_COLOR[h.storeName] || '#1a237e';
+    const sales = h.netSales ? '¥' + Number(h.netSales).toLocaleString() : '-';
+    const day = h.date ? h.date.slice(5).replace('-','/') : '';
+    const sub = [h.weather, h.staff].filter(Boolean).join('　');
+    return `
+    <div class="history-card">
+      <div class="history-badge" style="background:${color};">${h.storeName.slice(0,2)}</div>
+      <div class="history-info">
+        <div class="history-date">${day}（${h.storeName}）</div>
+        ${sub ? `<div class="history-sub">${sub}</div>` : ''}
+      </div>
+      <div class="history-sales">${sales}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('month-label').textContent =
+  new Date().getFullYear() + '年' + (new Date().getMonth()+1) + '月';
+</script>
+</body>
+</html>
