@@ -318,7 +318,8 @@
   try {
     const app = initializeApp(firebaseConfig, 'sales');
     const db  = getDatabase(app);
-    const storePath = (store) => 'zaiko/sales/' + encodeURIComponent(store);
+    const STORE_KEY = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
+    const storePath = (store) => 'zaiko/sales/' + (STORE_KEY[store] || store);
 
     window.fbSyncStore = function(store) {
       get(ref(db, storePath(store))).then(function(snap) {
@@ -421,7 +422,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.21</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.22</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -722,7 +723,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.21';
+const APP_VERSION = 'v2.22';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
