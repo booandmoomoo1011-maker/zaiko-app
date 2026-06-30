@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.3';
+window.APP_VERSION = 'v10.4';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3677,6 +3677,16 @@ function saveTempAM(){
   if(!date){showToast('記録日を入力してください');return;}
   if(!recorder){showToast('AMの記録者名を入力してください');return;}
   if(!time){showToast('AMの時間を入力してください');return;}
+  // 当日AM記録済みチェック
+  const _now=new Date();
+  const _today=_now.getFullYear()+'-'+String(_now.getMonth()+1).padStart(2,'0')+'-'+String(_now.getDate()).padStart(2,'0');
+  if(date===_today){
+    const _chk=loadTempRecords().find(r=>r.date===date);
+    if(_chk&&_chk.amRecorder&&_chk.amRecorder.trim()!==''){
+      showToast('🔒 本日のAMは記録済みです。履歴の ✏️ から変更してください');
+      checkTempLockState(); return;
+    }
+  }
   const keys=['r1','r2','r3','r4'];
   const names=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const records=loadTempRecords();
@@ -3708,6 +3718,16 @@ function saveTempPM(){
   if(!date){showToast('記録日を入力してください');return;}
   if(!recorder){showToast('PMの記録者名を入力してください');return;}
   if(!time){showToast('PMの時間を入力してください');return;}
+  // 当日PM記録済みチェック
+  const _now2=new Date();
+  const _today2=_now2.getFullYear()+'-'+String(_now2.getMonth()+1).padStart(2,'0')+'-'+String(_now2.getDate()).padStart(2,'0');
+  if(date===_today2){
+    const _chk2=loadTempRecords().find(r=>r.date===date);
+    if(_chk2&&_chk2.pmRecorder&&_chk2.pmRecorder.trim()!==''){
+      showToast('🔒 本日のPMは記録済みです。履歴の ✏️ から変更してください');
+      checkTempLockState(); return;
+    }
+  }
   const keys=['r1','r2','r3','r4'];
   const names=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const records=loadTempRecords();
@@ -3792,6 +3812,9 @@ function openTempEditModal(id){
   if(amRecEl) amRecEl.value = amRec;
   const pmRecEl = document.getElementById('temp-edit-pm-recorder');
   if(pmRecEl) pmRecEl.value = pmRec;
+  // 編集者欄はクリア（毎回入力させる）
+  const editorEl = document.getElementById('temp-edit-editor');
+  if(editorEl) editorEl.value = '';
   const keys=['r1','r2','r3','r4'];
   (r.data||[]).forEach((f,i)=>{
     const k=keys[i];
@@ -3806,9 +3829,11 @@ function closeTempEditModal(e){if(e&&e.target!==document.getElementById('temp-ed
 function saveTempEdit(){
   const id=document.getElementById('temp-edit-id').value;
   const date=document.getElementById('temp-edit-date').value;
-  const recorder=document.getElementById('temp-edit-recorder').value.trim();
+  const amRecorder=((document.getElementById('temp-edit-am-recorder')||{}).value||'').trim();
+  const pmRecorder=((document.getElementById('temp-edit-pm-recorder')||{}).value||'').trim();
+  const editor=((document.getElementById('temp-edit-editor')||{}).value||'').trim();
   if(!date){showToast('記録日を入力してください');return;}
-  if(!recorder){showToast('記録者名を入力してください');return;}
+  if(!editor){showToast('編集者名を入力してください');return;}
   const fridgeNames=['①冷蔵','②冷蔵兼用','③冷凍兼用','④冷凍'];
   const keys=['r1','r2','r3','r4'];
   const data=fridgeNames.map((name,i)=>({name,
@@ -3817,10 +3842,13 @@ function saveTempEdit(){
   }));
   const records=loadTempRecords(); const idx=records.findIndex(r=>r.id===id);
   if(idx===-1){showToast('記録が見つかりません');return;}
-  // amRecorder/pmRecorder を保持しつつ recorder も更新
-  records[idx]={...records[idx],date,recorder,amRecorder:recorder,pmRecorder:records[idx].pmRecorder||recorder,data};
+  records[idx]={...records[idx],date,
+    amRecorder:amRecorder||records[idx].amRecorder||'',
+    pmRecorder:pmRecorder||records[idx].pmRecorder||'',
+    recorder:amRecorder||pmRecorder||records[idx].recorder||'',
+    editedBy:editor,editedAt:new Date().toISOString(),data};
   saveTempRecords(records); document.getElementById('temp-edit-modal').style.display='none';
-  renderTempHistory(); showToast('✅ 編集を保存しました');
+  renderTempHistory(); checkTempLockState(); showToast('✅ 編集を保存しました（編集者: '+editor+'）');
   btnFeedback(document.querySelector('#temp-edit-modal .temp-save-btn'), '保存完了');
 }
 
@@ -3973,9 +4001,17 @@ setInterval(function(){ try{ saveAutoBackup(); }catch(e){} }, 30*60*1000);
     </div>
     <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
       <input type="hidden" id="temp-edit-id">
+      <input type="hidden" id="temp-edit-recorder">
       <div style="display:flex;gap:8px;">
-        <div style="flex:1;"><div class="temp-label">記録者 *</div><input type="text" id="temp-edit-recorder" class="temp-input"></div>
         <div style="flex:1;"><div class="temp-label">記録日 *</div><input type="date" id="temp-edit-date" class="temp-input"></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;"><div class="temp-label" style="color:#1565c0;">AM記録者</div><input type="text" id="temp-edit-am-recorder" class="temp-input" placeholder="AM記録者名"></div>
+        <div style="flex:1;"><div class="temp-label" style="color:#0a3d7a;">PM記録者</div><input type="text" id="temp-edit-pm-recorder" class="temp-input" placeholder="PM記録者名"></div>
+      </div>
+      <div style="background:#fff3e0;border-radius:8px;padding:8px;">
+        <div class="temp-label" style="color:#e65100;">✏️ 編集者名 *（この記録を修正した人）</div>
+        <input type="text" id="temp-edit-editor" class="temp-input" placeholder="編集者名を入力してください">
       </div>
       <div style="background:#d6eeff;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;">
         <div style="font-weight:700;color:#1565c0;font-size:13px;margin-bottom:2px;">AM</div>
