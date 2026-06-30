@@ -215,6 +215,9 @@ window.closeSettings = function() {
   document.getElementById('settings-overlay').style.display = 'none';
 };
 
+// allData をスコープ外に移動
+const allData = {};
+
 try {
   const app = initializeApp({
     apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
@@ -232,7 +235,6 @@ try {
     if (el) el.textContent = snap.val() ? '🟢 接続中' : '🔴 未接続';
   });
 
-  const allData = {};
 
   Object.keys(STORE_KEY).forEach(storeName => {
     const key = STORE_KEY[storeName];
