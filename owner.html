@@ -156,7 +156,16 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
     <button class="settings-close" onclick="closeSettings()">✕</button>
   </div>
 
-  <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:14px;">📋 店舗URLをコピー（LINEに貼り付けて送る）</p>
+  <p style="font-size:13px;font-weight:700;color:#555;margin-bottom:14px;">📋 URLをコピー（LINEに貼り付けて送る）</p>
+
+  <!-- オーナー用URL -->
+  <div class="url-row" style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #eee;">
+    <span class="url-store-name">👑 オーナー用</span>
+    <button class="url-copy-btn" style="background:#1a237e;" onclick="copyOwnerUrl()">📋 URLをコピー</button>
+  </div>
+
+  <!-- 各店舗URL -->
+  <p style="font-size:11px;color:#999;margin-bottom:10px;">各店舗スタッフ用</p>
   <div id="url-copy-btns"></div>
 </div>
 
@@ -182,6 +191,13 @@ document.getElementById('url-copy-btns').innerHTML = STORES_ORDER.map(s => {
     <button class="url-copy-btn" style="background:${color};" onclick="copyUrl('${s}')">📋 URLをコピー</button>
   </div>`;
 }).join('');
+
+window.copyOwnerUrl = function() {
+  const url = 'https://zaiko-app-two.vercel.app/owner.html';
+  navigator.clipboard.writeText(url).then(() => {
+    alert('オーナー用URLをコピーしました。\nLINEに貼り付けて送ってください。');
+  });
+};
 
 window.copyUrl = function(store) {
   const url = APP_URL + '?store=' + encodeURIComponent(store);
