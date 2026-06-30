@@ -318,9 +318,19 @@
       if (el) el.textContent = snap.val() ? '🟢Firebase接続中' : '🔴Firebase未接続';
     });
 
+    var _fbListener = null;
+    var _fbListenerStore = null;
+    var _skipFbUpdate = false;
+
     window.fbSyncStore = function(store) {
-      _fbDb.ref(_storePath(store)).once('value').then(function(snap) {
-        if (!snap.exists()) { console.log('Firebase: '+store+' データなし'); return; }
+      // 前の店舗のリスナーを解除
+      if (_fbListener && _fbListenerStore) {
+        _fbDb.ref(_storePath(_fbListenerStore)).off('value', _fbListener);
+      }
+      _fbListenerStore = store;
+      _fbListener = _fbDb.ref(_storePath(store)).on('value', function(snap) {
+        if (_skipFbUpdate) { _skipFbUpdate = false; return; }
+        if (!snap.exists()) return;
         var fbData = snap.val();
         if (fbData.entered) {
           try {
@@ -350,18 +360,21 @@
         }
         if (typeof renderCalendar === 'function') renderCalendar();
         if (typeof renderHistory  === 'function') renderHistory();
-      }).catch(function(e) { console.warn('Firebase sync error', e); });
+      }, function(e) { console.warn('Firebase sync error', e); });
     };
     window.fbWriteEntered = function(store, obj) {
-      _fbDb.ref(_storePath(store) + '/entered').set(obj).catch(function(e){ console.warn('FB entered error',e); });
+      _skipFbUpdate = true;
+      _fbDb.ref(_storePath(store) + '/entered').set(obj).catch(function(e){ _skipFbUpdate=false; console.warn('FB entered error',e); });
     };
     window.fbWriteHistory = function(store, arr) {
+      _skipFbUpdate = true;
       var obj = {};
       arr.forEach(function(h) { if (h.date) obj[h.date.replace(/-/g,'_')] = h; });
-      _fbDb.ref(_storePath(store) + '/history').set(obj).catch(function(e){ console.warn('FB history error',e); });
+      _fbDb.ref(_storePath(store) + '/history').set(obj).catch(function(e){ _skipFbUpdate=false; console.warn('FB history error',e); });
     };
     window.fbWriteHolidays = function(store, obj) {
-      _fbDb.ref(_storePath(store) + '/holidays').set(obj).catch(function(e){ console.warn('FB holidays error',e); });
+      _skipFbUpdate = true;
+      _fbDb.ref(_storePath(store) + '/holidays').set(obj).catch(function(e){ _skipFbUpdate=false; console.warn('FB holidays error',e); });
     };
   } catch(e) { console.warn('Firebase初期化エラー', e); }
   </script>
@@ -414,7 +427,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.26</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.27</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -717,7 +730,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.26';
+const APP_VERSION = 'v2.27';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
