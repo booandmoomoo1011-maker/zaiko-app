@@ -297,21 +297,30 @@
   window.fbWriteHolidays = function(){};
   window.fbSyncStore     = function(){};
   try {
-    var _fbApp = firebase.initializeApp({
-      apiKey:        "AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo",
-      authDomain:    "zaiko2017inb.firebaseapp.com",
-      databaseURL:   "https://zaiko2017inb-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId:     "zaiko2017inb",
-      storageBucket: "zaiko2017inb.firebasestorage.app",
-      appId:         "1:705085250436:web:5bda2efcc70e4ffca25bd1"
-    }, 'sales');
-    var _fbDb = firebase.app('sales').database();
+    var _fbCfg = {
+      apiKey:           "AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo",
+      authDomain:       "zaiko2017inb.firebaseapp.com",
+      databaseURL:      "https://zaiko2017inb-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId:        "zaiko2017inb",
+      storageBucket:    "zaiko2017inb.firebasestorage.app",
+      messagingSenderId:"705085250436",
+      appId:            "1:705085250436:web:5bda2efcc70e4ffca25bd1"
+    };
+    var _fbApp;
+    try { _fbApp = firebase.app('sales'); } catch(e) { _fbApp = firebase.initializeApp(_fbCfg, 'sales'); }
+    var _fbDb = _fbApp.database();
     var _STORE_KEY = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
     var _storePath = function(store) { return 'zaiko/sales/' + (_STORE_KEY[store] || store); };
 
+    // 接続状態インジケーター
+    _fbApp.database().ref('.info/connected').on('value', function(snap) {
+      var el = document.getElementById('fb-status');
+      if (el) el.textContent = snap.val() ? '🟢Firebase接続中' : '🔴Firebase未接続';
+    });
+
     window.fbSyncStore = function(store) {
       _fbDb.ref(_storePath(store)).once('value').then(function(snap) {
-        if (!snap.exists()) return;
+        if (!snap.exists()) { console.log('Firebase: '+store+' データなし'); return; }
         var fbData = snap.val();
         if (fbData.entered) {
           try {
@@ -405,7 +414,8 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.23</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.24</div>
+  <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -706,7 +716,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.23';
+const APP_VERSION = 'v2.24';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
