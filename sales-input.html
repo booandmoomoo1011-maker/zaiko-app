@@ -338,14 +338,21 @@
         const ent = d.entered || {};
         delete ent['_empty'];
         localStorage.setItem('entered_'+store, JSON.stringify(ent));
-        localStorage.setItem('holidays_'+store, JSON.stringify(d.holidays || {}));
+        if (typeof _ck_dates_save === 'function') _ck_dates_save('en_', store, ent);
+
+        const hol = d.holidays || {};
+        localStorage.setItem('holidays_'+store, JSON.stringify(hol));
+        if (typeof _ck_dates_save === 'function') _ck_dates_save('hd_', store, hol);
+
         if (d.history) {
           try {
             const arr = Object.values(d.history).sort((a,b)=>b.date.localeCompare(a.date));
             localStorage.setItem('history_'+store, JSON.stringify(arr));
+            if (typeof _ck_hist_save === 'function') _ck_hist_save(store, arr);
           } catch(e){}
         } else {
           localStorage.setItem('history_'+store, JSON.stringify([]));
+          if (typeof _ck_hist_save === 'function') _ck_hist_save(store, []);
         }
         if (typeof renderCalendar==='function') renderCalendar();
         if (typeof renderHistory ==='function') renderHistory();
@@ -431,7 +438,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.34</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.35</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -734,7 +741,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.34';
+const APP_VERSION = 'v2.35';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
