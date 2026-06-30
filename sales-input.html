@@ -414,7 +414,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.24</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.25</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -716,7 +716,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.24';
+const APP_VERSION = 'v2.25';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -1483,6 +1483,19 @@ function calActionEdit() {
     } else {
       editMode = false;
       originalData = null;
+      // 未入力の場合はフォームを全クリア
+      ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
+       'credit','point','emoney','coupon','buhin','buhinCash','buhinOther'].forEach(function(id){
+        var el = document.getElementById(id); if (el) el.value = '';
+      });
+      ['buhinBrand','weather','staff-name','morning-staff','morning-comment',
+       'afternoon-staff','afternoon-comment'].forEach(function(id){
+        var el = document.getElementById(id); if (el) el.value = '';
+      });
+      document.getElementById('btn').textContent = '送信';
+      document.getElementById('btn').style.background = '';
+      document.getElementById('btn-revert').style.display = 'none';
+      updateSummary();
     }
     document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
     return;
