@@ -369,6 +369,8 @@
     };
 
   } catch(e) { console.warn('Firebase初期化エラー', e); }
+  // モジュール読み込み完了を通知
+  window.dispatchEvent(new CustomEvent('firebase-ready'));
   </script>
 </head>
 <body>
@@ -419,7 +421,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.20</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.21</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
 
@@ -720,7 +722,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.20';
+const APP_VERSION = 'v2.21';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -1176,7 +1178,15 @@ function selectStore(s) {
   // 表示項目設定を適用
   applyFieldSettings(loadFieldSettings(s));
   if (typeof window.fbSyncStore === 'function') window.fbSyncStore(s);
+  // Firebase未準備の場合は準備完了後に同期
+  window.__pendingFbSync = s;
 }
+// Firebase準備完了時に未処理の同期を実行
+window.addEventListener('firebase-ready', function() {
+  if (window.__pendingFbSync && typeof window.fbSyncStore === 'function') {
+    window.fbSyncStore(window.__pendingFbSync);
+  }
+});
 
 function toggle(id, show) {
   document.getElementById(id).classList.toggle('hidden', !show);
