@@ -438,7 +438,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.45</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.49</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -516,6 +516,10 @@
       </p>
     </div>
 
+    <!-- 過去データ読み込み時の表示（見るだけ・薄黄色） -->
+    <div id="view-summary" class="card" style="display:none;background:#fffde7;border:2px solid #ffe082;"></div>
+
+    <div id="input-section">
     <!-- 編集中の日付バナー -->
     <div id="edit-date-banner" style="display:none;background:#5c6bc0;color:#fff;font-size:17px;font-weight:800;text-align:center;padding:15px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 8px rgba(92,107,192,0.3);"></div>
 
@@ -680,13 +684,19 @@
       style="display:none;width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">
       ↩️ 読み込んだデータに戻す
     </button>
+    <button id="btn-cancel-edit" onclick="closeView()"
+      style="display:none;width:100%;padding:12px;background:#fff;color:#c62828;border:2px solid #ef9a9a;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">
+      ✖ やめて入力画面に戻る
+    </button>
     <div id="msg"></div>
+    </div><!-- /input-section -->
 
     <!-- 過去データの入力・修正（一番下） -->
     <div class="card" style="margin-top:20px;border:2px dashed #c5cae9;">
-      <h2 style="color:#5c6bc0;">🔧 過去データの入力・修正</h2>
+      <h2 style="color:#5c6bc0;cursor:pointer;user-select:none;" onclick="togglePastData()">🔧 過去データの入力・修正　<span id="pastdata-arrow">▼</span></h2>
+      <div id="pastdata-body" style="display:none;">
       <div class="row" style="margin-bottom:10px;">
-        <div class="lbl" style="font-size:13px;color:#555;">対象日付<br><span style="font-size:11px;color:#aaa;">（先月以前）</span></div>
+        <div class="lbl" style="font-size:13px;color:#555;">対象日付<br><span style="font-size:11px;color:#aaa;">（過去の日付）</span></div>
         <div class="inp">
           <input type="date" id="edit-date"
             style="width:100%;padding:9px 10px;border:1.5px solid #c5cae9;border-radius:7px;font-size:15px;background:#fafafa;">
@@ -701,6 +711,7 @@
       <div id="load-msg" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:13px;text-align:center;"></div>
       <button id="btn-edit-loaded" onclick="enterEditFromView()" style="display:none;width:100%;padding:14px;background:#303f9f;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;margin-top:10px;">✏️ この内容を編集する</button>
       <button id="btn-close-view" onclick="closeView()" style="display:none;width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">✖ 表示を閉じる</button>
+      </div><!-- /pastdata-body -->
     </div>
 
     <!-- 入力履歴 -->
@@ -732,7 +743,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.45';
+const APP_VERSION = 'v2.49';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -1215,19 +1226,19 @@ async function loadData(viewOnly) {
       if (viewOnly) {
         viewMode = true;
         editMode = false;
-        document.getElementById('btn').style.display = 'none';
-        document.getElementById('btn-revert').style.display = 'none';
-        document.getElementById('btn-edit-loaded').style.display = 'block';
-        document.getElementById('btn-close-view').style.display = 'block';
+        document.getElementById('input-section').style.display = 'none';
         setEditDateBanner('');
-        showLoadMsg('📄 ' + date + ' の内容を表示中です。修正するには下の「編集する」を押してください。', 'ok');
+        showLoadMsg('📄 ' + date + ' の内容を表示しています。編集するには黄色の枠内の「この内容を編集する」を押してください。', 'ok');
       } else {
         viewMode = false;
         editMode = true;
+        document.getElementById('input-section').style.display = '';
+        document.getElementById('view-summary').style.display = 'none';
         document.getElementById('btn').style.display = 'block';
         document.getElementById('btn').textContent = '✏️ 修正内容を送信（上書き保存）';
         document.getElementById('btn').style.background = '#303f9f';
         document.getElementById('btn-revert').style.display = 'block';
+        document.getElementById('btn-cancel-edit').style.display = 'block';
         setEditDateBanner(date);
         showLoadMsg('✅ データを読み込みました。上のフォームで修正して送信してください。', 'ok');
       }
@@ -1251,7 +1262,13 @@ async function loadData(viewOnly) {
         }
       }
       syncNoticeFromComment();
-      document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
+      if (viewMode) {
+        renderViewSummary(d, date);
+        document.getElementById('view-summary').style.display = 'block';
+        document.getElementById('view-summary').scrollIntoView({behavior:'smooth'});
+      } else {
+        document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
+      }
     } else {
       showLoadMsg('❌ ' + result.error, 'ng');
     }
@@ -1485,6 +1502,9 @@ function calActionHolidayOff() {
 
 function calActionEdit() {
   closeCalPopup();
+  viewMode = false;
+  var _is = document.getElementById('input-section'); if (_is) _is.style.display = '';
+  var _vs = document.getElementById('view-summary'); if (_vs) _vs.style.display = 'none';
   const today = new Date().toISOString().slice(0,10);
   if (calPopupDate === today) {
     // 今日の日付：入力済みなら履歴から読み込む
@@ -1524,6 +1544,7 @@ function calActionEdit() {
         document.getElementById('btn').textContent = '✏️ 修正内容を送信（上書き保存）';
         document.getElementById('btn').style.background = '#303f9f';
         document.getElementById('btn-revert').style.display = 'block';
+      document.getElementById('btn-cancel-edit').style.display = 'block';
         syncNoticeFromComment();
         updateSummary();
         showLoadMsg('✅ 本日のデータを読み込みました。修正して送信してください。', 'ok');
@@ -1584,20 +1605,22 @@ function calActionEdit() {
     if (entry.afternoonStaff)  document.getElementById('afternoon-staff').value  = entry.afternoonStaff;
     if (entry.afternoonComment){ document.getElementById('afternoon-comment').value = entry.afternoonComment; updateCharCount('afternoon-comment', 'afternoon-count'); }
     document.getElementById('edit-date').value = calPopupDate;
-    editMode = true;
-    setEditDateBanner(calPopupDate);
+    viewMode = true;
+    editMode = false;
+    loadedViewDate = calPopupDate;
     originalData = Object.assign({}, entry);
-    document.getElementById('btn').textContent = '✏️ 修正内容を送信（上書き保存）';
-    document.getElementById('btn').style.background = '#303f9f';
-    document.getElementById('btn-revert').style.display = 'block';
-    showLoadMsg('✅ データを読み込みました。修正して送信してください。', 'ok');
+    setEditDateBanner('');
     syncNoticeFromComment();
     updateSummary();
-    document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
+    document.getElementById('input-section').style.display = 'none';
+    renderViewSummary(entry, calPopupDate);
+    document.getElementById('view-summary').style.display = 'block';
+    showLoadMsg('', '');
+    document.getElementById('view-summary').scrollIntoView({behavior:'smooth'});
   } else {
-    // 履歴になければGASから読み込み（従来の動作）
+    // 履歴になければGASから読み込み
     document.getElementById('edit-date').value = calPopupDate;
-    loadData();
+    loadData(true);
   }
 }
 
@@ -2148,6 +2171,16 @@ function clearMsg() {
   el.textContent = '';
 }
 
+// 過去データ検索欄の折りたたみ開閉
+function togglePastData() {
+  var body = document.getElementById('pastdata-body');
+  var arrow = document.getElementById('pastdata-arrow');
+  if (!body) return;
+  var willOpen = (body.style.display === 'none' || body.style.display === '');
+  body.style.display = willOpen ? 'block' : 'none';
+  if (arrow) arrow.textContent = willOpen ? '▲' : '▼';
+}
+
 function setEditDateBanner(dateStr) {
   var b = document.getElementById('edit-date-banner');
   if (!b) return;
@@ -2167,9 +2200,45 @@ function setEditDateBanner(dateStr) {
 }
 
 // 「見るだけ」から編集モードに切り替え
+// 過去データ読み込み時の「見るだけ」表示（薄黄色）を作る
+function renderViewSummary(d, date) {
+  var el = document.getElementById('view-summary');
+  if (!el) return;
+  var yen = function(v){ return (v !== '' && v != null && !isNaN(parseInt(v))) ? '¥' + parseInt(v).toLocaleString() : '-'; };
+  var num = function(v){ return (v !== '' && v != null && !isNaN(parseInt(v))) ? parseInt(v).toLocaleString() : '-'; };
+  var staff = '';
+  try { var hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); var e = hist.find(function(x){ return x.date === date; }); if (e) staff = e.staff || ''; } catch(_) {}
+  var notice = (document.getElementById('morning-comment').value || '').trim();
+  var isDetail = (currentStore === '大須' || currentStore === '鎌倉');
+  var h = '';
+  h += '<h2 style="color:#5a3e00;border-bottom-color:#ffe082;">📄 ' + date + ' の内容（表示のみ）</h2>';
+  h += '<div style="font-size:15px;line-height:2;color:#333;">';
+  if (staff) h += '<div>担当者：' + staff + '</div>';
+  h += '<div>天気：' + (d.weather || '-') + '</div>';
+  h += '<div>純売上：' + yen(d.netSales) + '</div>';
+  h += '<div>組数：' + num(d.kumi) + '　男：' + num(d.male) + '　女：' + num(d.female) + '</div>';
+  h += '<div>売上10%：' + yen(d.sales10) + '　消費税：' + yen(d.tax10) + '</div>';
+  h += '<div>売上8%：' + yen(d.sales8) + '　消費税：' + yen(d.tax8) + '</div>';
+  h += '<div>クレジット：' + yen(d.credit) + '　ポイント：' + yen(d.point) + '</div>';
+  h += '<div>電子マネー：' + yen(d.emoney) + '　商品券：' + yen(d.coupon) + '</div>';
+  if (!isDetail) {
+    h += '<div>物販：' + yen(d.buhin) + '</div>';
+  } else {
+    h += '<div>物販(現金)：' + yen(d.buhinCash) + '　(現金以外)：' + yen(d.buhinOther) + '</div>';
+    if (d.buhinBrand) h += '<div>ブランド：' + d.buhinBrand + '</div>';
+  }
+  if (notice) h += '<div style="margin-top:6px;"><b>重要連絡事項：</b>' + notice + '</div>';
+  h += '</div>';
+  h += '<button onclick="enterEditFromView()" style="width:100%;padding:14px;background:#303f9f;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;margin-top:14px;">✏️ この内容を編集する</button>';
+  h += '<button onclick="closeView()" style="width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">✖ 閉じる</button>';
+  el.innerHTML = h;
+}
+
 function enterEditFromView() {
   viewMode = false;
   editMode = true;
+  document.getElementById('view-summary').style.display = 'none';
+  document.getElementById('input-section').style.display = '';
   document.getElementById('edit-date').value = loadedViewDate;
   setEditDateBanner(loadedViewDate);
   var b = document.getElementById('btn');
@@ -2177,8 +2246,7 @@ function enterEditFromView() {
   b.textContent = '✏️ 修正内容を送信（上書き保存）';
   b.style.background = '#303f9f';
   document.getElementById('btn-revert').style.display = 'block';
-  document.getElementById('btn-edit-loaded').style.display = 'none';
-  document.getElementById('btn-close-view').style.display = 'none';
+  document.getElementById('btn-cancel-edit').style.display = 'block';
   showLoadMsg('✏️ 編集モードにしました。修正して送信してください。', 'ok');
   document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
 }
@@ -2201,6 +2269,9 @@ function resetEditMode() {
   document.getElementById('btn-revert').style.display = 'none';
   var be = document.getElementById('btn-edit-loaded'); if (be) be.style.display = 'none';
   var bc = document.getElementById('btn-close-view'); if (bc) bc.style.display = 'none';
+  var bx = document.getElementById('btn-cancel-edit'); if (bx) bx.style.display = 'none';
+  var isec = document.getElementById('input-section'); if (isec) isec.style.display = '';
+  var vsum = document.getElementById('view-summary'); if (vsum) vsum.style.display = 'none';
   document.getElementById('edit-date').value = '';
   setEditDateBanner('');
   showLoadMsg('', '');
