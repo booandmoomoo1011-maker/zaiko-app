@@ -116,16 +116,16 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
 <div class="section">
   <div class="section-title">▶ 店舗を開く</div>
   <div class="store-grid">
-    <button class="store-btn" style="background:linear-gradient(135deg,#5a3e00,#8d6e1a);" onclick="openStore('那古野')">
+    <button class="store-btn" style="background:#fff9c4;color:#5a3e00;" onclick="openStore('那古野')">
       那古野<span class="sub">タップして開く</span>
     </button>
-    <button class="store-btn" style="background:linear-gradient(135deg,#880e4f,#c2185b);" onclick="openStore('大須')">
+    <button class="store-btn" style="background:#fce4ec;color:#880e4f;" onclick="openStore('大須')">
       大須<span class="sub">タップして開く</span>
     </button>
-    <button class="store-btn" style="background:linear-gradient(135deg,#01579b,#0288d1);" onclick="openStore('鉄板')">
+    <button class="store-btn" style="background:#e1f5fe;color:#01579b;" onclick="openStore('鉄板')">
       鉄板<span class="sub">タップして開く</span>
     </button>
-    <button class="store-btn" style="background:linear-gradient(135deg,#4a148c,#7b1fa2);" onclick="openStore('鎌倉')">
+    <button class="store-btn" style="background:#f3e5f5;color:#4a148c;" onclick="openStore('鎌倉')">
       鎌倉<span class="sub">タップして開く</span>
     </button>
   </div>
@@ -177,10 +177,10 @@ import { getDatabase, ref, onValue } from 'firebase/database';
 
 const STORE_KEY  = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLOR = {
-  '那古野': '#5a3e00',
-  '大須':   '#880e4f',
-  '鉄板':   '#01579b',
-  '鎌倉':   '#4a148c'
+  '那古野': '#f57f17',
+  '大須':   '#c2185b',
+  '鉄板':   '#0277bd',
+  '鎌倉':   '#6a1b9a'
 };
 const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html';
 const STORES_ORDER = ['那古野','大須','鉄板','鎌倉'];
