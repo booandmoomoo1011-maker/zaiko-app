@@ -177,17 +177,17 @@ import { getDatabase, ref, onValue } from 'firebase/database';
 
 const STORE_KEY  = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLOR = {
-  '那古野': '#f9c500',
-  '大須':   '#c2185b',
-  '鉄板':   '#0277bd',
-  '鎌倉':   '#6a1b9a'
+  '那古野': '#fff9c4',
+  '大須':   '#fce4ec',
+  '鉄板':   '#e1f5fe',
+  '鎌倉':   '#f3e5f5'
 };
-// バッジ文字色（淡い色の店舗だけ濃い文字にして読みやすく）
+// バッジ・ボタンの文字色（店舗ボタンと同じ濃い色で読みやすく）
 const STORE_TEXT = {
   '那古野': '#5a3e00',
-  '大須':   '#ffffff',
-  '鉄板':   '#ffffff',
-  '鎌倉':   '#ffffff'
+  '大須':   '#880e4f',
+  '鉄板':   '#01579b',
+  '鎌倉':   '#4a148c'
 };
 const APP_URL = 'https://zaiko-app-two.vercel.app/sales-input.html';
 const STORES_ORDER = ['那古野','大須','鉄板','鎌倉'];
