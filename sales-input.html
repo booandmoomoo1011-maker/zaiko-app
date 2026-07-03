@@ -439,7 +439,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.62</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.63</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -785,7 +785,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.62';
+const APP_VERSION = 'v2.63';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -2335,7 +2335,7 @@ function renderViewSummary(d, date) {
     h += '<div>物販(現金)：' + yen(d.buhinCash) + '　(現金以外)：' + yen(d.buhinOther) + '</div>';
     if (d.buhinBrand) h += '<div>ブランド：' + d.buhinBrand + '</div>';
   }
-  if (notice) h += '<div style="margin-top:6px;"><b>重要連絡事項：</b>' + notice + '</div>';
+  if (notice) h += '<div style="margin-top:6px;"><b>重要伝達事項：</b>' + notice + '</div>';
   h += '</div>';
   h += '<button onclick="enterEditFromView()" style="width:100%;padding:14px;background:#303f9f;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;margin-top:14px;">✏️ この内容を編集する</button>';
   h += '<button onclick="closeView()" style="width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">✖ 閉じる</button>';
