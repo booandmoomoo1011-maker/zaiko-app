@@ -439,7 +439,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.60</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.62</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -672,7 +672,8 @@
 
     <!-- 重要伝達事項 -->
     <div class="card" id="card-nippo" style="background:#e1f5fe;border:1px solid #b3e5fc;">
-      <h2>📝 重要伝達事項</h2>
+      <h2 style="cursor:pointer;user-select:none;" onclick="toggleNippo()">📝 重要伝達事項　<span id="nippo-arrow">▼</span></h2>
+      <div id="nippo-body" style="display:none;">
       <p style="font-size:12px;color:#888;margin-bottom:6px;">当てはまるものを選んでください（複数選択できます）</p>
       <div style="display:flex;flex-direction:column;gap:7px;">
         <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">
@@ -705,6 +706,7 @@
         </label>
         <textarea id="notice-other-text" class="nippo-comment" maxlength="50" placeholder="その他の内容を記入（最大50文字）" oninput="updateImportantNotice()" style="height:90px;"></textarea>
       </div>
+      </div><!-- /nippo-body -->
       <!-- データ保存用（今までのコメント欄と同じ場所に保存・非表示） -->
       <textarea id="morning-comment" style="display:none;"></textarea>
       <textarea id="afternoon-comment" style="display:none;"></textarea>
@@ -783,7 +785,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.60';
+const APP_VERSION = 'v2.62';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -2014,18 +2016,32 @@ function updateSummary() {
     '<div class="sum-row"><span class="sum-key">担当者名</span><span class="' + (staffNameVal ? 'sum-val' : 'sum-val empty') + '">' + (staffNameVal || '未入力') + '</span></div>' +
     '<div class="sum-row"><span class="sum-key">天気</span><span class="' + (weatherVal ? 'sum-val' : 'sum-val empty') + '">' + (weatherVal || '-') + '</span></div>'
   );
-  html += sec('👥 客数', ppl('kumi','組') + ppl('male','名') + ppl('female','名'));
-  html += sec('💴 売上', yen('netSales') + yen('sales10') + yen('tax10') + yen('sales8') + yen('tax8'));
-  html += sec('💳 支払い方法', yen('credit') + yen('point') + yen('emoney') + yen('coupon'));
-
-  let buhinHtml = '';
-  if (!isDetail) {
-    buhinHtml = yen('buhin');
-  } else {
-    buhinHtml = yen('buhinCash') + yen('buhinOther');
-    buhinHtml += '<div class="sum-row"><span class="sum-key">ブランド名</span><span class="' + (brandVal ? 'sum-val' : 'sum-val empty') + '">' + (brandVal || '-') + '</span></div>';
+  var fsS = loadFieldSettings(currentStore);
+  if (fsS.kyakusu !== false) {
+    html += sec('👥 客数', ppl('kumi','組') + ppl('male','名') + ppl('female','名'));
   }
-  html += sec('🛍️ 物販', buhinHtml);
+  var salesRows = yen('netSales');
+  if (fsS.tax !== false) {
+    salesRows += yen('sales10') + yen('tax10') + yen('sales8') + yen('tax8');
+  }
+  html += sec('💴 売上', salesRows);
+  var payRows = '';
+  if (fsS.credit !== false) payRows += yen('credit');
+  if (fsS.point  !== false) payRows += yen('point');
+  if (fsS.emoney !== false) payRows += yen('emoney');
+  if (fsS.coupon !== false) payRows += yen('coupon');
+  if (payRows) html += sec('💳 支払い方法', payRows);
+
+  if (fsS.buhin !== false) {
+    let buhinHtml = '';
+    if (!isDetail) {
+      buhinHtml = yen('buhin');
+    } else {
+      buhinHtml = yen('buhinCash') + yen('buhinOther');
+      buhinHtml += '<div class="sum-row"><span class="sum-key">ブランド名</span><span class="' + (brandVal ? 'sum-val' : 'sum-val empty') + '">' + (brandVal || '-') + '</span></div>';
+    }
+    html += sec('🛍️ 物販', buhinHtml);
+  }
 
   document.getElementById('summary-content').innerHTML = html;
 
@@ -2249,6 +2265,16 @@ function clearMsg() {
   const el = document.getElementById('msg');
   el.style.display = 'none';
   el.textContent = '';
+}
+
+// 重要伝達事項の折りたたみ開閉
+function toggleNippo() {
+  var body = document.getElementById('nippo-body');
+  var arrow = document.getElementById('nippo-arrow');
+  if (!body) return;
+  var willOpen = (body.style.display === 'none' || body.style.display === '');
+  body.style.display = willOpen ? 'block' : 'none';
+  if (arrow) arrow.textContent = willOpen ? '▲' : '▼';
 }
 
 // 過去データ検索欄の折りたたみ開閉
