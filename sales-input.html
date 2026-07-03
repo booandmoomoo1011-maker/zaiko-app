@@ -2141,3 +2141,366 @@ async function submitData() {
       buhin:      n('buhin'),
       buhinCash:  n('buhinCash'),
     
+      buhinOther: n('buhinOther'),
+      buhinBrand: s('buhinBrand'),
+      weather:    s('weather')
+    }
+  };
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.success) {
+      markEntered(date);
+      const nippoPayload = {
+        store: currentStore, date: date,
+        morningStaff:     staffName,
+        morningComment:   document.getElementById('morning-comment').value.trim(),
+        afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
+        afternoonComment: document.getElementById('afternoon-comment').value.trim()
+      };
+      saveHistory(currentStore, {
+        date: date, staff: staffName, time: submitTime,
+        netSales: n('netSales'), kumi: n('kumi'),
+        male: n('male'), female: n('female'),
+        weather: s('weather'),
+        sales10: n('sales10'), tax10: n('tax10'),
+        sales8:  n('sales8'),  tax8:  n('tax8'),
+        credit:  n('credit'),  point: n('point'),
+        emoney:  n('emoney'),  coupon: n('coupon'),
+        buhin: n('buhin'), buhinCash: n('buhinCash'),
+        buhinOther: n('buhinOther'), buhinBrand: s('buhinBrand'),
+        morningStaff:     nippoPayload.morningStaff,
+        morningComment:   nippoPayload.morningComment,
+        afternoonStaff:   nippoPayload.afternoonStaff,
+        afternoonComment: nippoPayload.afternoonComment
+      });
+      resetEditMode();
+      fetch(NIPPO_GAS_URL, { method: 'POST', body: JSON.stringify(nippoPayload) }).catch(() => {});
+      clearMorningReport(currentStore, date);
+      clearForm();
+      clearAutoSave();
+      renderCalendar();
+      renderHistory();
+      showDoneScreen(currentStore, date, payload.values.netSales);
+    } else {
+      showMsg('❌ エラー: ' + result.error, 'ng');
+    }
+  } catch(err) {
+    showMsg('📤 送信しました。スプレッドシートで内容をご確認ください。', 'ok');
+    markEntered(date);
+    saveHistory(currentStore, {
+      date: date, staff: staffName, time: submitTime,
+      netSales: n('netSales'), kumi: n('kumi'),
+      male: n('male'), female: n('female'),
+      weather: s('weather'),
+      sales10: n('sales10'), tax10: n('tax10'),
+      sales8:  n('sales8'),  tax8:  n('tax8'),
+      credit:  n('credit'),  point: n('point'),
+      emoney:  n('emoney'),  coupon: n('coupon'),
+      buhin: n('buhin'), buhinCash: n('buhinCash'),
+      buhinOther: n('buhinOther'), buhinBrand: s('buhinBrand'),
+      morningStaff:     document.getElementById('morning-staff').value.trim(),
+      morningComment:   document.getElementById('morning-comment').value.trim(),
+      afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
+      afternoonComment: document.getElementById('afternoon-comment').value.trim()
+    });
+    resetEditMode();
+    clearForm();
+    clearAutoSave();
+    renderCalendar();
+    renderHistory();
+    showDoneScreen(currentStore, date, payload.values.netSales);
+  }
+
+  btn.disabled = false;
+  btn.textContent = editMode ? '✏️ 修正内容を送信（上書き保存）' : 'スプレッドシートに送信';
+}
+
+function renderDoneStars() {
+  const container = document.getElementById('done-stars');
+  if (!container) return;
+  const total = 16, r = 76, cx = 90, cy = 90;
+  let svg = '<svg width="180" height="180" viewBox="0 0 180 180" style="position:absolute;inset:0;">';
+  for (let i = 0; i < total; i++) {
+    const angle = (i / total) * 2 * Math.PI - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    svg += '<text x="' + x + '" y="' + y + '" font-size="11" fill="rgba(255,255,255,0.9)" text-anchor="middle" dominant-baseline="middle">✦</text>';
+  }
+  svg += '</svg>';
+  container.innerHTML = svg;
+}
+
+function showDoneScreen(store, date, netSales) {
+  const colors = {
+    '大須':  { bg: '#880e4f', sub: '#fce4ec' },
+    '那古野':{ bg: '#5a3e00', sub: '#fff9c4' },
+    '鉄板':  { bg: '#01579b', sub: '#e1f5fe' },
+    '鎌倉':  { bg: '#4a148c', sub: '#f3e5f5' }
+  };
+  const c = colors[store] || { bg: '#1a237e', sub: '#ffffff' };
+  const el = document.getElementById('done-screen');
+  el.style.background = c.bg;
+  el.style.display = 'flex';
+  renderDoneStars();
+  document.getElementById('done-store').textContent = store + '店';
+  document.getElementById('done-date').textContent  = date;
+  document.getElementById('done-sales').textContent = netSales ? '売上 ¥' + Number(netSales).toLocaleString() : '';
+  document.getElementById('done-sales').style.color = c.sub;
+}
+function closeDoneScreen() {
+  document.getElementById('done-screen').style.display = 'none';
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+}
+function clearMsg() {
+  const el = document.getElementById('msg');
+  el.style.display = 'none';
+  el.textContent = '';
+}
+
+// 重要伝達事項の折りたたみ開閉
+function toggleNippo() {
+  var body = document.getElementById('nippo-body');
+  var arrow = document.getElementById('nippo-arrow');
+  if (!body) return;
+  var willOpen = (body.style.display === 'none' || body.style.display === '');
+  body.style.display = willOpen ? 'block' : 'none';
+  if (arrow) arrow.textContent = willOpen ? '▲' : '▼';
+}
+
+// 過去データ検索欄の折りたたみ開閉
+function togglePastData() {
+  var body = document.getElementById('pastdata-body');
+  var arrow = document.getElementById('pastdata-arrow');
+  if (!body) return;
+  var willOpen = (body.style.display === 'none' || body.style.display === '');
+  body.style.display = willOpen ? 'block' : 'none';
+  if (arrow) arrow.textContent = willOpen ? '▲' : '▼';
+}
+
+function setEditDateBanner(dateStr) {
+  var b = document.getElementById('edit-date-banner');
+  if (!b) return;
+  if (dateStr) {
+    var label = dateStr;
+    var p = String(dateStr).split('-');
+    if (p.length === 3) {
+      var dt = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+      var dow = ['日','月','火','水','木','金','土'][dt.getDay()];
+      label = Number(p[1]) + '月' + Number(p[2]) + '日（' + dow + '）';
+    }
+    b.textContent = '✏️ ' + label + '　編集中';
+    b.style.display = 'block';
+    var isec = document.getElementById('input-section'); if (isec) isec.classList.add('editing-mode');
+  } else {
+    b.style.display = 'none';
+    var isecOff = document.getElementById('input-section'); if (isecOff) isecOff.classList.remove('editing-mode');
+  }
+}
+
+
+// 「見るだけ」から編集モードに切り替え
+// 過去データ読み込み時の「見るだけ」表示（薄黄色）を作る
+function renderViewSummary(d, date) {
+  var el = document.getElementById('view-summary');
+  if (!el) return;
+  var yen = function(v){ return (v !== '' && v != null && !isNaN(parseInt(v))) ? '¥' + parseInt(v).toLocaleString() : '-'; };
+  var num = function(v){ return (v !== '' && v != null && !isNaN(parseInt(v))) ? parseInt(v).toLocaleString() : '-'; };
+  var staff = '';
+  try { var hist = JSON.parse(localStorage.getItem('history_' + currentStore) || '[]'); var e = hist.find(function(x){ return x.date === date; }); if (e) staff = e.staff || ''; } catch(_) {}
+  var notice = (document.getElementById('morning-comment').value || '').trim();
+  var isDetail = (currentStore === '大須' || currentStore === '鎌倉');
+  var h = '';
+  h += '<h2 style="color:#5a3e00;border-bottom-color:#ffe082;">📄 ' + date + ' の内容（表示のみ）</h2>';
+  h += '<div style="font-size:15px;line-height:2;color:#333;">';
+  if (staff) h += '<div>担当者：' + staff + '</div>';
+  h += '<div>天気：' + (d.weather || '-') + '</div>';
+  h += '<div>純売上：' + yen(d.netSales) + '</div>';
+  h += '<div>組数：' + num(d.kumi) + '　男：' + num(d.male) + '　女：' + num(d.female) + '</div>';
+  h += '<div>売上10%：' + yen(d.sales10) + '　消費税：' + yen(d.tax10) + '</div>';
+  h += '<div>売上8%：' + yen(d.sales8) + '　消費税：' + yen(d.tax8) + '</div>';
+  h += '<div>クレジット：' + yen(d.credit) + '　ポイント：' + yen(d.point) + '</div>';
+  h += '<div>電子マネー：' + yen(d.emoney) + '　商品券：' + yen(d.coupon) + '</div>';
+  if (!isDetail) {
+    h += '<div>物販：' + yen(d.buhin) + '</div>';
+  } else {
+    h += '<div>物販(現金)：' + yen(d.buhinCash) + '　(現金以外)：' + yen(d.buhinOther) + '</div>';
+    if (d.buhinBrand) h += '<div>ブランド：' + d.buhinBrand + '</div>';
+  }
+  if (notice) h += '<div style="margin-top:6px;"><b>重要伝達事項：</b>' + notice + '</div>';
+  h += '</div>';
+  h += '<button onclick="enterEditFromView()" style="width:100%;padding:14px;background:#303f9f;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;margin-top:14px;">✏️ この内容を編集する</button>';
+  h += '<button onclick="closeView()" style="width:100%;padding:12px;background:#fff;color:#757575;border:2px solid #bdbdbd;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">✖ 閉じる</button>';
+  el.innerHTML = h;
+}
+
+function enterEditFromView() {
+  viewMode = false;
+  editMode = true;
+  document.getElementById('view-summary').style.display = 'none';
+  document.getElementById('input-section').style.display = '';
+  document.getElementById('edit-date').value = loadedViewDate;
+  setEditDateBanner(loadedViewDate);
+  var b = document.getElementById('btn');
+  b.style.display = 'block';
+  b.textContent = '✏️ 修正内容を送信（上書き保存）';
+  b.style.background = '#303f9f';
+  document.getElementById('btn-revert').style.display = 'block';
+  document.getElementById('btn-cancel-edit').style.display = 'block';
+  showLoadMsg('✏️ 編集モードにしました。修正して送信してください。', 'ok');
+  document.getElementById('form-area').scrollIntoView({behavior:'smooth'});
+}
+
+// 「見るだけ」表示を閉じる
+function closeView() {
+  clearForm();
+  resetEditMode();
+  syncNoticeFromComment();
+}
+
+function resetEditMode() {
+  editMode = false;
+  viewMode = false;
+  loadedViewDate = '';
+  originalData = null;
+  document.getElementById('btn').style.display = 'block';
+  document.getElementById('btn').textContent = '📤 スプレッドシートに送信';
+  document.getElementById('btn').style.background = '#c62828';
+  document.getElementById('btn-revert').style.display = 'none';
+  var be = document.getElementById('btn-edit-loaded'); if (be) be.style.display = 'none';
+  var bc = document.getElementById('btn-close-view'); if (bc) bc.style.display = 'none';
+  var bx = document.getElementById('btn-cancel-edit'); if (bx) bx.style.display = 'none';
+  var isec = document.getElementById('input-section'); if (isec) isec.style.display = '';
+  var vsum = document.getElementById('view-summary'); if (vsum) vsum.style.display = 'none';
+  document.getElementById('edit-date').value = '';
+  setEditDateBanner('');
+  showLoadMsg('', '');
+}
+
+function revertToOriginal() {
+  if (!originalData) return;
+  if (!confirm('読み込んだデータに戻しますか？\n（現在の入力内容は消えます）')) return;
+  const setN = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (val === '' || val === null || val === undefined) ? '' : val;
+  };
+  setN('kumi',       originalData.kumi);
+  setN('male',       originalData.male);
+  setN('female',     originalData.female);
+  setN('netSales',   originalData.netSales);
+  setN('sales10',    originalData.sales10);
+  setN('tax10',      originalData.tax10);
+  setN('sales8',     originalData.sales8);
+  setN('tax8',       originalData.tax8);
+  setN('credit',     originalData.credit);
+  setN('point',      originalData.point);
+  setN('emoney',     originalData.emoney);
+  setN('coupon',     originalData.coupon);
+  setN('buhin',      originalData.buhin);
+  setN('buhinCash',  originalData.buhinCash);
+  setN('buhinOther', originalData.buhinOther);
+  setN('buhinBrand', originalData.buhinBrand);
+  setN('weather',    originalData.weather);
+  updateSummary();
+  showMsg('↩️ 読み込んだデータに戻しました', 'ok');
+}
+
+// 重要伝達事項：チェック内容をコメント欄（morning-comment）にまとめて保存
+function updateImportantNotice() {
+  var parts = [];
+  document.querySelectorAll('.notice-chk').forEach(function(c){ if (c.checked) parts.push(c.value); });
+  var otherChk = document.getElementById('notice-other-chk');
+  var otherTxt = document.getElementById('notice-other-text');
+  if (otherChk && otherChk.checked) {
+    parts.push('その他：' + ((otherTxt && otherTxt.value ? otherTxt.value : '').trim()));
+  }
+  var mc = document.getElementById('morning-comment');
+  if (mc) mc.value = parts.join(' / ');
+}
+// 保存済みコメントからチェック状態を復元
+function syncNoticeFromComment() {
+  var mc = document.getElementById('morning-comment');
+  var txt = mc ? (mc.value || '') : '';
+  var otherIdx = txt.indexOf('その他：');
+  var base = (otherIdx !== -1) ? txt.substring(0, otherIdx) : txt;
+  document.querySelectorAll('.notice-chk').forEach(function(c){
+    c.checked = base.indexOf(c.value) !== -1;
+  });
+  var otherChk = document.getElementById('notice-other-chk');
+  var otherTxt = document.getElementById('notice-other-text');
+  if (otherIdx !== -1) {
+    if (otherChk) otherChk.checked = true;
+    if (otherTxt) otherTxt.value = txt.substring(otherIdx + 4);
+  } else {
+    if (otherChk) otherChk.checked = false;
+    if (otherTxt) otherTxt.value = '';
+  }
+}
+
+function updateCharCount(taId, countId) {
+  var elc = document.getElementById(countId);
+  if (!elc) return;
+  const len = document.getElementById(taId).value.length;
+  const el = document.getElementById(countId);
+  el.textContent = len + ' / 100';
+  el.className = 'char-count' + (len > 100 ? ' over' : '');
+}
+function saveMorningReport() {
+  if (!currentStore) { showMsg('先に店舗を選択してください', 'ng'); return; }
+  const date = document.getElementById('date').value;
+  if (!date) { showMsg('日付を先に選択してください', 'ng'); return; }
+  const staff   = document.getElementById('morning-staff').value.trim();
+  const comment = document.getElementById('morning-comment').value.trim();
+  localStorage.setItem('nippo_morning_' + currentStore + '_' + date, JSON.stringify({ staff, comment }));
+  const msg = document.getElementById('morning-saved-msg');
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; }, 3000);
+}
+function loadMorningReport(store, date) {
+  const saved = localStorage.getItem('nippo_morning_' + store + '_' + date);
+  if (saved) {
+    try {
+      const d = JSON.parse(saved);
+      document.getElementById('morning-staff').value   = d.staff   || '';
+      document.getElementById('morning-comment').value = d.comment || '';
+      updateCharCount('morning-comment', 'morning-count');
+    } catch(e) {}
+  }
+}
+function clearMorningReport(store, date) {
+  localStorage.removeItem('nippo_morning_' + store + '_' + date);
+}
+
+function clearForm() {
+  ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
+   'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand']
+    .forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('weather').value = '';
+  document.getElementById('staff-name').value = '';
+  document.getElementById('morning-staff').value = '';
+  document.getElementById('morning-comment').value = '';
+  document.getElementById('afternoon-staff').value = '';
+  document.getElementById('afternoon-comment').value = '';
+  updateCharCount('morning-comment', 'morning-count');
+  updateCharCount('afternoon-comment', 'afternoon-count');
+  syncNoticeFromComment();
+  const d = new Date();
+  document.getElementById('date').value =
+    d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+  document.getElementById('summary-card').style.display = 'none';
+}
+</script>
+</body>
+</html>
