@@ -438,7 +438,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.53</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.54</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -463,6 +463,14 @@
       <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">
         <input type="checkbox" id="toggle-buhin" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
         🛍️ 物販を表示する
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">
+        <input type="checkbox" id="toggle-tax" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
+        🧾 税区分（10%・8%の内訳）を表示する
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;">
+        <input type="checkbox" id="toggle-payment" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
+        💳 支払い方法を表示する
       </label>
     </div>
   </div>
@@ -575,6 +583,7 @@
         <div class="lbl">純売上</div>
         <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="netSales" placeholder="¥ 0" min="0"></div>
       </div>
+      <div id="tax-section">
       <div class="row">
         <div class="lbl">売上（10%対象）</div>
         <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="sales10" placeholder="¥ 0" min="0"></div>
@@ -591,10 +600,11 @@
         <div class="lbl">消費税 8%</div>
         <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="tax8" placeholder="¥ 0" min="0"></div>
       </div>
+      </div><!-- /tax-section -->
     </div>
 
     <!-- 支払い方法 -->
-    <div class="card">
+    <div class="card" id="card-payment">
       <h2>💳 支払い方法</h2>
       <div class="row">
         <div class="lbl">クレジット</div>
@@ -743,7 +753,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.53';
+const APP_VERSION = 'v2.54';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -899,6 +909,8 @@ function openSettings() {
     var settings = loadFieldSettings(currentStore);
     document.getElementById('toggle-kyakusu').checked = settings.kyakusu;
     document.getElementById('toggle-buhin').checked   = settings.buhin;
+    document.getElementById('toggle-tax').checked     = settings.tax !== false;
+    document.getElementById('toggle-payment').checked = settings.payment !== false;
   } else {
     fsSection.style.display = 'none';
   }
@@ -988,18 +1000,21 @@ function getFieldSettingsKey(store) {
   return 'field_settings_' + store;
 }
 function loadFieldSettings(store) {
+  var def = { kyakusu: true, buhin: true, tax: true, payment: true };
   try {
     var saved = localStorage.getItem(getFieldSettingsKey(store));
-    if (saved) return JSON.parse(saved);
+    if (saved) return Object.assign(def, JSON.parse(saved));
   } catch(e) {}
-  // デフォルト：両方表示
-  return { kyakusu: true, buhin: true };
+  // デフォルト：すべて表示
+  return def;
 }
 function saveFieldSettings() {
   if (!currentStore) return;
   var settings = {
     kyakusu: document.getElementById('toggle-kyakusu').checked,
-    buhin:   document.getElementById('toggle-buhin').checked
+    buhin:   document.getElementById('toggle-buhin').checked,
+    tax:     document.getElementById('toggle-tax').checked,
+    payment: document.getElementById('toggle-payment').checked
   };
   try { localStorage.setItem(getFieldSettingsKey(currentStore), JSON.stringify(settings)); } catch(e) {}
   applyFieldSettings(settings);
@@ -1019,6 +1034,10 @@ function applyFieldSettings(settings) {
     if (buhinSimple && !buhinSimple.classList.contains('hidden')) buhinSimple.style.display = '';
     if (buhinDetail && !buhinDetail.classList.contains('hidden')) buhinDetail.style.display = '';
   }
+  var taxSection = document.getElementById('tax-section');
+  if (taxSection) taxSection.style.display = (settings.tax !== false) ? '' : 'none';
+  var paymentCard = document.getElementById('card-payment');
+  if (paymentCard) paymentCard.style.display = (settings.payment !== false) ? '' : 'none';
 }
 
 function checkAdminPw() {
