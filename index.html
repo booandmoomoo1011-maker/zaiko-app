@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.4';
+window.APP_VERSION = 'v10.5';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3379,6 +3379,59 @@ function saveWarabiEdit(){
   if(!inspector){showToast('検品者名を入力してください');return;}
   const records=loadWarabiRecords(); const idx=records.findIndex(r=>r.id===id);
   if(idx===-1){showToast('記録が見つかりません');return;}
+  const oldRec=records[idx];
+
+  // 品目または日付が変わった場合、在庫（NYUKA）を更新
+  if(oldRec.item!==item || oldRec.date!==date){
+    const oldStockId=WARABI_ITEM_MAP[oldRec.item];
+    const newStockId=WARABI_ITEM_MAP[item];
+    const qty=oldRec.qty||0;
+    const oldDateKey=oldRec.date.replace(/-/g,'/');
+    const newDateKey=date.replace(/-/g,'/');
+
+    // ── 古い在庫エントリを削除 ──
+    if(oldStockId&&qty>0){
+      if(oldDateKey===dateStr){
+        const arr=NYUKA[oldStockId]||[];
+        const i2=arr.findIndex(n=>n.qty===qty&&n.staff===oldRec.inspector);
+        if(i2!==-1)arr.splice(i2,1);
+        NYUKA[oldStockId]=arr;
+        renderNyuka(oldStockId);calcStock(oldStockId);saveDraft();
+      } else {
+        const h=loadHistory();
+        const hi=h.findIndex(r=>r.date===oldDateKey);
+        if(hi!==-1&&h[hi].nyuka&&h[hi].nyuka[oldStockId]){
+          const arr=h[hi].nyuka[oldStockId];
+          const i2=arr.findIndex(n=>n.qty===qty&&n.staff===oldRec.inspector);
+          if(i2!==-1)arr.splice(i2,1);
+          h[hi].nyuka[oldStockId]=arr;
+          saveHistory(h);
+          if(window.firebaseSave)window.firebaseSave(h);
+        }
+      }
+    }
+
+    // ── 新しい在庫エントリを追加 ──
+    if(newStockId&&qty>0){
+      if(newDateKey===dateStr){
+        if(!NYUKA[newStockId])NYUKA[newStockId]=[];
+        NYUKA[newStockId].push({qty,staff:inspector,date:newDateKey});
+        renderNyuka(newStockId);calcStock(newStockId);saveDraft();
+      } else {
+        const h=loadHistory();
+        const hi=h.findIndex(r=>r.date===newDateKey);
+        if(hi!==-1){
+          if(!h[hi].nyuka)h[hi].nyuka={};
+          if(!h[hi].nyuka[newStockId])h[hi].nyuka[newStockId]=[];
+          h[hi].nyuka[newStockId].push({qty,staff:inspector});
+          saveHistory(h);
+          if(window.firebaseSave)window.firebaseSave(h);
+        }
+      }
+      renderAllMonthlySummaryBadges();
+    }
+  }
+
   records[idx]={...records[idx],date,inspector,item,factory,inquiry,carrier,orderNo};
   saveWarabiRecords(records); document.getElementById('warabi-edit-modal').style.display='none';
   renderWarabiHistory(); showToast('✅ 編集を保存しました');
@@ -3601,6 +3654,11 @@ function resetTempInputRow(period){
   });
 }
 
+// ④冷凍欄でEnterを押したとき（何もせずフォーカスを外すだけ）
+function confirmTempInputAll(){
+  try{ document.activeElement.blur(); }catch(e){}
+}
+
 function setTempMinus(){
   _tempPickerSign = -1;
   try{
@@ -3628,6 +3686,14 @@ function selectTempValue(val){
     else{btn.style.background='#e8f5e9';btn.style.borderColor='#81c784';btn.style.color='#7a6000';}
   }
   closeTempPicker();
+}
+
+// temp-picker-modal の「マイナス（−）で登録」ボタン
+function setTempMinusAndConfirm(){
+  const raw = document.getElementById('temp-picker-input').value;
+  if(raw===''||isNaN(parseFloat(raw))){ showToast('温度を入力してください'); return; }
+  _tempPickerSign = -1;
+  confirmTempInput();
 }
 
 function confirmTempInput(){
