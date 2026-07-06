@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.5';
+window.APP_VERSION = 'v10.7';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1637,12 +1637,23 @@ function renderAll(){renderSimple();renderSales();}
 
 function renderSimple(){
   const wrap=document.getElementById('simple-wrap');
+  // 前日の在庫を取得
+  const _ph=loadHistory();
+  const _prevRec=_ph.find(r=>r.date!==dateStr);
   let html='<div class="card">';
   SIMPLE.forEach(it=>{
     if(editMode){
       const si2=SIMPLE;const sidx=si2.indexOf(it);html+=`<div class="item-row"><div class="sort-btns"><button class="sort-btn" onclick="moveItem('simple',${sidx},-1)">▲</button><button class="sort-btn" onclick="moveItem('simple',${sidx},1)">▼</button></div><input class="iname-edit" type="text" id="name_${it.id}" value="${esc(it.name)}"><button class="del-btn" onclick="delSimple('${it.id}')">🗑</button></div>`;
     } else {
-      const sv=document.getElementById("simple_"+it.id);const sval=sv?sv.value:"0";html+=`<div class="item-row"><span class="iname">${esc(it.name)}</span><input class="num-input" type="number" id="simple_${it.id}" value="${sval}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);checkSimpleLow('${it.id}');saveDraft()"></div>`;
+      const sv=document.getElementById("simple_"+it.id);const sval=sv?sv.value:"0";
+      // IDで前日値を取得、なければ品目名で再検索（品目を削除・再追加したIDが変わった場合の対策）
+      let prevVal=(_prevRec&&_prevRec.simple&&_prevRec.simple[it.id]!==undefined)?_prevRec.simple[it.id]:null;
+      if(prevVal===null&&_prevRec&&_prevRec.simpleItems&&_prevRec.simple){
+        const oldItem=(_prevRec.simpleItems||[]).find(si=>si.name===it.name);
+        if(oldItem&&_prevRec.simple[oldItem.id]!==undefined)prevVal=_prevRec.simple[oldItem.id];
+      }
+      const prevHtml=prevVal!==null?`<span style="font-size:11px;color:#999;margin-top:1px;display:block;text-align:right;">前日 ${prevVal}</span>`:'';
+      html+=`<div class="item-row"><span class="iname">${esc(it.name)}</span><div style="display:flex;flex-direction:column;align-items:flex-end;"><input class="num-input" type="number" id="simple_${it.id}" value="${sval}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);checkSimpleLow('${it.id}');saveDraft()">${prevHtml}</div></div>`;
     }
   });
   html+='</div>';
