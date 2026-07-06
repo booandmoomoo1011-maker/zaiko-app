@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.7';
+window.APP_VERSION = 'v10.10';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1006,6 +1006,11 @@ try {
       </select>
     </div>
     <div id="nyuka-item-buttons" style="padding:10px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surface);border-bottom:1px solid var(--border2);max-height:40vh;overflow-y:auto;"></div>
+    <!-- カレンダー/リスト切替 -->
+    <div style="padding:8px 16px;display:flex;gap:8px;background:var(--surface);border-bottom:1px solid var(--border2);">
+      <button id="nyuka-cal-btn" onclick="setNyukaView('calendar')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--green);font-family:inherit;background:var(--green);color:#fff;">📅 カレンダー</button>
+      <button id="nyuka-list-btn" onclick="setNyukaView('list')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border2);font-family:inherit;background:var(--surface);color:var(--text2);">📋 リスト</button>
+    </div>
     <div id="nyuka-history-content" style="padding:14px 16px 20px;"></div>
   </div>
 </div>
@@ -1208,7 +1213,7 @@ try {
           <input type="number" id="warabi-qty" class="warabi-input" placeholder="個数" min="1" step="1" inputmode="numeric" style="width:100%;box-sizing:border-box;">
         </div>
         <div class="warabi-field"><div class="warabi-label">お問い合わせ番号</div>
-          <input type="text" id="warabi-inquiry" class="warabi-input" placeholder="例：WB-2026-001">
+          <input type="text" id="warabi-inquiry" class="warabi-input" placeholder="例：WB-">
         </div>
         <div class="warabi-field"><div class="warabi-label">工場名</div>
           <select id="warabi-factory" class="warabi-select" style="width:100%;"></select>
@@ -1240,7 +1245,18 @@ try {
             <option value="">全品目</option>
           </select>
         </div>
-        <div id="warabi-history-list" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;"></div>
+        <!-- 月ナビゲーション -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">
+          <button onclick="changeWarabiMonth(-1)" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;padding:4px 12px;font-size:14px;cursor:pointer;color:#6a3faf;font-weight:700;">‹</button>
+          <span id="warabi-cal-month-label" style="flex:1;text-align:center;font-size:13px;font-weight:700;color:#4527a0;"></span>
+          <button onclick="changeWarabiMonth(1)" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;padding:4px 12px;font-size:14px;cursor:pointer;color:#6a3faf;font-weight:700;">›</button>
+        </div>
+        <!-- カレンダー/リスト切替 -->
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button id="warabi-cal-btn" onclick="setWarabiView('calendar')" style="flex:1;padding:6px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid #6a3faf;font-family:inherit;background:#6a3faf;color:#fff;">📅 カレンダー</button>
+          <button id="warabi-list-btn" onclick="setWarabiView('list')" style="flex:1;padding:6px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid #c9a8f0;font-family:inherit;background:#fff;color:#6a3faf;">📋 リスト</button>
+        </div>
+        <div id="warabi-history-list"></div>
       </div>
     </div>
   </div>
@@ -2033,6 +2049,7 @@ function showNyukaHistoryModal(){
   });
   _nyukaFilterItem = '';
   renderNyukaItemButtons();
+  _updateNyukaViewToggle();
   renderNyukaHistory();
 }
 
@@ -2077,6 +2094,8 @@ function renderNyukaItemButtons(){
 }
 
 let _nyukaFilterItem = '';
+let _nyukaViewMode = 'calendar';
+let _nyukaCalDayMap = {};
 function selectNyukaItem(id){
   _nyukaFilterItem = id;
   document.getElementById('nyuka-history-item').value = id;
@@ -2089,6 +2108,161 @@ function closeNyukaHistoryModal(e){
   document.getElementById('nyuka-history-modal').style.display = 'none';
 }
 
+function _updateNyukaViewToggle(){
+  const calBtn = document.getElementById('nyuka-cal-btn');
+  const listBtn = document.getElementById('nyuka-list-btn');
+  const mode = _nyukaViewMode;
+  if(calBtn){
+    calBtn.style.background = mode==='calendar'?'var(--green)':'var(--surface)';
+    calBtn.style.color = mode==='calendar'?'#fff':'var(--text2)';
+    calBtn.style.border = mode==='calendar'?'1.5px solid var(--green)':'1.5px solid var(--border2)';
+  }
+  if(listBtn){
+    listBtn.style.background = mode==='list'?'var(--green)':'var(--surface)';
+    listBtn.style.color = mode==='list'?'#fff':'var(--text2)';
+    listBtn.style.border = mode==='list'?'1.5px solid var(--green)':'1.5px solid var(--border2)';
+  }
+}
+
+function setNyukaView(mode){
+  _nyukaViewMode = mode;
+  _updateNyukaViewToggle();
+  renderNyukaHistory();
+}
+
+function renderNyukaCalendarView(ym, y, m, fm, filterItem, monthLabel){
+  const el = document.getElementById('nyuka-history-content');
+  const todayISO = new Date().toISOString().slice(0,10);
+  const dayMap = {};
+
+  // わらび餅エントリーを収集
+  if(!filterItem || filterItem.startsWith('warabi::')){
+    const warabiName = filterItem ? filterItem.replace('warabi::','') : '';
+    const allW = (typeof loadWarabiRecords==='function') ? loadWarabiRecords() : [];
+    const filteredW = allW.filter(r => r.date && r.date.startsWith(ym) && (warabiName ? r.item===warabiName : true));
+    filteredW.forEach(r => {
+      const d = r.date;
+      if(!dayMap[d]) dayMap[d] = [];
+      dayMap[d].push({isWarabi:true, itemName:r.item||'わらび餅', qty:r.qty||0, staff:r.inspector||''});
+    });
+  }
+
+  // 売上/NYUKA エントリーを収集
+  if(!filterItem || !filterItem.startsWith('warabi::')){
+    const allH = loadHistory();
+    const monthH = allH.filter(r => r.date.startsWith(fm));
+    monthH.forEach(r => {
+      const nyuka = r.nyuka || {};
+      Object.keys(nyuka).forEach(iid => {
+        if(filterItem && iid!==filterItem) return;
+        const sItem = SALES.find(x=>x.id===iid)||(r.salesItems||[]).find(x=>x.id===iid);
+        const iname = sItem?sItem.name:iid;
+        nyuka[iid].forEach((n,ni) => {
+          const d = n.date.includes('-')?n.date:n.date.replace(/\//g,'-');
+          if(!dayMap[d]) dayMap[d] = [];
+          dayMap[d].push({itemId:iid,itemName:iname,date:d,qty:n.qty,staff:n.staff||'',src:'hist',histDate:r.date,entryIdx:ni});
+        });
+      });
+    });
+    SALES.forEach(it => {
+      if(filterItem && it.id!==filterItem) return;
+      (NYUKA[it.id]||[]).forEach((n,ni) => {
+        const isoDate = n.date.includes('-')?n.date:n.date.replace(/\//g,'-');
+        if(!isoDate.replace(/-/g,'/').startsWith(fm)) return;
+        if(!dayMap[isoDate]) dayMap[isoDate] = [];
+        dayMap[isoDate].push({itemId:it.id,itemName:it.name,date:isoDate,qty:n.qty,staff:n.staff||'',src:'today',todayIdx:ni});
+      });
+    });
+  }
+
+  _nyukaCalDayMap = dayMap;
+  _nyukaCalYM = [y, m];
+
+  const firstDay = new Date(y, m-1, 1).getDay();
+  const lastDate = new Date(y, m, 0).getDate();
+  const dayNames = ['日','月','火','水','木','金','土'];
+  const hasAny = Object.keys(dayMap).length > 0;
+
+  let html = `<div>`;
+  html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;">`;
+  dayNames.forEach((d, i) => {
+    const color = i===0?'#c04000':i===6?'#1a5fa8':'var(--text2)';
+    html += `<div style="text-align:center;font-size:11px;font-weight:700;color:${color};padding:6px 0;">${d}</div>`;
+  });
+  for(let i=0; i<firstDay; i++) html += `<div></div>`;
+  for(let d=1; d<=lastDate; d++){
+    const dateISO = y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const entries = dayMap[dateISO] || [];
+    const hasRecord = entries.length > 0;
+    const isToday = dateISO === todayISO;
+    const dow = (firstDay + d - 1) % 7;
+    const isSun = dow === 0, isSat = dow === 6;
+    let cellBg, numColor, dotColor;
+    if(isToday){
+      cellBg = 'background:#1a5fa8;border-radius:10px;';
+      numColor = '#fff';
+      dotColor = hasRecord ? '#90ee90' : 'transparent';
+    } else if(hasRecord){
+      cellBg = 'background:var(--blue-light);border-radius:10px;border:1px solid var(--blue-bd);';
+      numColor = isSun?'#c04000':isSat?'#1a5fa8':'var(--text)';
+      dotColor = 'var(--green)';
+    } else {
+      cellBg = '';
+      numColor = isSun?'#c04000':isSat?'#1a5fa8':'var(--text3)';
+      dotColor = 'transparent';
+    }
+    html += `<div onclick="${hasRecord?`showNyukaCalendarDay('${dateISO}')`:''}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px 2px;cursor:${hasRecord?'pointer':'default'};min-height:44px;${cellBg}">`;
+    html += `<span style="font-size:15px;font-weight:700;color:${numColor};line-height:1;">${d}</span>`;
+    html += `<span style="width:6px;height:6px;border-radius:50%;background:${dotColor};margin-top:3px;display:inline-block;"></span>`;
+    html += `</div>`;
+  }
+  html += `</div>`;
+  if(!hasAny) html += `<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">${monthLabel}の入荷記録はありません</div>`;
+  html += `<div id="nyuka-cal-day-detail" style="margin-top:8px;"></div>`;
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+let _nyukaCalYM = [0,0];
+function showNyukaCalendarDay(dateISO){
+  const detail = document.getElementById('nyuka-cal-day-detail');
+  if(!detail) return;
+  const entries = _nyukaCalDayMap[dateISO] || [];
+  if(!entries.length){ detail.innerHTML=''; return; }
+  const [y, m] = _nyukaCalYM;
+  const parts = dateISO.split('-');
+  const dd = parseInt(parts[2]);
+  const weekDay = '日月火水木金土'[new Date(y,m-1,dd).getDay()];
+  const isWeekend = new Date(y,m-1,dd).getDay()%6===0;
+  const dayTotal = entries.reduce((s,e)=>s+(e.qty||0),0);
+  let html = `<div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;">`;
+  html += `<div style="padding:9px 14px;display:flex;align-items:center;justify-content:space-between;background:var(--blue-light);border-bottom:1px solid var(--border);">`;
+  html += `<span style="font-size:14px;font-weight:700;color:${isWeekend?'#c04000':'var(--text)'};">${m}/${dd}（${weekDay}）</span>`;
+  html += `<span style="font-size:13px;font-weight:700;color:var(--blue);">計 ${dayTotal}個</span>`;
+  html += `</div><div style="padding:6px 0;">`;
+  entries.forEach((e,ei) => {
+    if(e.isWarabi){
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--border);">`;
+      html += `<span style="font-size:13px;font-weight:600;color:#4527a0;flex:1;">${esc(e.itemName)}</span>`;
+      html += `<span style="font-size:11px;color:#4527a0;background:#ede7f6;padding:2px 8px;border-radius:10px;">👤${esc(e.staff||'未記入')}</span>`;
+      html += `<span style="font-size:14px;font-weight:700;color:var(--text);min-width:36px;text-align:right;">${e.qty}個</span>`;
+      html += `</div>`;
+    } else {
+      const uid = `ncd-${dateISO.replace(/-/g,'')}-${e.itemId}-${ei}`;
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;" id="nhrow-${uid}">`;
+      html += `<span style="font-size:13px;font-weight:600;color:var(--text);flex:1;min-width:80px;">${esc(e.itemName)}</span>`;
+      html += `<span style="font-size:11px;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:10px;">👤${esc(e.staff||'未記入')}</span>`;
+      html += `<span style="font-size:14px;font-weight:700;color:var(--text);min-width:36px;text-align:right;">${e.qty}個</span>`;
+      html += `<button onclick="openNyukaEditRow('${uid}','${e.itemId}','${esc(e.itemName)}','${e.date}',${e.qty},'${esc(e.staff)}','${e.src}','${e.src==='hist'?e.histDate:''}',${e.src==='hist'?e.entryIdx:(e.todayIdx||0)})" style="padding:4px 10px;background:var(--blue-light);border:1px solid var(--blue-bd);color:var(--blue);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✏️ 編集</button>`;
+      html += `<button onclick="deleteNyukaHistRow('${e.itemId}','${e.src}','${e.src==='hist'?e.histDate:''}',${e.src==='hist'?e.entryIdx:(e.todayIdx||0)},'${uid}')" style="padding:4px 8px;background:#fff0f0;border:1px solid #f09595;color:#a32d2d;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🗑</button>`;
+      html += `</div>`;
+    }
+  });
+  html += `</div></div>`;
+  detail.innerHTML = html;
+  detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
 function renderNyukaHistory(){
   const ym = document.getElementById('nyuka-history-month').value;
   const filterItem = (typeof _nyukaFilterItem !== 'undefined') ? _nyukaFilterItem : document.getElementById('nyuka-history-item').value;
@@ -2098,6 +2272,11 @@ function renderNyukaHistory(){
   const monthLabel = y + '年' + m + '月';
   const el = document.getElementById('nyuka-history-content');
   let html = '';
+
+  if(typeof _nyukaViewMode !== 'undefined' && _nyukaViewMode === 'calendar'){
+    renderNyukaCalendarView(ym, y, m, fm, filterItem, monthLabel);
+    return;
+  }
 
   if(!filterItem || filterItem.startsWith('warabi::')){
     const warabiName = filterItem ? filterItem.replace('warabi::','') : '';
@@ -3215,13 +3394,49 @@ function saveWarabiRecord(){
   btnFeedback(document.querySelector('.warabi-btn[onclick="saveWarabiRecord()"]'), '登録完了');
 }
 
+let _warabiViewMode = 'calendar';
+let _warabiCalMonth = {y: new Date().getFullYear(), m: new Date().getMonth()+1};
+let _warabiCalDayMap2 = {};
+
+function changeWarabiMonth(delta){
+  _warabiCalMonth.m += delta;
+  if(_warabiCalMonth.m > 12){ _warabiCalMonth.m = 1; _warabiCalMonth.y++; }
+  if(_warabiCalMonth.m < 1){ _warabiCalMonth.m = 12; _warabiCalMonth.y--; }
+  renderWarabiHistory();
+}
+
+function setWarabiView(mode){
+  _warabiViewMode = mode;
+  const calBtn = document.getElementById('warabi-cal-btn');
+  const listBtn = document.getElementById('warabi-list-btn');
+  if(calBtn){ calBtn.style.background=mode==='calendar'?'#6a3faf':'#fff'; calBtn.style.color=mode==='calendar'?'#fff':'#6a3faf'; calBtn.style.borderColor=mode==='calendar'?'#6a3faf':'#c9a8f0'; }
+  if(listBtn){ listBtn.style.background=mode==='list'?'#6a3faf':'#fff'; listBtn.style.color=mode==='list'?'#fff':'#6a3faf'; listBtn.style.borderColor=mode==='list'?'#6a3faf':'#c9a8f0'; }
+  renderWarabiHistory();
+}
+
 function renderWarabiHistory(){
   const filter=document.getElementById('warabi-hist-filter')?document.getElementById('warabi-hist-filter').value:'';
   const records=loadWarabiRecords();
-  const filtered=filter?records.filter(r=>r.item===filter):records;
   const el=document.getElementById('warabi-history-list');
   if(!el)return;
-  if(!filtered.length){el.innerHTML=`<div style="text-align:center;padding:12px;color:#999;font-size:12px;">記録がありません</div>`;return;}
+
+  // 月ラベル更新
+  const {y, m} = _warabiCalMonth;
+  const lbl = document.getElementById('warabi-cal-month-label');
+  if(lbl) lbl.textContent = y+'年'+m+'月';
+
+  // 選択月＋品目フィルター
+  const ym = y+'-'+String(m).padStart(2,'0');
+  const filtered = records.filter(r => r.date && r.date.startsWith(ym) && (filter ? r.item===filter : true));
+
+  if(_warabiViewMode === 'calendar'){
+    renderWarabiCalendar(filtered, y, m, el);
+    return;
+  }
+
+  // リスト表示
+  el.style.cssText = 'display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;';
+  if(!filtered.length){el.innerHTML=`<div style="text-align:center;padding:12px;color:#999;font-size:12px;">${y}年${m}月の記録はありません</div>`;return;}
   el.innerHTML=filtered.map(r=>{
     const dp=r.date.split('-');
     const dateLabel=dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
@@ -3248,6 +3463,84 @@ function renderWarabiHistory(){
       </div>
     </div>`;
   }).join('');
+}
+
+function renderWarabiCalendar(filtered, y, m, el){
+  const todayISO = new Date().toISOString().slice(0,10);
+  const dayMap = {};
+  filtered.forEach(r => { if(!dayMap[r.date])dayMap[r.date]=[]; dayMap[r.date].push(r); });
+  _warabiCalDayMap2 = dayMap;
+  el.style.cssText = '';
+
+  const firstDay = new Date(y, m-1, 1).getDay();
+  const lastDate = new Date(y, m, 0).getDate();
+  const dayNames = ['日','月','火','水','木','金','土'];
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px;">`;
+  dayNames.forEach((d,i)=>{
+    const c = i===0?'#c04000':i===6?'#1a5fa8':'#666';
+    html += `<div style="text-align:center;font-size:10px;font-weight:700;color:${c};padding:4px 0;">${d}</div>`;
+  });
+  for(let i=0;i<firstDay;i++) html+=`<div></div>`;
+  for(let d=1;d<=lastDate;d++){
+    const dateISO = y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const entries = dayMap[dateISO]||[];
+    const hasRecord = entries.length>0;
+    const isToday = dateISO===todayISO;
+    const dow = (firstDay+d-1)%7;
+    const isSun=dow===0, isSat=dow===6;
+    let cellSt, numC, dotC;
+    if(isToday){
+      cellSt='background:#4527a0;border-radius:8px;';
+      numC='#fff'; dotC=hasRecord?'#d4a8ff':'transparent';
+    } else if(hasRecord){
+      cellSt='background:#ede7f6;border-radius:8px;border:1px solid #c9a8f0;';
+      numC=isSun?'#c04000':isSat?'#1a5fa8':'#4527a0'; dotC='#6a3faf';
+    } else {
+      cellSt=''; numC=isSun?'#c04000':isSat?'#1a5fa8':'#bbb'; dotC='transparent';
+    }
+    html+=`<div onclick="${hasRecord?`showWarabiCalDay('${dateISO}')`:''}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 1px;cursor:${hasRecord?'pointer':'default'};min-height:40px;${cellSt}">`;
+    html+=`<span style="font-size:14px;font-weight:700;color:${numC};line-height:1;">${d}</span>`;
+    html+=`<span style="width:5px;height:5px;border-radius:50%;background:${dotC};margin-top:2px;display:inline-block;"></span>`;
+    html+=`</div>`;
+  }
+  html+=`</div>`;
+  if(!filtered.length) html+=`<div style="text-align:center;padding:10px;color:#999;font-size:12px;">${y}年${m}月の記録はありません</div>`;
+  html+=`<div id="warabi-cal-day-detail2" style="margin-top:6px;"></div>`;
+  el.innerHTML=html;
+}
+
+function showWarabiCalDay(dateISO){
+  const detail=document.getElementById('warabi-cal-day-detail2');
+  if(!detail)return;
+  const entries=_warabiCalDayMap2[dateISO]||[];
+  if(!entries.length){detail.innerHTML='';return;}
+  const [_y,_m,_d]=[parseInt(dateISO.slice(0,4)),parseInt(dateISO.slice(5,7)),parseInt(dateISO.slice(8,10))];
+  const weekDay='日月火水木金土'[new Date(_y,_m-1,_d).getDay()];
+  const total=entries.reduce((s,r)=>s+(r.qty||0),0);
+  let html=`<div style="background:#fff;border:1.5px solid #c9a8f0;border-radius:10px;overflow:hidden;">`;
+  html+=`<div style="padding:7px 12px;background:#ede7f6;border-bottom:1px solid #c9a8f0;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;font-weight:700;color:#4527a0;">${_m}/${_d}（${weekDay}）</span><span style="font-size:12px;font-weight:700;color:#6a3faf;">計 ${total}個</span></div>`;
+  entries.forEach(r=>{
+    html+=`<div style="padding:8px 12px;border-bottom:1px solid #ede7f6;">`;
+    html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">`;
+    html+=`<span style="background:#e8d8ff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#6a3faf;">${esc(r.item)}</span>`;
+    if(r.qty) html+=`<span style="background:#4527a0;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:700;color:#fff;">${r.qty}個</span>`;
+    html+=`<span style="font-size:11px;color:#555;flex:1;">👤${esc(r.inspector||'')}</span>`;
+    html+=`<button onclick="openWarabiEditModal('${r.id}')" style="background:#e8d8ff;border:1px solid #c9a8f0;border-radius:6px;font-size:11px;font-weight:700;padding:3px 8px;cursor:pointer;color:#6a3faf;">✏️</button>`;
+    html+=`<button onclick="deleteWarabiRecord('${r.id}')" style="background:none;border:none;font-size:14px;cursor:pointer;color:#c09;padding:0;">🗑</button>`;
+    html+=`</div>`;
+    if(r.factory||r.carrier||r.inquiry||r.orderNo){
+      html+=`<div style="margin-top:4px;font-size:11px;color:#777;display:flex;flex-wrap:wrap;gap:6px;">`;
+      if(r.factory)html+=`<span>🏭${esc(r.factory)}</span>`;
+      if(r.carrier)html+=`<span>🚚${esc(r.carrier)}</span>`;
+      if(r.inquiry)html+=`<span>📞${esc(r.inquiry)}</span>`;
+      if(r.orderNo)html+=`<span style="background:#ede6ff;border-radius:5px;padding:1px 6px;font-weight:700;color:#6a3faf;">📋${esc(r.orderNo)}</span>`;
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  html+=`</div>`;
+  detail.innerHTML=html;
 }
 
 function deleteWarabiRecord(id){
