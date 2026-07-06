@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.11';
+window.APP_VERSION = 'v10.12';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1006,11 +1006,6 @@ try {
       </select>
     </div>
     <div id="nyuka-item-buttons" style="padding:10px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surface);border-bottom:1px solid var(--border2);max-height:40vh;overflow-y:auto;"></div>
-    <!-- カレンダー/リスト切替 -->
-    <div style="padding:8px 16px;display:flex;gap:8px;background:var(--surface);border-bottom:1px solid var(--border2);">
-      <button id="nyuka-cal-btn" onclick="setNyukaView('calendar')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--green);font-family:inherit;background:var(--green);color:#fff;">📅 カレンダー</button>
-      <button id="nyuka-list-btn" onclick="setNyukaView('list')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border2);font-family:inherit;background:var(--surface);color:var(--text2);">📋 リスト</button>
-    </div>
     <div id="nyuka-history-content" style="padding:14px 16px 20px;"></div>
   </div>
 </div>
@@ -2049,7 +2044,6 @@ function showNyukaHistoryModal(){
   });
   _nyukaFilterItem = '';
   renderNyukaItemButtons();
-  _updateNyukaViewToggle();
   renderNyukaHistory();
 }
 
@@ -2272,11 +2266,6 @@ function renderNyukaHistory(){
   const monthLabel = y + '年' + m + '月';
   const el = document.getElementById('nyuka-history-content');
   let html = '';
-
-  if(typeof _nyukaViewMode !== 'undefined' && _nyukaViewMode === 'calendar'){
-    renderNyukaCalendarView(ym, y, m, fm, filterItem, monthLabel);
-    return;
-  }
 
   if(!filterItem || filterItem.startsWith('warabi::')){
     const warabiName = filterItem ? filterItem.replace('warabi::','') : '';
