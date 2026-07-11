@@ -439,7 +439,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.64</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.65</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -485,6 +485,27 @@
       <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding-left:8px;">
         <input type="checkbox" id="toggle-coupon" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
         商品券
+      </label>
+      <div style="font-size:13px;font-weight:700;color:#555;margin-top:6px;">🆕 追加項目（使う項目だけON）</div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding-left:8px;">
+        <input type="checkbox" id="toggle-lunchSales" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
+        🍱 ランチ売上
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding-left:8px;">
+        <input type="checkbox" id="toggle-lunchGuests" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
+        👥 ランチ人数
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding-left:8px;">
+        <input type="checkbox" id="toggle-uber" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
+        🛵 Uber
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding-left:8px;">
+        <input type="checkbox" id="toggle-menu" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
+        🛵 MENU
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;padding-left:8px;">
+        <input type="checkbox" id="toggle-rocket" onchange="saveFieldSettings()" style="width:20px;height:20px;cursor:pointer;">
+        🛵 Rocket
       </label>
     </div>
   </div>
@@ -664,6 +685,36 @@
       </div>
     </div>
 
+    <!-- ランチ -->
+    <div class="card" id="card-lunch">
+      <h2>🍱 ランチ</h2>
+      <div class="row" id="row-lunchSales">
+        <div class="lbl">ランチ売上</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="lunchSales" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row" id="row-lunchGuests">
+        <div class="lbl">ランチ人数</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="lunchGuests" placeholder="0" min="0"></div>
+      </div>
+    </div>
+
+    <!-- デリバリー -->
+    <div class="card" id="card-delivery">
+      <h2>🛵 デリバリー</h2>
+      <div class="row" id="row-uber">
+        <div class="lbl">Uber</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="uber" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row" id="row-menu">
+        <div class="lbl">MENU</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="menu" placeholder="¥ 0" min="0"></div>
+      </div>
+      <div class="row" id="row-rocket">
+        <div class="lbl">Rocket</div>
+        <div class="inp"><input type="text" inputmode="numeric" pattern="[0-9]*" id="rocket" placeholder="¥ 0" min="0"></div>
+      </div>
+    </div>
+
     <!-- 入力内容の確認まとめ -->
     <div class="card" id="summary-card" style="display:none;border:2px solid #e8eaf6;">
       <h2 style="color:#3949ab;">📋 入力内容の確認</h2>
@@ -785,7 +836,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.64';
+const APP_VERSION = 'v2.65';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -946,6 +997,11 @@ function openSettings() {
     document.getElementById('toggle-point').checked   = settings.point !== false;
     document.getElementById('toggle-emoney').checked  = settings.emoney !== false;
     document.getElementById('toggle-coupon').checked  = settings.coupon !== false;
+    document.getElementById('toggle-lunchSales').checked  = settings.lunchSales !== false;
+    document.getElementById('toggle-lunchGuests').checked = settings.lunchGuests !== false;
+    document.getElementById('toggle-uber').checked        = settings.uber !== false;
+    document.getElementById('toggle-menu').checked        = settings.menu !== false;
+    document.getElementById('toggle-rocket').checked      = settings.rocket !== false;
   } else {
     fsSection.style.display = 'none';
   }
@@ -1035,7 +1091,7 @@ function getFieldSettingsKey(store) {
   return 'field_settings_' + store;
 }
 function loadFieldSettings(store) {
-  var def = { kyakusu: true, buhin: true, tax: true, credit: true, point: true, emoney: true, coupon: true };
+  var def = { kyakusu: true, buhin: true, tax: true, credit: true, point: true, emoney: true, coupon: true, lunchSales: true, lunchGuests: true, uber: true, menu: true, rocket: true };
   try {
     var saved = localStorage.getItem(getFieldSettingsKey(store));
     if (saved) return Object.assign(def, JSON.parse(saved));
@@ -1052,7 +1108,12 @@ function saveFieldSettings() {
     credit:  document.getElementById('toggle-credit').checked,
     point:   document.getElementById('toggle-point').checked,
     emoney:  document.getElementById('toggle-emoney').checked,
-    coupon:  document.getElementById('toggle-coupon').checked
+    coupon:  document.getElementById('toggle-coupon').checked,
+    lunchSales:  document.getElementById('toggle-lunchSales').checked,
+    lunchGuests: document.getElementById('toggle-lunchGuests').checked,
+    uber:        document.getElementById('toggle-uber').checked,
+    menu:        document.getElementById('toggle-menu').checked,
+    rocket:      document.getElementById('toggle-rocket').checked
   };
   try { localStorage.setItem(getFieldSettingsKey(currentStore), JSON.stringify(settings)); } catch(e) {}
   applyFieldSettings(settings);
@@ -1078,6 +1139,14 @@ function applyFieldSettings(settings) {
     var r = document.getElementById(p[1]);
     if (r) r.style.display = (settings[p[0]] !== false) ? '' : 'none';
   });
+  [['lunchSales','row-lunchSales'],['lunchGuests','row-lunchGuests'],['uber','row-uber'],['menu','row-menu'],['rocket','row-rocket']].forEach(function(p){
+    var r = document.getElementById(p[1]);
+    if (r) r.style.display = (settings[p[0]] !== false) ? '' : 'none';
+  });
+  var lunchCard = document.getElementById('card-lunch');
+  if (lunchCard) lunchCard.style.display = (settings.lunchSales !== false || settings.lunchGuests !== false) ? '' : 'none';
+  var deliveryCard = document.getElementById('card-delivery');
+  if (deliveryCard) deliveryCard.style.display = (settings.uber !== false || settings.menu !== false || settings.rocket !== false) ? '' : 'none';
 }
 
 function checkAdminPw() {
@@ -1286,6 +1355,11 @@ async function loadData(viewOnly) {
       setN('buhin',      d.buhin);
       setN('buhinCash',  d.buhinCash);
       setN('buhinOther', d.buhinOther);
+      setN('lunchSales', d.lunchSales);
+      setN('lunchGuests',d.lunchGuests);
+      setN('uber',       d.uber);
+      setN('menu',       d.menu);
+      setN('rocket',     d.rocket);
       document.getElementById('buhinBrand').value = d.buhinBrand || '';
       document.getElementById('weather').value    = d.weather || '';
       originalData = Object.assign({}, d);
@@ -1891,7 +1965,7 @@ function renderHistory() {
 
 async function sendHoliday(dateStr, staffName) {
   const submitTime = new Date().toLocaleString('ja-JP', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  const zero = {kumi:0,male:0,female:0,netSales:0,sales10:0,tax10:0,sales8:0,tax8:0,credit:0,point:0,emoney:0,coupon:0,buhin:0,buhinCash:0,buhinOther:0,buhinBrand:'',weather:''};
+  const zero = {kumi:0,male:0,female:0,netSales:0,sales10:0,tax10:0,sales8:0,tax8:0,credit:0,point:0,emoney:0,coupon:0,buhin:0,buhinCash:0,buhinOther:0,buhinBrand:'',weather:'',lunchSales:0,lunchGuests:0,uber:0,menu:0,rocket:0};
   const payload = { store: currentStore, date: dateStr, staffName: staffName, submitTime: submitTime, isEdit: true, values: zero };
   try {
     await fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload) });
@@ -1904,7 +1978,8 @@ async function sendHoliday(dateStr, staffName) {
 // ---- 自動保存・復元 ----
 const SAVE_FIELDS = ['staff-name','weather','kumi','male','female','netSales',
   'sales10','tax10','sales8','tax8','credit','point','emoney','coupon',
-  'buhin','buhinCash','buhinOther','buhinBrand'];
+  'buhin','buhinCash','buhinOther','buhinBrand',
+  'lunchSales','lunchGuests','uber','menu','rocket'];
 
 function autoSave() {
   if (!currentStore || editMode || viewMode) return;
@@ -1941,7 +2016,8 @@ function updateSummary() {
     : document.getElementById('date').value;
 
   const fields = ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
-                  'credit','point','emoney','coupon','buhin','buhinCash','buhinOther'];
+                  'credit','point','emoney','coupon','buhin','buhinCash','buhinOther',
+                  'lunchSales','lunchGuests','uber','menu','rocket'];
   const anyFilled = dateVal || fields.some(id => document.getElementById(id).value !== '') ||
                     document.getElementById('weather').value || document.getElementById('buhinBrand').value;
 
@@ -1965,7 +2041,8 @@ function updateSummary() {
     netSales:'純売上', sales10:'売上(10%)', tax10:'消費税10%',
     sales8:'売上(8%)', tax8:'消費税8%',
     credit:'クレジット', point:'ポイント', emoney:'電子マネー', coupon:'商品券',
-    buhin:'物販', buhinCash:'物販(現金)', buhinOther:'物販(現金以外)', buhinBrand:'ブランド名'
+    buhin:'物販', buhinCash:'物販(現金)', buhinOther:'物販(現金以外)', buhinBrand:'ブランド名',
+    lunchSales:'ランチ売上', lunchGuests:'ランチ人数', uber:'Uber', menu:'MENU', rocket:'Rocket'
   };
 
   function row(id, val, isEmpty) {
@@ -1990,7 +2067,9 @@ function updateSummary() {
       {id:'emoney',lbl:'電子マネー'},{id:'coupon',lbl:'商品券'},
       {id:'buhin',lbl:'物販'},{id:'buhinCash',lbl:'物販(現金)'},
       {id:'buhinOther',lbl:'物販(現金以外)'},{id:'buhinBrand',lbl:'ブランド名'},
-      {id:'weather',lbl:'天気'}
+      {id:'weather',lbl:'天気'},
+      {id:'lunchSales',lbl:'ランチ売上'},{id:'lunchGuests',lbl:'ランチ人数'},
+      {id:'uber',lbl:'Uber'},{id:'menu',lbl:'MENU'},{id:'rocket',lbl:'Rocket'}
     ];
     let diffRows = '';
     DIFF_KEYS.forEach(function(f) {
@@ -2042,6 +2121,16 @@ function updateSummary() {
     }
     html += sec('🛍️ 物販', buhinHtml);
   }
+
+  var lunchRows = '';
+  if (fsS.lunchSales  !== false) lunchRows += yen('lunchSales');
+  if (fsS.lunchGuests !== false) lunchRows += ppl('lunchGuests','名');
+  if (lunchRows) html += sec('🍱 ランチ', lunchRows);
+  var deliveryRows = '';
+  if (fsS.uber   !== false) deliveryRows += yen('uber');
+  if (fsS.menu   !== false) deliveryRows += yen('menu');
+  if (fsS.rocket !== false) deliveryRows += yen('rocket');
+  if (deliveryRows) html += sec('🛵 デリバリー', deliveryRows);
 
   document.getElementById('summary-content').innerHTML = html;
 
@@ -2143,7 +2232,12 @@ async function submitData() {
     
       buhinOther: n('buhinOther'),
       buhinBrand: s('buhinBrand'),
-      weather:    s('weather')
+      weather:    s('weather'),
+      lunchSales:  n('lunchSales'),
+      lunchGuests: n('lunchGuests'),
+      uber:        n('uber'),
+      menu:        n('menu'),
+      rocket:      n('rocket')
     }
   };
 
@@ -2173,6 +2267,8 @@ async function submitData() {
         emoney:  n('emoney'),  coupon: n('coupon'),
         buhin: n('buhin'), buhinCash: n('buhinCash'),
         buhinOther: n('buhinOther'), buhinBrand: s('buhinBrand'),
+        lunchSales: n('lunchSales'), lunchGuests: n('lunchGuests'),
+        uber: n('uber'), menu: n('menu'), rocket: n('rocket'),
         morningStaff:     nippoPayload.morningStaff,
         morningComment:   nippoPayload.morningComment,
         afternoonStaff:   nippoPayload.afternoonStaff,
@@ -2203,6 +2299,8 @@ async function submitData() {
       emoney:  n('emoney'),  coupon: n('coupon'),
       buhin: n('buhin'), buhinCash: n('buhinCash'),
       buhinOther: n('buhinOther'), buhinBrand: s('buhinBrand'),
+      lunchSales: n('lunchSales'), lunchGuests: n('lunchGuests'),
+      uber: n('uber'), menu: n('menu'), rocket: n('rocket'),
       morningStaff:     document.getElementById('morning-staff').value.trim(),
       morningComment:   document.getElementById('morning-comment').value.trim(),
       afternoonStaff:   document.getElementById('afternoon-staff').value.trim(),
@@ -2337,6 +2435,8 @@ function renderViewSummary(d, date) {
     h += '<div>物販(現金)：' + yen(d.buhinCash) + '　(現金以外)：' + yen(d.buhinOther) + '</div>';
     if (d.buhinBrand) h += '<div>ブランド：' + d.buhinBrand + '</div>';
   }
+  if ([d.lunchSales,d.lunchGuests].some(function(x){return x!=='' && x!=null;})) h += '<div>ランチ売上：' + yen(d.lunchSales) + '　ランチ人数：' + num(d.lunchGuests) + '</div>';
+  if ([d.uber,d.menu,d.rocket].some(function(x){return x!=='' && x!=null;})) h += '<div>Uber：' + yen(d.uber) + '　MENU：' + yen(d.menu) + '　Rocket：' + yen(d.rocket) + '</div>';
   if (notice) h += '<div style="margin-top:6px;"><b>重要伝達事項：</b>' + notice + '</div>';
   h += '</div>';
   h += '<button onclick="enterEditFromView()" style="width:100%;padding:14px;background:#303f9f;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:800;cursor:pointer;margin-top:14px;">✏️ この内容を編集する</button>';
@@ -2483,7 +2583,8 @@ function clearMorningReport(store, date) {
 
 function clearForm() {
   ['kumi','male','female','netSales','sales10','tax10','sales8','tax8',
-   'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand']
+   'credit','point','emoney','coupon','buhin','buhinCash','buhinOther','buhinBrand',
+   'lunchSales','lunchGuests','uber','menu','rocket']
     .forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('weather').value = '';
   document.getElementById('staff-name').value = '';
