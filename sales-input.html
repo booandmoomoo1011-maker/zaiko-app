@@ -439,7 +439,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.66</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.67</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -836,7 +836,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.66';
+const APP_VERSION = 'v2.67';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -1236,14 +1236,17 @@ function checkPassword() {
 
 // 今日の日付を表示・セット
 (function() {
+  const now0 = new Date();
+  const realToday = now0.getFullYear() + '-' + String(now0.getMonth()+1).padStart(2,'0') + '-' + String(now0.getDate()).padStart(2,'0');
   const d = new Date();
+  if (d.getHours() < 6) d.setDate(d.getDate() - 1); // 朝6時より前に開いたら前日を初期表示（深夜に前日分を入力するため）
   const y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
   const dow = ['日','月','火','水','木','金','土'][d.getDay()];
   document.getElementById('today-display').textContent =
     y + '年' + m + '月' + day + '日（' + dow + '）';
   const todayStr = y + '-' + String(m).padStart(2,'0') + '-' + String(day).padStart(2,'0');
   document.getElementById('date').value = todayStr;
-  document.getElementById('edit-date').max = todayStr;
+  document.getElementById('edit-date').max = realToday;
 })();
 
 // URLパラメータで店舗を自動選択（前回復元なし）
@@ -1517,7 +1520,7 @@ function calSelectDay(dateStr) {
 
   calPopupDate = dateStr;
   const isHoliday = !!getHolidays()[dateStr];
-  const today = new Date().toISOString().slice(0,10);
+  const today = (function(){ var t = new Date(); return t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0'); })();
   const isFutureDate = dateStr > today;
 
   const isEntered = !!getEntered()[dateStr];
@@ -1653,7 +1656,7 @@ function calActionEdit() {
   viewMode = false;
   var _is = document.getElementById('input-section'); if (_is) _is.style.display = '';
   var _vs = document.getElementById('view-summary'); if (_vs) _vs.style.display = 'none';
-  const today = new Date().toISOString().slice(0,10);
+  const today = (function(){ var t = new Date(); return t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0'); })();
   if (calPopupDate === today) {
     // 今日の日付：入力済みなら履歴から読み込む
     const todayEntered = !!getEntered()[today];
@@ -2600,6 +2603,7 @@ function clearForm() {
   updateCharCount('afternoon-comment', 'afternoon-count');
   syncNoticeFromComment();
   const d = new Date();
+  if (d.getHours() < 6) d.setDate(d.getDate() - 1); // 朝6時より前は前日を初期表示
   document.getElementById('date').value =
     d.getFullYear() + '-' +
     String(d.getMonth()+1).padStart(2,'0') + '-' +
