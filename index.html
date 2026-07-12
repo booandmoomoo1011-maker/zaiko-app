@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.15';
+window.APP_VERSION = 'v10.16';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1703,6 +1703,7 @@ function renderSales(){
           <span class="stock-result-label">入荷</span>
           <span class="stock-result-val" id="nyuka_total_${it.id}" style="color:var(--blue);">0</span>
         </div>
+        <div class="nyuka-chips" id="nyuka_chips_${it.id}" style="display:none;margin-top:4px;"></div>
       </div>`;
     }
   });
@@ -2004,7 +2005,7 @@ function submitNyukaInput(){
   NYUKA[id].push({ date: todayISO, qty, staff });
   // 入荷した分を「本日在庫」に自動で加算する
   $set('stock_'+id, $v('stock_'+id) + qty);
-  calcStock(id);
+  renderNyuka(id);
   saveDraft();
   // staff欄にも反映
   const staffEl = document.getElementById('staff');
@@ -2422,8 +2423,33 @@ function toggleNyuka(){}
 function addNyuka(){}
 function nyukaRender(){}
 function renderNyuka(id){
-  if(id) calcStock(id);
-  else SALES.forEach(it=>calcStock(it.id));
+  if(!id){ SALES.forEach(it=>renderNyuka(it.id)); return; }
+  // カード上に「今日の入荷」を削除できるタグで表示
+  const box=document.getElementById('nyuka_chips_'+id);
+  if(box){
+    const list=NYUKA[id]||[];
+    if(list.length){
+      box.innerHTML=list.map((n,i)=>`<span style="display:inline-flex;align-items:center;gap:3px;background:#ede7f6;border:1px solid #b39ddb;border-radius:999px;padding:2px 4px 2px 9px;margin:2px 3px 0 0;font-size:11px;color:#4527a0;font-weight:700;">📦${n.qty}${n.staff?('・'+esc(n.staff)):''}<button type="button" onclick="delTodayNyuka('${id}',${i})" title="この入荷を削除" style="border:none;background:transparent;color:#e02020;font-weight:700;cursor:pointer;font-size:13px;line-height:1;padding:0 2px;">🗑</button></span>`).join('');
+      box.style.display='block';
+    } else {
+      box.innerHTML=''; box.style.display='none';
+    }
+  }
+  calcStock(id);
+}
+
+// カードから「今日の入荷」を1件削除（本日在庫からも引く）
+function delTodayNyuka(id, idx){
+  const list=NYUKA[id]||[];
+  if(!list[idx]) return;
+  const qty=list[idx].qty||0;
+  if(!confirm(`この入荷（${qty}）を削除しますか？\n本日在庫からも引かれます。`)) return;
+  list.splice(idx,1);
+  NYUKA[id]=list;
+  $set('stock_'+id, $v('stock_'+id) - qty);
+  renderNyuka(id);
+  saveDraft();
+  showToast('🗑 入荷を削除しました');
 }
 function nyukaDelToday(){}
 function nyukaDelHist(){}
@@ -2987,7 +3013,7 @@ function restoreLastValues(){
   });
   // 色チェック
   SIMPLE.forEach(it=>checkSimpleLow(it.id));
-  SALES.forEach(it=>calcStock(it.id));
+  SALES.forEach(it=>renderNyuka(it.id));
   // Uber Eats：今日の記録があれば復元、なければ空に
   UBER = (last.date===dateStr && last.uber) ? [...last.uber] : [];
   renderUber();
@@ -4417,8 +4443,4 @@ setInterval(function(){ try{ saveAutoBackup(); }catch(e){} }, 30*60*1000);
         <input type="text" id="temp-edit-editor" class="temp-input" placeholder="編集者名を入力してください">
       </div>
       <div style="background:#d6eeff;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;">
-        <div style="font-weight:700;color:#1565c0;font-size:13px;margin-bottom:2px;">AM</div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">①冷蔵</span><input type="time" id="temp-edit-r1-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r1-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">②冷蔵兼用</span><input type="time" id="temp-edit-r2-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r2-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">③冷凍兼用</span><input type="time" id="temp-edit-r3-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r3-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">④冷凍</span><input type="time" id="temp-edit-r4-am-time" class
+        <div style="font-weight:700;color:#1565c0;font-
