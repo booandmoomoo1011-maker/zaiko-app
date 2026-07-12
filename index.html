@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.14';
+window.APP_VERSION = 'v10.15';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3579,7 +3579,7 @@ function deleteWarabiRecord(id){
   const rec = records.find(r=>r.id===id);
   if(!rec){ saveWarabiRecords(records.filter(r=>r.id!==id)); renderWarabiHistory(); return; }
 
-  const stockItemId = WARABI_ITEM_MAP[rec.item];
+  const stockItemId = resolveWarabiStockId(rec.item);
   const qty = rec.qty || 0;
   const dateKey = rec.date.replace(/-/g,'/');
 
@@ -3589,7 +3589,11 @@ function deleteWarabiRecord(id){
       // 今日の未保存NYUKA
       const arr = NYUKA[stockItemId] || [];
       const idx = arr.findIndex(n=>n.qty===qty && n.staff===rec.inspector);
-      if(idx!==-1) arr.splice(idx,1);
+      if(idx!==-1){
+        arr.splice(idx,1);
+        // 削除した入荷分を「本日在庫」から取り除く
+        $set('stock_'+stockItemId, $v('stock_'+stockItemId) - qty);
+      }
       NYUKA[stockItemId] = arr;
       renderNyuka(stockItemId);
       calcStock(stockItemId);
@@ -4417,4 +4421,4 @@ setInterval(function(){ try{ saveAutoBackup(); }catch(e){} }, 30*60*1000);
         <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">①冷蔵</span><input type="time" id="temp-edit-r1-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r1-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
         <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">②冷蔵兼用</span><input type="time" id="temp-edit-r2-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r2-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
         <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">③冷凍兼用</span><input type="time" id="temp-edit-r3-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r3-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeholder="温度"></div>
-        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">④冷凍</span><input type="time" id="temp-edit-r4-am-time" class="temp-input" style="flex:1;min-width:0;width:auto;"><input type="text" id="temp-edit-r4-am-temp" class="temp-input" style="flex:1;min-width:0;width:auto;" placeh
+        <div style="display:flex;align-items:center;gap:6px;"><span style="width:72px;font-size:12px;font-weight:700;color:#1565c0;flex-shrink:0;">④冷凍</span><input type="time" id="temp-edit-r4-am-time" class
