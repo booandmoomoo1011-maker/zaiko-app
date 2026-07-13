@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.16';
+window.APP_VERSION = 'v10.17';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -2694,6 +2694,7 @@ function renderHistory(){
         ${r.staff?`<span class="hist-staff">👤 ${esc(r.staff==='（入力中）'?'入力中':r.staff)}</span>`:''}
         ${r._autoSaved&&!r.forceCompleted?'<span style="font-size:10px;background:#fff3cd;color:#856404;padding:1px 7px;border-radius:8px;font-weight:700;">📝 入力中</span>':''}
         ${r.hasWarn?'<span class="hist-warn-badge">⚠️ 差異あり</span>':''}
+        ${(()=>{if(!r.editLog||!r.editLog.length)return'';const le=r.editLog[r.editLog.length-1];const dp=(le.editDate||'').split('/');const ds=dp.length>=3?parseInt(dp[1])+'/'+parseInt(dp[2]):le.editDate||'';return`<span style="font-size:10px;background:#fff3cd;color:#856404;padding:2px 7px;border-radius:8px;font-weight:700;">✏️ 編集 ${ds} ${le.editTime||''}${le.staff?' 👤'+esc(le.staff):''}</span>`;})()}
         <button class="hist-edit-btn" onclick="editRecord(${realIdx})">✏️ 編集</button>
       </div>
       ${diffPopupHtml}
