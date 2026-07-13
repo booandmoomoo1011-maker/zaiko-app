@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.17';
+window.APP_VERSION = 'v10.18';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -894,6 +894,11 @@ try {
     <button onclick="openSettingsModal()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5);color:#fff;font-size:18px;padding:5px 13px;border-radius:20px;cursor:pointer;font-family:inherit;">⚙️</button>
   </div>
 </header>
+
+<!-- 編集モードバナー -->
+<div id="edit-mode-banner" style="display:none;background:#ff6d00;color:#fff;text-align:center;padding:10px 16px;font-size:14px;font-weight:700;position:sticky;top:0;z-index:999;letter-spacing:.03em;box-shadow:0 2px 8px rgba(255,109,0,.4);">
+  ✏️ <span id="edit-mode-date"></span> の記録を編集中
+</div>
 
 <!-- 入荷入力モーダル（シンプル版） -->
 <div id="nyuka-input-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:20px;" onclick="closeNyukaInputModal(event)">
@@ -1628,6 +1633,9 @@ function editRecord(idx){
   checkStaffHint();
   window.scrollTo({top:0,behavior:'smooth'});
   showToast('✏️ 編集モード：修正後に保存してください');
+  const _eb=document.getElementById('edit-mode-banner');
+  const _ed=document.getElementById('edit-mode-date');
+  if(_eb&&_ed){_ed.textContent=fmtDate(r.date);_eb.style.display='block';}
 }
 
 // ===== 品目編集モード =====
@@ -2536,6 +2544,7 @@ function doSave(autoSave=false){
   saveHistory(h);
   saveStaffName();
   editingDate=null;
+  const _eb2=document.getElementById('edit-mode-banner');if(_eb2)_eb2.style.display='none';
   renderHistory();
   showToast('✅ 記録を保存しました！');
   btnFeedback(document.getElementById('complete-btn'), '保存完了');
@@ -2938,6 +2947,7 @@ function resetToday(){
   // 完了ボタン状態リセット
   completed=false;
   editingDate=null;
+  const _eb3=document.getElementById('edit-mode-banner');if(_eb3)_eb3.style.display='none';
   const btn=document.getElementById('complete-btn');
   if(btn){btn.classList.remove('confirmed');btn.textContent='☑️ 最終確認・完了';}
   clearEdited();
