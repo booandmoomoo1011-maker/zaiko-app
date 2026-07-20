@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.20';
+window.APP_VERSION = 'v10.21';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3019,7 +3019,21 @@ if(loadHistory().length){
 if(restoreDraft()){
   showToast('📝 入力途中のデータを復元しました');
 }
-// [変更 v10.20] 起動時には担当者名を聞かない。在庫を入力し始めた時だけ聞く（autoSaveToFirebase内で呼ばれる）
+// [変更 v10.21] 起動時には聞かない。最初の入力欄に触れた瞬間に担当者名を聞く
+(function(){
+  let _asked=false;
+  document.addEventListener('focusin', function(e){
+    if(_asked) return;
+    const t=e.target;
+    if(!t || t.tagName!=='INPUT') return;
+    const id=t.id||'';
+    if(!/^(simple_|stock_|sell_|free_)/.test(id)) return;
+    _asked=true;
+    const el=document.getElementById('staff');
+    if(el && el.value.trim()) return;
+    openStaffModalStart();
+  }, true);
+})();
 // Firebase同期完了後にデータを上書き反映（initFirebaseOnReady内で呼ばれる）
 
 // ===== 前回値の復元 =====
