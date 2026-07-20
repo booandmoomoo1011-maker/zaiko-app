@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.18';
+window.APP_VERSION = 'v10.20';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -558,7 +558,7 @@ function changePasscode(){
   localStorage.setItem('pc_unlocked', np);
   alert('パスコードを変更しました：' + np);
 }
-window.APP_UPDATED = '2026-05-27';
+window.APP_UPDATED = '2026-07-20';
 
 // setSyncStatus：DOM生成後も呼べるようキューイング方式
 window._syncQueue = [];
@@ -1034,17 +1034,17 @@ try {
 <div id="staff-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:center;justify-content:center;padding:24px;">
   <div style="background:var(--surface);border-radius:20px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25);">
     <div style="background:var(--green);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="color:#fff;font-size:17px;font-weight:700;">👤 担当者名を入力</div>
+      <div id="staff-modal-title" style="color:#fff;font-size:17px;font-weight:700;">👤 担当者名を入力</div>
       <button onclick="closeStaffModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
     </div>
     <div style="padding:20px;">
-      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">保存する担当者名を入力してください</p>
+      <p id="staff-modal-sub" style="font-size:13px;color:var(--text2);margin-bottom:14px;">保存する担当者名を入力してください</p>
       <input type="text" id="staff-modal-input" placeholder="担当者名" list="staff-list-modal"
         autocomplete="on"
         style="width:100%;font-size:16px;padding:12px 14px;border:1.5px solid var(--border2);border-radius:10px;font-family:inherit;background:var(--surface);color:var(--text);margin-bottom:14px;"
         onkeydown="if(event.key==='Enter')submitStaffModal()">
       <datalist id="staff-list-modal"></datalist>
-      <button onclick="submitStaffModal()" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">☑️ 最終確認・完了</button>
+      <button id="staff-modal-btn" onclick="submitStaffModal()" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">☑️ 最終確認・完了</button>
     </div>
   </div>
 </div>
@@ -1436,7 +1436,7 @@ function confirmComplete(){
     return;
   }
 
-  openStaffModal();
+  openStaffModal('complete');
 }
 
 function showMissingAlert(items){
@@ -1475,13 +1475,31 @@ function showMissingAlert(items){
   // 「閉じて入力する」ボタンでオーバーレイも消す
   div.querySelector('button').addEventListener('click', ()=> overlay.remove());
 }
-function openStaffModal(){
+let _staffMode='complete';
+function openStaffModal(mode){
+  _staffMode = mode || 'complete';
   const modal=document.getElementById('staff-modal');
+  const titleEl=document.getElementById('staff-modal-title');
+  const subEl=document.getElementById('staff-modal-sub');
+  const btnEl=document.getElementById('staff-modal-btn');
+  if(_staffMode==='start'){
+    if(subEl) subEl.textContent='在庫の入力を始める前に、担当者名を入力してください';
+    if(btnEl) btnEl.textContent='✅ 入力を始める';
+  } else {
+    if(subEl) subEl.textContent='保存する担当者名を入力してください';
+    if(btnEl) btnEl.textContent='☑️ 最終確認・完了';
+  }
   modal.style.display='flex';
   const inp=document.getElementById('staff-modal-input');
   inp.value='';
   updateStaffListModal();
   setTimeout(()=>inp.focus(),100);
+}
+// 起動時：在庫入力に入る前に担当者名を聞く（既に入っていれば聞かない）
+function openStaffModalStart(){
+  const cur=(document.getElementById('staff') ? document.getElementById('staff').value.trim() : '');
+  if(cur) return;
+  openStaffModal('start');
 }
 function closeStaffModal(){
   document.getElementById('staff-modal').style.display='none';
@@ -1504,6 +1522,10 @@ function submitStaffModal(){
   document.getElementById('staff').value=val;
   saveStaffName();
   closeStaffModal();
+  if(_staffMode==='start'){
+    // 開始時：担当者名を確定するだけ（完了処理はしない）。以後の自動保存に名前が入る。
+    return;
+  }
   _doConfirmComplete();
 }
 function _doConfirmComplete(){
@@ -2997,6 +3019,7 @@ if(loadHistory().length){
 if(restoreDraft()){
   showToast('📝 入力途中のデータを復元しました');
 }
+// [変更 v10.20] 起動時には担当者名を聞かない。在庫を入力し始めた時だけ聞く（autoSaveToFirebase内で呼ばれる）
 // Firebase同期完了後にデータを上書き反映（initFirebaseOnReady内で呼ばれる）
 
 // ===== 前回値の復元 =====
@@ -3082,6 +3105,9 @@ function autoSaveToFirebase(){
   const t = new Date();
   const timeStr = t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
   const staff = document.getElementById('staff') ? document.getElementById('staff').value.trim() : '';
+  // [無記名防止] 担当者名が未入力の間はスプレッドシート(Firebase)へ保存しない。
+  // ローカルの下書き(saveDraft)は保存済みなのでデータは消えない。名前を入れれば同期される。
+  if(!staff){ openStaffModalStart(); return; }
   const simple = {}, sales = {}, nyuka = {};
   SIMPLE.forEach(it=>{ simple[it.id] = $v('simple_'+it.id); });
   SALES.forEach(it=>{
@@ -3096,7 +3122,7 @@ function autoSaveToFirebase(){
   const record = {
     date: dateStr,
     time: timeStr,
-    staff: staff || '（入力中）',
+    staff: staff,
     simple, sales, nyuka,
     simpleItems: SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:  SALES.map(it=>({id:it.id,name:it.name})),
