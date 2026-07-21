@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.52';
+window.APP_VERSION = 'v10.53';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1673,6 +1673,10 @@ function saveDiffAndComplete(){
 let _diffWarnItems = [];
 let _isForceComplete=false;
 function doComplete(){
+  // [修正 v10.53] 入力から1.5秒後に走る自動保存が予約されたままだと、
+  // 完了保存の直後に上書きされて「入力中」に戻ってしまうため、ここで止める。
+  try{ if(typeof _autoSaveTimer!=='undefined' && _autoSaveTimer){ clearTimeout(_autoSaveTimer); _autoSaveTimer=null; } }catch(e){}
+  try{ window._stockTouched = false; }catch(e){}
   completed=true;
   const btn=document.getElementById('complete-btn');
   btn.classList.add('confirmed');
@@ -3270,6 +3274,17 @@ function closeReviewModal(){
     btn.style.border = '';
   }
 }
+// [追加 v10.53] その記録が「完了ずみ」かを判定する。
+// 完了フラグだけでなく、「完了した時刻」が「在庫を最後に触った時刻」より
+// 後（または同時）なら完了ずみとみなす。
+// （完了の直後に別の自動保存が走っても、完了の表示が消えないようにするため）
+function _isRecDone(rec){
+  if(!rec) return false;
+  if(rec._autoSaved === false) return true;
+  if(rec.completedAt && (!rec.stockAt || rec.completedAt >= rec.stockAt)) return true;
+  return false;
+}
+
 // [追加 v10.52] 「完了画面を出す対象の日」を返す。
 // 朝8時までは前日あつかい（前日の完了画面を、翌朝8時まで出したままにするため）。
 function _reviewTargetDate(){
@@ -3327,7 +3342,7 @@ function _maybeShowDoneReview(){
   try{
     const t = _reviewTargetDate();
     const rec = loadHistory().find(r => r && r.date === t.slash);
-    if(!rec || rec._autoSaved !== false) return;   // 完了ずみでなければ出さない
+    if(!_isRecDone(rec)) return;   // 完了ずみでなければ出さない
     window._reviewShownOnLoad = true;
     const body = document.getElementById('review-modal-body');
     const dEl  = document.getElementById('review-modal-date');
@@ -3398,7 +3413,7 @@ function renderTodayCard(){
     uberRow = `<div class="tc-uber"><span>🛵 Uber Eats 売上</span><b>${uText}</b></div>`;
   }
 
-  const isDone = rec._autoSaved === false;
+  const isDone = _isRecDone(rec);
   const title  = isDone ? '✅ 本日 入力完了ずみ' : '📝 本日 入力中（自動保存ずみ）';
   // [修正 v10.25] 名前と時刻を出すのは「完了ボタンを押した時」だけにする。
   // 自動保存の time / staff は、わらび餅入荷の登録などでも書き換わってしまい、
