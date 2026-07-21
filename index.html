@@ -308,7 +308,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.46';
+window.APP_VERSION = 'v10.47';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3360,6 +3360,27 @@ function renderTodayCard(){
     ? (_rvTempHTML() + _rvWarabiHTML() + cardHtml)
     : cardHtml;
   el.style.display = 'block';
+  // [追加 v10.47] 完了ずみの日は、タブを閉じて開き直しても「保存済み」の見た目に戻す
+  try{ refreshCompleteBtnState(isDone); }catch(e){}
+}
+
+// 完了ボタンの見た目を、本日の記録の状態に合わせる。
+// 完了ずみ＝「✅ 保存済み」。ただし押せる状態のままにして、直したい時は再確認できるようにする。
+function refreshCompleteBtnState(isDone){
+  const btn = document.getElementById('complete-btn');
+  if(!btn) return;
+  completed = !!isDone;
+  btn.classList.remove('confirmed');   // 押せなくなるので付けない
+  btn.disabled = false;
+  if(isDone){
+    btn.textContent = '✅ 保存済み';
+    btn.style.background = 'var(--done-bd)';
+    btn.style.color = '#5a4000';
+  } else {
+    btn.textContent = '☑️ 最終確認・完了';
+    btn.style.background = '';
+    btn.style.color = '';
+  }
 }
 
 // ===== 前回値の復元 =====
