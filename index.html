@@ -253,8 +253,10 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .tcard-title{color:#fff;font-size:15px;font-weight:700;}
 .tcard-sub{color:#fff;font-size:12px;opacity:.9;white-space:nowrap;}
 .tcard-body{padding:10px 12px;}
-/* [修正 v10.34] 2列から1列に。在庫の入力欄と同じ縦の並び順で表示する */
-.tcard-grid{display:grid;grid-template-columns:1fr;gap:4px;}
+/* [修正 v10.35] 2列に戻しつつ、並び順を「左の列を上から下へ→次に右の列」に変更。
+   （左右に交互ではなく、在庫の入力欄と同じ縦の順番で読めるようにするため） */
+.tcard-grid{columns:2;column-gap:10px;}
+.tcard-grid > *{break-inside:avoid;-webkit-column-break-inside:avoid;margin-bottom:4px;}
 .tc-row{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;padding:3px 6px;background:#fff;border-radius:7px;}
 .tc-row span{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tc-row b{color:var(--text);font-weight:700;flex-shrink:0;}
@@ -302,7 +304,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.34';
+window.APP_VERSION = 'v10.35';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
