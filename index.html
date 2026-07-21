@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.50';
+window.APP_VERSION = 'v10.51';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -731,6 +731,7 @@ try {
       localStorage.setItem('temp_records', JSON.stringify(data));
       if(typeof renderTempHistory==='function') renderTempHistory();
       if(typeof renderTempRecorderList==='function') renderTempRecorderList();
+      if(typeof renderTodayCard==='function') renderTodayCard();
     }
   });
 
@@ -757,6 +758,7 @@ try {
         });
       }
       if(typeof renderWarabiHistory === 'function') renderWarabiHistory();
+      if(typeof renderTodayCard === 'function') renderTodayCard();
     }
   });
 
@@ -3375,6 +3377,15 @@ function renderTodayCard(){
   // （完了後に戻って在庫を直すと、他の記録が消えてしまっていたため）
   el.innerHTML = _rvTempHTML() + _rvWarabiHTML() + cardHtml;
   el.style.display = 'block';
+  // [追加 v10.51] 確認画面を開いたままなら、その中身も最新にする
+  // （他の端末で数字が変わった時に、開いている画面が古いままにならないように）
+  try{
+    const rm = document.getElementById('review-modal');
+    const rb = document.getElementById('review-modal-body');
+    if(rm && rb && rm.style.display === 'flex'){
+      rb.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML();
+    }
+  }catch(e){}
   // [追加 v10.47] 完了ずみの日は、タブを閉じて開き直しても「保存済み」の見た目に戻す
   try{ refreshCompleteBtnState(isDone); }catch(e){}
 }
