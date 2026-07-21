@@ -308,7 +308,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.47';
+window.APP_VERSION = 'v10.48';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3265,11 +3265,17 @@ function closeReviewModal(){
     btn.style.border = '';
   }
 }
-function confirmReviewAndComplete(){
-  // [変更 v10.43] 保存しても画面は閉じない。
-  // ボタンを「完了」に変えて、確認した内容をそのまま見られるようにする。
-  // 「戻って直す」で元の画面に戻る。
-  doComplete();
+// 完了ずみの確認画面を、開いた時に1回だけ出す
+function _maybeShowDoneReview(){
+  if(window._reviewShownOnLoad) return;
+  window._reviewShownOnLoad = true;
+  try{
+    openDayReviewModal();
+    _setReviewDoneButtons();
+  }catch(e){}
+}
+// 確認画面のボタンを「完了」の状態にする
+function _setReviewDoneButtons(){
   const b = document.getElementById('review-save-btn');
   if(b){
     b.textContent = '☑️ 完了';
@@ -3277,6 +3283,14 @@ function confirmReviewAndComplete(){
     b.style.background = '#8fae9c';
     b.style.cursor = 'default';
   }
+}
+function confirmReviewAndComplete(){
+  // [変更 v10.43] 保存しても画面は閉じない。
+  // ボタンを「完了」に変えて、確認した内容をそのまま見られるようにする。
+  // 「戻って直す」で元の画面に戻る。
+  window._reviewShownOnLoad = true;   // 保存直後に確認画面を開き直さないため
+  doComplete();
+  _setReviewDoneButtons();
   // [修正 v10.44] 左のボタンは「戻って直す」のまま（押すと入力画面に戻って直せるため）
 }
 
@@ -3376,6 +3390,9 @@ function refreshCompleteBtnState(isDone){
     btn.textContent = '✅ 保存済み';
     btn.style.background = 'var(--done-bd)';
     btn.style.color = '#5a4000';
+    // [追加 v10.48] 完了ずみの日は、アプリを開いた時に確認画面をそのまま表示する。
+    // どの端末で開いても「完了している」と一目で分かる。
+    _maybeShowDoneReview();
   } else {
     btn.textContent = '☑️ 最終確認・完了';
     btn.style.background = '';
