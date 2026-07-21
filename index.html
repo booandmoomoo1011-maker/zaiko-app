@@ -46,13 +46,14 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .staff-complete-row label{font-size:14px;font-weight:600;color:var(--text2);white-space:nowrap;}
 .staff-complete-row input{width:110px;font-size:14px;padding:5px 8px;border:1px solid var(--border2);border-radius:6px;font-family:inherit;background:var(--surface);color:var(--text);}
 .staff-complete-row input:focus{outline:none;border-color:var(--green);}
-.complete-inline-btn{margin-left:auto;padding:7px 16px;background:var(--done-bg);border:1.5px solid var(--done-bd);border-radius:20px;font-family:inherit;font-size:14px;font-weight:700;color:#7a6000;cursor:pointer;white-space:nowrap;transition:background .2s;box-shadow:0 4px 18px rgba(200,160,0,0.5);}
-.complete-inline-btn:active{background:var(--done-bd);}
+/* [変更 v10.49] 最終確認・完了ボタンをオレンジに */
+.complete-inline-btn{margin-left:auto;padding:7px 16px;background:#ff6d00;border:1.5px solid #ff6d00;border-radius:20px;font-family:inherit;font-size:14px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;transition:background .2s;box-shadow:0 4px 18px rgba(255,109,0,.45);}
+.complete-inline-btn:active{background:#e56100;border-color:#e56100;}
 
 .force-complete-btn{background:#fff0f0;border:1.5px solid #e02020;color:#c00000;border-radius:20px;font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;cursor:pointer;white-space:nowrap;margin-top:4px;}
 .force-complete-btn.confirm{background:#e02020;color:#fff;}
 
-.complete-inline-btn.confirmed{background:var(--done-bd);color:#5a4000;pointer-events:none;}
+.complete-inline-btn.confirmed{background:#c25400;border-color:#c25400;color:#fff;pointer-events:none;}
 .edit-inline-btn{display:none;}
 .edit-action-row{display:flex;gap:8px;}
 .edit-action-btn{flex:1;padding:11px 10px;border-radius:var(--r);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;border:none;text-align:center;}
@@ -308,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.48';
+window.APP_VERSION = 'v10.50';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3370,9 +3371,9 @@ function renderTodayCard(){
   // [追加 v10.40] 完了したあとは、確認画面と同じ並び（冷蔵庫→わらび餅入荷→在庫）を画面に出す。
   // これで一日の記録が一目で見られる。入力中はこれまで通り在庫のカードだけ。
   el.className = '';
-  el.innerHTML = isDone
-    ? (_rvTempHTML() + _rvWarabiHTML() + cardHtml)
-    : cardHtml;
+  // [修正 v10.50] 完了ずみでなくても、冷蔵庫温度・わらび餅入荷を常に表示する。
+  // （完了後に戻って在庫を直すと、他の記録が消えてしまっていたため）
+  el.innerHTML = _rvTempHTML() + _rvWarabiHTML() + cardHtml;
   el.style.display = 'block';
   // [追加 v10.47] 完了ずみの日は、タブを閉じて開き直しても「保存済み」の見た目に戻す
   try{ refreshCompleteBtnState(isDone); }catch(e){}
@@ -3388,14 +3389,16 @@ function refreshCompleteBtnState(isDone){
   btn.disabled = false;
   if(isDone){
     btn.textContent = '✅ 保存済み';
-    btn.style.background = 'var(--done-bd)';
-    btn.style.color = '#5a4000';
+    btn.style.background = '#c25400';
+    btn.style.borderColor = '#c25400';
+    btn.style.color = '#fff';
     // [追加 v10.48] 完了ずみの日は、アプリを開いた時に確認画面をそのまま表示する。
     // どの端末で開いても「完了している」と一目で分かる。
     _maybeShowDoneReview();
   } else {
     btn.textContent = '☑️ 最終確認・完了';
     btn.style.background = '';
+    btn.style.borderColor = '';
     btn.style.color = '';
   }
 }
@@ -3816,6 +3819,8 @@ function loadWarabiRecords(){
 function saveWarabiRecords(list){
   localStorage.setItem(WARABI_RECORDS_KEY,JSON.stringify(list));
   if(typeof window.firebaseSaveWarabiRecords==='function') window.firebaseSaveWarabiRecords(list);
+  // [追加 v10.50] 本日のカードの入荷表示も最新にする
+  try{ renderTodayCard(); }catch(e){}
 }
 
 function initWarabiSection(){
@@ -4274,6 +4279,8 @@ function loadTempRecords(){
 function saveTempRecords(list){
   localStorage.setItem(TEMP_RECORDS_KEY,JSON.stringify(list));
   if(typeof window.firebaseSaveTempRecords==='function') window.firebaseSaveTempRecords(list);
+  // [追加 v10.50] 本日のカードの温度表示も最新にする
+  try{ renderTodayCard(); }catch(e){}
 }
 function toggleTempSection(){
   const body=document.getElementById("temp-body");
