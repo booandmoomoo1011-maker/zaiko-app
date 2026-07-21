@@ -304,7 +304,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.37';
+window.APP_VERSION = 'v10.39';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3130,92 +3130,102 @@ if(loadHistory().length){
 // ===== [追加 v10.36] 完了前の「本日の記録確認」 =====
 // 完了ボタンを押すと、在庫・冷蔵庫温度・わらび餅入荷・Uber・備考をまとめて表示し、
 // 確認してから保存できるようにする（一日の記録を最後に見返せる）。
-// 記録の種類ごとに、アプリ本体と同じ色で囲む
-// 冷蔵庫＝青 / わらび餅入荷＝紫 / 在庫＝緑
-function _rvBlock(title, inner, theme){
-  if(!inner) return '';
-  const t = theme==='blue'   ? {head:'#1565c0', bg:'#e8f4ff', bd:'#90caf9'}
-          : theme==='purple' ? {head:'#8a5fcf', bg:'#f3eeff', bd:'#c9a8f0'}
-          :                    {head:'#1a5f3a', bg:'#eaf7ef', bd:'#1a5f3a'};
-  return `<div style="background:${t.bg};border:2px solid ${t.bd};border-radius:14px;overflow:hidden;margin-bottom:10px;">
-    <div style="background:${t.head};padding:9px 13px;color:#fff;font-size:15px;font-weight:700;">${title}</div>
-    <div style="padding:9px 11px;">${inner}</div></div>`;
+// 確認画面は、それぞれの記録と同じ見た目・同じ配色で作る
+// ①冷蔵庫＝青（温度記録履歴と同じ） ②わらび餅入荷＝紫（入荷記録と同じ） ③在庫＝本日のカードと同じ
+function _rvTempHTML(){
+  try{
+    const r = (typeof loadTempRecords==='function' ? loadTempRecords() : []).find(x=>x && x.date===todayISO);
+    if(!r) return '';
+    const dp = r.date.split('-');
+    const dateLabel = dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
+    const amRecorder = r.amRecorder||r.recorder||'';
+    const pmRecorder = r.pmRecorder||r.recorder||'';
+    const rows = (r.data||[]).map(f=>`
+      <div style="display:flex;align-items:center;gap:4px;margin-top:3px;font-size:12px;">
+        <span style="font-weight:700;color:#fff;min-width:52px;">${esc((f.name||'').replace(/冷蔵側|冷凍側|兼用機|冷蔵兼用|冷凍兼用/g,''))}</span>
+        <span style="background:rgba(255,255,255,.25);border-radius:4px;padding:1px 6px;color:#fff;">AM ${f.am&&f.am.time?f.am.time:'—'} <b>${f.am&&f.am.temp!==''&&f.am.temp!==undefined?(f.am.temp==='DF'?'DF':f.am.temp+'℃'):'—'}</b></span>
+        <span style="background:rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;color:#fff;">PM ${f.pm&&f.pm.time?f.pm.time:'—'} <b>${f.pm&&f.pm.temp!==''&&f.pm.temp!==undefined?(f.pm.temp==='DF'?'DF':f.pm.temp+'℃'):'—'}</b></span>
+      </div>`).join('');
+    return `<div class="temp-record-row" style="background:#1565c0;border:2px solid #0a3d7a;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="temp-record-date" style="color:#fff;">📅 ${dateLabel}<span style="font-size:10px;background:#fff;color:#1565c0;padding:1px 7px;border-radius:8px;margin-left:6px;font-weight:700;">今日</span></span>
+      </div>
+      <div style="display:flex;gap:8px;font-size:11px;color:#cde;margin-top:2px;">
+        ${amRecorder?`<span>AM👤${esc(amRecorder)}</span>`:''}
+        ${pmRecorder?`<span>PM👤${esc(pmRecorder)}</span>`:''}
+      </div>
+      <div style="filter:brightness(1.3);">${rows}</div>
+    </div>`;
+  }catch(e){ return ''; }
 }
-function _rvLabel(text){
-  return `<div style="font-size:11px;font-weight:700;color:var(--text2);margin:2px 0 4px;">${text}</div>`;
+function _rvWarabiHTML(){
+  try{
+    const recs = (typeof loadWarabiRecords==='function' ? loadWarabiRecords() : []).filter(x=>x && x.date===todayISO);
+    if(!recs.length) return '';
+    return recs.map(r=>`<div class="warabi-record-row" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="background:#e8d8ff;border-radius:6px;padding:2px 7px;font-size:11px;font-weight:700;color:#6a3faf;">${esc(r.item||'')}</span>
+        ${r.qty?`<span style="background:#1a5f3a;border-radius:6px;padding:2px 9px;font-size:13px;font-weight:700;color:#fff;">${r.qty}個</span>`:''}
+        <span style="font-size:11px;color:#555;">👤${esc(r.inspector||'')}</span>
+      </div>
+      <div style="font-size:11px;color:#555;display:flex;flex-wrap:wrap;gap:6px;margin-top:3px;">
+        ${r.factory?`<span>🏭${esc(r.factory)}</span>`:''}
+        ${r.carrier?`<span>🚚${esc(r.carrier)}</span>`:''}
+        ${r.inquiry?`<span>📞${esc(r.inquiry)}</span>`:''}
+        ${r.orderNo?`<span style="background:#ede6ff;border-radius:5px;padding:1px 6px;font-weight:700;color:#6a3faf;">📋${esc(r.orderNo)}</span>`:''}
+      </div>
+    </div>`).join('');
+  }catch(e){ return ''; }
 }
-function _rvRow(name, val){
-  return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:5px 9px;background:var(--surface);border-radius:8px;margin-bottom:3px;"><span style="color:var(--text2);">${esc(name)}</span><b style="color:var(--text);">${val}</b></div>`;
+function _rvStockHTML(){
+  // 本日のカードと同じ見た目。ただし数字は「今この画面に入っている値」を使う
+  let rows = '';
+  SIMPLE.forEach(it=>{
+    const q = $v('simple_'+it.id);
+    const low = isLowStock(it.name, q) ? ' style="color:#e02020"' : '';
+    rows += `<div class="tc-row"><span>${esc(it.name)}</span><b${low}>${q}</b></div>`;
+  });
+  SALES.forEach(it=>{
+    const st = document.getElementById('stock_'+it.id);
+    const q  = (st && st.value.trim()!=='') ? parseFloat(st.value)||0 : 0;
+    const low = isLowStock(it.name, q) ? ' style="color:#e02020"' : '';
+    rows += `<div class="tc-row"><span>${esc(it.name)}</span><b${low}>${q}</b></div>`;
+  });
+  let uberRow = '';
+  try{
+    const uArr = UBER.filter(u=>u && !u._empty);
+    if(uArr.length){
+      const isNoTrade = uArr.length===1 && uArr[0].noTrade;
+      const uTotal = uArr.reduce((s,u)=>s+(u.amount||0),0);
+      const uText = isNoTrade ? '本日取引無し' : ('¥'+uTotal.toLocaleString()+`（${uArr.length}件）`);
+      uberRow = `<div class="tc-uber"><span>🛵 Uber Eats 売上</span><b>${uText}</b></div>`;
+    }
+  }catch(e){}
+  let noteRow = '';
+  try{
+    const noteEl = document.getElementById('note');
+    const note = noteEl ? noteEl.value.trim() : '';
+    if(note) noteRow = `<div style="margin-top:8px;padding:8px 10px;background:var(--surface);border-radius:9px;font-size:13px;white-space:pre-wrap;color:var(--text);">📝 ${esc(note)}</div>`;
+  }catch(e){}
+  const staff = document.getElementById('staff') ? document.getElementById('staff').value.trim() : '';
+  // [v10.39] 配色は「入力中」カードと同じ山吹色（tcard auto）にする
+  return `<div class="tcard auto" style="margin-bottom:0;">
+    <div class="tcard-head">
+      <span class="tcard-title">📦 本日の在庫</span>
+      <span class="tcard-sub">${esc(staff)}</span>
+    </div>
+    <div class="tcard-body">
+      <div class="tcard-grid">${rows}</div>
+      ${uberRow}${noteRow}
+    </div>
+  </div>`;
 }
 function openDayReviewModal(){
   const body = document.getElementById('review-modal-body');
   const dEl  = document.getElementById('review-modal-date');
   if(!body) { doComplete(); return; }   // 画面が無い時は今まで通り保存する
   if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(dateStr) : dateStr);
-  let html = '';
-
-  // ① 冷蔵庫温度記録（青）
-  try{
-    const tRec = (typeof loadTempRecords==='function' ? loadTempRecords() : []).find(r=>r && r.date===todayISO);
-    let t = '';
-    if(tRec && tRec.data && tRec.data.length){
-      ['am','pm'].forEach(k=>{
-        const who = k==='am' ? (tRec.amRecorder||'') : (tRec.pmRecorder||'');
-        const has = tRec.data.some(f=>f[k] && f[k].temp!=='' && f[k].temp!=null);
-        if(!who && !has) return;
-        const vals = tRec.data.map(f=>{
-          const v = (f[k] && f[k].temp!=='' && f[k].temp!=null) ? f[k].temp+'℃' : '—';
-          return `${esc(f.name||'')} ${v}`;
-        }).join('　');
-        t += `<div style="font-size:13px;padding:5px 9px;background:var(--surface);border-radius:8px;margin-bottom:3px;"><b>${k==='am'?'AM':'PM'}</b>　${vals}${who?`　<span style="color:var(--text2);">👤 ${esc(who)}</span>`:''}</div>`;
-      });
-    }
-    if(!t) t = `<div style="font-size:13px;padding:5px 9px;color:var(--text2);">本日の記録はありません</div>`;
-    html += _rvBlock('🌡 冷蔵庫温度記録', t, 'blue');
-  }catch(e){}
-
-  // ② わらび餅 入荷記録（紫・あった場合だけ）
-  try{
-    const wRecs = (typeof loadWarabiRecords==='function' ? loadWarabiRecords() : []).filter(r=>r && r.date===todayISO);
-    if(wRecs.length){
-      let w = '';
-      wRecs.forEach(r=>{
-        w += _rvRow(r.item||'わらび餅', `${r.qty||0}個　<span style="color:var(--text2);font-weight:400;">👤 ${esc(r.inspector||'')}</span>`);
-      });
-      html += _rvBlock('📥 わらび餅 入荷記録', w, 'purple');
-    }
-  }catch(e){}
-
-  // ③ 在庫（緑）※ここは今までと同じ内容
-  let g = '';
-  let s1 = '';
-  SIMPLE.forEach(it=>{ s1 += _rvRow(it.name, $v('simple_'+it.id)); });
-  if(s1) g += _rvLabel('在庫数のみ') + s1;
-  let s2 = '';
-  SALES.forEach(it=>{
-    const st = document.getElementById('stock_'+it.id);
-    const stock = (st && st.value.trim()!=='') ? st.value : '—';
-    s2 += _rvRow(it.name, `在庫 ${stock}　販売 ${$v('sell_'+it.id)}　無料 ${$v('free_'+it.id)}`);
-  });
-  if(s2) g += _rvLabel('販売・無料') + s2;
-  try{
-    const uArr = UBER.filter(u=>u && !u._empty);
-    if(uArr.length){
-      const isNoTrade = uArr.length===1 && uArr[0].noTrade;
-      const uTotal = uArr.reduce((s,u)=>s+(u.amount||0),0);
-      g += _rvLabel('🛵 Uber Eats 売上') + _rvRow('合計', isNoTrade ? '本日取引無し' : `¥${uTotal.toLocaleString()}（${uArr.length}件）`);
-    }
-  }catch(e){}
-  try{
-    const noteEl = document.getElementById('note');
-    const note = noteEl ? noteEl.value.trim() : '';
-    if(note){
-      g += _rvLabel('📝 備考') + `<div style="font-size:13px;white-space:pre-wrap;color:var(--text);padding:5px 9px;background:var(--surface);border-radius:8px;">${esc(note)}</div>`;
-    }
-  }catch(e){}
-  html += _rvBlock('📦 本日の在庫', g, 'green');
-
-  body.innerHTML = html;
+  body.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML();
   const m = document.getElementById('review-modal');
   m.style.display = 'flex';
   body.scrollTop = 0;
