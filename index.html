@@ -301,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.28';
+window.APP_VERSION = 'v10.29';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -802,8 +802,10 @@ try {
           if(typeof renderAll==='function') renderAll();
           if(typeof renderHistory==='function') renderHistory();
           if(typeof restoreLastValues==='function') restoreLastValues();
-          // [修正 v10.22] 入力途中の下書きを最後にもう一度反映（同期で入力中の数字が消えないように）
-          if(typeof restoreDraft==='function') restoreDraft();
+          // [修正 v10.29] 下書きを戻すのは「この端末に未送信の入力がある時」だけ。
+          // 他の端末が入力した新しい数字を、古い下書きで上書きしないようにするため。
+          try{ localStorage.setItem('zaiko_last_sync_at', String(Date.now())); }catch(e){}
+          if(window._hasLocalEdits && typeof restoreDraft==='function') restoreDraft();
         }
         const tempData = tempSnap.val();
         if(tempData){
@@ -848,8 +850,9 @@ try {
       if(typeof renderAll==='function') renderAll();
       if(typeof renderHistory==='function') renderHistory();
       if(typeof restoreLastValues==='function') restoreLastValues();
-      // [修正 v10.22] 入力途中の下書きを最後にもう一度反映（同期で入力中の数字が消えないように）
-      if(typeof restoreDraft==='function') restoreDraft();
+      // [修正 v10.29] 下書きを戻すのは「この端末に未送信の入力がある時」だけ。
+      try{ localStorage.setItem('zaiko_last_sync_at', String(Date.now())); }catch(e){}
+      if(window._hasLocalEdits && typeof restoreDraft==='function') restoreDraft();
       if(firstLoad){
         if(typeof showToast==='function') showToast('✅ データを読み込みました');
         firstLoad = false;
@@ -1399,6 +1402,8 @@ let editingDate=null; // 編集中の記録の日付
 const now=new Date();
 const dateStr=now.getFullYear()+'/'+(now.getMonth()+1).toString().padStart(2,'0')+'/'+now.getDate().toString().padStart(2,'0');
 const todayISO=now.toISOString().slice(0,10);
+// [修正 v10.29] 下書きの保存キー。起動処理でも使うので、ここで先に宣言しておく。
+var DRAFT_KEY = 'zaiko_draft_' + dateStr.replace(/\//g, '-');
 const _hdTop=document.getElementById('hdate-top');
 if(_hdTop) _hdTop.textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月';
 const _hdBot=document.getElementById('hdate-bottom');
@@ -3050,10 +3055,24 @@ if(loadHistory().length){
   renderHistory();
   restoreLastValues();
 }
-// [修正] 下書きがあれば履歴より優先して復元（更新・リロード対策）
-if(restoreDraft()){
-  showToast('📝 入力途中のデータを復元しました');
-}
+// [修正 v10.29] 下書きは「最後に同期したより後に書かれたもの」だけ復元する。
+// （前は無条件に戻していたため、他の端末で入力した新しい数字が、
+//   この端末の古い下書きで上書きされ、更新のたびに数字が戻ってしまっていた）
+(function(){
+  try{
+    const d = loadDraft();
+    if(!d) return;
+    const lastSync = parseInt(localStorage.getItem('zaiko_last_sync_at')||'0', 10);
+    const draftAt  = d._savedAt || 0;
+    // 下書きの方が新しい時だけ復元（_savedAt が無い古い下書きは復元しない）
+    if(draftAt > lastSync){
+      if(restoreDraft()){
+        window._hasLocalEdits = true;
+        showToast('📝 入力途中のデータを復元しました');
+      }
+    }
+  }catch(e){}
+})();
 // [変更 v10.21] 起動時には聞かない。最初の入力欄に触れた瞬間に担当者名を聞く
 (function(){
   let _asked=false;
@@ -3181,7 +3200,8 @@ function restoreLastValues(){
 
 
 // ===== 下書き自動保存（更新・リロード対策）=====
-const DRAFT_KEY = 'zaiko_draft_' + dateStr.replace(/\//g, '-');
+// [修正 v10.29] DRAFT_KEY は起動処理より前で使えるように、上（dateStrの直後）で var 宣言している。
+// （以前はここで const 宣言していたため、起動時の下書き復元がエラーで止まっていた）
 
 let _autoSaveTimer = null;
 function saveDraft(){
@@ -3202,6 +3222,10 @@ function saveDraft(){
       draft.sales[it.id+'_free'] = $v('free_'+it.id);
       draft.nyuka[it.id]         = [...(NYUKA[it.id]||[])];
     });
+    // [追加 v10.29] 下書きを書いた時刻と「この端末で入力した」印を残す。
+    // 他の端末の新しいデータを、古い下書きで上書きしないための判定に使う。
+    draft._savedAt = Date.now();
+    window._hasLocalEdits = true;
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
   }catch(e){
     console.warn('saveDraft failed:', e);
@@ -3257,6 +3281,9 @@ function autoSaveToFirebase(){
   }
   localStorage.setItem('zaiko_history', JSON.stringify(h));
   if(window.firebaseSave) window.firebaseSave(h);
+  // [追加 v10.29] 送信できたので「この端末に未送信の入力がある」印を消す
+  window._hasLocalEdits = false;
+  try{ localStorage.setItem('zaiko_last_sync_at', String(Date.now())); }catch(e){}
   // [追加 v10.23] 当日の記録カードを更新
   try{ renderTodayCard(); }catch(e){}
 }
