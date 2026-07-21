@@ -308,7 +308,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.42';
+window.APP_VERSION = 'v10.43';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1305,8 +1305,8 @@ try {
       </div>
       <div id="review-modal-body" style="padding:12px 14px;overflow-y:auto;flex:1;"></div>
       <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0;">
-        <button onclick="closeReviewModal()" style="flex:1;padding:13px;background:var(--surface);color:#1a5f3a;border:2px solid #1a5f3a;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">戻って直す</button>
-        <button onclick="confirmReviewAndComplete()" style="flex:1.5;padding:13px;background:#1a5f3a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✅ これで保存</button>
+        <button id="review-back-btn" onclick="closeReviewModal()" style="flex:1;padding:13px;background:var(--surface);color:#1a5f3a;border:2px solid #1a5f3a;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">戻って直す</button>
+        <button id="review-save-btn" onclick="confirmReviewAndComplete()" style="flex:1.5;padding:13px;background:#1a5f3a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✅ これで保存</button>
       </div>
     </div>
   </div>
@@ -3228,6 +3228,16 @@ function openDayReviewModal(){
   if(!body) { doComplete(); return; }   // 画面が無い時は今まで通り保存する
   if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(dateStr) : dateStr);
   body.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML();
+  // ボタンの見た目を最初の状態に戻す
+  const b = document.getElementById('review-save-btn');
+  if(b){
+    b.textContent = '✅ これで保存';
+    b.disabled = false;
+    b.style.background = '#1a5f3a';
+    b.style.cursor = 'pointer';
+  }
+  const bk = document.getElementById('review-back-btn');
+  if(bk) bk.textContent = '戻って直す';
   const m = document.getElementById('review-modal');
   m.style.display = 'flex';
   body.scrollTop = 0;
@@ -3239,9 +3249,19 @@ function closeReviewModal(){
   _isForceComplete = false;   // 直しに戻るので、差異の判定はやり直す
 }
 function confirmReviewAndComplete(){
-  const m = document.getElementById('review-modal');
-  if(m) m.style.display='none';
+  // [変更 v10.43] 保存しても画面は閉じない。
+  // ボタンを「完了」に変えて、確認した内容をそのまま見られるようにする。
+  // 「戻って直す」で元の画面に戻る。
   doComplete();
+  const b = document.getElementById('review-save-btn');
+  if(b){
+    b.textContent = '☑️ 完了';
+    b.disabled = true;
+    b.style.background = '#8fae9c';
+    b.style.cursor = 'default';
+  }
+  const bk = document.getElementById('review-back-btn');
+  if(bk) bk.textContent = '閉じる';
 }
 
 // ===== [追加 v10.23] 当日の記録カード =====
