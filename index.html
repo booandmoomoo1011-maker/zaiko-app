@@ -301,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.31';
+window.APP_VERSION = 'v10.32';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -805,7 +805,7 @@ try {
           // [修正 v10.29] 下書きを戻すのは「この端末に未送信の入力がある時」だけ。
           // 他の端末が入力した新しい数字を、古い下書きで上書きしないようにするため。
           try{ localStorage.setItem('zaiko_last_sync_at', String(Date.now())); }catch(e){}
-          if(window._hasLocalEdits && typeof restoreDraft==='function') restoreDraft();
+          if(window._hasLocalEdits && typeof shouldRestoreDraft==='function' && shouldRestoreDraft() && typeof restoreDraft==='function') restoreDraft();
         }
         const tempData = tempSnap.val();
         if(tempData){
@@ -852,7 +852,7 @@ try {
       if(typeof restoreLastValues==='function') restoreLastValues();
       // [修正 v10.29] 下書きを戻すのは「この端末に未送信の入力がある時」だけ。
       try{ localStorage.setItem('zaiko_last_sync_at', String(Date.now())); }catch(e){}
-      if(window._hasLocalEdits && typeof restoreDraft==='function') restoreDraft();
+      if(window._hasLocalEdits && typeof shouldRestoreDraft==='function' && shouldRestoreDraft() && typeof restoreDraft==='function') restoreDraft();
       if(firstLoad){
         if(typeof showToast==='function') showToast('✅ データを読み込みました');
         firstLoad = false;
@@ -3067,16 +3067,16 @@ if(loadHistory().length){
 //   この端末の古い下書きで上書きされ、更新のたびに数字が戻ってしまっていた）
 (function(){
   try{
-    const d = loadDraft();
-    if(!d) return;
-    const lastSync = parseInt(localStorage.getItem('zaiko_last_sync_at')||'0', 10);
-    const draftAt  = d._savedAt || 0;
-    // 下書きの方が新しい時だけ復元（_savedAt が無い古い下書きは復元しない）
-    if(draftAt > lastSync){
+    if(!loadDraft()) return;
+    if(shouldRestoreDraft()){
       if(restoreDraft()){
         window._hasLocalEdits = true;
         showToast('📝 入力途中のデータを復元しました');
       }
+    } else {
+      // 保存済みの記録の方が新しい＝この下書きはもう古い。
+      // 残しておくと更新のたびに数字が戻ってしまうので消す。
+      clearDraft();
     }
   }catch(e){}
 })();
@@ -3342,6 +3342,24 @@ function clearDraft(){
       if(k.startsWith('zaiko_draft_') && k !== DRAFT_KEY) localStorage.removeItem(k);
     });
   }catch(e){}
+}
+
+// [追加 v10.32] 下書きを画面に戻してよいかを判定する。
+// 保存済みの記録より下書きが新しい時だけ戻す。
+// （他の端末が入れた新しい数字を、この端末に残っていた古い下書きで
+//   上書きしてしまい、更新のたびに前日の数字に戻る不具合への対処）
+function shouldRestoreDraft(){
+  try{
+    const d = loadDraft();
+    if(!d) return false;
+    const draftAt = d._savedAt || 0;
+    if(!draftAt) return false;              // 時刻のない古い下書きは戻さない
+    const rec = loadHistory().find(r => r && r.date === dateStr);
+    if(!rec) return true;                   // 本日の保存記録がまだ無いなら下書きを使う
+    const iso = rec.stockAt || rec.completedAt || '';
+    if(!iso) return false;                  // 記録に時刻が無い時は、保存済みの方を優先
+    return draftAt > (Date.parse(iso) || 0);
+  }catch(e){ return false; }
 }
 
 function restoreDraft(){
