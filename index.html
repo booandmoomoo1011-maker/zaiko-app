@@ -308,7 +308,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.44';
+window.APP_VERSION = 'v10.46';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1487,6 +1487,10 @@ function confirmComplete(){
     return;
   }
 
+  // [変更 v10.46] 在庫を入力し始めた時に担当者名を聞いているので、
+  // すでに名前が入っていれば、ここでは聞かずにそのまま確認画面へ進む。
+  const _cur = document.getElementById('staff') ? document.getElementById('staff').value.trim() : '';
+  if(_cur){ _doConfirmComplete(); return; }
   openStaffModal('complete');
 }
 
@@ -3247,6 +3251,19 @@ function closeReviewModal(){
   const m = document.getElementById('review-modal');
   if(m) m.style.display='none';
   _isForceComplete = false;   // 直しに戻るので、差異の判定はやり直す
+  // [修正 v10.45] 「戻って直す」で入力画面に戻った時、完了ボタンが
+  // 「保存済み」のまま押せなくなっていたので、押せる状態に戻す。
+  // （押せないと担当者名の入力も出ないままだった）
+  completed = false;
+  const btn = document.getElementById('complete-btn');
+  if(btn){
+    btn.classList.remove('confirmed');
+    btn.disabled = false;
+    btn.textContent = '☑️ 最終確認・完了';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.style.border = '';
+  }
 }
 function confirmReviewAndComplete(){
   // [変更 v10.43] 保存しても画面は閉じない。
