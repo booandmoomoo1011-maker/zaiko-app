@@ -245,6 +245,10 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .month-ind-btn:active{background:#c8f0d8;}
 .month-ind-btn.active{background:#1a5f3a;color:#fff;border-color:#1a5f3a;}
 
+/* [追加 v10.42] 名前入力（候補リスト付き）の▼マークを消す */
+input[list]::-webkit-calendar-picker-indicator{display:none!important;opacity:0;}
+input[list]::-webkit-list-button{display:none!important;}
+
 /* ===== [追加 v10.23] 当日の記録カード ===== */
 .tcard{background:#eaf7ef;border:2px solid #1a5f3a;border-radius:14px;margin-bottom:12px;overflow:hidden;width:100%;box-sizing:border-box;}
 .tcard.auto{background:#fff8e6;border-color:#c98a00;}
@@ -304,7 +308,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.39';
+window.APP_VERSION = 'v10.42';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3141,11 +3145,9 @@ function _rvTempHTML(){
     const amRecorder = r.amRecorder||r.recorder||'';
     const pmRecorder = r.pmRecorder||r.recorder||'';
     const rows = (r.data||[]).map(f=>`
-      <div style="display:flex;align-items:center;gap:4px;margin-top:3px;font-size:12px;">
-        <span style="font-weight:700;color:#fff;min-width:52px;">${esc((f.name||'').replace(/冷蔵側|冷凍側|兼用機|冷蔵兼用|冷凍兼用/g,''))}</span>
-        <span style="background:rgba(255,255,255,.25);border-radius:4px;padding:1px 6px;color:#fff;">AM ${f.am&&f.am.time?f.am.time:'—'} <b>${f.am&&f.am.temp!==''&&f.am.temp!==undefined?(f.am.temp==='DF'?'DF':f.am.temp+'℃'):'—'}</b></span>
-        <span style="background:rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;color:#fff;">PM ${f.pm&&f.pm.time?f.pm.time:'—'} <b>${f.pm&&f.pm.temp!==''&&f.pm.temp!==undefined?(f.pm.temp==='DF'?'DF':f.pm.temp+'℃'):'—'}</b></span>
-      </div>`).join('');
+        <span style="font-weight:700;color:#fff;white-space:nowrap;">${esc((f.name||'').replace(/冷蔵側|冷凍側|兼用機|冷蔵兼用|冷凍兼用/g,''))}</span>
+        <span style="background:rgba(255,255,255,.25);border-radius:4px;padding:1px 6px;color:#fff;text-align:left;white-space:nowrap;">AM ${f.am&&f.am.time?f.am.time:'—'} <b>${f.am&&f.am.temp!==''&&f.am.temp!==undefined?(f.am.temp==='DF'?'DF':f.am.temp+'℃'):'—'}</b></span>
+        <span style="background:rgba(255,255,255,.15);border-radius:4px;padding:1px 6px;color:#fff;text-align:left;white-space:nowrap;">PM ${f.pm&&f.pm.time?f.pm.time:'—'} <b>${f.pm&&f.pm.temp!==''&&f.pm.temp!==undefined?(f.pm.temp==='DF'?'DF':f.pm.temp+'℃'):'—'}</b></span>`).join('');
     return `<div class="temp-record-row" style="background:#1565c0;border:2px solid #0a3d7a;margin-bottom:10px;">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span class="temp-record-date" style="color:#fff;">📅 ${dateLabel}<span style="font-size:10px;background:#fff;color:#1565c0;padding:1px 7px;border-radius:8px;margin-left:6px;font-weight:700;">今日</span></span>
@@ -3154,7 +3156,7 @@ function _rvTempHTML(){
         ${amRecorder?`<span>AM👤${esc(amRecorder)}</span>`:''}
         ${pmRecorder?`<span>PM👤${esc(pmRecorder)}</span>`:''}
       </div>
-      <div style="filter:brightness(1.3);">${rows}</div>
+      <div style="display:grid;grid-template-columns:auto 1fr 1fr;align-items:center;gap:3px 5px;margin-top:3px;font-size:12px;filter:brightness(1.3);">${rows}</div>
     </div>`;
   }catch(e){ return ''; }
 }
@@ -3300,16 +3302,27 @@ function renderTodayCard(){
     // 古い記録（v10.30以前）は正しい時刻が分からないので時刻を出さない
     sub = isDone ? '完了ずみ' : '自動保存ずみ';
   }
-  el.className = isDone ? 'tcard' : 'tcard auto';
-  el.innerHTML = `
+  // [追加 v10.40] 備考も出す（Uberの下）
+  let noteRow = '';
+  if(rec.note && rec.note.trim()){
+    noteRow = `<div style="margin-top:8px;padding:8px 10px;background:var(--surface);border-radius:9px;font-size:13px;white-space:pre-wrap;color:var(--text);">📝 ${esc(rec.note.trim())}</div>`;
+  }
+  const cardHtml = `<div class="${isDone ? 'tcard' : 'tcard auto'}" style="margin-bottom:0;">
     <div class="tcard-head">
       <span class="tcard-title">${title}</span>
       <span class="tcard-sub">${sub}</span>
     </div>
     <div class="tcard-body">
       <div class="tcard-grid">${rows || '<div class="tc-row"><span>記録なし</span><b>-</b></div>'}</div>
-      ${uberRow}
-    </div>`;
+      ${uberRow}${noteRow}
+    </div>
+  </div>`;
+  // [追加 v10.40] 完了したあとは、確認画面と同じ並び（冷蔵庫→わらび餅入荷→在庫）を画面に出す。
+  // これで一日の記録が一目で見られる。入力中はこれまで通り在庫のカードだけ。
+  el.className = '';
+  el.innerHTML = isDone
+    ? (_rvTempHTML() + _rvWarabiHTML() + cardHtml)
+    : cardHtml;
   el.style.display = 'block';
 }
 
@@ -4574,11 +4587,9 @@ function renderTempHistory(){
     const pmRecorder = r.pmRecorder||r.recorder||'';
     const isTodayRec = r.date.replace(/-/g,'/') === dateStr;
     const rows=(r.data||[]).map(f=>`
-      <div style="display:flex;align-items:center;gap:4px;margin-top:3px;font-size:12px;">
-        <span style="font-weight:700;color:${isTodayRec?'#fff':'#1565c0'};min-width:52px;">${esc(f.name.replace(/冷蔵側|冷凍側|兼用機|冷蔵兼用|冷凍兼用/g,''))}</span>
-        <span style="background:${isTodayRec?'rgba(255,255,255,.25)':'#d6eeff'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#1565c0'};">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?(f.am.temp==='DF'?'DF':f.am.temp+'℃'):'—'}</b></span>
-        <span style="background:${isTodayRec?'rgba(255,255,255,.15)':'#7ec8f0'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#0a3d7a'};">PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?(f.pm.temp==='DF'?'DF':f.pm.temp+'℃'):'—'}</b></span>
-      </div>`).join('');
+        <span style="font-weight:700;color:${isTodayRec?'#fff':'#1565c0'};white-space:nowrap;">${esc(f.name.replace(/冷蔵側|冷凍側|兼用機|冷蔵兼用|冷凍兼用/g,''))}</span>
+        <span style="background:${isTodayRec?'rgba(255,255,255,.25)':'#d6eeff'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#1565c0'};text-align:left;white-space:nowrap;">AM ${f.am.time||'—'} <b>${f.am.temp!==''&&f.am.temp!==undefined?(f.am.temp==='DF'?'DF':f.am.temp+'℃'):'—'}</b></span>
+        <span style="background:${isTodayRec?'rgba(255,255,255,.15)':'#7ec8f0'};border-radius:4px;padding:1px 6px;color:${isTodayRec?'#fff':'#0a3d7a'};text-align:left;white-space:nowrap;">PM ${f.pm.time||'—'} <b>${f.pm.temp!==''&&f.pm.temp!==undefined?(f.pm.temp==='DF'?'DF':f.pm.temp+'℃'):'—'}</b></span>`).join('');
     return `<div class="temp-record-row" style="${isTodayRec?'background:#1565c0;border:2px solid #0a3d7a;':''}">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <span class="temp-record-date" style="${isTodayRec?'color:#fff;':''}">📅 ${dateLabel}${isTodayRec?'<span style="font-size:10px;background:#fff;color:#1565c0;padding:1px 7px;border-radius:8px;margin-left:6px;font-weight:700;">今日</span>':''}</span>
@@ -4591,7 +4602,7 @@ function renderTempHistory(){
         ${amRecorder?`<span>AM👤${esc(amRecorder)}</span>`:''}
         ${pmRecorder?`<span>PM👤${esc(pmRecorder)}</span>`:''}
       </div>
-      <div style="${isTodayRec?'filter:brightness(1.3);':''}">
+      <div style="display:grid;grid-template-columns:auto 1fr 1fr;align-items:center;gap:3px 5px;margin-top:3px;font-size:12px;${isTodayRec?'filter:brightness(1.3);':''}">
         ${rows}
       </div>
     </div>`;
