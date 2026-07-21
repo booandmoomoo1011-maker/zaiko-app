@@ -301,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.29';
+window.APP_VERSION = 'v10.30';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1532,6 +1532,9 @@ function openStaffModalStart(){
 }
 function closeStaffModal(){
   document.getElementById('staff-modal').style.display='none';
+  // [修正 v10.30] 名前を入れずに閉じた場合は、次に数字を触った時にもう一度聞けるようにする
+  const _s=document.getElementById('staff');
+  if(!_s || !_s.value.trim()) window._staffAsked = false;
 }
 function updateStaffListModal(){
   const dl=document.getElementById('staff-list-modal');
@@ -3075,16 +3078,17 @@ if(loadHistory().length){
 })();
 // [変更 v10.21] 起動時には聞かない。最初の入力欄に触れた瞬間に担当者名を聞く
 (function(){
-  let _asked=false;
-  document.addEventListener('focusin', function(e){
-    if(_asked) return;
+  // [修正 v10.30] 「触れただけ（フォーカス）」ではなく「数字を実際に変えた時」だけ聞く
+  document.addEventListener('input', function(e){
     const t=e.target;
     if(!t || t.tagName!=='INPUT') return;
     const id=t.id||'';
+    // 在庫・販売・無料の数字欄だけが対象（わらび餅入荷や温度記録では聞かない）
     if(!/^(simple_|stock_|sell_|free_)/.test(id)) return;
-    _asked=true;
     const el=document.getElementById('staff');
-    if(el && el.value.trim()) return;
+    if(el && el.value.trim()) return;   // すでに名前が入っていれば何もしない
+    if(window._staffAsked) return;      // 一度出したら続けては出さない
+    window._staffAsked = true;
     openStaffModalStart();
   }, true);
 })();
@@ -3247,7 +3251,11 @@ function autoSaveToFirebase(){
   const staff = document.getElementById('staff') ? document.getElementById('staff').value.trim() : '';
   // [無記名防止] 担当者名が未入力の間はスプレッドシート(Firebase)へ保存しない。
   // ローカルの下書き(saveDraft)は保存済みなのでデータは消えない。名前を入れれば同期される。
-  if(!staff){ openStaffModalStart(); return; }
+  // [修正 v10.30] ここではポップアップを出さない。
+  // わらび餅入荷の登録や温度記録など、在庫の数字を触っていない操作でも
+  // ここが動いてしまい、何もしていないのに担当者名を聞かれていたため。
+  // （名前を入れるまで保存しない仕組みはそのまま。数字を触った時に別の所で聞く）
+  if(!staff){ return; }
   const simple = {}, sales = {}, nyuka = {};
   SIMPLE.forEach(it=>{ simple[it.id] = $v('simple_'+it.id); });
   SALES.forEach(it=>{
