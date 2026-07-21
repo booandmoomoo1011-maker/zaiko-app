@@ -301,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.32';
+window.APP_VERSION = 'v10.33';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3069,12 +3069,13 @@ if(loadHistory().length){
   try{
     if(!loadDraft()) return;
     if(shouldRestoreDraft()){
+      // [修正 v10.33] ここで _hasLocalEdits は立てない。
+      // 立てると、同期でデータが届いた後にまた古い下書きを戻してしまうため。
       if(restoreDraft()){
-        window._hasLocalEdits = true;
         showToast('📝 入力途中のデータを復元しました');
       }
     } else {
-      // 保存済みの記録の方が新しい＝この下書きはもう古い。
+      // 本日の保存記録がある＝この下書きはもう用済み。
       // 残しておくと更新のたびに数字が戻ってしまうので消す。
       clearDraft();
     }
@@ -3348,17 +3349,18 @@ function clearDraft(){
 // 保存済みの記録より下書きが新しい時だけ戻す。
 // （他の端末が入れた新しい数字を、この端末に残っていた古い下書きで
 //   上書きしてしまい、更新のたびに前日の数字に戻る不具合への対処）
+// [修正 v10.33] 端末ごとに時計がずれていると時刻の比較はあてにならないため、
+// 時刻を使わない判定に変更した。ルールは2つだけ。
+//   ・本日の保存記録がまだ無い → 下書きを使う（入力途中を守る）
+//   ・本日の保存記録がある → 保存記録を必ず優先し、下書きは使わない
+//     （ただし、この画面で今まさに入力して、まだ送信できていない時は下書きを使う）
+// これで「上のカード＝下の入力欄」が必ず一致する。
 function shouldRestoreDraft(){
   try{
-    const d = loadDraft();
-    if(!d) return false;
-    const draftAt = d._savedAt || 0;
-    if(!draftAt) return false;              // 時刻のない古い下書きは戻さない
+    if(!loadDraft()) return false;
     const rec = loadHistory().find(r => r && r.date === dateStr);
-    if(!rec) return true;                   // 本日の保存記録がまだ無いなら下書きを使う
-    const iso = rec.stockAt || rec.completedAt || '';
-    if(!iso) return false;                  // 記録に時刻が無い時は、保存済みの方を優先
-    return draftAt > (Date.parse(iso) || 0);
+    if(!rec) return true;
+    return !!window._hasLocalEdits;
   }catch(e){ return false; }
 }
 
