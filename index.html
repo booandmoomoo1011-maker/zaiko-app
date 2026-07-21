@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.51';
+window.APP_VERSION = 'v10.52';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3143,9 +3143,10 @@ if(loadHistory().length){
 // 確認してから保存できるようにする（一日の記録を最後に見返せる）。
 // 確認画面は、それぞれの記録と同じ見た目・同じ配色で作る
 // ①冷蔵庫＝青（温度記録履歴と同じ） ②わらび餅入荷＝紫（入荷記録と同じ） ③在庫＝本日のカードと同じ
-function _rvTempHTML(){
+function _rvTempHTML(dISO){
+  const _d = dISO || todayISO;
   try{
-    const r = (typeof loadTempRecords==='function' ? loadTempRecords() : []).find(x=>x && x.date===todayISO);
+    const r = (typeof loadTempRecords==='function' ? loadTempRecords() : []).find(x=>x && x.date===_d);
     if(!r) return '';
     const dp = r.date.split('-');
     const dateLabel = dp[0]+'年'+parseInt(dp[1])+'月'+parseInt(dp[2])+'日';
@@ -3167,9 +3168,10 @@ function _rvTempHTML(){
     </div>`;
   }catch(e){ return ''; }
 }
-function _rvWarabiHTML(){
+function _rvWarabiHTML(dISO){
+  const _d = dISO || todayISO;
   try{
-    const recs = (typeof loadWarabiRecords==='function' ? loadWarabiRecords() : []).filter(x=>x && x.date===todayISO);
+    const recs = (typeof loadWarabiRecords==='function' ? loadWarabiRecords() : []).filter(x=>x && x.date===_d);
     if(!recs.length) return '';
     return recs.map(r=>`<div class="warabi-record-row" style="margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:6px;">
@@ -3268,13 +3270,74 @@ function closeReviewModal(){
     btn.style.border = '';
   }
 }
-// 完了ずみの確認画面を、開いた時に1回だけ出す
+// [追加 v10.52] 「完了画面を出す対象の日」を返す。
+// 朝8時までは前日あつかい（前日の完了画面を、翌朝8時まで出したままにするため）。
+function _reviewTargetDate(){
+  const n = new Date();
+  const d = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  if(n.getHours() < 8) d.setDate(d.getDate()-1);
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  return { slash: y+'/'+m+'/'+dd, iso: y+'-'+m+'-'+dd };
+}
+
+// 保存された記録から在庫カードを作る（画面の入力欄ではなく記録そのものを使う）
+function _rvStockHTMLFromRecord(rec){
+  if(!rec) return '';
+  const siMap = Object.fromEntries((rec.simpleItems||SIMPLE).map(x=>[x.id,x]));
+  const saMap = Object.fromEntries((rec.salesItems ||SALES ).map(x=>[x.id,x]));
+  let rows = '';
+  SIMPLE.forEach(it=>{
+    if(!rec.simple || rec.simple[it.id]===undefined) return;
+    const nm=(siMap[it.id]||it).name, q=rec.simple[it.id];
+    rows += `<div class="tc-row"><span>${esc(nm)}</span><b${isLowStock(nm,q)?' style="color:#e02020"':''}>${q}</b></div>`;
+  });
+  SALES.forEach(it=>{
+    if(!rec.sales || rec.sales[it.id]===undefined) return;
+    const nm=(saMap[it.id]||it).name, q=rec.sales[it.id];
+    rows += `<div class="tc-row"><span>${esc(nm)}</span><b${isLowStock(nm,q)?' style="color:#e02020"':''}>${q}</b></div>`;
+  });
+  let uberRow='';
+  const uArr = Array.isArray(rec.uber) ? rec.uber.filter(u=>u && !u._empty) : [];
+  if(uArr.length){
+    const isNoTrade = uArr.length===1 && uArr[0].noTrade;
+    const uTotal = uArr.reduce((s,u)=>s+(u.amount||0),0);
+    uberRow = `<div class="tc-uber"><span>🛵 Uber Eats 売上</span><b>${isNoTrade?'本日取引無し':('¥'+uTotal.toLocaleString()+`（${uArr.length}件）`)}</b></div>`;
+  }
+  let noteRow='';
+  if(rec.note && rec.note.trim()){
+    noteRow = `<div style="margin-top:8px;padding:8px 10px;background:var(--surface);border-radius:9px;font-size:13px;white-space:pre-wrap;color:var(--text);">📝 ${esc(rec.note.trim())}</div>`;
+  }
+  const who = rec.completedStaff || rec.stockStaff || rec.staff || '';
+  const when = rec.completedTime || rec.stockTime || '';
+  return `<div class="tcard auto" style="margin-bottom:0;">
+    <div class="tcard-head">
+      <span class="tcard-title">📦 本日の在庫</span>
+      <span class="tcard-sub">${esc(who)} ${esc(when)}</span>
+    </div>
+    <div class="tcard-body">
+      <div class="tcard-grid">${rows}</div>
+      ${uberRow}${noteRow}
+    </div>
+  </div>`;
+}
+
+// 完了ずみの確認画面を、開いた時に1回だけ出す（朝8時までは前日ぶんを出す）
 function _maybeShowDoneReview(){
   if(window._reviewShownOnLoad) return;
-  window._reviewShownOnLoad = true;
   try{
-    openDayReviewModal();
+    const t = _reviewTargetDate();
+    const rec = loadHistory().find(r => r && r.date === t.slash);
+    if(!rec || rec._autoSaved !== false) return;   // 完了ずみでなければ出さない
+    window._reviewShownOnLoad = true;
+    const body = document.getElementById('review-modal-body');
+    const dEl  = document.getElementById('review-modal-date');
+    const m    = document.getElementById('review-modal');
+    if(!body || !m) return;
+    if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(t.slash) : t.slash);
+    body.innerHTML = _rvTempHTML(t.iso) + _rvWarabiHTML(t.iso) + _rvStockHTMLFromRecord(rec);
     _setReviewDoneButtons();
+    m.style.display = 'flex';
+    body.scrollTop = 0;
   }catch(e){}
 }
 // 確認画面のボタンを「完了」の状態にする
@@ -3388,6 +3451,8 @@ function renderTodayCard(){
   }catch(e){}
   // [追加 v10.47] 完了ずみの日は、タブを閉じて開き直しても「保存済み」の見た目に戻す
   try{ refreshCompleteBtnState(isDone); }catch(e){}
+  // [追加 v10.52] 完了ずみなら、開いた時に確認画面をそのまま出す（翌朝8時まで）
+  try{ _maybeShowDoneReview(); }catch(e){}
 }
 
 // 完了ボタンの見た目を、本日の記録の状態に合わせる。
@@ -3403,9 +3468,6 @@ function refreshCompleteBtnState(isDone){
     btn.style.background = '#c25400';
     btn.style.borderColor = '#c25400';
     btn.style.color = '#fff';
-    // [追加 v10.48] 完了ずみの日は、アプリを開いた時に確認画面をそのまま表示する。
-    // どの端末で開いても「完了している」と一目で分かる。
-    _maybeShowDoneReview();
   } else {
     btn.textContent = '☑️ 最終確認・完了';
     btn.style.background = '';
