@@ -258,8 +258,9 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .tc-row span{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tc-row b{color:var(--text);font-weight:700;flex-shrink:0;}
 .tcard-btns{display:flex;gap:8px;margin-top:10px;}
-.tcard-btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:#1a5f3a;color:#fff;}
-.tcard-btn.sub{background:#fff;color:#1a5f3a;border:2px solid #1a5f3a;}
+/* [v10.24] 編集ボタンは編集中の帯（#ff6d00）と同じオレンジに合わせる */
+.tcard-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;background:#ff6d00;color:#fff;box-shadow:0 2px 8px rgba(255,109,0,.4);}
+.tcard-btn:active{background:#e56100;}
 
 /* ===== わらび餅入荷記録 ===== */
 .warabi-section{background:#f3eeff;border:1.5px solid #c9a8f0;border-radius:14px;margin-bottom:12px;overflow:hidden;width:100%;box-sizing:border-box;}
@@ -300,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.23';
+window.APP_VERSION = 'v10.24';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3102,16 +3103,9 @@ function renderTodayCard(){
       <div class="tcard-grid">${rows || '<div class="tc-row"><span>記録なし</span><b>-</b></div>'}</div>
       <div class="tcard-btns">
         <button class="tcard-btn" onclick="editTodayRecord()">✏️ この記録を編集する</button>
-        <button class="tcard-btn sub" onclick="jumpToInput()">↓ 入力欄へ</button>
       </div>
     </div>`;
   el.style.display = 'block';
-}
-
-// 入力欄（在庫数のみ）まで画面を移動する
-function jumpToInput(){
-  const t = document.getElementById('simple-wrap');
-  if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 // ===== 前回値の復元 =====
