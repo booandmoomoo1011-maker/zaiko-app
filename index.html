@@ -301,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.26';
+window.APP_VERSION = 'v10.28';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -2550,6 +2550,11 @@ function doSave(autoSave=false){
     forceCompleted:_isForceComplete||false,
     warnItems:_isForceComplete?warns.map(function(it){return it.id;}):[],
     _autoSaved: false,
+    // [追加 v10.27] 完了ボタンを押した瞬間の時刻を、この保存専用の項目として持つ。
+    // time は自動保存など他の処理でも書き換わるため、カード表示にはこちらを使う。
+    completedAt: t.toISOString(),
+    completedTime: timeStr,
+    completedStaff: staff,
     editLog:[] // 編集履歴
   };
   SIMPLE.forEach(it=>{record.simple[it.id]=$v('simple_'+it.id);});
@@ -2619,9 +2624,13 @@ function renderHistory(){
     const fm=filterMonth.replace('-','/');
     h=allH.filter(r=>r.date.startsWith(fm));
   }
+  // 月間サマリーは当日ぶんも含めて計算する（合計がずれないように、絞り込み前のhで先に呼ぶ）
+  renderMonthSummary(h,filterMonth);
+  // [追加 v10.28] 当日ぶんは上の「本日のカード」に出るので、下の履歴は前日から表示する。
+  // ただし日付や月で絞り込んでいる時は、探している記録が消えないようにそのまま全部出す。
+  if(!filterDate && !filterMonth){ h = h.filter(r => r && r.date !== dateStr); }
   const hcEl=document.getElementById('hist-count');
   if(hcEl) hcEl.textContent=allH.length?allH.length+'件中'+h.length+'件':'';
-  renderMonthSummary(h,filterMonth);
   if(!h.length){el.innerHTML='<div class="hist-empty">該当する記録がありません</div>';return;}
   el.innerHTML=h.map((r)=>{
     const realIdx=allH.indexOf(r);
@@ -3105,7 +3114,13 @@ function renderTodayCard(){
   // [修正 v10.25] 名前と時刻を出すのは「完了ボタンを押した時」だけにする。
   // 自動保存の time / staff は、わらび餅入荷の登録などでも書き換わってしまい、
   // 在庫を入力していない人の名前・時刻が出てしまうため、入力中は出さない。
-  const sub    = isDone ? `${esc(rec.staff||'')} ${esc(rec.time||'')} 完了` : '自動保存ずみ';
+  // [修正 v10.27] 表示は「完了ボタンを押した時の専用データ」だけを使う。
+  // 古い記録（v10.26以前）には無いので、その場合は時刻を出さない（間違った時刻を出さないため）。
+  let sub = '自動保存ずみ';
+  if(isDone){
+    const nm2 = rec.completedStaff || rec.staff || '';
+    sub = rec.completedTime ? `${esc(nm2)} ${esc(rec.completedTime)} 完了` : `${esc(nm2)} 完了`;
+  }
   el.className = isDone ? 'tcard' : 'tcard auto';
   el.innerHTML = `
     <div class="tcard-head">
