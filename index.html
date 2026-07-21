@@ -257,10 +257,10 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .tc-row{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;padding:3px 6px;background:#fff;border-radius:7px;}
 .tc-row span{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tc-row b{color:var(--text);font-weight:700;flex-shrink:0;}
-.tcard-btns{display:flex;gap:8px;margin-top:10px;}
-/* [v10.24] 編集ボタンは編集中の帯（#ff6d00）と同じオレンジに合わせる */
-.tcard-btn{flex:1;padding:12px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;background:#ff6d00;color:#fff;box-shadow:0 2px 8px rgba(255,109,0,.4);}
-.tcard-btn:active{background:#e56100;}
+/* [v10.26] Uber Eats 売上の行 */
+.tc-uber{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:8px;padding:8px 10px;background:#1a1a1a;border-radius:9px;font-size:13px;font-weight:700;}
+.tc-uber span{color:#fff;}
+.tc-uber b{color:#06C167;font-size:15px;}
 
 /* ===== わらび餅入荷記録 ===== */
 .warabi-section{background:#f3eeff;border:1.5px solid #c9a8f0;border-radius:14px;margin-bottom:12px;overflow:hidden;width:100%;box-sizing:border-box;}
@@ -301,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.24';
+window.APP_VERSION = 'v10.26';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3090,9 +3090,22 @@ function renderTodayCard(){
     rows += `<div class="tc-row"><span>${esc(nm)}</span><b${low}>${qty}</b></div>`;
   });
 
+  // [追加 v10.26] Uber Eats の売上（保存されている記録から計算）
+  let uberRow = '';
+  const uArr = Array.isArray(rec.uber) ? rec.uber.filter(u=>u && !u._empty) : [];
+  if(uArr.length){
+    const isNoTrade = uArr.length===1 && uArr[0].noTrade;
+    const uTotal = uArr.reduce((s,u)=>s+(u.amount||0),0);
+    const uText = isNoTrade ? '本日取引無し' : ('¥'+uTotal.toLocaleString()+`（${uArr.length}件）`);
+    uberRow = `<div class="tc-uber"><span>🛵 Uber Eats 売上</span><b>${uText}</b></div>`;
+  }
+
   const isDone = rec._autoSaved === false;
   const title  = isDone ? '✅ 本日 入力完了ずみ' : '📝 本日 入力中（自動保存ずみ）';
-  const sub    = `${esc(rec.staff||'')} ${esc(rec.time||'')}`;
+  // [修正 v10.25] 名前と時刻を出すのは「完了ボタンを押した時」だけにする。
+  // 自動保存の time / staff は、わらび餅入荷の登録などでも書き換わってしまい、
+  // 在庫を入力していない人の名前・時刻が出てしまうため、入力中は出さない。
+  const sub    = isDone ? `${esc(rec.staff||'')} ${esc(rec.time||'')} 完了` : '自動保存ずみ';
   el.className = isDone ? 'tcard' : 'tcard auto';
   el.innerHTML = `
     <div class="tcard-head">
@@ -3101,9 +3114,7 @@ function renderTodayCard(){
     </div>
     <div class="tcard-body">
       <div class="tcard-grid">${rows || '<div class="tc-row"><span>記録なし</span><b>-</b></div>'}</div>
-      <div class="tcard-btns">
-        <button class="tcard-btn" onclick="editTodayRecord()">✏️ この記録を編集する</button>
-      </div>
+      ${uberRow}
     </div>`;
   el.style.display = 'block';
 }
