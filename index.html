@@ -308,7 +308,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.43';
+window.APP_VERSION = 'v10.44';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3260,8 +3260,7 @@ function confirmReviewAndComplete(){
     b.style.background = '#8fae9c';
     b.style.cursor = 'default';
   }
-  const bk = document.getElementById('review-back-btn');
-  if(bk) bk.textContent = '閉じる';
+  // [修正 v10.44] 左のボタンは「戻って直す」のまま（押すと入力画面に戻って直せるため）
 }
 
 // ===== [追加 v10.23] 当日の記録カード =====
