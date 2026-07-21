@@ -301,7 +301,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.30';
+window.APP_VERSION = 'v10.31';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -2563,6 +2563,10 @@ function doSave(autoSave=false){
     completedAt: t.toISOString(),
     completedTime: timeStr,
     completedStaff: staff,
+    // [追加 v10.31] 完了保存でも「在庫を触った時刻」を残す（完了は在庫入力の確定なので同時刻）
+    stockAt: t.toISOString(),
+    stockTime: timeStr,
+    stockStaff: staff,
     editLog:[] // 編集履歴
   };
   SIMPLE.forEach(it=>{record.simple[it.id]=$v('simple_'+it.id);});
@@ -3091,6 +3095,14 @@ if(loadHistory().length){
     window._staffAsked = true;
     openStaffModalStart();
   }, true);
+  // [追加 v10.31] 在庫の数字を実際に変えた時だけ印をつける。
+  // 次の自動保存で「在庫を触った時刻と名前」として記録する。
+  document.addEventListener('input', function(e){
+    const t=e.target;
+    if(!t || t.tagName!=='INPUT') return;
+    if(!/^(simple_|stock_|sell_|free_)/.test(t.id||'')) return;
+    window._stockTouched = true;
+  }, true);
 })();
 // Firebase同期完了後にデータを上書き反映（initFirebaseOnReady内で呼ばれる）
 
@@ -3137,12 +3149,20 @@ function renderTodayCard(){
   // [修正 v10.25] 名前と時刻を出すのは「完了ボタンを押した時」だけにする。
   // 自動保存の time / staff は、わらび餅入荷の登録などでも書き換わってしまい、
   // 在庫を入力していない人の名前・時刻が出てしまうため、入力中は出さない。
-  // [修正 v10.27] 表示は「完了ボタンを押した時の専用データ」だけを使う。
-  // 古い記録（v10.26以前）には無いので、その場合は時刻を出さない（間違った時刻を出さないため）。
-  let sub = '自動保存ずみ';
-  if(isDone){
-    const nm2 = rec.completedStaff || rec.staff || '';
-    sub = rec.completedTime ? `${esc(nm2)} ${esc(rec.completedTime)} 完了` : `${esc(nm2)} 完了`;
+  // [修正 v10.31] 「完了を押した時」と「在庫の数字を触った時」の
+  // 遅い方（新しい方）を表示する。わらび餅入荷などの時刻は使わない。
+  let sub = '';
+  const cAt = rec.completedAt || '';
+  const sAt = rec.stockAt || '';
+  if(cAt || sAt){
+    if(cAt >= sAt){
+      sub = `${esc(rec.completedStaff||rec.staff||'')} ${esc(rec.completedTime||'')} 完了`;
+    } else {
+      sub = `${esc(rec.stockStaff||rec.staff||'')} ${esc(rec.stockTime||'')} 入力`;
+    }
+  } else {
+    // 古い記録（v10.30以前）は正しい時刻が分からないので時刻を出さない
+    sub = isDone ? '完了ずみ' : '自動保存ずみ';
   }
   el.className = isDone ? 'tcard' : 'tcard auto';
   el.innerHTML = `
@@ -3282,6 +3302,14 @@ function autoSaveToFirebase(){
     editLog: idx >= 0 ? (h[idx].editLog||[]) : [],
     _autoSaved: true, // 自動保存フラグ
   };
+  // [追加 v10.31] 在庫の数字を触った時だけ、その時刻と名前を専用項目に残す。
+  // （わらび餅入荷や温度記録だけの保存では上書きしない）
+  if(window._stockTouched){
+    record.stockAt    = t.toISOString();
+    record.stockTime  = timeStr;
+    record.stockStaff = staff;
+    window._stockTouched = false;
+  }
   if(idx >= 0){
     h[idx] = {...h[idx], ...record, editLog: h[idx].editLog||[]};
   } else {
