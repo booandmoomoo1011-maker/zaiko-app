@@ -284,7 +284,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.21';
+window.APP_VERSION = 'v10.22';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -785,6 +785,8 @@ try {
           if(typeof renderAll==='function') renderAll();
           if(typeof renderHistory==='function') renderHistory();
           if(typeof restoreLastValues==='function') restoreLastValues();
+          // [修正 v10.22] 入力途中の下書きを最後にもう一度反映（同期で入力中の数字が消えないように）
+          if(typeof restoreDraft==='function') restoreDraft();
         }
         const tempData = tempSnap.val();
         if(tempData){
@@ -829,6 +831,8 @@ try {
       if(typeof renderAll==='function') renderAll();
       if(typeof renderHistory==='function') renderHistory();
       if(typeof restoreLastValues==='function') restoreLastValues();
+      // [修正 v10.22] 入力途中の下書きを最後にもう一度反映（同期で入力中の数字が消えないように）
+      if(typeof restoreDraft==='function') restoreDraft();
       if(firstLoad){
         if(typeof showToast==='function') showToast('✅ データを読み込みました');
         firstLoad = false;
@@ -3040,7 +3044,9 @@ if(restoreDraft()){
 function restoreLastValues(){
   const h=loadHistory();
   if(!h.length) return;
-  const last=h[0];
+  // [修正 v10.22] 当日の記録があれば必ずそれを優先する。
+  // （以前は h[0] を見ていたため、並び順によっては保存した当日の数字が前日の数字に戻ってしまった）
+  const last = h.find(r => r && r.date === dateStr) || h[0];
   SIMPLE.forEach(it=>{
     const v=last.simple&&last.simple[it.id]!==undefined?last.simple[it.id]:0;
     $set('simple_'+it.id, v);
