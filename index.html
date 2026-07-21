@@ -245,6 +245,22 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 .month-ind-btn:active{background:#c8f0d8;}
 .month-ind-btn.active{background:#1a5f3a;color:#fff;border-color:#1a5f3a;}
 
+/* ===== [追加 v10.23] 当日の記録カード ===== */
+.tcard{background:#eaf7ef;border:2px solid #1a5f3a;border-radius:14px;margin-bottom:12px;overflow:hidden;width:100%;box-sizing:border-box;}
+.tcard.auto{background:#fff8e6;border-color:#c98a00;}
+.tcard-head{background:#1a5f3a;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.tcard.auto .tcard-head{background:#c98a00;}
+.tcard-title{color:#fff;font-size:15px;font-weight:700;}
+.tcard-sub{color:#fff;font-size:12px;opacity:.9;white-space:nowrap;}
+.tcard-body{padding:10px 12px;}
+.tcard-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;}
+.tc-row{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;padding:3px 6px;background:#fff;border-radius:7px;}
+.tc-row span{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tc-row b{color:var(--text);font-weight:700;flex-shrink:0;}
+.tcard-btns{display:flex;gap:8px;margin-top:10px;}
+.tcard-btn{flex:1;padding:11px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:#1a5f3a;color:#fff;}
+.tcard-btn.sub{background:#fff;color:#1a5f3a;border:2px solid #1a5f3a;}
+
 /* ===== わらび餅入荷記録 ===== */
 .warabi-section{background:#f3eeff;border:1.5px solid #c9a8f0;border-radius:14px;margin-bottom:12px;overflow:hidden;width:100%;box-sizing:border-box;}
 .warabi-header{background:#8a5fcf;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
@@ -284,7 +300,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.22';
+window.APP_VERSION = 'v10.23';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1266,6 +1282,9 @@ try {
     </div>
   </div>
 
+  <!-- [追加 v10.23] 当日の記録カード（本日ぶんが保存されている時だけ表示。翌日は自動で消える） -->
+  <div id="today-card" style="display:none;"></div>
+
   <!-- 担当者入力は入力完了ボタン押下時にモーダルで表示 -->
   <input type="hidden" id="staff" value="">
   <datalist id="staff-list"></datalist>
@@ -1622,6 +1641,8 @@ function doComplete(){
   clearDraft(); // [修正] 正式保存後は下書きを削除
   doSave(true);
   _isForceComplete=false;
+  // [追加 v10.23] 完了後に当日の記録カードを更新
+  try{ renderTodayCard(); }catch(e){}
 }
 
 
@@ -3040,6 +3061,59 @@ if(restoreDraft()){
 })();
 // Firebase同期完了後にデータを上書き反映（initFirebaseOnReady内で呼ばれる）
 
+// ===== [追加 v10.23] 当日の記録カード =====
+// 本日ぶんの記録が保存されている時だけ、わらび餅入荷記録の下に表示する。
+// 日付で判定しているので、翌日になれば自動で消えて、いつもの履歴の場所だけになる。
+function renderTodayCard(){
+  const el = document.getElementById('today-card');
+  if(!el) return;
+  let rec = null;
+  try{ rec = loadHistory().find(r => r && r.date === dateStr) || null; }catch(e){}
+  if(!rec){ el.style.display='none'; el.innerHTML=''; return; }
+
+  const siMap = Object.fromEntries((rec.simpleItems||SIMPLE).map(x=>[x.id,x]));
+  const saMap = Object.fromEntries((rec.salesItems ||SALES ).map(x=>[x.id,x]));
+  let rows = '';
+  SIMPLE.forEach(it=>{
+    if(!rec.simple || rec.simple[it.id]===undefined) return;
+    const nm = (siMap[it.id]||it).name;
+    const qty = rec.simple[it.id];
+    const low = isLowStock(nm, qty) ? ' style="color:#e02020"' : '';
+    rows += `<div class="tc-row"><span>${esc(nm)}</span><b${low}>${qty}</b></div>`;
+  });
+  SALES.forEach(it=>{
+    if(!rec.sales || rec.sales[it.id]===undefined) return;
+    const nm = (saMap[it.id]||it).name;
+    const qty = rec.sales[it.id];
+    const low = isLowStock(nm, qty) ? ' style="color:#e02020"' : '';
+    rows += `<div class="tc-row"><span>${esc(nm)}</span><b${low}>${qty}</b></div>`;
+  });
+
+  const isDone = rec._autoSaved === false;
+  const title  = isDone ? '✅ 本日 入力完了ずみ' : '📝 本日 入力中（自動保存ずみ）';
+  const sub    = `${esc(rec.staff||'')} ${esc(rec.time||'')}`;
+  el.className = isDone ? 'tcard' : 'tcard auto';
+  el.innerHTML = `
+    <div class="tcard-head">
+      <span class="tcard-title">${title}</span>
+      <span class="tcard-sub">${sub}</span>
+    </div>
+    <div class="tcard-body">
+      <div class="tcard-grid">${rows || '<div class="tc-row"><span>記録なし</span><b>-</b></div>'}</div>
+      <div class="tcard-btns">
+        <button class="tcard-btn" onclick="editTodayRecord()">✏️ この記録を編集する</button>
+        <button class="tcard-btn sub" onclick="jumpToInput()">↓ 入力欄へ</button>
+      </div>
+    </div>`;
+  el.style.display = 'block';
+}
+
+// 入力欄（在庫数のみ）まで画面を移動する
+function jumpToInput(){
+  const t = document.getElementById('simple-wrap');
+  if(t) t.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
 // ===== 前回値の復元 =====
 function restoreLastValues(){
   const h=loadHistory();
@@ -3081,6 +3155,8 @@ function restoreLastValues(){
       noteEl.value='';
     }
   }
+  // [追加 v10.23] 当日の記録カードも更新
+  try{ renderTodayCard(); }catch(e){}
 }
 
 
@@ -3161,6 +3237,8 @@ function autoSaveToFirebase(){
   }
   localStorage.setItem('zaiko_history', JSON.stringify(h));
   if(window.firebaseSave) window.firebaseSave(h);
+  // [追加 v10.23] 当日の記録カードを更新
+  try{ renderTodayCard(); }catch(e){}
 }
 
 function loadDraft(){
