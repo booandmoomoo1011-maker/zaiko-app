@@ -304,7 +304,7 @@ main{padding:10px;max-width:480px;margin:0 auto;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.35';
+window.APP_VERSION = 'v10.37';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1292,6 +1292,21 @@ try {
   <!-- [追加 v10.23] 当日の記録カード（本日ぶんが保存されている時だけ表示。翌日は自動で消える） -->
   <div id="today-card" style="display:none;"></div>
 
+  <!-- [追加 v10.36] 完了ボタンを押した時に出す「本日の記録確認」画面 -->
+  <div id="review-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2100;align-items:center;justify-content:center;padding:14px;">
+    <div style="background:var(--surface);border-radius:16px;width:100%;max-width:540px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="background:#1a5f3a;padding:12px 16px;flex-shrink:0;">
+        <div style="color:#fff;font-size:16px;font-weight:700;">📋 本日の記録確認</div>
+        <div id="review-modal-date" style="color:#cfe8d8;font-size:12px;margin-top:2px;"></div>
+      </div>
+      <div id="review-modal-body" style="padding:12px 14px;overflow-y:auto;flex:1;"></div>
+      <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border);flex-shrink:0;">
+        <button onclick="closeReviewModal()" style="flex:1;padding:13px;background:var(--surface);color:#1a5f3a;border:2px solid #1a5f3a;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">戻って直す</button>
+        <button onclick="confirmReviewAndComplete()" style="flex:1.5;padding:13px;background:#1a5f3a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">✅ これで保存</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 担当者入力は入力完了ボタン押下時にモーダルで表示 -->
   <input type="hidden" id="staff" value="">
   <datalist id="staff-list"></datalist>
@@ -1581,7 +1596,8 @@ function _doConfirmComplete(){
   if(warns.length){
     openDiffModal(warns);
   } else {
-    doComplete();
+    // [変更 v10.36] すぐ保存せず、まず本日の記録確認を出す
+    openDayReviewModal();
   }
 }
 
@@ -1639,7 +1655,8 @@ function saveDiffAndComplete(){
     noteEl.value = existing ? existing + '\n' + reasonText : reasonText;
   }
   document.getElementById('diff-modal').style.display='none';
-  doComplete();
+  // [変更 v10.36] 差異の理由を入れた後も、本日の記録確認を出してから保存する
+  openDayReviewModal();
 }
 
 let _diffWarnItems = [];
@@ -3109,6 +3126,111 @@ if(loadHistory().length){
   }, true);
 })();
 // Firebase同期完了後にデータを上書き反映（initFirebaseOnReady内で呼ばれる）
+
+// ===== [追加 v10.36] 完了前の「本日の記録確認」 =====
+// 完了ボタンを押すと、在庫・冷蔵庫温度・わらび餅入荷・Uber・備考をまとめて表示し、
+// 確認してから保存できるようにする（一日の記録を最後に見返せる）。
+// 記録の種類ごとに、アプリ本体と同じ色で囲む
+// 冷蔵庫＝青 / わらび餅入荷＝紫 / 在庫＝緑
+function _rvBlock(title, inner, theme){
+  if(!inner) return '';
+  const t = theme==='blue'   ? {head:'#1565c0', bg:'#e8f4ff', bd:'#90caf9'}
+          : theme==='purple' ? {head:'#8a5fcf', bg:'#f3eeff', bd:'#c9a8f0'}
+          :                    {head:'#1a5f3a', bg:'#eaf7ef', bd:'#1a5f3a'};
+  return `<div style="background:${t.bg};border:2px solid ${t.bd};border-radius:14px;overflow:hidden;margin-bottom:10px;">
+    <div style="background:${t.head};padding:9px 13px;color:#fff;font-size:15px;font-weight:700;">${title}</div>
+    <div style="padding:9px 11px;">${inner}</div></div>`;
+}
+function _rvLabel(text){
+  return `<div style="font-size:11px;font-weight:700;color:var(--text2);margin:2px 0 4px;">${text}</div>`;
+}
+function _rvRow(name, val){
+  return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:5px 9px;background:var(--surface);border-radius:8px;margin-bottom:3px;"><span style="color:var(--text2);">${esc(name)}</span><b style="color:var(--text);">${val}</b></div>`;
+}
+function openDayReviewModal(){
+  const body = document.getElementById('review-modal-body');
+  const dEl  = document.getElementById('review-modal-date');
+  if(!body) { doComplete(); return; }   // 画面が無い時は今まで通り保存する
+  if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(dateStr) : dateStr);
+  let html = '';
+
+  // ① 冷蔵庫温度記録（青）
+  try{
+    const tRec = (typeof loadTempRecords==='function' ? loadTempRecords() : []).find(r=>r && r.date===todayISO);
+    let t = '';
+    if(tRec && tRec.data && tRec.data.length){
+      ['am','pm'].forEach(k=>{
+        const who = k==='am' ? (tRec.amRecorder||'') : (tRec.pmRecorder||'');
+        const has = tRec.data.some(f=>f[k] && f[k].temp!=='' && f[k].temp!=null);
+        if(!who && !has) return;
+        const vals = tRec.data.map(f=>{
+          const v = (f[k] && f[k].temp!=='' && f[k].temp!=null) ? f[k].temp+'℃' : '—';
+          return `${esc(f.name||'')} ${v}`;
+        }).join('　');
+        t += `<div style="font-size:13px;padding:5px 9px;background:var(--surface);border-radius:8px;margin-bottom:3px;"><b>${k==='am'?'AM':'PM'}</b>　${vals}${who?`　<span style="color:var(--text2);">👤 ${esc(who)}</span>`:''}</div>`;
+      });
+    }
+    if(!t) t = `<div style="font-size:13px;padding:5px 9px;color:var(--text2);">本日の記録はありません</div>`;
+    html += _rvBlock('🌡 冷蔵庫温度記録', t, 'blue');
+  }catch(e){}
+
+  // ② わらび餅 入荷記録（紫・あった場合だけ）
+  try{
+    const wRecs = (typeof loadWarabiRecords==='function' ? loadWarabiRecords() : []).filter(r=>r && r.date===todayISO);
+    if(wRecs.length){
+      let w = '';
+      wRecs.forEach(r=>{
+        w += _rvRow(r.item||'わらび餅', `${r.qty||0}個　<span style="color:var(--text2);font-weight:400;">👤 ${esc(r.inspector||'')}</span>`);
+      });
+      html += _rvBlock('📥 わらび餅 入荷記録', w, 'purple');
+    }
+  }catch(e){}
+
+  // ③ 在庫（緑）※ここは今までと同じ内容
+  let g = '';
+  let s1 = '';
+  SIMPLE.forEach(it=>{ s1 += _rvRow(it.name, $v('simple_'+it.id)); });
+  if(s1) g += _rvLabel('在庫数のみ') + s1;
+  let s2 = '';
+  SALES.forEach(it=>{
+    const st = document.getElementById('stock_'+it.id);
+    const stock = (st && st.value.trim()!=='') ? st.value : '—';
+    s2 += _rvRow(it.name, `在庫 ${stock}　販売 ${$v('sell_'+it.id)}　無料 ${$v('free_'+it.id)}`);
+  });
+  if(s2) g += _rvLabel('販売・無料') + s2;
+  try{
+    const uArr = UBER.filter(u=>u && !u._empty);
+    if(uArr.length){
+      const isNoTrade = uArr.length===1 && uArr[0].noTrade;
+      const uTotal = uArr.reduce((s,u)=>s+(u.amount||0),0);
+      g += _rvLabel('🛵 Uber Eats 売上') + _rvRow('合計', isNoTrade ? '本日取引無し' : `¥${uTotal.toLocaleString()}（${uArr.length}件）`);
+    }
+  }catch(e){}
+  try{
+    const noteEl = document.getElementById('note');
+    const note = noteEl ? noteEl.value.trim() : '';
+    if(note){
+      g += _rvLabel('📝 備考') + `<div style="font-size:13px;white-space:pre-wrap;color:var(--text);padding:5px 9px;background:var(--surface);border-radius:8px;">${esc(note)}</div>`;
+    }
+  }catch(e){}
+  html += _rvBlock('📦 本日の在庫', g, 'green');
+
+  body.innerHTML = html;
+  const m = document.getElementById('review-modal');
+  m.style.display = 'flex';
+  body.scrollTop = 0;
+}
+
+function closeReviewModal(){
+  const m = document.getElementById('review-modal');
+  if(m) m.style.display='none';
+  _isForceComplete = false;   // 直しに戻るので、差異の判定はやり直す
+}
+function confirmReviewAndComplete(){
+  const m = document.getElementById('review-modal');
+  if(m) m.style.display='none';
+  doComplete();
+}
 
 // ===== [追加 v10.23] 当日の記録カード =====
 // 本日ぶんの記録が保存されている時だけ、わらび餅入荷記録の下に表示する。
