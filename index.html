@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.53';
+window.APP_VERSION = 'v10.54';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -789,6 +789,11 @@ try {
         SALES.push(it);
         if(typeof NYUKA !== 'undefined' && !NYUKA[it.id]) NYUKA[it.id]=[];
       });
+    }
+    // [追加 v10.54] スタンプ引き換え品目も同期（古い版から来て未定義なら現状維持）
+    if(typeof STAMP !== 'undefined' && Array.isArray(itemData.stamp) && itemData.stamp.length){
+      STAMP.length = 0;
+      itemData.stamp.forEach(function(it){ STAMP.push(it); });
     }
     // 品目編集モード中はUIをリセットしない
     if(typeof editMode !== 'undefined' && editMode) return;
@@ -1320,6 +1325,8 @@ try {
 
   <div class="sec">在庫数のみ</div>
   <div id="simple-wrap"></div>
+  <div class="sec" style="color:#b03a63;">🎫 スタンプカード引き換え商品</div>
+  <div id="stamp-wrap"></div>
   <div class="sec">販売・無料数あり（入荷記録付き）</div>
   <div id="sales-wrap"></div>
   <div class="sec">🛵 Uber Eats 売上</div>
@@ -1385,6 +1392,12 @@ const DEFAULT_SIMPLE=[
   {id:'milk',name:'牛乳'},
   {id:'matcha',name:'浅川園抹茶'},
 ];
+const DEFAULT_STAMP=[
+  {id:'stamp-box5',name:'5個箱セット'},
+  {id:'stamp-kama',name:'釜揚げ単品'},
+  {id:'stamp-drink',name:'ドリンク'},
+  {id:'stamp-strap',name:'ストラップ'},
+];
 const DEFAULT_SALES=[
   {id:'kama-solo',name:'釜揚げ（単品）'},
   {id:'kama-box',name:'釜揚げ（箱）'},
@@ -1394,16 +1407,17 @@ const DEFAULT_SALES=[
   {id:'strap-matcha',name:'ストラップ（抹茶）'},
 ];
 function loadItems(){
-  try{const s=localStorage.getItem('zaiko_items');if(s){const d=JSON.parse(s);return{simple:d.simple,sales:d.sales};}}catch(e){}
-  return{simple:JSON.parse(JSON.stringify(DEFAULT_SIMPLE)),sales:JSON.parse(JSON.stringify(DEFAULT_SALES))};
+  try{const s=localStorage.getItem('zaiko_items');if(s){const d=JSON.parse(s);return{simple:d.simple,sales:d.sales,stamp:(d.stamp&&d.stamp.length)?d.stamp:JSON.parse(JSON.stringify(DEFAULT_STAMP))};}}catch(e){}
+  return{simple:JSON.parse(JSON.stringify(DEFAULT_SIMPLE)),sales:JSON.parse(JSON.stringify(DEFAULT_SALES)),stamp:JSON.parse(JSON.stringify(DEFAULT_STAMP))};
 }
 function saveItems(){
-  localStorage.setItem('zaiko_items',JSON.stringify({simple:SIMPLE,sales:SALES}));
+  localStorage.setItem('zaiko_items',JSON.stringify({simple:SIMPLE,sales:SALES,stamp:STAMP}));
   // Firebaseにも品目リストを保存
-  if(window.firebaseSaveItems) window.firebaseSaveItems({simple:SIMPLE,sales:SALES});
+  if(window.firebaseSaveItems) window.firebaseSaveItems({simple:SIMPLE,sales:SALES,stamp:STAMP});
 }
 
-let {simple:SIMPLE,sales:SALES}=loadItems();
+let {simple:SIMPLE,sales:SALES,stamp:STAMP}=loadItems();
+if(!Array.isArray(STAMP)||!STAMP.length){ STAMP=JSON.parse(JSON.stringify(DEFAULT_STAMP)); }
 const NYUKA={};
 SALES.forEach(it=>{NYUKA[it.id]=[];});
 let editMode=false;
@@ -1708,6 +1722,7 @@ function editRecord(idx){
   document.getElementById('staff').value=r.staff||'';
   document.getElementById('note').value=r.note||'';
   SIMPLE.forEach(it=>{$set('simple_'+it.id,r.simple[it.id]||0);});
+  STAMP.forEach(it=>{$set('stamp_'+it.id,(r.stamp&&r.stamp[it.id])||0);});
   SALES.forEach(it=>{
     $set('stock_'+it.id,r.sales[it.id]||0);
     $set('sell_'+it.id,r.sales[it.id+'_sell']||0);
@@ -1744,7 +1759,18 @@ function toggleEditMode(){
 }
 
 // ===== レンダリング =====
-function renderAll(){renderSimple();renderSales();}
+function renderAll(){renderSimple();renderStamp();renderSales();}
+function renderStamp(){
+  const wrap=document.getElementById('stamp-wrap');
+  if(!wrap) return;
+  let html='<div class="card" style="border:1.5px solid #f0b8cc;background:#fdf2f6;">';
+  STAMP.forEach(it=>{
+    const sv=document.getElementById('stamp_'+it.id); const sval=sv?sv.value:'0';
+    html+=`<div class="item-row"><span class="iname">${esc(it.name)}</span><div style="display:flex;flex-direction:column;align-items:flex-end;"><input class="num-input" type="number" id="stamp_${it.id}" value="${sval}" min="0" step="1" inputmode="numeric" oninput="markEdited(this);saveDraft()"></div></div>`;
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
 
 function renderSimple(){
   const wrap=document.getElementById('simple-wrap');
@@ -2584,9 +2610,10 @@ function doSave(autoSave=false){
   const targetDate = editingDate || dateStr;
   const record={
     date:targetDate, time:timeStr, staff,
-    simple:{},sales:{},nyuka:{},
+    simple:{},sales:{},nyuka:{},stamp:{},
     simpleItems:SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:SALES.map(it=>({id:it.id,name:it.name})),
+    stampItems:STAMP.map(it=>({id:it.id,name:it.name})),
     note:document.getElementById('note').value.trim(),
     uber:UBER.filter(u=>!u._empty),
     hasWarn:warns.length>0,
@@ -2605,6 +2632,7 @@ function doSave(autoSave=false){
     editLog:[] // 編集履歴
   };
   SIMPLE.forEach(it=>{record.simple[it.id]=$v('simple_'+it.id);});
+  STAMP.forEach(it=>{record.stamp[it.id]=$v('stamp_'+it.id);});
   SALES.forEach(it=>{
     record.sales[it.id]=$v('stock_'+it.id);
     record.sales[it.id+'_sell']=$v('sell_'+it.id);
@@ -3036,6 +3064,7 @@ function updateStaffList(){
 function resetToday(){
   if(!confirm('今日の入力内容（在庫・販売・無料・Uber・備考）をリセットしますか？\n\n保存済みの記録は消えません。入力欄だけリセットされます。'))return;
   SIMPLE.forEach(it=>$set('simple_'+it.id,0));
+  STAMP.forEach(it=>$set('stamp_'+it.id,0));
   SALES.forEach(it=>{
     $set('stock_'+it.id,0);
     $set('sell_'+it.id,0);
@@ -3124,7 +3153,7 @@ if(loadHistory().length){
     if(!t || t.tagName!=='INPUT') return;
     const id=t.id||'';
     // 在庫・販売・無料の数字欄だけが対象（わらび餅入荷や温度記録では聞かない）
-    if(!/^(simple_|stock_|sell_|free_)/.test(id)) return;
+    if(!/^(simple_|stamp_|stock_|sell_|free_)/.test(id)) return;
     const el=document.getElementById('staff');
     if(el && el.value.trim()) return;   // すでに名前が入っていれば何もしない
     if(window._staffAsked) return;      // 一度出したら続けては出さない
@@ -3136,7 +3165,7 @@ if(loadHistory().length){
   document.addEventListener('input', function(e){
     const t=e.target;
     if(!t || t.tagName!=='INPUT') return;
-    if(!/^(simple_|stock_|sell_|free_)/.test(t.id||'')) return;
+    if(!/^(simple_|stamp_|stock_|sell_|free_)/.test(t.id||'')) return;
     window._stockTouched = true;
   }, true);
 })();
@@ -3199,6 +3228,9 @@ function _rvStockHTML(){
     const q = $v('simple_'+it.id);
     const low = isLowStock(it.name, q) ? ' style="color:#e02020"' : '';
     rows += `<div class="tc-row"><span>${esc(it.name)}</span><b${low}>${q}</b></div>`;
+  });
+  STAMP.forEach(it=>{
+    rows += `<div class="tc-row" style="background:#fdf2f6;"><span>🎫 ${esc(it.name)}</span><b>${$v('stamp_'+it.id)}</b></div>`;
   });
   SALES.forEach(it=>{
     const st = document.getElementById('stock_'+it.id);
@@ -3300,11 +3332,17 @@ function _rvStockHTMLFromRecord(rec){
   if(!rec) return '';
   const siMap = Object.fromEntries((rec.simpleItems||SIMPLE).map(x=>[x.id,x]));
   const saMap = Object.fromEntries((rec.salesItems ||SALES ).map(x=>[x.id,x]));
+  const stMap = Object.fromEntries((rec.stampItems ||STAMP ).map(x=>[x.id,x]));
   let rows = '';
   SIMPLE.forEach(it=>{
     if(!rec.simple || rec.simple[it.id]===undefined) return;
     const nm=(siMap[it.id]||it).name, q=rec.simple[it.id];
     rows += `<div class="tc-row"><span>${esc(nm)}</span><b${isLowStock(nm,q)?' style="color:#e02020"':''}>${q}</b></div>`;
+  });
+  STAMP.forEach(it=>{
+    if(!rec.stamp || rec.stamp[it.id]===undefined) return;
+    const nm=(stMap[it.id]||it).name, q=rec.stamp[it.id];
+    rows += `<div class="tc-row" style="background:#fdf2f6;"><span>🎫 ${esc(nm)}</span><b>${q}</b></div>`;
   });
   SALES.forEach(it=>{
     if(!rec.sales || rec.sales[it.id]===undefined) return;
@@ -3387,6 +3425,7 @@ function renderTodayCard(){
 
   const siMap = Object.fromEntries((rec.simpleItems||SIMPLE).map(x=>[x.id,x]));
   const saMap = Object.fromEntries((rec.salesItems ||SALES ).map(x=>[x.id,x]));
+  const stMap = Object.fromEntries((rec.stampItems ||STAMP ).map(x=>[x.id,x]));
   let rows = '';
   SIMPLE.forEach(it=>{
     if(!rec.simple || rec.simple[it.id]===undefined) return;
@@ -3394,6 +3433,11 @@ function renderTodayCard(){
     const qty = rec.simple[it.id];
     const low = isLowStock(nm, qty) ? ' style="color:#e02020"' : '';
     rows += `<div class="tc-row"><span>${esc(nm)}</span><b${low}>${qty}</b></div>`;
+  });
+  STAMP.forEach(it=>{
+    if(!rec.stamp || rec.stamp[it.id]===undefined) return;
+    const nm = (stMap[it.id]||it).name;
+    rows += `<div class="tc-row" style="background:#fdf2f6;"><span>🎫 ${esc(nm)}</span><b>${rec.stamp[it.id]}</b></div>`;
   });
   SALES.forEach(it=>{
     if(!rec.sales || rec.sales[it.id]===undefined) return;
@@ -3502,6 +3546,10 @@ function restoreLastValues(){
     const v=last.simple&&last.simple[it.id]!==undefined?last.simple[it.id]:0;
     $set('simple_'+it.id, v);
   });
+  STAMP.forEach(it=>{
+    const v=last.stamp&&last.stamp[it.id]!==undefined?last.stamp[it.id]:0;
+    $set('stamp_'+it.id, v);
+  });
   const isToday = last.date === dateStr;
   SALES.forEach(it=>{
     const stock=last.sales&&last.sales[it.id]!==undefined?last.sales[it.id]:0;
@@ -3552,7 +3600,9 @@ function saveDraft(){
       nyuka: {},
       uber: [...UBER],
     };
+    draft.stamp = {};
     SIMPLE.forEach(it=>{ draft.simple[it.id] = $v('simple_'+it.id); });
+    STAMP.forEach(it=>{ draft.stamp[it.id] = $v('stamp_'+it.id); });
     SALES.forEach(it=>{
       const stockEl = document.getElementById('stock_'+it.id);
       draft.sales[it.id]         = stockEl ? stockEl.value : '';
@@ -3590,8 +3640,9 @@ function autoSaveToFirebase(){
   // ここが動いてしまい、何もしていないのに担当者名を聞かれていたため。
   // （名前を入れるまで保存しない仕組みはそのまま。数字を触った時に別の所で聞く）
   if(!staff){ return; }
-  const simple = {}, sales = {}, nyuka = {};
+  const simple = {}, sales = {}, nyuka = {}, stamp = {};
   SIMPLE.forEach(it=>{ simple[it.id] = $v('simple_'+it.id); });
+  STAMP.forEach(it=>{ stamp[it.id] = $v('stamp_'+it.id); });
   SALES.forEach(it=>{
     const stockEl = document.getElementById('stock_'+it.id);
     sales[it.id]           = stockEl && stockEl.value !== '' ? parseFloat(stockEl.value)||0 : 0;
@@ -3605,9 +3656,10 @@ function autoSaveToFirebase(){
     date: dateStr,
     time: timeStr,
     staff: staff,
-    simple, sales, nyuka,
+    simple, sales, nyuka, stamp,
     simpleItems: SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:  SALES.map(it=>({id:it.id,name:it.name})),
+    stampItems:  STAMP.map(it=>({id:it.id,name:it.name})),
     note: document.getElementById('note') ? document.getElementById('note').value.trim() : '',
     uber: UBER.filter(u=>!u._empty),
     hasWarn: false,
@@ -3682,6 +3734,9 @@ function restoreDraft(){
   if(!draft) return false;
   SIMPLE.forEach(it=>{
     if(draft.simple && draft.simple[it.id] !== undefined) $set('simple_'+it.id, draft.simple[it.id]);
+  });
+  STAMP.forEach(it=>{
+    if(draft.stamp && draft.stamp[it.id] !== undefined) $set('stamp_'+it.id, draft.stamp[it.id]);
   });
   SALES.forEach(it=>{
     if(draft.sales){
