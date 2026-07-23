@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.54';
+window.APP_VERSION = 'v10.56';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1008,6 +1008,9 @@ try {
       <button onclick="closeSettingsModal();showNyukaHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#ede7f6;border:1.5px solid #b39ddb;border-radius:12px;color:#4527a0;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">📦</span> 入荷履歴
       </button>
+      <button onclick="closeSettingsModal();showStampHistoryModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#fdf2f6;border:1.5px solid #e59ab8;border-radius:12px;color:#b03a63;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        <span style="font-size:20px;">🎟️</span> スタンプカード引き換え 記録
+      </button>
       <button onclick="closeSettingsModal();showUberModal();" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;background:#e8f0ff;border:1.5px solid #99b8f0;border-radius:12px;color:#1a3f8a;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
         <span style="font-size:20px;">🛵</span> 月間売上
       </button>
@@ -1051,6 +1054,20 @@ try {
     </div>
     <div id="nyuka-item-buttons" style="padding:10px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surface);border-bottom:1px solid var(--border2);max-height:40vh;overflow-y:auto;"></div>
     <div id="nyuka-history-content" style="padding:14px 16px 20px;"></div>
+  </div>
+</div>
+
+<!-- スタンプカード引き換え 記録モーダル -->
+<div id="stamp-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeStampHistoryModal(event)">
+  <div style="background:var(--surface);border-radius:16px;max-width:520px;margin:16px auto 16px;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
+    <div style="background:#c25480;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
+      <div style="color:#fff;font-size:17px;font-weight:700;">スタンプカード引き換え 記録</div>
+      <button onclick="closeStampHistoryModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#fff;opacity:.8;line-height:1;">✕</button>
+    </div>
+    <div style="padding:14px 16px 0;display:flex;gap:8px;align-items:center;">
+      <input type="month" id="stamp-history-month" style="flex:1;padding:8px 10px;border:1px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);" onchange="renderStampHistory()">
+    </div>
+    <div id="stamp-history-content" style="padding:14px 16px 20px;"></div>
   </div>
 </div>
 
@@ -1325,7 +1342,7 @@ try {
 
   <div class="sec">在庫数のみ</div>
   <div id="simple-wrap"></div>
-  <div class="sec" style="color:#b03a63;">🎫 スタンプカード引き換え商品</div>
+  <div class="sec" style="color:#b03a63;">スタンプカード引き換え商品</div>
   <div id="stamp-wrap"></div>
   <div class="sec">販売・無料数あり（入荷記録付き）</div>
   <div id="sales-wrap"></div>
@@ -2229,6 +2246,60 @@ function selectNyukaItem(id){
 function closeNyukaHistoryModal(e){
   if(e && e.target !== document.getElementById('nyuka-history-modal')) return;
   document.getElementById('nyuka-history-modal').style.display = 'none';
+}
+
+// ===== スタンプカード引き換え 記録 =====
+function showStampHistoryModal(){
+  const modal = document.getElementById('stamp-history-modal');
+  if(!modal) return;
+  modal.style.display = 'block';
+  const n = new Date();
+  document.getElementById('stamp-history-month').value = n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+  renderStampHistory();
+}
+function closeStampHistoryModal(e){
+  if(e && e.target !== document.getElementById('stamp-history-modal')) return;
+  document.getElementById('stamp-history-modal').style.display = 'none';
+}
+function renderStampHistory(){
+  const el = document.getElementById('stamp-history-content');
+  if(!el) return;
+  const ym = document.getElementById('stamp-history-month').value; // YYYY-MM
+  const ymSlash = ym ? ym.replace('-','/') : '';
+  const all = loadHistory();
+  const recs = all.filter(r => r && r.date && (!ymSlash || r.date.startsWith(ymSlash)) && r.stamp);
+  // 品目一覧（記録に入っている順を尊重しつつ現行STAMPを基準に）
+  const items = STAMP.slice();
+  // 月合計
+  const totals = {};
+  items.forEach(it=> totals[it.id]=0);
+  recs.forEach(r=>{ items.forEach(it=>{ const v=parseFloat(r.stamp[it.id])||0; totals[it.id]+=v; }); });
+  const monthLabel = ym ? (ym.split('-')[0]+'年'+parseInt(ym.split('-')[1])+'月') : '全期間';
+  // 合計表
+  let html = `<div style="background:#fdf2f6;border:1.5px solid #e59ab8;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:700;color:#b03a63;margin-bottom:6px;">${monthLabel} の合計</div>`;
+  items.forEach(it=>{
+    html += `<div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0;"><span style="color:var(--text2);">${esc(it.name)}</span><b style="color:var(--text);">${totals[it.id]} 個</b></div>`;
+  });
+  html += `</div>`;
+  // 日ごと（引き換えが1つでもある日だけ、日付の新しい順）
+  const days = recs.filter(r=> items.some(it=> (parseFloat(r.stamp[it.id])||0) > 0))
+                   .sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+  if(!days.length){
+    html += `<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px;">${monthLabel}の引き換え記録はありません</div>`;
+    el.innerHTML = html;
+    return;
+  }
+  days.forEach(r=>{
+    const parts = items.filter(it=> (parseFloat(r.stamp[it.id])||0) > 0)
+                       .map(it=> `<span style="background:#fdf2f6;border:1px solid #e59ab8;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;color:#b03a63;">${esc(it.name)} ${parseFloat(r.stamp[it.id])||0}</span>`)
+                       .join(' ');
+    html += `<div style="border-top:1px solid var(--border);padding:8px 2px;">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">📅 ${fmtDate(r.date)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">${parts}</div>
+    </div>`;
+  });
+  el.innerHTML = html;
 }
 
 function _updateNyukaViewToggle(){
@@ -3221,6 +3292,34 @@ function _rvWarabiHTML(dISO){
     </div>`).join('');
   }catch(e){ return ''; }
 }
+// [追加 v10.55] スタンプカード引き換え商品は在庫とは別枠のピンクのカードで表示する
+function _rvStampCard(getQty, items){
+  const list = items || STAMP;
+  let rows = '';
+  list.forEach(it=>{
+    const q = getQty(it);
+    if(q===null || q===undefined) return;
+    rows += `<div class="tc-row"><span>${esc(it.name)}</span><b>${q}</b></div>`;
+  });
+  if(!rows) return '';
+  return `<div class="tcard" style="background:#fdf2f6;border-color:#e59ab8;margin-bottom:10px;">
+    <div class="tcard-head" style="background:#c25480;">
+      <span class="tcard-title">スタンプカード引き換え商品</span>
+    </div>
+    <div class="tcard-body"><div class="tcard-grid">${rows}</div></div>
+  </div>`;
+}
+// 画面の入力欄から作る
+function _rvStampLiveHTML(){
+  return _rvStampCard(it=>$v('stamp_'+it.id), STAMP);
+}
+// 保存された記録から作る
+function _rvStampRecHTML(rec){
+  if(!rec || !rec.stamp) return '';
+  const items = rec.stampItems || STAMP;
+  return _rvStampCard(it=> (rec.stamp[it.id]!==undefined ? rec.stamp[it.id] : null), items);
+}
+
 function _rvStockHTML(){
   // 本日のカードと同じ見た目。ただし数字は「今この画面に入っている値」を使う
   let rows = '';
@@ -3228,9 +3327,6 @@ function _rvStockHTML(){
     const q = $v('simple_'+it.id);
     const low = isLowStock(it.name, q) ? ' style="color:#e02020"' : '';
     rows += `<div class="tc-row"><span>${esc(it.name)}</span><b${low}>${q}</b></div>`;
-  });
-  STAMP.forEach(it=>{
-    rows += `<div class="tc-row" style="background:#fdf2f6;"><span>🎫 ${esc(it.name)}</span><b>${$v('stamp_'+it.id)}</b></div>`;
   });
   SALES.forEach(it=>{
     const st = document.getElementById('stock_'+it.id);
@@ -3272,7 +3368,7 @@ function openDayReviewModal(){
   const dEl  = document.getElementById('review-modal-date');
   if(!body) { doComplete(); return; }   // 画面が無い時は今まで通り保存する
   if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(dateStr) : dateStr);
-  body.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML();
+  body.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
   // ボタンの見た目を最初の状態に戻す
   const b = document.getElementById('review-save-btn');
   if(b){
@@ -3332,17 +3428,11 @@ function _rvStockHTMLFromRecord(rec){
   if(!rec) return '';
   const siMap = Object.fromEntries((rec.simpleItems||SIMPLE).map(x=>[x.id,x]));
   const saMap = Object.fromEntries((rec.salesItems ||SALES ).map(x=>[x.id,x]));
-  const stMap = Object.fromEntries((rec.stampItems ||STAMP ).map(x=>[x.id,x]));
   let rows = '';
   SIMPLE.forEach(it=>{
     if(!rec.simple || rec.simple[it.id]===undefined) return;
     const nm=(siMap[it.id]||it).name, q=rec.simple[it.id];
     rows += `<div class="tc-row"><span>${esc(nm)}</span><b${isLowStock(nm,q)?' style="color:#e02020"':''}>${q}</b></div>`;
-  });
-  STAMP.forEach(it=>{
-    if(!rec.stamp || rec.stamp[it.id]===undefined) return;
-    const nm=(stMap[it.id]||it).name, q=rec.stamp[it.id];
-    rows += `<div class="tc-row" style="background:#fdf2f6;"><span>🎫 ${esc(nm)}</span><b>${q}</b></div>`;
   });
   SALES.forEach(it=>{
     if(!rec.sales || rec.sales[it.id]===undefined) return;
@@ -3387,7 +3477,7 @@ function _maybeShowDoneReview(){
     const m    = document.getElementById('review-modal');
     if(!body || !m) return;
     if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(t.slash) : t.slash);
-    body.innerHTML = _rvTempHTML(t.iso) + _rvWarabiHTML(t.iso) + _rvStockHTMLFromRecord(rec);
+    body.innerHTML = _rvTempHTML(t.iso) + _rvWarabiHTML(t.iso) + _rvStockHTMLFromRecord(rec) + _rvStampRecHTML(rec);
     _setReviewDoneButtons();
     m.style.display = 'flex';
     body.scrollTop = 0;
@@ -3425,7 +3515,6 @@ function renderTodayCard(){
 
   const siMap = Object.fromEntries((rec.simpleItems||SIMPLE).map(x=>[x.id,x]));
   const saMap = Object.fromEntries((rec.salesItems ||SALES ).map(x=>[x.id,x]));
-  const stMap = Object.fromEntries((rec.stampItems ||STAMP ).map(x=>[x.id,x]));
   let rows = '';
   SIMPLE.forEach(it=>{
     if(!rec.simple || rec.simple[it.id]===undefined) return;
@@ -3433,11 +3522,6 @@ function renderTodayCard(){
     const qty = rec.simple[it.id];
     const low = isLowStock(nm, qty) ? ' style="color:#e02020"' : '';
     rows += `<div class="tc-row"><span>${esc(nm)}</span><b${low}>${qty}</b></div>`;
-  });
-  STAMP.forEach(it=>{
-    if(!rec.stamp || rec.stamp[it.id]===undefined) return;
-    const nm = (stMap[it.id]||it).name;
-    rows += `<div class="tc-row" style="background:#fdf2f6;"><span>🎫 ${esc(nm)}</span><b>${rec.stamp[it.id]}</b></div>`;
   });
   SALES.forEach(it=>{
     if(!rec.sales || rec.sales[it.id]===undefined) return;
@@ -3497,7 +3581,7 @@ function renderTodayCard(){
   el.className = '';
   // [修正 v10.50] 完了ずみでなくても、冷蔵庫温度・わらび餅入荷を常に表示する。
   // （完了後に戻って在庫を直すと、他の記録が消えてしまっていたため）
-  el.innerHTML = _rvTempHTML() + _rvWarabiHTML() + cardHtml;
+  el.innerHTML = _rvTempHTML() + _rvWarabiHTML() + cardHtml + _rvStampLiveHTML();
   el.style.display = 'block';
   // [追加 v10.51] 確認画面を開いたままなら、その中身も最新にする
   // （他の端末で数字が変わった時に、開いている画面が古いままにならないように）
@@ -3505,7 +3589,7 @@ function renderTodayCard(){
     const rm = document.getElementById('review-modal');
     const rb = document.getElementById('review-modal-body');
     if(rm && rb && rm.style.display === 'flex'){
-      rb.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML();
+      rb.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
     }
   }catch(e){}
   // [追加 v10.47] 完了ずみの日は、タブを閉じて開き直しても「保存済み」の見た目に戻す
