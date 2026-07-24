@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.56';
+window.APP_VERSION = 'v10.58';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -743,20 +743,8 @@ try {
       const data = Array.isArray(raw) ? raw : Object.values(raw);
       data.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
       localStorage.setItem('warabi_records', JSON.stringify(data));
-      if(typeof NYUKA !== 'undefined' && typeof WARABI_ITEM_MAP !== 'undefined'){
-        const todayRecords = data.filter(r => r.date && r.date.replace(/-/g,'/') === (typeof dateStr !== 'undefined' ? dateStr : ''));
-        todayRecords.forEach(r => {
-          const sid = WARABI_ITEM_MAP[r.item];
-          if(sid){
-            if(!NYUKA[sid]) NYUKA[sid] = [];
-            if(!NYUKA[sid].find(n => n.qty === r.qty && n.staff === r.inspector && n.date === r.date.replace(/-/g,'/'))){
-              NYUKA[sid].push({qty: r.qty, staff: r.inspector, date: r.date.replace(/-/g,'/')});
-            }
-            if(typeof renderNyuka === 'function') renderNyuka(sid);
-            if(typeof calcStock === 'function') calcStock(sid);
-          }
-        });
-      }
+      // [修正 v10.58] 当日の入荷を在庫に反映（日付で拾う・変則表記もOK・二重加算なし）
+      if(typeof reflectTodayWarabiToNyuka==='function'){ reflectTodayWarabiToNyuka(); }
       if(typeof renderWarabiHistory === 'function') renderWarabiHistory();
       if(typeof renderTodayCard === 'function') renderTodayCard();
     }
@@ -828,7 +816,8 @@ try {
           if(typeof renderTempHistory==='function') renderTempHistory();
         }
         const warabiData = warabiSnap.val();
-        if(warabiData) localStorage.setItem('warabi_records', JSON.stringify(warabiData));
+        if(warabiData){ localStorage.setItem('warabi_records', JSON.stringify(warabiData));
+          if(typeof reflectTodayWarabiToNyuka==='function') reflectTodayWarabiToNyuka(); }
         const master = masterSnap.val();
         if(master){
           if(master.factories&&master.factories.length) localStorage.setItem('warabi_factories', JSON.stringify(master.factories));
@@ -3648,6 +3637,8 @@ function restoreLastValues(){
     else if(last.nyuka&&last.nyuka[it.id]) NYUKA[it.id]=[...last.nyuka[it.id]];
     calcStock(it.id);
   });
+  // [追加 v10.58] 当日の入荷記録を必ず在庫に反映（履歴の同期で消えないように最後に呼ぶ）
+  try{ reflectTodayWarabiToNyuka(); }catch(e){}
   // 色チェック
   SIMPLE.forEach(it=>checkSimpleLow(it.id));
   SALES.forEach(it=>renderNyuka(it.id));
@@ -3981,6 +3972,27 @@ const WARABI_ITEM_MAP = {
   '釜揚げ（単品）': 'kama-solo',
   '釜揚げ（箱）':   'kama-box',
 };
+
+// [追加 v10.58] 入荷記録(warabi_records)から「今日の日付」のぶんを拾って、在庫のNYUKAに反映する。
+// 履歴同期のたびに呼んでも、重複チェックがあるので二重に足さない。
+function reflectTodayWarabiToNyuka(){
+  let recs=[];
+  try{ recs = JSON.parse(localStorage.getItem('warabi_records')||'[]'); }catch(e){ return; }
+  if(!Array.isArray(recs)) recs = Object.values(recs||{});
+  const today = recs.filter(r=> r && r.date && r.date.replace(/-/g,'/') === dateStr);
+  today.forEach(r=>{
+    const sid = resolveWarabiStockId(r.item);
+    if(!sid) return;
+    if(!NYUKA[sid]) NYUKA[sid] = [];
+    const dkey = r.date.replace(/-/g,'/');
+    const qty = parseFloat(r.qty)||0;
+    if(qty<=0) return;
+    const dup = NYUKA[sid].find(n=> n.qty===qty && n.staff===(r.inspector||'') && n.date===dkey);
+    if(!dup){ NYUKA[sid].push({qty:qty, staff:r.inspector||'', date:dkey}); }
+    if(typeof renderNyuka==='function') renderNyuka(sid);
+    if(typeof calcStock==='function') calcStock(sid);
+  });
+}
 
 // 品目名から在庫IDを求める（名前に「（15個）」等が付いていても照合できるようにする）
 function resolveWarabiStockId(item){
@@ -4438,8 +4450,8 @@ function saveWarabiEdit(){
 
   // 品目または日付が変わった場合、在庫（NYUKA）を更新
   if(oldRec.item!==item || oldRec.date!==date){
-    const oldStockId=WARABI_ITEM_MAP[oldRec.item];
-    const newStockId=WARABI_ITEM_MAP[item];
+    const oldStockId=resolveWarabiStockId(oldRec.item);
+    const newStockId=resolveWarabiStockId(item);
     const qty=oldRec.qty||0;
     const oldDateKey=oldRec.date.replace(/-/g,'/');
     const newDateKey=date.replace(/-/g,'/');
