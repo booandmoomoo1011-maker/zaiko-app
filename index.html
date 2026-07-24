@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.59';
+window.APP_VERSION = 'v10.61';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1331,10 +1331,10 @@ try {
 
   <div class="sec">在庫数のみ</div>
   <div id="simple-wrap"></div>
-  <div class="sec" style="color:#b03a63;">スタンプカード引き換え商品</div>
-  <div id="stamp-wrap"></div>
   <div class="sec">販売・無料数あり（入荷記録付き）</div>
   <div id="sales-wrap"></div>
+  <div class="sec" style="color:#ad1457;">🎫 スタンプカード引き換え商品</div>
+  <div id="stamp-wrap"></div>
   <div class="sec">🛵 Uber Eats 売上</div>
   <div id="uber-wrap" style="padding:0 2px;">
     <div class="sales-card" style="margin-bottom:8px;border:1.5px solid #142328;background:#1a1a1a;border-radius:14px;">
@@ -1770,7 +1770,9 @@ function renderAll(){renderSimple();renderStamp();renderSales();}
 function renderStamp(){
   const wrap=document.getElementById('stamp-wrap');
   if(!wrap) return;
-  let html='<div class="card" style="border:1.5px solid #f0b8cc;background:#fdf2f6;">';
+  let html='<div class="card" style="border:1.5px solid #e59ab8;background:#fdf2f6;overflow:hidden;padding:0;">';
+  // [v10.61] Uberのような濃いピンクの見出しバー
+  html+='<div style="background:#c2185b;padding:11px 14px;color:#fff;font-size:16px;font-weight:700;">🎫 スタンプカード引き換え商品</div>';
   STAMP.forEach(it=>{
     const sv=document.getElementById('stamp_'+it.id); const sval=sv?sv.value:'0';
     html+=`<div class="item-row"><span class="iname">${esc(it.name)}</span><div style="display:flex;flex-direction:column;align-items:flex-end;"><input class="num-input" type="number" id="stamp_${it.id}" value="${sval}" min="0" step="1" inputmode="numeric" oninput="markEdited(this);saveDraft()"></div></div>`;
