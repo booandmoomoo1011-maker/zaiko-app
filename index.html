@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.58';
+window.APP_VERSION = 'v10.59';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1428,6 +1428,7 @@ const NYUKA={};
 SALES.forEach(it=>{NYUKA[it.id]=[];});
 let editMode=false;
 let completed=false;
+let _stockManual={}; // [v10.59] 本日在庫を手で直した品目（true=自動加算しない）
 let UBER=[]; // Uber Eats売上リスト [{amount, time}]
 
 // 在庫警告の閾値（品目名：閾値以下で赤表示）
@@ -1825,7 +1826,7 @@ function renderSales(){
           </div>
           <div class="scol">
             <div class="clabel">本日在庫</div>
-            <input class="num-input stock-input" type="number" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'';})()}" min="0" step="0.1" inputmode="decimal" placeholder="—" style="color:#1565c0;font-weight:700;" oninput="markEdited(this);calcStock('${it.id}');saveDraft()">
+            <input class="num-input stock-input" type="number" id="stock_${it.id}" value="${(()=>{const e=document.getElementById('stock_'+it.id);return e?e.value:'';})()}" min="0" step="0.1" inputmode="decimal" placeholder="—" style="color:#1565c0;font-weight:700;" oninput="markEdited(this);_stockManual['${it.id}']=true;calcStock('${it.id}');saveDraft()">
           </div>
           <div class="scol"><div class="clabel">販売</div><input class="num-input" type="number" id="sell_${it.id}" value="${(()=>{const e=document.getElementById('sell_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
           <div class="scol"><div class="clabel">${it.name.includes('釜揚げ箱')?'単品に移行':'無料'}</div><input class="num-input" type="number" id="free_${it.id}" value="${(()=>{const e=document.getElementById('free_'+it.id);return e?e.value:'0';})()}" min="0" step="0.1" inputmode="decimal" oninput="markEdited(this);calcStock('${it.id}');saveDraft()"></div>
@@ -2671,6 +2672,7 @@ function doSave(autoSave=false){
   const record={
     date:targetDate, time:timeStr, staff,
     simple:{},sales:{},nyuka:{},stamp:{},
+    stockManual:Object.assign({}, _stockManual),
     simpleItems:SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:SALES.map(it=>({id:it.id,name:it.name})),
     stampItems:STAMP.map(it=>({id:it.id,name:it.name})),
@@ -3123,6 +3125,7 @@ function updateStaffList(){
 // ===== 今日の入力をリセット =====
 function resetToday(){
   if(!confirm('今日の入力内容（在庫・販売・無料・Uber・備考）をリセットしますか？\n\n保存済みの記録は消えません。入力欄だけリセットされます。'))return;
+  _stockManual = {};
   SIMPLE.forEach(it=>$set('simple_'+it.id,0));
   STAMP.forEach(it=>$set('stamp_'+it.id,0));
   SALES.forEach(it=>{
@@ -3637,6 +3640,8 @@ function restoreLastValues(){
     else if(last.nyuka&&last.nyuka[it.id]) NYUKA[it.id]=[...last.nyuka[it.id]];
     calcStock(it.id);
   });
+  // [追加 v10.59] 手動で直した在庫の印を記録から復元（当日のみ）
+  _stockManual = (isToday && last.stockManual) ? Object.assign({}, last.stockManual) : {};
   // [追加 v10.58] 当日の入荷記録を必ず在庫に反映（履歴の同期で消えないように最後に呼ぶ）
   try{ reflectTodayWarabiToNyuka(); }catch(e){}
   // 色チェック
@@ -3676,6 +3681,7 @@ function saveDraft(){
       uber: [...UBER],
     };
     draft.stamp = {};
+    draft.stockManual = Object.assign({}, _stockManual);
     SIMPLE.forEach(it=>{ draft.simple[it.id] = $v('simple_'+it.id); });
     STAMP.forEach(it=>{ draft.stamp[it.id] = $v('stamp_'+it.id); });
     SALES.forEach(it=>{
@@ -3732,6 +3738,7 @@ function autoSaveToFirebase(){
     time: timeStr,
     staff: staff,
     simple, sales, nyuka, stamp,
+    stockManual: Object.assign({}, _stockManual),
     simpleItems: SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:  SALES.map(it=>({id:it.id,name:it.name})),
     stampItems:  STAMP.map(it=>({id:it.id,name:it.name})),
@@ -3810,6 +3817,7 @@ function restoreDraft(){
   SIMPLE.forEach(it=>{
     if(draft.simple && draft.simple[it.id] !== undefined) $set('simple_'+it.id, draft.simple[it.id]);
   });
+  if(draft.stockManual) _stockManual = Object.assign({}, draft.stockManual);
   STAMP.forEach(it=>{
     if(draft.stamp && draft.stamp[it.id] !== undefined) $set('stamp_'+it.id, draft.stamp[it.id]);
   });
@@ -3990,8 +3998,24 @@ function reflectTodayWarabiToNyuka(){
     const dup = NYUKA[sid].find(n=> n.qty===qty && n.staff===(r.inspector||'') && n.date===dkey);
     if(!dup){ NYUKA[sid].push({qty:qty, staff:r.inspector||'', date:dkey}); }
     if(typeof renderNyuka==='function') renderNyuka(sid);
-    if(typeof calcStock==='function') calcStock(sid);
+    autoFillArrivalStock(sid);
   });
+}
+
+// [追加 v10.59] 入荷がある品目の本日在庫を「前日在庫＋入荷−販売−無料」に自動セット。
+// 手で在庫を直した品目(_stockManual)は触らない。絶対値なので端末が変わっても同じ・二重加算なし。
+function autoFillArrivalStock(id){
+  if(_stockManual[id]) return;
+  const prev = prevStock(id);
+  if(prev===null) return;
+  const nyukaTotal = (NYUKA[id]||[]).reduce((s,n)=>s+(n.qty||0),0);
+  if(nyukaTotal<=0) return;
+  const sell = $v('sell_'+id), free = $v('free_'+id);
+  let v = prev + nyukaTotal - sell - free;
+  if(v<0) v=0;
+  const el = document.getElementById('stock_'+id);
+  if(el) el.value = v;
+  calcStock(id);
 }
 
 // 品目名から在庫IDを求める（名前に「（15個）」等が付いていても照合できるようにする）
@@ -4122,8 +4146,8 @@ function saveWarabiRecord(){
       // 今日の入荷→NYUKAに即反映
       if(!NYUKA[stockItemId]) NYUKA[stockItemId]=[];
       NYUKA[stockItemId].push({qty, staff:inspector, date:dateStr});
-      // 入荷した分を「本日在庫」に自動で加算する
-      $set('stock_'+stockItemId, $v('stock_'+stockItemId) + qty);
+      // [修正 v10.59] 入荷を本日在庫に反映（絶対値。手動品目は触らない）
+      autoFillArrivalStock(stockItemId);
       renderNyuka(stockItemId);
       calcStock(stockItemId);
       saveDraft();
