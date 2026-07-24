@@ -309,7 +309,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.61';
+window.APP_VERSION = 'v10.62';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -2927,8 +2927,16 @@ function renderMonthSummary(h,filterMonth){
       salesTotals[it.name].free+=r.sales[it.id+'_free']||0;
     });
   });
+  // [追加 v10.62] スタンプ引き換えの月間合計
+  const stampTotals={};
+  STAMP.forEach(it=>{ stampTotals[it.id]={name:it.name,total:0}; });
+  targetH.forEach(r=>{
+    if(r.stamp){ STAMP.forEach(it=>{ stampTotals[it.id].total += parseFloat(r.stamp[it.id])||0; }); }
+  });
+  const stampParts = STAMP.filter(it=>stampTotals[it.id].total>0)
+                          .map(it=>`${esc(stampTotals[it.id].name)} ${stampTotals[it.id].total}`);
   const entries=Object.entries(salesTotals).filter(([,v])=>v.free>0||v.sell>0);
-  if(!entries.length){el.style.display='none';return;}
+  if(!entries.length && !stampParts.length){el.style.display='none';return;}
   const label=filterMonth?`📆 ${fm} 月まとめ（${targetH.length}日分）`:`📆 今月（${fm}）の集計（${targetH.length}日分）`;
   let html=`<div style="background:var(--done-bg);border:1px solid var(--done-bd);border-radius:var(--r);padding:12px;margin-bottom:8px;">
     <div style="font-size:13px;font-weight:700;color:#7a6000;margin-bottom:8px;">${label}</div>
@@ -2940,7 +2948,9 @@ function renderMonthSummary(h,filterMonth){
   let uberMonthTotal=0;let uberMonthCount=0;
   targetH.forEach(r=>{if(r.uber&&r.uber.length){uberMonthTotal+=r.uber.reduce((s,u)=>s+u.amount,0);uberMonthCount+=r.uber.length;}});
   const uberSummary=uberMonthCount?`<div style="margin-top:8px;padding:6px 10px;background:#f0f7ff;border-radius:8px;font-size:13px;font-weight:700;color:var(--blue);">🛵 Uber Eats 月間売上：¥${uberMonthTotal.toLocaleString()}（${uberMonthCount}件）</div>`:'';
-  html+=`</tbody></table>${uberSummary}</div>`;
+  // [追加 v10.62] スタンプ引き換えの月間合計を表示
+  const stampSummary=stampParts.length?`<div style="margin-top:8px;padding:6px 10px;background:#fdf2f6;border-radius:8px;font-size:13px;font-weight:700;color:#ad1457;">🎫 スタンプ引き換え：${stampParts.join('　/　')}</div>`:'';
+  html+=`</tbody></table>${stampSummary}${uberSummary}</div>`;
   el.innerHTML=html;
   el.style.display='block';
 }
