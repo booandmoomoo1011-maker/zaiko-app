@@ -426,7 +426,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.35</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.44</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -459,6 +459,12 @@
     <input id="who" type="text" placeholder="名前を記入" autocomplete="off">
     <button id="whoOk" type="button">決定</button>
     <datalist id="nameList"></datalist>
+  </div>
+  <div class="howto" style="margin:8px 12px 0;padding:10px 12px;background:#fff;border:1.5px solid #e8607f;border-radius:10px;color:#555;font-size:13px;line-height:1.9;">
+    <span class="hdot">・</span>店名を選んでください<br>
+    <span class="hdot">・</span>西暦・月を選んでください<br>
+    <span class="hdot">・</span>名前を記入し決定<br>
+    <span class="hdot">・</span>シフトの記入は日付をタップし決定
   </div>
   <div class="status" id="sStatus"></div>
   <div id="staffMine"></div>
@@ -587,7 +593,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.35"; window.APP_UPDATED="2026-07-29";
+window.APP_VERSION="v1.44"; window.APP_UPDATED="2026-07-29";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1179,6 +1185,7 @@ $("#decideBtn").onclick=()=>{
 /* ================= スタッフ画面 ================= */
 function initWho(){
   const ss=$("#whoStore"); ss.innerHTML="";
+  const ph=document.createElement("option"); ph.value=""; ph.textContent="店舗を選ぶ"; ss.appendChild(ph);
   STORES.forEach(st=>{ const o=document.createElement("option"); o.value=st; o.textContent=st; ss.appendChild(o); });
   fillNames(); fillYM();
 }
@@ -1197,8 +1204,11 @@ function ensureStaff(nm){
 function applyStaffHeader(){
   const c=STORE_COLOR[$("#whoStore").value];
   const head=document.querySelector("header");
-  head.style.background = c ? c.hd : "";
+  const baseCol = c ? c.hd : "#111";                 // 未選択は黒
+  head.style.background = baseCol;
   head.style.color = (c && isLightColor(c.hd)) ? "#333" : "#fff";
+  document.querySelectorAll(".howto .hdot").forEach(el=>{ el.style.color = baseCol; el.style.fontWeight="900"; });
+  const howto=document.querySelector(".howto"); if(howto){ howto.style.borderColor = baseCol; }
 }
 $("#whoStore").onchange=()=>{ fillNames(); const nm=($("#who").value||"").trim(); if(nm && S.staff[nm]){ S.staff[nm].store=$("#whoStore").value; save(); } applyStaffHeader(); renderStaff(); };
 function renderStaff(){
@@ -1361,9 +1371,10 @@ $("#who").onchange=()=>renderStaff();
 $("#whoOk").onclick=()=>{ const nm=($("#who").value||"").trim(); if(!nm){ $("#who").focus(); return; } ensureStaff(nm); S.staff[nm].store=$("#whoStore").value; save(); applyStaffHeader(); renderStaff(); };
 $("#who").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#whoOk").click(); } });
 $("#yearSel").onchange=setYM; $("#monthSel").onchange=setYM;
-$("#shareBtn").onclick=()=>{
-  const url="https://（あなたのアプリURL）/shift-input.html?store=大須";
-  alert("このメッセージをLINEで送ります：\n\n7月のシフト希望をお願いします🙏\n"+url);
+$("#shareBtn").onclick=async ()=>{
+  const url = "https://zaiko-app-two.vercel.app/shift/";   // スタッフに配る公開URL（固定）
+  try{ await navigator.clipboard.writeText(url); alert("URLをコピーしました。LINEに貼り付けて送ってください：\n\n"+url); }
+  catch(e){ alert("このURLをLINEに貼り付けて送ってください：\n\n"+url); }
 };
 
 /* ================= 画面切替 ================= */
