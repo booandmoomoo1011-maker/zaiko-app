@@ -415,7 +415,7 @@
 </head>
 <body>
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.32</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.33</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -579,7 +579,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.32"; window.APP_UPDATED="2026-07-29";
+window.APP_VERSION="v1.33"; window.APP_UPDATED="2026-07-29";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -1366,12 +1366,10 @@ $("#who").onchange=()=>renderStaff();
 $("#whoOk").onclick=()=>{ const nm=($("#who").value||"").trim(); if(!nm){ $("#who").focus(); return; } ensureStaff(nm); S.staff[nm].store=$("#whoStore").value; save(); applyStaffHeader(); renderStaff(); };
 $("#who").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#whoOk").click(); } });
 $("#yearSel").onchange=setYM; $("#monthSel").onchange=setYM;
-$("#shareBtn").onclick=async ()=>{
+$("#shareBtn").onclick=()=>{
   const url = location.origin + location.pathname;   // 今開いているページのURLを自動で使う
   const msg = "シフト希望をお願いします🙏\n" + url;
-  try{ if(navigator.share){ await navigator.share({ text: msg }); return; } }catch(e){}
-  try{ await navigator.clipboard.writeText(msg); alert("メッセージをコピーしました。LINEに貼り付けて送ってください：\n\n"+msg); return; }catch(e){}
-  alert("このメッセージをLINEで送ってください：\n\n"+msg);
+  window.open("https://line.me/R/msg/text/?" + encodeURIComponent(msg), "_blank");  // LINEを直接ひらく（PC・スマホ両対応）
 };
 
 /* ================= 画面切替 ================= */
