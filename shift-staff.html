@@ -49,16 +49,16 @@
   .stoggle{display:flex; background:#ededed; border-radius:20px; padding:3px; margin-left:8px; flex:0 0 auto;}
   .stoggle button{border:none; background:transparent; color:#555; font-weight:700; font-size:13px; padding:6px 14px; border-radius:18px; cursor:pointer; white-space:nowrap;}
   .stoggle button.on{background:#c99a00; color:#fff;}
-  .sbar{flex-wrap:wrap; gap:4px 5px; align-items:center; overflow-x:visible;}
+  .sbar{flex-wrap:wrap; gap:8px 7px; align-items:center; overflow-x:visible;}
   .nmeBreak{display:block; flex-basis:100%; height:0; margin:0; padding:0;}
   #who{flex:1 1 auto;}
-  .sbar select{padding:5px 4px; font-size:13px; flex:0 0 auto;}
-  #who{padding:6px 8px; font-size:14px; border:1.5px solid var(--line); border-radius:9px; width:78px; min-width:56px; flex:1 1 60px; max-width:130px; appearance:none; -webkit-appearance:none;}
+  .sbar select{padding:9px 8px; font-size:16px; flex:0 0 auto;}
+  #who{padding:10px 13px; font-size:17px; border:1.5px solid var(--line); border-radius:10px; width:120px; min-width:95px; flex:1 1 110px; max-width:200px; appearance:none; -webkit-appearance:none;}
   #who::-webkit-calendar-picker-indicator{display:none !important; opacity:0;}
-  #whoOk{padding:6px 10px; font-size:13px; font-weight:700; color:#fff; background:#222; border:none; border-radius:9px; cursor:pointer; white-space:nowrap; flex:0 0 auto;}
+  #whoOk{padding:10px 18px; font-size:16px; font-weight:700; color:#fff; background:#222; border:none; border-radius:9px; cursor:pointer; white-space:nowrap; flex:0 0 auto;}
   #whoOk:hover{background:#000;}
   header .btn.share{padding:6px 12px; font-size:13px;}
-  .sbar span{white-space:nowrap; font-size:12px; flex:0 0 auto;}
+  .sbar span{white-space:nowrap; font-size:16px; flex:0 0 auto;}
   .sbar .btn.share{padding:7px 11px; white-space:nowrap;}
   .barrow .btn{padding:7px 11px; font-size:13px;}
   .pub{color:#2fa04a; font-weight:700;} .unpub{color:#c98a00; font-weight:700;}
@@ -182,7 +182,7 @@
   .caltools .updatedlbl{align-self:center; font-size:11px; color:#2f7a3f; font-weight:800; margin-left:8px; white-space:nowrap;}
   .mcell .mtop{display:flex; align-items:baseline; gap:3px; align-self:stretch; width:100%; padding-left:2px;}
   .mcell .wsmall{font-size:8px; color:#c2c2c2; font-weight:700; white-space:nowrap; line-height:1.35;}
-  .ymsel{padding:5px 3px; font-size:12px; border:1.5px solid var(--line); border-radius:8px; flex:0 0 auto;}
+  .ymsel{padding:9px 6px; font-size:16px; border:1.5px solid var(--line); border-radius:8px; flex:0 0 auto;}
   .dibox{max-width:430px;}
   .moff{font-size:13px; font-weight:700; color:#9aa0a8;}
   .mtime{display:block; margin-top:1px;}
@@ -198,8 +198,8 @@
   .wishline{font-size:12px; color:#888; margin-bottom:10px;}
   .wishline.ylw{color:#7a5b00; background:#fef7cf; border:1px dashed #d9c76a; border-radius:6px; padding:5px 9px; display:inline-block;}
   .notemsg{font-size:13px; color:#7a5563; background:#fff0f5; border:1px solid #f0d3db; border-radius:8px; padding:8px 10px; margin-bottom:10px; line-height:1.5;}
-  .cmtmask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:70; padding:20px;}
-  .cmtbox{background:#fff; border-radius:14px; max-width:340px; width:100%; padding:16px;}
+  .cmtmask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; z-index:70; padding:20px; overflow-y:auto; -webkit-overflow-scrolling:touch; box-sizing:border-box;}
+  .cmtbox{background:#fff; border-radius:14px; max-width:340px; width:100%; padding:16px; box-sizing:border-box; margin:auto;}
   .cmtbox .ttl{font-weight:700; color:var(--pink-d); margin-bottom:8px; font-size:14px;}
   .cmtbox .txt{font-size:14px; line-height:1.6; white-space:pre-wrap; background:#fff8fb; border:1px solid var(--line); border-radius:8px; padding:11px;}
   .cmtbox button{margin-top:12px; width:100%; background:var(--pink); color:#fff; border:none; border-radius:8px; padding:10px; font-weight:700; cursor:pointer;}
@@ -426,7 +426,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.32</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.35</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -456,7 +456,6 @@
     <select id="whoStore"></select>
     <select id="yearSel" class="ymsel"></select><select id="monthSel" class="ymsel"></select>
     <span class="nmeBreak"></span>
-    <span style="font-size:13px; color:#888;">名前：</span>
     <input id="who" type="text" placeholder="名前を記入" autocomplete="off">
     <button id="whoOk" type="button">決定</button>
     <datalist id="nameList"></datalist>
@@ -588,7 +587,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.32"; window.APP_UPDATED="2026-07-28";
+window.APP_VERSION="v1.35"; window.APP_UPDATED="2026-07-29";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1295,9 +1294,9 @@ function drawDayInput(){
   const note=((S.staff[me].notes||{})[key(d)]||'').replace(/"/g,'&quot;');
   const hasIn=!!(w.off||w.allday||w.all||w.am||w.pm||w.start||w.end);
   $("#diBody").innerHTML=`<div class="seg2 ${w.off?"offmode":""}">
-    <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
     <div class="line lam"><span class="tg am">AM</span><input type="text" class="tinp" placeholder="：" value="${dv('am','start')}" data-seg="am" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('am','end')}" data-seg="am" data-f="end"></div>
     <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','start')}" data-seg="pm" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','end')}" data-seg="pm" data-f="end"></div>
+    <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
     <div class="line qnote"><button class="qbtn ${w.allday?'on-maru':''}" data-q="maru">◎</button><button class="qbtn ${w.off?'on-batu':''}" data-q="batu">✕</button><button type="button" class="qsubmit" id="diSubmit">${(diHasInitial&&hasIn)?"変更":"決定"}</button><button type="button" class="qsubmit" id="diEdit" style="display:none;background:#5a6b7a;">変更</button></div>
     <div class="line noteln"><span class="tg note">備考</span><input type="text" class="noteinp" value="${note}" placeholder=""></div>
   </div>`;
