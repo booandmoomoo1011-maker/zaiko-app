@@ -1607,12 +1607,12 @@ $("#who").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(
 $("#yearSel").onchange=setYM; $("#monthSel").onchange=setYM;
 $("#oYearSel").onchange=setYMOwner; $("#oMonthSel").onchange=setYMOwner;
 $("#shareBtn").onclick=async ()=>{
-  const url = "https://zaiko-app-two.vercel.app/shift/";   // スタッフに配る公開URL（固定）
+  const url = "https://zaiko-app-two.vercel.app/shift-staff.html";   // スタッフに配る公開URL（固定）
   try{ await navigator.clipboard.writeText(url); alert("スタッフ用URLをコピーしました。LINEに貼り付けて送ってください：\n\n"+url); }
   catch(e){ alert("このスタッフ用URLをLINEに貼り付けて送ってください：\n\n"+url); }
 };
 $("#shareOwnerBtn").onclick=async ()=>{
-  const url = "https://zaiko-app-two.vercel.app/shift/owner.html";   // オーナー用の公開URL（固定）
+  const url = "https://zaiko-app-two.vercel.app/shift-owner.html";   // オーナー用の公開URL（固定）
   try{ await navigator.clipboard.writeText(url); alert("オーナー用URLをコピーしました。自分のスマホなどで開いてください：\n\n"+url); }
   catch(e){ alert("このオーナー用URLをブラウザで開いてください：\n\n"+url); }
 };
