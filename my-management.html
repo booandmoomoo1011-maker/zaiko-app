@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#5f5c55">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="私の管理">
+<link rel="manifest" href="/my-management.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/my-management-icon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/my-management-icon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/my-management-icon-180.png">
 <title>私の管理｜Zaikon</title>
 <style>
 :root{--bg:#f5f4ef;--card:#fff;--ink:#24231f;--sub:#747168;--line:#dedbd2;--green:#2c5f2e;--blue:#185fa5;--pink:#c74a68}
@@ -56,7 +64,7 @@ footer{text-align:center;color:#999;font-size:11px;padding-top:8px}
 <a class="card shift" href="/shift-owner.html" target="_blank" rel="noopener"><div class="icon">🗓️</div><div class="name">シフト・オーナー</div><div class="desc">シフトの作成・公開画面</div></a>
 </div>
 </section>
-<footer>My Management v1.1</footer>
+<footer>My Management v1.2</footer>
 </main>
 <script>
 document.querySelectorAll('a.card').forEach(function(link){
@@ -67,6 +75,11 @@ document.querySelectorAll('a.card').forEach(function(link){
     link.href=latest.href;
   });
 });
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/my-management-sw.js');
+  });
+}
 </script>
 </body>
 </html>
