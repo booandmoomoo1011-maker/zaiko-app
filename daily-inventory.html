@@ -3068,7 +3068,7 @@ function shareToLine(){
     return;
   }
 
-  const url='https://zaiko-app-two.vercel.app';
+  const url='https://zaiko-app-two.vercel.app/daily-inventory.html';
   const doCopied = (btn) => {
     if(btn){ const orig=btn.textContent; btn.textContent='✅ コピーしました！'; btn.style.background='#2c5f2e'; setTimeout(()=>{btn.textContent=orig;btn.style.background='';},2500); }
     showToast('🔗 URLをコピーしました！LINEに貼り付けてください');
