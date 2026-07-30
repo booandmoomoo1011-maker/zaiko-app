@@ -56,7 +56,17 @@ footer{text-align:center;color:#999;font-size:11px;padding-top:8px}
 <a class="card shift" href="/shift-owner.html" target="_blank" rel="noopener"><div class="icon">🗓️</div><div class="name">シフト・オーナー</div><div class="desc">シフトの作成・公開画面</div></a>
 </div>
 </section>
-<footer>My Management v1.0</footer>
+<footer>My Management v1.1</footer>
 </main>
+<script>
+document.querySelectorAll('a.card').forEach(function(link){
+  const appPath=link.getAttribute('href');
+  link.addEventListener('click',function(){
+    const latest=new URL(appPath,window.location.origin);
+    latest.searchParams.set('_latest',Date.now().toString());
+    link.href=latest.href;
+  });
+});
+</script>
 </body>
 </html>
