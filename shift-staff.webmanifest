@@ -1,8 +1,8 @@
 {
   "name": "シフト・スタッフ",
   "short_name": "シフト・スタッフ",
-  "start_url": "/shift-staff.html",
-  "scope": "/",
+  "start_url": "/shift-staff.html?launch=pwa",
+  "scope": "/shift-staff.html",
   "display": "standalone",
   "background_color": "#ffe766",
   "theme_color": "#ffe766",
@@ -19,5 +19,9 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/shift-staff.html",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  }
 }
