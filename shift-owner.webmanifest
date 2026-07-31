@@ -4,14 +4,20 @@
   "start_url": "/shift-owner.html?launch=pwa",
   "scope": "/shift-owner.html",
   "display": "standalone",
-  "background_color": "#d8c8ff",
-  "theme_color": "#d8c8ff",
+  "background_color": "#f6cd58",
+  "theme_color": "#f6cd58",
   "icons": [
     {
       "src": "/icons/shift-owner-180.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/shift-owner-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/shift-owner-512.png",
