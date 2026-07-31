@@ -1,0 +1,23 @@
+{
+  "name": "シフト・オーナー",
+  "short_name": "シフト・オーナー",
+  "start_url": "/shift-owner.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#d8c8ff",
+  "theme_color": "#d8c8ff",
+  "icons": [
+    {
+      "src": "/icons/shift-owner-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/shift-owner-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
