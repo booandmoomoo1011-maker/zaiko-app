@@ -1,8 +1,8 @@
 {
   "name": "シフト・オーナー",
   "short_name": "シフト・オーナー",
-  "start_url": "/shift-owner.html",
-  "scope": "/",
+  "start_url": "/shift-owner.html?launch=pwa",
+  "scope": "/shift-owner.html",
   "display": "standalone",
   "background_color": "#d8c8ff",
   "theme_color": "#d8c8ff",
@@ -19,5 +19,9 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/shift-owner.html",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  }
 }
