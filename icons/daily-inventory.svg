@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#bfe9ff"/>
+  <circle cx="405" cy="102" r="28" fill="#fff" opacity=".55"/>
+  <circle cx="92" cy="416" r="38" fill="#fff" opacity=".42"/>
+  <path d="M164 142l55-47h116l34 47v247c0 18-14 32-32 32H175c-18 0-32-14-32-32V174c0-13 8-25 21-32z" fill="#fffdf8" stroke="#393531" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M219 95l47 52h103l-34-52z" fill="#e7f7ff" stroke="#393531" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M266 147v274" fill="none" stroke="#393531" stroke-width="16"/>
+  <rect x="178" y="207" width="54" height="94" rx="18" fill="#83cef3"/>
+  <path d="M191 250c8-15 21-15 29 0v30h-29z" fill="#fff"/>
+  <text x="318" y="302" text-anchor="middle" font-family="Arial Rounded MT Bold,Arial,sans-serif" font-size="54" font-weight="900" fill="#2384b7">MILK</text>
+  <path d="M184 349h137" stroke="#ff9eaa" stroke-width="15" stroke-linecap="round"/>
+</svg>

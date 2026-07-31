@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#c9f2b5"/>
+  <circle cx="101" cy="105" r="31" fill="#fff" opacity=".45"/>
+  <circle cx="415" cy="405" r="40" fill="#fff" opacity=".38"/>
+  <path d="M104 178l152-71 152 71-152 73z" fill="#f4c47e" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M104 178v181l152 70V251z" fill="#e5aa58" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M408 178v181l-152 70V251z" fill="#f0bb6c" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
+  <path d="M207 130l150 72v69l-49-20-52 28v-28L104 178z" fill="#ffd997" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
+  <rect x="150" y="274" width="106" height="69" rx="13" fill="#fff8df" transform="rotate(24 203 309)"/>
+  <text x="202" y="321" text-anchor="middle" font-family="Yu Gothic,Arial,sans-serif" font-size="42" font-weight="900" fill="#4b3a2c" transform="rotate(24 202 321)">在庫</text>
+</svg>
