@@ -1,0 +1,23 @@
+{
+  "name": "売上オーナー",
+  "short_name": "売上オーナー",
+  "start_url": "/sales-owner.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6cd58",
+  "theme_color": "#f6cd58",
+  "icons": [
+    {
+      "src": "/icons/sales-owner-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/sales-owner-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
