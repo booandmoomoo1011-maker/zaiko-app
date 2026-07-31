@@ -1,8 +1,8 @@
 {
   "name": "売上入力",
   "short_name": "売上入力",
-  "start_url": "/sales-input.html",
-  "scope": "/",
+  "start_url": "/sales-input.html?launch=pwa",
+  "scope": "/sales-input.html",
   "display": "standalone",
   "background_color": "#ffd5e3",
   "theme_color": "#ffd5e3",
@@ -19,5 +19,9 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/sales-input.html",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  }
 }
