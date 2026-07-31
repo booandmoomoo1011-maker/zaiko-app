@@ -1,0 +1,23 @@
+{
+  "name": "シフト・スタッフ",
+  "short_name": "シフト・スタッフ",
+  "start_url": "/shift-staff.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffe766",
+  "theme_color": "#ffe766",
+  "icons": [
+    {
+      "src": "/icons/shift-staff-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/shift-staff-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
