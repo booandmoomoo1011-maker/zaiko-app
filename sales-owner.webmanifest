@@ -1,8 +1,8 @@
 {
   "name": "売上オーナー",
   "short_name": "売上オーナー",
-  "start_url": "/sales-owner.html",
-  "scope": "/",
+  "start_url": "/sales-owner.html?launch=pwa",
+  "scope": "/sales-owner.html",
   "display": "standalone",
   "background_color": "#f6cd58",
   "theme_color": "#f6cd58",
@@ -19,5 +19,9 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/sales-owner.html",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  }
 }
