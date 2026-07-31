@@ -1,0 +1,23 @@
+{
+  "name": "売上入力",
+  "short_name": "売上入力",
+  "start_url": "/sales-input.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffd5e3",
+  "theme_color": "#ffd5e3",
+  "icons": [
+    {
+      "src": "/icons/sales-input-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/sales-input-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
