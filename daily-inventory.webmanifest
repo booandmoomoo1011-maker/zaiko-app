@@ -1,7 +1,7 @@
 {
   "name": "毎日在庫",
   "short_name": "毎日在庫",
-  "start_url": "/",
+  "start_url": "/?launch=pwa",
   "scope": "/",
   "display": "standalone",
   "background_color": "#bfe9ff",
@@ -19,5 +19,9 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/?app=daily-inventory",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  }
 }
