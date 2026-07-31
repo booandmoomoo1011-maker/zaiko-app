@@ -5,7 +5,11 @@
   <path d="M104 178l152-71 152 71-152 73z" fill="#f4c47e" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
   <path d="M104 178v181l152 70V251z" fill="#e5aa58" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
   <path d="M408 178v181l-152 70V251z" fill="#f0bb6c" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
-  <path d="M207 130l150 72v69l-49-20-52 28v-28L104 178z" fill="#ffd997" stroke="#513c2d" stroke-width="16" stroke-linejoin="round"/>
-  <rect x="150" y="274" width="106" height="69" rx="13" fill="#fff8df" transform="rotate(24 203 309)"/>
-  <text x="202" y="321" text-anchor="middle" font-family="Yu Gothic,Arial,sans-serif" font-size="42" font-weight="900" fill="#4b3a2c" transform="rotate(24 202 321)">在庫</text>
+  <path d="M256 251v178" fill="none" stroke="#513c2d" stroke-width="16"/>
+  <path d="M206 130l152 72" fill="none" stroke="#513c2d" stroke-width="16"/>
+  <rect x="139" y="257" width="104" height="92" rx="14" fill="#fff8df"/>
+  <g fill="#4b3a2c" transform="translate(146 326) scale(.045 -.045)">
+    <path d="M55 711H947V596H55ZM381 387H906V276H381ZM343 47H944V-64H343ZM585 553H706V-12H585ZM371 850L496 820Q459 700 403 583T268 365Q189 264 82 191Q76 208 44 271T23 306Q91 350 146.5 412T245 547Q288 620 319.5 697T371 850ZM171 431H292V-88H171Z"/>
+    <path transform="translate(1000)" d="M262 612H929V522H262ZM219 114H964V18H219ZM523 668H637V-91H523ZM395 285V236H774V285ZM395 403V354H774V403ZM290 476H884V162H290ZM469 850H594V708H469ZM165 772H956V667H165ZM109 772H223V446Q223 386 219.5 315.5T204.5 172.5Q193 100 172 33T116-89Q106-78 52.5-38.5T20-21Q51 29 69 88T95.5 209.5Q104 272 106.5 332.5T109 446Z"/>
+  </g>
 </svg>
