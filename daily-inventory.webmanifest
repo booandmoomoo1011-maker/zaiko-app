@@ -1,8 +1,8 @@
 {
   "name": "毎日在庫",
   "short_name": "毎日在庫",
-  "start_url": "/?launch=pwa",
-  "scope": "/",
+  "start_url": "/index.html?launch=pwa",
+  "scope": "/index.html",
   "display": "standalone",
   "background_color": "#bfe9ff",
   "theme_color": "#bfe9ff",
