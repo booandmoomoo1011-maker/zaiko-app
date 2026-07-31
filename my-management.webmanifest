@@ -2,13 +2,27 @@
   "name": "私の管理",
   "short_name": "私の管理",
   "description": "Zaikon アプリ一覧",
-  "start_url": "/my-management.html",
-  "scope": "/",
+  "start_url": "/my-management.html?launch=pwa",
+  "scope": "/my-management.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "icons": [
-    {"src": "/my-management-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-    {"src": "/my-management-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
-  ]
+    {
+      "src": "/my-management-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/my-management-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/my-management.html",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  }
 }
