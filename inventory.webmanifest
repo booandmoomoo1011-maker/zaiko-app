@@ -1,8 +1,8 @@
 {
   "name": "在庫管理",
   "short_name": "在庫管理",
-  "start_url": "/inventory.html",
-  "scope": "/",
+  "start_url": "/inventory.html?launch=pwa",
+  "scope": "/inventory.html",
   "display": "standalone",
   "background_color": "#c9f2b5",
   "theme_color": "#c9f2b5",
@@ -19,5 +19,9 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/inventory.html",
+  "launch_handler": {
+    "client_mode": "navigate-new"
+  }
 }
