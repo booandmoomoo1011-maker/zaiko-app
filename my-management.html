@@ -17,7 +17,7 @@
 :root{--bg:#f5f4ef;--card:#fff;--ink:#24231f;--sub:#747168;--line:#dedbd2;--green:#2c5f2e;--blue:#185fa5;--pink:#c74a68}
 *{box-sizing:border-box}
 body{margin:0;font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",sans-serif;background:var(--bg);color:var(--ink)}
-header{background:var(--green);color:#fff;padding:22px 18px}
+header{background:#000;color:#fff;padding:22px 18px}
 header div{max-width:880px;margin:auto}
 h1{margin:0;font-size:26px}
 header p{margin:5px 0 0;font-size:13px;opacity:.85}
@@ -29,14 +29,14 @@ h2{font-size:14px;color:var(--sub);margin:0 0 9px;padding-left:3px}
 .card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .card:hover{box-shadow:0 5px 16px rgba(0,0,0,.09);transform:translateY(-1px)}
 .card:active{transform:translateY(1px)}
-.icon{font-size:25px;margin-bottom:8px}
+.icon{width:82px;height:82px;margin-bottom:12px;border-radius:20px;display:block;box-shadow:0 4px 12px rgba(0,0,0,.12)}
 .name{font-size:17px;font-weight:800}
 .desc{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.5}
 .inventory{border-left:5px solid var(--green)}
 .sales{border-left:5px solid var(--blue)}
 .shift{border-left:5px solid var(--pink)}
 footer{text-align:center;color:#999;font-size:11px;padding-top:8px}
-@media(max-width:560px){.grid{grid-template-columns:1fr}header{padding:18px 16px}h1{font-size:22px}.card{padding:15px}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}header{padding:18px 16px}h1{font-size:22px}.card{padding:15px}.icon{width:74px;height:74px}}
 </style>
 </head>
 <body>
@@ -46,25 +46,25 @@ footer{text-align:center;color:#999;font-size:11px;padding-top:8px}
 <section>
 <h2>在庫管理</h2>
 <div class="grid">
-<a class="card inventory" href="/" target="_blank" rel="noopener"><div class="icon">📦</div><div class="name">毎日在庫</div><div class="desc">日々の在庫・販売・入荷を管理</div></a>
-<a class="card inventory" href="/inventory.html" target="_blank" rel="noopener"><div class="icon">🗂️</div><div class="name">在庫管理</div><div class="desc">店舗・品目・棚卸しを管理</div></a>
+<a class="card inventory" href="/" target="_blank" rel="noopener"><img class="icon" src="/icons/daily-inventory.svg" alt="毎日在庫アイコン" width="82" height="82"><div class="name">毎日在庫</div><div class="desc">日々の在庫・販売・入荷を管理</div></a>
+<a class="card inventory" href="/inventory.html" target="_blank" rel="noopener"><img class="icon" src="/icons/inventory.svg" alt="在庫管理アイコン" width="82" height="82"><div class="name">在庫管理</div><div class="desc">店舗・品目・棚卸しを管理</div></a>
 </div>
 </section>
 <section>
 <h2>売上管理</h2>
 <div class="grid">
-<a class="card sales" href="/sales-input.html" target="_blank" rel="noopener"><div class="icon">🧾</div><div class="name">売上入力</div><div class="desc">店舗ごとの売上を入力</div></a>
-<a class="card sales" href="/sales-owner.html" target="_blank" rel="noopener"><div class="icon">👑</div><div class="name">売上オーナー</div><div class="desc">店舗別の売上状況を確認</div></a>
+<a class="card sales" href="/sales-input.html" target="_blank" rel="noopener"><img class="icon" src="/icons/sales-input.svg" alt="売上入力アイコン" width="82" height="82"><div class="name">売上入力</div><div class="desc">店舗ごとの売上を入力</div></a>
+<a class="card sales" href="/sales-owner.html" target="_blank" rel="noopener"><img class="icon" src="/icons/sales-owner.svg" alt="売上オーナーアイコン" width="82" height="82"><div class="name">売上オーナー</div><div class="desc">店舗別の売上状況を確認</div></a>
 </div>
 </section>
 <section>
 <h2>シフト管理</h2>
 <div class="grid">
-<a class="card shift" href="/shift-staff.html" target="_blank" rel="noopener"><div class="icon">📅</div><div class="name">シフト・スタッフ</div><div class="desc">希望シフトの入力画面</div></a>
-<a class="card shift" href="/shift-owner.html" target="_blank" rel="noopener"><div class="icon">🗓️</div><div class="name">シフト・オーナー</div><div class="desc">シフトの作成・公開画面</div></a>
+<a class="card shift" href="/shift-staff.html" target="_blank" rel="noopener"><img class="icon" src="/icons/shift-staff.svg" alt="シフト・スタッフアイコン" width="82" height="82"><div class="name">シフト・スタッフ</div><div class="desc">希望シフトの入力画面</div></a>
+<a class="card shift" href="/shift-owner.html" target="_blank" rel="noopener"><img class="icon" src="/icons/shift-owner.svg" alt="シフト・オーナーアイコン" width="82" height="82"><div class="name">シフト・オーナー</div><div class="desc">シフトの作成・公開画面</div></a>
 </div>
 </section>
-<footer>My Management v1.3</footer>
+<footer>My Management v1.4</footer>
 </main>
 <script>
 document.querySelectorAll('a.card').forEach(function(link){
