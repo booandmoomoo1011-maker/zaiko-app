@@ -1,0 +1,23 @@
+{
+  "name": "在庫管理",
+  "short_name": "在庫管理",
+  "start_url": "/inventory.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#c9f2b5",
+  "theme_color": "#c9f2b5",
+  "icons": [
+    {
+      "src": "/icons/inventory-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/inventory-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
