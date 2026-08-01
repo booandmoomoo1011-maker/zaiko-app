@@ -48,35 +48,73 @@ const db = getFirestore(app);
 let _isSyncing = false;  // 二重保存防止フラグ
 let _syncTimer = null;   // デバウンス用タイマー
 let _lastSyncData = '';  // 前回保存データ（差分チェック用）
+let _saveQueued = false; // 保存中に追加変更が来た場合の再保存フラグ
+
+function firestoreComparable(data) {
+  return JSON.stringify({
+    stores: data.stores,
+    allItems: data.allItems,
+    nextStoreId: data.nextStoreId,
+    nextItemId: data.nextItemId,
+    categories: data.categories
+  });
+}
+
+function localSavedTime() {
+  try {
+    const raw = localStorage.getItem('zaikoApp_v1');
+    const savedAt = raw ? JSON.parse(raw)?.savedAt : null;
+    const time = savedAt ? new Date(savedAt).getTime() : 0;
+    return Number.isFinite(time) ? time : 0;
+  } catch (_) {
+    return 0;
+  }
+}
+
+async function performFirestoreSave() {
+  if (_isSyncing) {
+    _saveQueued = true;
+    return;
+  }
+  _isSyncing = true;
+  try {
+    const data = {
+      stores: window._appStores,
+      allItems: window._appAllItems.map(i => ({...i, image: ''})), // 画像は除外
+      nextStoreId: window._appNextStoreId,
+      nextItemId: window._appNextItemId,
+      categories: window._appStoreCategories,
+      updatedAt: new Date().toISOString()
+    };
+    const comparable = firestoreComparable(data);
+    if (comparable === _lastSyncData) return;
+
+    await setDoc(doc(db, 'inventory', 'main'), data);
+    _lastSyncData = comparable;
+    console.log('Firestore保存完了');
+  } catch(e) {
+    console.warn('Firestore保存エラー:', e);
+    // オフライン時もlocalStorageに保存済みなので問題なし
+  } finally {
+    _isSyncing = false;
+    if (_saveQueued) {
+      _saveQueued = false;
+      // 保存中に変更された最新状態を待たずにもう一度保存する
+      void performFirestoreSave();
+    }
+  }
+}
 
 // Firestoreにデータを保存（デバウンス付き・3秒待って保存）
-window.saveToFirestore = async function() {
+window.saveToFirestore = function(options = {}) {
   clearTimeout(_syncTimer);
-  _syncTimer = setTimeout(async () => {
-    if (_isSyncing) return;
-    _isSyncing = true;
-    try {
-      const data = {
-        stores: window._appStores,
-        allItems: window._appAllItems.map(i => ({...i, image: ''})), // 画像は除外
-        nextStoreId: window._appNextStoreId,
-        nextItemId: window._appNextItemId,
-        categories: window._appStoreCategories,
-        updatedAt: new Date().toISOString()
-      };
-      // データが前回と同じなら保存しない（無駄な書き込み防止）
-      const dataStr = JSON.stringify(data);
-      if (dataStr === _lastSyncData) { _isSyncing = false; return; }
-      _lastSyncData = dataStr;
+  if (options.immediate) return performFirestoreSave();
+  _syncTimer = setTimeout(performFirestoreSave, 3000); // 連続操作時は最後の1回だけ保存
+};
 
-      await setDoc(doc(db, 'inventory', 'main'), data);
-      console.log('Firestore保存完了');
-    } catch(e) {
-      console.warn('Firestore保存エラー:', e);
-      // オフライン時もlocalStorageに保存済みなので問題なし
-    }
-    _isSyncing = false;
-  }, 3000); // 3秒後に保存（連続操作時は最後の1回だけ保存）
+// アプリを閉じる・別画面へ移る直前に待ち時間なしで保存する
+window.flushFirestoreSave = function() {
+  return window.saveToFirestore({ immediate: true });
 };
 
 // Firestoreからデータを取得して適用
@@ -103,6 +141,7 @@ window.loadFromFirestore = async function() {
       window._appNextStoreId = d.nextStoreId || 5;
       window._appNextItemId = d.nextItemId || 903;
       if (d.categories) window._appStoreCategories = d.categories;
+      _lastSyncData = firestoreComparable(d);
       console.log('Firestoreデータを適用（クラウドが新しい）');
       return true;
     } else {
@@ -125,8 +164,18 @@ window.startFirestoreSync = function() {
     // 自分が保存中なら無視（自分の保存による更新通知をスキップ）
     if (_isSyncing) return;
 
+    // 端末側の保存日時より古いクラウドデータは適用しない
+    const cloudTime = d.updatedAt ? new Date(d.updatedAt).getTime() : 0;
+    const localTime = localSavedTime();
+    if (Number.isFinite(cloudTime) && cloudTime < localTime) {
+      console.log('古いFirestoreデータを無視（端末データが新しい）');
+      // 端末側の最新版を待たずにクラウドへ戻す
+      void window.saveToFirestore({ immediate: true });
+      return;
+    }
+
     // データが実際に変わっているか確認
-    const newDataStr = JSON.stringify({stores: d.stores, allItems: d.allItems});
+    const newDataStr = firestoreComparable(d);
     if (newDataStr === _lastSyncData) return;
     _lastSyncData = newDataStr;
 
@@ -136,6 +185,9 @@ window.startFirestoreSync = function() {
     window._appNextStoreId = d.nextStoreId || 5;
     window._appNextItemId = d.nextItemId || 903;
     if (d.categories) window._appStoreCategories = d.categories;
+
+    // 受信した最新版を端末にも保存する（Firestoreへの再送信はしない）
+    if (typeof saveData === 'function') saveData({ skipFirestore: true });
 
     // UIを再描画
     if (typeof renderTabs === 'function') renderTabs();
@@ -151,7 +203,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const loaded = await window.loadFromFirestore();
   if (loaded) {
     // クラウドデータをlocalStorageにも同期
-    if (typeof saveData === 'function') saveData();
+    if (typeof saveData === 'function') saveData({ skipFirestore: true });
     if (typeof renderTabs === 'function') renderTabs();
     if (typeof render === 'function') render();
   }
@@ -396,7 +448,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.2.0';
+const APP_VERSION   = '4.2.1';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -724,7 +776,7 @@ function showToast(msg,color='#1D9E75'){
 // ============================================================
 // データ保存・読み込み
 // ============================================================
-function saveData(){
+function saveData(options={}){
   try{
     // 画像はIndexedDBで管理するのでlocalStorageには保存しない
     const noImg={stores,allItems:allItems.map(i=>({...i,image:''})),nextStoreId,nextItemId,currentStoreId,currentRole,savedAt:new Date().toISOString()};
@@ -758,7 +810,7 @@ function saveData(){
     localStorage.setItem(CAT_KEY, JSON.stringify(STORE_CATEGORIES));
 
     // Firestoreにも非同期で保存（オフライン時はスキップ）
-    if (typeof window.saveToFirestore === 'function') {
+    if (!options.skipFirestore && typeof window.saveToFirestore === 'function') {
       window.saveToFirestore();
     }
   }catch(e){
@@ -2267,8 +2319,20 @@ FIXED_STORES.forEach((name,i)=>{ if(stores[i]) stores[i].name=name; else stores.
 applyRoleUI();
 checkUpdate();
 checkJustUpdated();
-window.addEventListener('beforeunload',()=>saveData());
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')saveData();});
+window.addEventListener('beforeunload',()=>{
+  saveData();
+  if(typeof window.flushFirestoreSave==='function') void window.flushFirestoreSave();
+});
+window.addEventListener('pagehide',()=>{
+  saveData();
+  if(typeof window.flushFirestoreSave==='function') void window.flushFirestoreSave();
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){
+    saveData();
+    if(typeof window.flushFirestoreSave==='function') void window.flushFirestoreSave();
+  }
+});
 renderTabs();
 render();
 
