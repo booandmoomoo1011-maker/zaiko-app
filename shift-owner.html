@@ -525,7 +525,7 @@
 <!-- PWA_INSTALL_KIT_END -->
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.57</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.58</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -739,7 +739,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.57"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.58"; window.APP_UPDATED="2026-08-01";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -892,7 +892,7 @@ function renderOwner(){
       rows+="</tr>";
     });
     /* ＋名前を記入（この店舗に直接追加）*/
-    rows+=`<tr class="addrow"><td class="name addname"><input class="addinp" data-st="${esc(st)}" type="text" placeholder="＋ 名前を記入" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;background:transparent;font-size:13px;color:#2fa04a;font-weight:700;padding:2px;"></td>`;
+    rows+=`<tr class="addrow"><td class="name addname"><input class="addinp" data-st="${esc(st)}" type="text" placeholder="＋" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;background:transparent;font-size:13px;color:#2fa04a;font-weight:700;padding:2px;"></td>`;
     for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
     rows+=`</tr>`;
     const blanks=Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 目安の数。提出で埋まっても常にSPARE_ROWS行の空きを自動追加 */
