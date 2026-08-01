@@ -484,7 +484,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.47</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.48</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -651,7 +651,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.47"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.48"; window.APP_UPDATED="2026-08-01";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1445,5 +1445,25 @@ $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
 
 initWho(); buildPalette(); showStaff();
 </script>
+
+<!-- PULL_TO_REFRESH_V1 -->
+<style>
+#zaikonPullRefresh{position:fixed;left:50%;top:8px;z-index:2147482999;transform:translate(-50%,-70px);transition:transform .18s ease;background:#222;color:#fff;border-radius:18px;padding:7px 14px;font:700 12px/1.2 sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.28);pointer-events:none}
+#zaikonPullRefresh.show{transform:translate(-50%,0)}
+</style>
+<div id="zaikonPullRefresh">↓ 引っ張って更新</div>
+<script>
+(function(){
+  var el=document.getElementById('zaikonPullRefresh'),sy=0,sx=0,dy=0,tracking=false;
+  function blocked(t){ return !!(t&&t.closest&&t.closest('input,textarea,select,button,.gridwrap,.dayscroll,.modal,.cmtmask')); }
+  function hide(){ if(el) el.classList.remove('show'); tracking=false; dy=0; }
+  function refresh(){ var u=new URL(location.href); u.searchParams.set('_refresh',Date.now()); location.replace(u.toString()); }
+  addEventListener('touchstart',function(e){ if(scrollY>0||e.touches.length!==1||blocked(e.target)) return; sy=e.touches[0].clientY; sx=e.touches[0].clientX; tracking=true; dy=0; },{passive:true});
+  addEventListener('touchmove',function(e){ if(!tracking||e.touches.length!==1) return; var y=e.touches[0].clientY,dx=e.touches[0].clientX-sx; dy=y-sy; if(dy<=0||Math.abs(dx)>dy){ hide(); return; } if(dy>18){ e.preventDefault(); el.classList.add('show'); el.textContent=dy>=70?'離して更新':'↓ 引っ張って更新'; } },{passive:false});
+  addEventListener('touchend',function(){ if(!tracking) return; var go=dy>=70; hide(); if(go) refresh(); },{passive:true});
+  addEventListener('touchcancel',hide,{passive:true});
+})();
+</script>
+
 </body>
 </html>
