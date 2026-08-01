@@ -77,6 +77,7 @@ async function performFirestoreSave() {
     return;
   }
   _isSyncing = true;
+  if (typeof window.setSaveStatus === 'function') window.setSaveStatus('saving', 'クラウド保存中');
   try {
     const data = {
       stores: window._appStores,
@@ -87,13 +88,20 @@ async function performFirestoreSave() {
       updatedAt: new Date().toISOString()
     };
     const comparable = firestoreComparable(data);
-    if (comparable === _lastSyncData) return;
+    if (comparable === _lastSyncData) {
+      if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド保存済み');
+      return;
+    }
 
     await setDoc(doc(db, 'inventory', 'main'), data);
     _lastSyncData = comparable;
+    if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド保存済み');
     console.log('Firestore保存完了');
   } catch(e) {
     console.warn('Firestore保存エラー:', e);
+    if (typeof window.setSaveStatus === 'function') {
+      window.setSaveStatus(navigator.onLine ? 'error' : 'offline', navigator.onLine ? 'クラウド保存失敗' : 'オフライン・端末保存済み');
+    }
     // オフライン時もlocalStorageに保存済みなので問題なし
   } finally {
     _isSyncing = false;
@@ -142,6 +150,7 @@ window.loadFromFirestore = async function() {
       window._appNextItemId = d.nextItemId || 903;
       if (d.categories) window._appStoreCategories = d.categories;
       _lastSyncData = firestoreComparable(d);
+      if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド同期済み');
       console.log('Firestoreデータを適用（クラウドが新しい）');
       return true;
     } else {
@@ -185,6 +194,7 @@ window.startFirestoreSync = function() {
     window._appNextStoreId = d.nextStoreId || 5;
     window._appNextItemId = d.nextItemId || 903;
     if (d.categories) window._appStoreCategories = d.categories;
+    if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド同期済み');
 
     // 受信した最新版を端末にも保存する（Firestoreへの再送信はしない）
     if (typeof saveData === 'function') saveData({ skipFirestore: true });
@@ -237,6 +247,11 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .role-pill{display:inline-flex;align-items:center;justify-content:center;gap:3px;height:40px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid transparent;white-space:nowrap;flex:1;min-width:0;padding:0 4px}
 .role-pill.admin{background:var(--pl);color:var(--p);border-color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd);border-color:var(--gd)}.role-pill.viewer{background:var(--grl);color:var(--gr);border-color:var(--gr)}
 .role-pill.inactive{opacity:0.28;filter:grayscale(0.5)}
+.save-status{position:fixed;left:12px;bottom:12px;z-index:8500;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 11px;border-radius:16px;background:var(--sf);color:var(--tm);border:1px solid var(--bd);box-shadow:var(--sh);font-size:11px;font-weight:700;pointer-events:none;transition:background .2s,color .2s,border-color .2s}
+.save-status.local{background:var(--grl);color:var(--gr);border-color:var(--gr)}
+.save-status.saving{background:var(--al);color:var(--a);border-color:var(--a)}
+.save-status.cloud{background:var(--gl);color:var(--gd);border-color:var(--g)}
+.save-status.offline,.save-status.error{background:var(--rl);color:var(--r);border-color:var(--r)}
 .line-share-btn{display:none}
 .line-share-btn:active{background:#05a849;}
 .cat-tag{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--sf);color:var(--tx);white-space:nowrap;transition:all .15s}
@@ -378,6 +393,8 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 </script>
 <!-- PWA_INSTALL_KIT_END -->
 
+<div id="save-status" class="save-status local" role="status" aria-live="polite">● 端末保存済み</div>
+
 
 <div class="upd-banner" id="upd-banner">
   <div class="upd-dot"></div>
@@ -448,7 +465,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.2.1';
+const APP_VERSION   = '4.3.0';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -622,6 +639,13 @@ function getCategories(){
 function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+function setSaveStatus(state,text){
+  const el=document.getElementById('save-status');
+  if(!el) return;
+  el.className=`save-status ${state}`;
+  el.textContent=`● ${text}`;
+}
+window.setSaveStatus=setSaveStatus;
 // ============================================================
 // カテゴリーフィルター（モーダル選択方式）
 // ============================================================
@@ -667,16 +691,24 @@ function renderCatList(){
     <span style="font-size:14px;font-weight:${_selectedCat===''?'700':'600'};color:${_selectedCat===''?'var(--g)':'var(--tx)'}">📋 すべてのカテゴリー</span>
     <span style="font-size:12px;background:var(--bg);padding:2px 8px;border-radius:10px;color:var(--tm)">${total}件</span>
   </div>`;
-  const rows=matched.map(c=>{
+  window._catModalMatched=matched;
+  const rows=matched.map((c,index)=>{
     const isSelected=_selectedCat===c;
     const cnt=counts[c]||0;
-    return`<div onclick="selectCat2('${c.replace(/'/g,"\'")}');" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:var(--rs);border:2px solid ${isSelected?'var(--g)':'var(--bd)'};background:${isSelected?'var(--gl)':'var(--sf)'};cursor:pointer">
+    return`<div class="cat-select-row" data-cat-index="${index}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:var(--rs);border:2px solid ${isSelected?'var(--g)':'var(--bd)'};background:${isSelected?'var(--gl)':'var(--sf)'};cursor:pointer">
       <span style="font-size:14px;font-weight:${isSelected?'700':'500'};color:${isSelected?'var(--g)':'var(--tx)'}">${isSelected?'✓ ':''}${esc(c)}</span>
       <span style="font-size:12px;background:var(--bg);padding:2px 8px;border-radius:10px;color:var(--tm)">${cnt}件</span>
     </div>`;
   }).join('');
   const empty=matched.length===0?`<div style="text-align:center;padding:24px;color:var(--tf)">「${esc(q)}」は見つかりません</div>`:'';
   list.innerHTML=allRow+rows+empty;
+  list.querySelectorAll('.cat-select-row').forEach(row=>{
+    row.addEventListener('click',()=>{
+      const index=Number(row.dataset.catIndex);
+      const cat=window._catModalMatched?.[index];
+      if(typeof cat==='string') selectCat2(cat);
+    });
+  });
 }
 
 function selectCat2(val){
@@ -808,6 +840,7 @@ function saveData(options={}){
 
     localStorage.setItem(BACKUP_KEY, p);
     localStorage.setItem(CAT_KEY, JSON.stringify(STORE_CATEGORIES));
+    setSaveStatus(navigator.onLine ? 'local' : 'offline', navigator.onLine ? '端末保存済み' : 'オフライン・端末保存済み');
 
     // Firestoreにも非同期で保存（オフライン時はスキップ）
     if (!options.skipFirestore && typeof window.saveToFirestore === 'function') {
@@ -994,7 +1027,7 @@ function renderTabs(){
       const activeStyle=act?` style="background:${col};border-color:${col};color:#fff"`:'';
       const inactiveStyle=!act?` style="color:${col};border-color:${col}"`:'';
       const btnStyle=act?activeStyle:inactiveStyle;
-      return`<button class="stab ${act}"${btnStyle} onclick="selectStore(${s.id})">${s.name}</button>`;
+      return`<button class="stab ${act}"${btnStyle} onclick="selectStore(${s.id})">${esc(s.name)}</button>`;
     }).join('')
     +(r.manageStores?`<button class="stab tab-add" onclick="openStoreModal()">＋ 店舗を追加</button>`:'');
 }
@@ -1614,8 +1647,8 @@ async function openItemModal(id,cont=false){
   const isNew=!editingItem;
   document.getElementById('modal-content').innerHTML=`
     <h2>${editingItem?'商品を編集':'商品を追加'}</h2>
-    <div style="font-size:12px;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${storeColor(currentStoreId)};display:inline-block"></span>${store?.name||''}</div>
-    <div class="fr"><label>商品名</label><input id="f-name" value="${v.name}" placeholder="例：オレンジジュース" autocomplete="off"></div>
+    <div style="font-size:12px;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${storeColor(currentStoreId)};display:inline-block"></span>${esc(store?.name||'')}</div>
+    <div class="fr"><label>商品名</label><input id="f-name" value="${esc(v.name)}" placeholder="例：オレンジジュース" autocomplete="off"></div>
     <div class="fr"><label>商品画像</label>
       <div class="img-area" id="img-area-wrap">
         ${imgSrc?`<img class="img-prev" src="${imgSrc}" alt="" id="img-preview">`:`<div class="img-ph" id="img-preview" onclick="document.getElementById('f-img-file').click()">🖼<span style="font-size:10px;margin-top:2px">タップして選択</span></div>`}
@@ -1628,7 +1661,7 @@ async function openItemModal(id,cont=false){
       <input type="file" id="f-img-cam" accept="image/*" capture="environment" style="display:none" onchange="handleImg(event)">
       <input type="file" id="f-img-file" accept="image/*" style="display:none" onchange="handleImg(event)">
     </div>
-    <div class="fr"><label>カテゴリ</label><select id="f-cat">${getCategories().map(c=>`<option${c===v.cat?' selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="fr"><label>カテゴリ</label><select id="f-cat">${getCategories().map(c=>`<option${c===v.cat?' selected':''}>${esc(c)}</option>`).join('')}</select></div>
     <div class="fg">
       <div class="fr"><label>在庫数</label><input id="f-qty" type="number" min="0" step="0.01" inputmode="decimal" value="${v.qty}"></div>
       <div class="fr"><label>単位</label><select id="f-unit">${units.map(u=>`<option${u===v.unit?' selected':''}>${u}</option>`).join('')}</select></div>
@@ -1769,12 +1802,12 @@ function renderCatModal(){
     <h2>🏷 カテゴリー管理</h2>
     <div style="font-size:13px;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px">
       <span style="width:8px;height:8px;border-radius:50%;background:${storeColor(currentStoreId)};display:inline-block"></span>
-      ${store?.name||''}のカテゴリー
+      ${esc(store?.name||'')}のカテゴリー
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;max-height:40vh;overflow-y:auto">
       ${cats.map((c,i)=>`
         <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:var(--rs);padding:8px 12px;border:1.5px solid var(--bd)">
-          <span style="flex:1;font-size:14px;font-weight:500">${c}</span>
+          <span style="flex:1;font-size:14px;font-weight:500">${esc(c)}</span>
           <button class="btn-sm" onclick="editCat(${i})" style="padding:0 8px">✏️</button>
           <button class="btn-sm danger" onclick="deleteCat(${i})" style="padding:0 8px"${cats.length<=1?' disabled':''}>🗑</button>
         </div>`).join('')}
@@ -2333,6 +2366,12 @@ document.addEventListener('visibilitychange',()=>{
     if(typeof window.flushFirestoreSave==='function') void window.flushFirestoreSave();
   }
 });
+window.addEventListener('online',()=>{
+  setSaveStatus('saving','再接続・クラウド保存中');
+  if(typeof window.flushFirestoreSave==='function') void window.flushFirestoreSave();
+});
+window.addEventListener('offline',()=>setSaveStatus('offline','オフライン・端末保存済み'));
+setSaveStatus(navigator.onLine ? 'local' : 'offline', navigator.onLine ? '端末保存済み' : 'オフライン・端末保存済み');
 renderTabs();
 render();
 
