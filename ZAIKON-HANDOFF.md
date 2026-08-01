@@ -9,7 +9,7 @@
 - GitHub: `booandmoomoo1011-maker/zaiko-app`
 - 正式ブランチ: `main`
 - Vercel: `https://zaiko-app-two.vercel.app`
-- 2026-08-01時点の機能更新基準コミット: `97182a9001ccef9c5de66ce50e4af527959d6b03`
+- 2026-08-01時点の機能更新基準コミット: `f55cb9d7148f7f55a679c1dbfcb745c195cc53bc`
 - 過去のLINEプレビュー作業開始基準: `c70d595accc4fdc80bb1af78d6c5d6e2bc90b1f5`
 
 古い添付ファイルや過去チャットのコピーを直接デプロイせず、必ずGitHub `main` の現行ファイルを取得して差分を確認すること。
@@ -79,6 +79,13 @@
 
 - 日別画面が開かなかった原因は、名簿だけに存在する未提出スタッフに対して、`decided`、`req`、`hold` などを直接参照してJavaScriptエラーになっていたこと。
 - 携帯アプリだけ更新されなかった原因は、通常URLの `shift/owner.html` と携帯PWA用の `shift-owner.html` が別ファイルで、片方だけ更新されていたこと。
+
+### 再発防止の自動検査
+
+- GitHub Actions の `.github/workflows/shift-sync-check.yml` で、更新のたびにZaikonアプリを自動検査する。
+- 対象は「私の管理」「毎日在庫」「売上入力」「売上オーナー」「シフト・スタッフ」「シフト・オーナー」と `sw.js`。
+- 正式HTMLの欠落、OGP・manifestの欠落、OGP URL/画像の重複、シフト通常版と携帯版の不一致、名前選択・名簿同期・引っ張って更新の消失、売上入力の店舗固定の消失、`sw.js` の `no-store` 消失、バージョン番号の後退を検出した場合は検査を失敗にする。
+- 在庫管理 `inventory.html` は別作業中のため、ユーザー指示により今回の自動検査対象から除外している。許可なく変更・検査追加しない。
 
 ## 5. 自動更新の正式仕様
 
