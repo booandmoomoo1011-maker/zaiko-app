@@ -175,7 +175,7 @@
   .mcalgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
   .mch{text-align:center; font-weight:700; font-size:12px; color:#666; padding:3px 0;}
   .mch.sun{color:var(--sun);} .mch.sat{color:var(--sat);}
-  .mcell{position:relative; min-height:52px; border:1px solid var(--line); border-radius:7px; background:#fff; padding:2px; display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .mcell{position:relative; min-width:0; overflow:hidden; min-height:52px; border:1px solid var(--line); border-radius:7px; background:#fff; padding:2px; display:flex; flex-direction:column; align-items:center; gap:2px;}
   .mcell.empty{border:none; background:transparent;}
   .mcell.sun{background:#fdf0f3;} .mcell.sat{background:#eef4fd;}
   .mnum{font-size:11px; font-weight:700; color:#555; align-self:flex-start; padding-left:2px;}
@@ -196,8 +196,8 @@
   .caltools .allbtn{flex:0 0 auto; padding:6px 12px; font-size:12px;}
   .caltools .allbtn.locked{background:#eee; color:#bbb; border-color:#ddd; cursor:not-allowed; box-shadow:none;}
   .caltools .updatedlbl{align-self:center; font-size:11px; color:#2f7a3f; font-weight:800; margin-left:8px; white-space:nowrap;}
-  .mcell .mtop{display:flex; align-items:baseline; gap:3px; align-self:stretch; width:100%; padding-left:2px;}
-  .mcell .wsmall{font-size:8px; color:#c2c2c2; font-weight:700; white-space:nowrap; line-height:1.35;}
+  .mcell .mtop{display:flex; align-items:baseline; gap:3px; align-self:stretch; width:100%; min-width:0; padding-left:2px;}
+  .mcell .wsmall{font-size:8px; color:#c2c2c2; font-weight:700; white-space:normal; word-break:break-all; overflow:hidden; min-width:0; line-height:1.35;}
   .ymsel{padding:9px 6px; font-size:16px; border:1.5px solid var(--line); border-radius:8px; flex:0 0 auto;}
   .dibox{max-width:430px;}
   .moff{font-size:13px; font-weight:700; color:#9aa0a8;}
@@ -484,7 +484,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.48</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.53</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -514,15 +514,19 @@
     <select id="whoStore"></select>
     <select id="yearSel" class="ymsel"></select><select id="monthSel" class="ymsel"></select>
     <span class="nmeBreak"></span>
-    <input id="who" type="text" placeholder="名前を記入" autocomplete="off">
+    <select id="who" style="appearance:auto;-webkit-appearance:menulist;"><option value="">名前を選ぶ</option></select>
     <button id="whoOk" type="button">決定</button>
-    <datalist id="nameList"></datalist>
   </div>
   <div class="howto" style="margin:8px 12px 0;padding:10px 12px;background:#fff;border:1.5px solid #e8607f;border-radius:10px;color:#555;font-size:13px;line-height:1.9;">
-    <span class="hdot">・</span>店名を選んでください<br>
-    <span class="hdot">・</span>西暦・月を選んでください<br>
-    <span class="hdot">・</span>名前を記入し決定<br>
-    <span class="hdot">・</span>シフトの記入は日付をタップし決定
+    <div class="howtoHead" id="howtoHead" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:700;color:#c74a68;user-select:none;">
+      <span>📖 使い方</span><span class="howtoArrow" id="howtoArrow" style="font-size:12px;">▼</span>
+    </div>
+    <div class="howtoBody" id="howtoBody" style="margin-top:6px;">
+      <span class="hdot">・</span>店名を選んでください<br>
+      <span class="hdot">・</span>西暦・月を選んでください<br>
+      <span class="hdot">・</span>名前を記入し決定<br>
+      <span class="hdot">・</span>シフトの記入は日付をタップし決定
+    </div>
   </div>
   <div class="status" id="sStatus"></div>
   <div id="staffMine"></div>
@@ -651,7 +655,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.48"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.53"; window.APP_UPDATED="2026-08-01";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -669,7 +673,7 @@ function doUpdate(){
   cp.set("t", Date.now());
   location.href = location.pathname + "?" + cp.toString();
 }
-checkForUpdate();
+setTimeout(checkForUpdate, 8000);   // 起動直後の全文再取得を遅らせて、開くのを軽くする
 setInterval(checkForUpdate, 60*1000);
 document.addEventListener("visibilitychange", function(){ if(!document.hidden) checkForUpdate(); });
 const DOW=["日","月","火","水","木","金","土"];
@@ -717,6 +721,10 @@ function seed(){
 let S;
 try{ S=JSON.parse(localStorage.getItem(STORE_KEY)) || seed(); }catch(e){ S=seed(); }
 function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
+/* ---- 選んだ店舗・名前・年月を覚える（次に開いたとき復元）---- */
+const SEL_KEY="shiftStaffSel_v1";
+function saveSel(){ try{ var w=document.getElementById('who'), st=document.getElementById('whoStore'); localStorage.setItem(SEL_KEY, JSON.stringify({ who:w?(w.value||'').trim():'', store:st?st.value:'', y:Y, m:M })); }catch(e){} }
+function loadSel(){ try{ return JSON.parse(localStorage.getItem(SEL_KEY)||'null'); }catch(e){ return null; } }
 let _fbPushT=null;
 function save(){ saveLocal(); if(window.fbTouch) window.fbTouch(); try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){} }
 function buildFbPayload(){ /* スタッフ: 自分の希望だけクラウドへ */
@@ -729,8 +737,12 @@ function shiftApplyRemote(val){ try{
   if(!val || (!val.meta && !val.staff)) return; /* クラウドが空ならローカル維持 */
   var meta=val.meta||{}, raw=val.staff||{}, staff={};
   Object.keys(raw).forEach(function(k){ var nd=raw[k]||{}; var nm=nd.nm||k; nd.store=nd.store||"大須"; nd.wish=nd.wish||{}; nd.decided=nd.decided||{}; nd.notes=nd.notes||{}; staff[nm]=nd; });
-  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.staff=staff;
+  /* 自分の入力がクラウドにまだ届いていない時、手元の入力を消さない */
+  var _me=(document.getElementById('who')?document.getElementById('who').value:'')||''; _me=_me.trim();
+  if(_me && S.staff && S.staff[_me] && !staff[_me]) staff[_me]=S.staff[_me];
+  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.roster=meta.roster||S.roster||{}; S.staff=staff;
   saveLocal();
+  if(typeof fillNames==='function'){ try{ fillNames(); }catch(e){} }
   var ov=document.querySelector('#ownerView'), sv=document.querySelector('#staffView');
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
   if(typeof renderStaff==='function' && sv && sv.style.display!=='none') renderStaff();
@@ -1251,9 +1263,23 @@ function fillYM(){
   const ys=$("#yearSel"); ys.innerHTML=""; for(let y=2026;y<=2030;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; ys.appendChild(o); }
   const ms=$("#monthSel"); ms.innerHTML=""; for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"; if(m===M)o.selected=true; ms.appendChild(o); }
 }
-function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); renderStaff(); }
+function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); saveSel(); renderStaff(); }
 function fillNames(){
-  const dl=$("#nameList"); if(dl) dl.innerHTML=""; /* 候補（記録）は残さない */
+  const sel=$("#who"); if(!sel || sel.tagName!=="SELECT") return;
+  const store=$("#whoStore").value;
+  const cur=(sel.value||"").trim();
+  const R=(S.roster&&typeof S.roster==="object")?S.roster:{};
+  let list=[];
+  if(store){ list=Array.isArray(R[store])?R[store].slice():[]; }
+  else{ STORES.forEach(function(s){ (Array.isArray(R[s])?R[s]:[]).forEach(function(n){ if(list.indexOf(n)<0) list.push(n); }); }); }
+  /* オーナーで登録した順番のまま（並べ替えない） */
+  const enc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  let html='<option value="">名前を選ぶ</option>';
+  list.forEach(function(nm){ html+='<option value="'+enc(nm)+'">'+enc(nm)+'</option>'; });
+  /* 以前選んでいた名前が一覧に無くても残す（消えないように） */
+  if(cur && list.indexOf(cur)<0){ html+='<option value="'+enc(cur)+'">'+enc(cur)+'</option>'; }
+  sel.innerHTML=html;
+  sel.value=cur;
 }
 function ensureStaff(nm){
   if(!nm) return;
@@ -1268,12 +1294,12 @@ function applyStaffHeader(){
   document.querySelectorAll(".howto .hdot").forEach(el=>{ el.style.color = baseCol; el.style.fontWeight="900"; });
   const howto=document.querySelector(".howto"); if(howto){ howto.style.borderColor = baseCol; }
 }
-$("#whoStore").onchange=()=>{ fillNames(); const nm=($("#who").value||"").trim(); if(nm && S.staff[nm]){ S.staff[nm].store=$("#whoStore").value; save(); } applyStaffHeader(); renderStaff(); };
+$("#whoStore").onchange=()=>{ fillNames(); const nm=($("#who").value||"").trim(); if(nm && S.staff[nm]){ S.staff[nm].store=$("#whoStore").value; save(); } saveSel(); applyStaffHeader(); renderStaff(); };
 function renderStaff(){
   const me=($("#who").value||"").trim();
   $("#shareBtn").style.display="";
   if(!me){
-    $("#sStatus").innerHTML="店舗を選んで、名前を記入してください。";
+    $("#sStatus").innerHTML="店舗を選んで、名前を選んでください。";
     $("#staffMine").innerHTML=""; return;
   }
   ensureStaff(me);
@@ -1283,7 +1309,7 @@ function renderStaff(){
 function wishMini(w){
   if(!w) return "";
   if(w.off) return '<span style="color:#4aa8dd;font-weight:800;">✕</span>';
-  if(w.allday) return "9:00-23:00";
+  if(w.allday) return "◎";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`<span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}`);
@@ -1295,7 +1321,7 @@ function renderMine(me){
   const home=S.staff[me].store||"大須";
   const hc=(STORE_COLOR[home]||STORE_COLOR["大須"]).hd;
   const first=new Date(Y,M-1,1).getDay();
-  const _locked=!!(S.decidedMonths&&S.decidedMonths[Y+"-"+M]);
+  const _locked=false;   /* スタッフの「全部◎」はいつでも使える（オーナー操作で無効化しない） */
   let html=`<div class="caltools"><button type="button" class="allbtn${_locked?' locked':''}" id="allMaru" ${_locked?'disabled':''}>全部 ◎ 一日OK</button><span class="updatedlbl" id="updatedLbl"></span></div>`;
   html+='<div class="mcal"><div class="mcalgrid">';
   DOW.forEach((dw,i)=>html+=`<div class="mch ${i===0?'sun':i===6?'sat':''}">${dw}</div>`);
@@ -1425,8 +1451,8 @@ $("#raReject").onclick=()=>{
   save(); $("#raMask").style.display="none"; renderStaff();
 };
 $("#raMask").onclick=e=>{ if(e.target.id==="raMask") $("#raMask").style.display="none"; };
-$("#who").onchange=()=>renderStaff();
-$("#whoOk").onclick=()=>{ const nm=($("#who").value||"").trim(); if(!nm){ $("#who").focus(); return; } ensureStaff(nm); S.staff[nm].store=$("#whoStore").value; save(); applyStaffHeader(); renderStaff(); };
+$("#who").onchange=()=>{ saveSel(); renderStaff(); };
+$("#whoOk").onclick=()=>{ const nm=($("#who").value||"").trim(); if(!nm){ $("#who").focus(); return; } ensureStaff(nm); S.staff[nm].store=$("#whoStore").value; save(); saveSel(); applyStaffHeader(); renderStaff(); };
 $("#who").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#whoOk").click(); } });
 $("#yearSel").onchange=setYM; $("#monthSel").onchange=setYM;
 $("#shareBtn").onclick=async ()=>{
@@ -1443,9 +1469,35 @@ function showOwner(){ $("#staffView").style.display="none"; $("#ownerView").styl
   $("#tbOwner").classList.add("on"); $("#tbStaff").classList.remove("on"); { const _o=$("#oMonthLabel"); if(_o) _o.textContent="大須・那古野 / "+Y+"年"+M+"月"; } renderOwner(); }
 $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
 
-initWho(); buildPalette(); showStaff();
-</script>
+(function(){
+  var sel=loadSel();
+  if(sel){ if(sel.y) Y=+sel.y; if(sel.m) M=+sel.m; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); }
+  initWho(); buildPalette();
+  if(sel){
+    if(sel.store){ var st=document.getElementById('whoStore'); if(st) st.value=sel.store; }
+    fillNames();
+    if(sel.who){ var w=document.getElementById('who'); if(w){ if(!Array.prototype.some.call(w.options,function(o){return o.value===sel.who;})){ var o=document.createElement('option'); o.value=sel.who; o.textContent=sel.who; w.appendChild(o);} w.value=sel.who; } }
+  }
+  showStaff();
+})();
 
+/* ---- 使い方の開閉（▼）。一度閉じたら記憶。名前が既にあれば最初から閉じる ---- */
+(function(){
+  const HOWTO_KEY="shiftHowtoOpen";
+  function applyHowto(open){
+    var b=document.getElementById('howtoBody'), a=document.getElementById('howtoArrow');
+    if(b) b.style.display=open?'':'none';
+    if(a) a.textContent=open?'▼':'▶';
+  }
+  var head=document.getElementById('howtoHead');
+  var saved=null; try{ saved=localStorage.getItem(HOWTO_KEY); }catch(e){}
+  var open;
+  if(saved==='0') open=false; else if(saved==='1') open=true;
+  else { var w=document.getElementById('who'); open=!(w&&(w.value||'').trim()); }
+  applyHowto(open);
+  if(head) head.onclick=function(){ open=!open; applyHowto(open); try{ localStorage.setItem(HOWTO_KEY, open?'1':'0'); }catch(e){} };
+})();
+</script>
 <!-- PULL_TO_REFRESH_V1 -->
 <style>
 #zaikonPullRefresh{position:fixed;left:50%;top:8px;z-index:2147482999;transform:translate(-50%,-70px);transition:transform .18s ease;background:#222;color:#fff;border-radius:18px;padding:7px 14px;font:700 12px/1.2 sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.28);pointer-events:none}
@@ -1464,6 +1516,7 @@ initWho(); buildPalette(); showStaff();
   addEventListener('touchcancel',hide,{passive:true});
 })();
 </script>
+
 
 </body>
 </html>
