@@ -1,0 +1,67 @@
+name: Shift file safety check
+
+on:
+  push:
+    paths:
+      - "shift/index.html"
+      - "shift-staff.html"
+      - "shift/owner.html"
+      - "shift-owner.html"
+      - ".github/workflows/shift-sync-check.yml"
+  pull_request:
+    paths:
+      - "shift/index.html"
+      - "shift-staff.html"
+      - "shift/owner.html"
+      - "shift-owner.html"
+      - ".github/workflows/shift-sync-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-shift-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Confirm paired files are identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp --silent shift/index.html shift-staff.html || {
+            echo "::error::Staff shift files are different. Update both files with the same content."
+            exit 1
+          }
+          cmp --silent shift/owner.html shift-owner.html || {
+            echo "::error::Owner shift files are different. Update both files with the same content."
+            exit 1
+          }
+
+      - name: Protect the mobile staff selector and roster order sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          file="shift/index.html"
+
+          grep -Fq '<select id="who"' "$file" || {
+            echo "::error::The staff name selector is missing."
+            exit 1
+          }
+          grep -Fq 'S.roster=meta.roster' "$file" || {
+            echo "::error::Firebase roster synchronization is missing."
+            exit 1
+          }
+          grep -Fq "if(typeof fillNames==='function')" "$file" || {
+            echo "::error::Immediate roster dropdown refresh is missing."
+            exit 1
+          }
+          grep -Fq '<!-- PULL_TO_REFRESH_V1 -->' "$file" || {
+            echo "::error::Pull-to-refresh is missing."
+            exit 1
+          }
+          if grep -Fq '<input id="who"' "$file"; then
+            echo "::error::An obsolete text name input was detected."
+            exit 1
+          fi
