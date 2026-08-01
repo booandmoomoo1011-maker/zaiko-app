@@ -7,7 +7,7 @@
 <meta property="og:site_name" content="Zaikon">
 <meta property="og:title" content="シフト・オーナー">
 <meta property="og:description" content="シフトの作成・公開画面">
-<meta property="og:url" content="https://zaiko-app-two.vercel.app/shift-owner.html">
+<meta property="og:url" content="https://zaiko-app-two.vercel.app/shift/owner.html">
 <meta property="og:image" content="https://zaiko-app-two.vercel.app/icons/shift-owner-512.png?v=4">
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
@@ -525,7 +525,7 @@
 <!-- PWA_INSTALL_KIT_END -->
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.54</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.55</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -723,7 +723,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.54"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.55"; window.APP_UPDATED="2026-08-01";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -1665,12 +1665,12 @@ $("#who").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(
 $("#yearSel").onchange=setYM; $("#monthSel").onchange=setYM;
 $("#oYearSel").onchange=setYMOwner; $("#oMonthSel").onchange=setYMOwner;
 $("#shareBtn").onclick=async ()=>{
-  const url = "https://zaiko-app-two.vercel.app/shift-staff.html";   // スタッフに配る公開URL（固定）
+  const url = "https://zaiko-app-two.vercel.app/shift/";   // スタッフに配る公開URL（固定）
   try{ await navigator.clipboard.writeText(url); alert("スタッフ用URLをコピーしました。LINEに貼り付けて送ってください：\n\n"+url); }
   catch(e){ alert("このスタッフ用URLをLINEに貼り付けて送ってください：\n\n"+url); }
 };
 $("#shareOwnerBtn").onclick=async ()=>{
-  const url = "https://zaiko-app-two.vercel.app/shift-owner.html";   // オーナー用の公開URL（固定）
+  const url = "https://zaiko-app-two.vercel.app/shift/owner.html";   // オーナー用の公開URL（固定）
   try{ await navigator.clipboard.writeText(url); alert("オーナー用URLをコピーしました。自分のスマホなどで開いてください：\n\n"+url); }
   catch(e){ alert("このオーナー用URLをブラウザで開いてください：\n\n"+url); }
 };
