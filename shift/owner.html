@@ -3,6 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Zaikon">
+<meta property="og:title" content="シフト・オーナー">
+<meta property="og:description" content="シフトの作成・公開画面">
+<meta property="og:url" content="https://zaiko-app-two.vercel.app/shift-owner.html">
+<meta property="og:image" content="https://zaiko-app-two.vercel.app/icons/shift-owner-512.png?v=4">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f6cd58">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="シフト・オーナー">
+<link rel="manifest" href="/shift-owner.webmanifest?v=3">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/shift-owner-32.png?v=3">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/shift-owner-16.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/shift-owner-180.png?v=3">
 <title>シフト作成（オーナー）</title>
 <style>
   :root{ --pink:#e8607f; --pink-d:#c74a68; --bg:#fafafa; --line:#e2e2e2; --ink:#3a3a3a;
@@ -18,6 +34,34 @@
     .day .qbtn{padding:6px 12px;}
     .slist{padding:0 8px;}
     .noteinp{font-size:13px;}
+  }
+  /* オーナー画面：携帯向け調整（PCの見た目は変えない） */
+  @media (max-width:600px){
+    header h1{font-size:13px;}
+    .demoTag{font-size:10px; padding:2px 6px;}
+    header .btn.share{padding:5px 8px; font-size:11px;}
+    /* 上のバー：ボタンをコンパクトに、折り返してもスッキリ */
+    .bar.barrow{gap:5px 6px; padding:7px 8px;}
+    .barrow strong#oMonthLabel{font-size:12px;}
+    .barrow .ymsel{padding:5px 4px; font-size:13px;}
+    .barrow .btn{padding:7px 9px !important; font-size:12px !important;}
+    .barrow .stoggle button{padding:6px 12px; font-size:13px;}
+    .statusInline{font-size:11px;}
+    /* 月の表：日列を少し詰めて多く見えるように＋文字を読みやすく */
+    #tbl thead th{min-width:54px; font-size:11px;}
+    #tbl td.name, #tbl th.name{min-width:66px; max-width:66px; font-size:12px;}
+    .gridwrap{max-height:calc(100vh - 132px); -webkit-overflow-scrolling:touch;}
+    /* 日別タイムライン：指でも押しやすく */
+    .daymodal{width:99vw; max-width:99vw; height:96vh;}
+    .dayhead h3{font-size:13px;}
+    .dayhead button{padding:7px 10px; font-size:13px;}
+    .dbar .dresize{width:16px;}
+    .dbar .btime{padding:2px 3px;}
+    .storeoff-btn{padding:2px 8px; font-size:11px;}
+    /* ポップアップ入力：指で押しやすいサイズ */
+    .cmtbox{padding:16px 14px;}
+    .cmtbox input.tinp{font-size:16px; padding:9px;}
+    .dpday{min-width:48px; padding:8px 4px; font-size:13px;}
   }
   header{background:#2b2b2b; color:#fff; padding:5px 12px; position:sticky; top:0; z-index:20;
     display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
@@ -70,6 +114,11 @@
   .delstaff{float:right; border:none; background:transparent; color:#cfcfcf; font-weight:700; font-size:12px; line-height:1; cursor:pointer; padding:0 1px;}
   .delstaff:hover{color:#c0392b;}
   tbody td{height:26px; vertical-align:top; cursor:pointer; padding:0; position:relative;}
+  #tbody tr.blankrow td.blankname{background:#fcfcfc; color:#ccc;}
+  #tbody td.blankcell{background:#fff; cursor:default;}
+  #tbody td.stoff{background:#eaf6fd !important;}
+  .storeoff-btn{margin-left:6px; border:1px solid #9cc9e6; background:#eaf6fd; color:#2b7fa3; font-size:10px; font-weight:800; border-radius:6px; padding:1px 7px; cursor:pointer; white-space:nowrap;}
+  .storeoff-btn.on{background:#57b7e3; color:#fff; border-color:#3a9bd0;}
   tr.secrow td.secname{background:#f3d9e1; color:var(--pink-d); font-weight:800; font-size:11px; white-space:nowrap; padding:1px 6px;}
   tr.secrow td.sechead{background:#f9e7ee; height:13px;}
   td.hasnote .wish{padding-top:2px;}
@@ -312,11 +361,12 @@
   .psheet{display:flex; gap:3mm; page-break-after:always; break-after:page;}
   .psheet:last-child{page-break-after:auto; break-after:auto;}
   .pday{flex:1; min-width:0;}
-  .pdtitle{font-weight:700; font-size:var(--fsT,11px); margin:0 0 3px; border-bottom:1px solid #bbb; color:#333;}
+  .pdtitle{font-weight:700; font-size:var(--fsT,11px); margin:0 0 3px; border-bottom:1.2px solid #555; color:#333;}
   table.pgrid{border-collapse:collapse; width:100%; table-layout:fixed; margin-bottom:2mm;}
-  table.pgrid th, table.pgrid td{border:0.5px solid #cfcfcf; font-size:var(--fs,6px); height:var(--rowH,9px); text-align:center; padding:0; overflow:hidden; color:#777;}
+  table.pgrid th, table.pgrid td{border:0.7px solid #7a7a7a; font-size:var(--fs,6px); height:var(--rowH,9px); text-align:center; padding:0; overflow:hidden; color:#777;}
   table.pgrid td.pn, table.pgrid th.pn{width:var(--nameW,36px); text-align:left; font-size:var(--fsN,6.5px); padding:0 2px; white-space:nowrap; color:#333;}
   table.pgrid tr.pst td{font-weight:800; font-size:var(--fsS,7.5px); text-align:left; padding-left:2px;}
+  table.pgrid tr.pst td.phr{font-weight:600; font-size:var(--fs,6px); text-align:center; padding:0; color:#555; background:#f2f2f2;}
   /* 画面プレビューでの1枚ずつの区切り */
   #ppBody .psheet{margin-bottom:14px; padding-bottom:14px; border-bottom:2px dashed #bbb;}
   #ppBody .psheet:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
@@ -328,6 +378,24 @@
   #ppPrint{background:var(--pink); color:#fff;} #ppClose{background:#ddd; color:#333;}
   .ppscroll{overflow:auto; padding:16px; background:#8f8f8f;}
   .ppsheet{background:#fff; width:1040px; max-width:100%; margin:0 auto; padding:12px; box-shadow:0 3px 14px rgba(0,0,0,.35);}
+
+  /* 希望／決定シフト A4横1枚（月間まるごと・下までフィット） */
+  table.wovgrid{border-collapse:collapse; width:100%; table-layout:fixed; font-size:var(--wcfs,7px);}
+  table.wovgrid td{border:0.7px solid #7a7a7a; text-align:center; padding:0; overflow:hidden; height:var(--wrh,15px); color:#333; line-height:1.1;}
+  table.wovgrid td.wpn{width:52px; text-align:left; padding:0 3px; white-space:nowrap; font-size:var(--wnfs,8px); font-weight:700;}
+  table.wovgrid td.woff{background:#eaf6fd;}
+  /* 各店舗の先頭にくり返す「店舗名＋日にち曜日」見出し行 */
+  table.wovgrid tr.wsthead td{height:auto; font-weight:800; background:#f4f4f4; line-height:1.25; padding:2px 0;}
+  table.wovgrid tr.wsthead td.wpn{font-size:var(--wshfs,11px); padding-left:3px;}
+  table.wovgrid tr.wsthead td.wdh{font-size:var(--wdhfs,11px); color:#222;}
+  table.wovgrid tr.wsthead td.wdh.wsun{color:#c0392b;} table.wovgrid tr.wsthead td.wdh.wsat{color:#2f6fd0;}
+  .wovsheet{width:100%;}
+  /* 印刷時に背景色（店舗カラー・休みの水色など）を必ず出す */
+  #printArea, #printArea *, .ppsheet, .ppsheet *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  .dpday{display:inline-flex; align-items:center; justify-content:center; min-width:44px; padding:5px 4px; border:1.5px solid var(--line); border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; background:#fff; color:#555; user-select:none;}
+  .dpday.on{background:#2fa04a; color:#fff; border-color:#268a3d;}
+  .dpday.sun{color:#c0392b;} .dpday.sat{color:#2f6fd0;}
+  .dpday.on.sun,.dpday.on.sat{color:#fff;}
 
   @media print{
     body>*{display:none !important;}
@@ -414,9 +482,44 @@
   </script>
 </head>
 <body>
+<!-- LINE_PWA_GUIDE_START (LINE内ブラウザでのみ表示・ホーム画面追加の案内) -->
+<div id="linePwaGuide" style="display:none;position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#111;color:#fff;padding:12px 14px;font-size:14px;line-height:1.7;box-shadow:0 2px 10px rgba(0,0,0,.35);font-family:sans-serif;">
+  <div style="font-weight:700;margin-bottom:4px;">📱 ホーム画面に追加する方法</div>
+  <div id="lpgMsg" style="color:#ffe;"></div>
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="lpgCopy" style="background:#06c755;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;">🔗 URLをコピー</button>
+    <button id="lpgClose" style="background:#555;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:13px;">閉じる</button>
+  </div>
+</div>
+<script>
+(function(){
+  try{
+    var ua = navigator.userAgent || "";
+    if(!/Line\//i.test(ua)) return; // LINE内ブラウザのときだけ
+    var isIOS = /iPhone|iPad|iPod/i.test(ua);
+    var el = document.getElementById('linePwaGuide');
+    var msg = document.getElementById('lpgMsg');
+    if(!el || !msg) return;
+    var step = isIOS
+      ? "① 右下の「≡」または右上の「…」→「Safariで開く」<br>② 開いたら 下の 共有ボタン（□に↑）→「ホーム画面に追加」"
+      : "① 右上の「…」→「他のブラウザで開く」(Chrome)<br>② 開いたら 右上の「⋮」→「アプリをインストール」/「ホーム画面に追加」";
+    msg.innerHTML = "いまLINEの中で開いています。このままだと追加ボタンが出ません。<br>" + step;
+    el.style.display = 'block';
+    document.getElementById('lpgClose').onclick = function(){ el.style.display='none'; };
+    document.getElementById('lpgCopy').onclick = async function(){
+      var url = location.href.split('#')[0];
+      try{ await navigator.clipboard.writeText(url); alert("URLをコピーしました。SafariまたはChromeのアドレス欄に貼り付けて開いてください：\n\n"+url); }
+      catch(e){ alert("このURLをSafari/Chromeで開いてください：\n\n"+url); }
+    };
+  }catch(e){}
+})();
+</script>
+<!-- LINE_PWA_GUIDE_END -->
+
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.33</span></h1>
-  <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.53</span></h1>
+  <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
+  <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
     <button id="tbOwner" type="button">オーナー画面</button>
@@ -426,14 +529,22 @@
 <!-- ============ オーナー ============ -->
 <div id="ownerView" style="display:none;">
   <div class="bar barrow">
-    <strong id="oMonthLabel" style="color:var(--pink-d);white-space:nowrap;"><span style="color:#c74a68">大須</span>・<span style="color:#8a6d00">那古野</span>・<span style="color:#1e6f95">鉄板</span> / 2026年7月</strong>
+    <strong id="oMonthLabel" style="color:var(--pink-d);white-space:nowrap;"><span style="color:#c74a68">大須</span>・<span style="color:#8a6d00">那古野</span>・<span style="color:#1e6f95">鉄板</span></strong>
+    <select id="oYearSel" class="ymsel"></select><select id="oMonthSel" class="ymsel"></select>
+    <div class="stoggle" id="oViewToggle">
+      <button id="ovWish" class="on" type="button">希望</button>
+      <button id="ovDec" type="button">決定</button>
+    </div>
     <span id="oStatus" class="statusInline"></span>
     <div class="spacer"></div>
     <input id="printStart" type="number" min="1" max="31" value="1" title="開始日" style="display:none;">
     <span style="font-size:11px;color:#888;display:none;">〜3日</span>
-    <button class="btn gray" id="printBtn" type="button">🖨 印刷</button>
+    <button class="btn gray" id="wishPrintBtn" type="button">🖨 希望シフト</button>
+    <button class="btn gray" id="printBtn" type="button">🖨 決定シフト</button>
+    <button class="btn gray" id="printPickBtn" type="button">🖨 日別(選ぶ)</button>
     <button class="btn gray" id="printBlankBtn" type="button">🖨 白紙</button>
     <button class="btn decide" id="decideBtn" type="button">この月をスタッフに公開</button>
+    <button class="btn gray" id="setBtn" type="button" title="設定">⚙ 設定</button>
   </div>
   <div class="gridwrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </div>
@@ -491,6 +602,31 @@
       <div><button id="ppPrint" type="button">🖨 印刷する</button><button id="ppClose" type="button">閉じる</button></div>
     </div>
     <div class="ppscroll"><div class="ppsheet" id="ppBody"></div></div>
+  </div>
+</div>
+
+<!-- 決定シフト：印刷する日を選ぶ -->
+<div class="cmtmask" id="dpMask">
+  <div class="cmtbox" style="max-width:400px;">
+    <div class="ttl" id="dpTtl">🖨 決定シフト：印刷する日を選ぶ</div>
+    <div style="display:flex; gap:6px; margin:2px 0 8px;">
+      <button id="dpAll" type="button" class="qbtn" style="flex:1;color:#2b7fa3;background:#eaf6fd;">全部えらぶ</button>
+      <button id="dpClear" type="button" class="qbtn" style="flex:1;color:#555;background:#f0f0f0;">クリア</button>
+    </div>
+    <div id="dpList" style="display:flex; flex-wrap:wrap; gap:4px; max-height:46vh; overflow:auto;"></div>
+    <button id="dpPrint" type="button" style="background:#2fa04a; margin-top:10px;">選んだ日を印刷する</button>
+    <button id="dpClose" type="button" style="background:#c9c9c9; margin-top:8px;">閉じる</button>
+  </div>
+</div>
+
+<!-- 設定（クリア／戻す） -->
+<div class="cmtmask" id="setMask">
+  <div class="cmtbox" style="max-width:360px;">
+    <div class="ttl">⚙ 設定</div>
+    <div style="font-size:12px;color:#666;line-height:1.7;margin-bottom:10px;">動作確認で入力したものを消せます。消したあとでも「戻す」で直前のクリアを取り消せます（共有クラウドも一緒に消えます）。</div>
+    <button id="setClear" type="button" style="background:#c0596b;">🧹 入力内容をぜんぶクリア</button>
+    <button id="setUndo" type="button" style="background:#2f9ad0;margin-top:8px;">↩ 戻す（さっきのクリアを取り消す）</button>
+    <button id="setClose" type="button" style="background:#c9c9c9;margin-top:8px;">閉じる</button>
   </div>
 </div>
 
@@ -579,7 +715,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.33"; window.APP_UPDATED="2026-07-29";
+window.APP_VERSION="v1.53"; window.APP_UPDATED="2026-08-01";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -590,12 +726,15 @@ let Y=2026, M=7, DAYS=31;
 const key=d=>`${Y}-${pad(M)}-${pad(d)}`;
 const STORE_KEY="shiftDemoState_v10";
 const STORES=["大須","那古野","鉄板"];
+const BLANK_SLOTS={ "大須":15, "那古野":6, "鉄板":4 };  /* 各店舗の空白行の目安（提出者はこの上に入る）*/
+const SPARE_ROWS=3;  /* 提出で埋まっても常に残す空き行の数（自動追加）*/
 const STORE_COLOR={
   "大須":  { bg:"#f9dbe4", head:"#fbeef2", ink:"#c74a68", hd:"#ee7d97" },
   "那古野":{ bg:"#fbf1c8", head:"#fdf8e4", ink:"#8a6d00", hd:"#f7c600" },
   "鉄板":  { bg:"#d5ecf8", head:"#eaf6fc", ink:"#1e6f95", hd:"#57b7e3" }
 };
 const DEC_COLOR={ "大須":"#f2a9c0", "那古野":"#ecd06a", "鉄板":"#9dd3ef" };
+const STOFF_COLOR="#eaf6fd";  /* 店舗の休みの日：薄い水色 */
 
 /* ---- 祝日 自動判定（毎年）---- */
 function fmtd(dt){ return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`; }
@@ -629,13 +768,13 @@ let _fbPushT=null;
 function save(){ saveLocal(); if(window.fbTouch) window.fbTouch(); try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){} }
 function buildFbPayload(){ /* オーナー: 全員分＋公開状態をクラウドへ */
   var staffOut={}; Object.keys(S.staff||{}).forEach(function(nm){ var nd=Object.assign({},S.staff[nm]); nd.nm=nm; staffOut[nm]=nd; });
-  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{} }, staff:staffOut };
+  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{}, storeOff:S.storeOff||{} }, staff:staffOut };
 }
 function shiftApplyRemote(val){ try{
   if(!val || (!val.meta && !val.staff)) return; /* クラウドが空ならローカル維持 */
   var meta=val.meta||{}, raw=val.staff||{}, staff={};
   Object.keys(raw).forEach(function(k){ var nd=raw[k]||{}; var nm=nd.nm||k; nd.store=nd.store||"大須"; nd.wish=nd.wish||{}; nd.decided=nd.decided||{}; nd.notes=nd.notes||{}; staff[nm]=nd; });
-  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.staff=staff;
+  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.storeOff=meta.storeOff||{}; S.staff=staff;
   saveLocal();
   var ov=document.querySelector('#ownerView'), sv=document.querySelector('#staffView');
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
@@ -671,6 +810,7 @@ function wishChip(w,isWeekend){
 
 /* ================= オーナー画面 ================= */
 let editing=null, pickColor=COLORS[5];
+let ownerMode='wish';  /* 月表の表示：wish=希望 / decided=決定だけ */
 function decChips(dv){
   if(!dv) return "";
   if(dv.off) return `<div class="chip" style="background:#b0b6bd">休み</div>`;
@@ -688,7 +828,7 @@ function buildPalette(){
     d.onclick=()=>{ pickColor=c; buildPalette(); }; p.appendChild(d); });
 }
 function renderOwner(){
-  $("#oStatus").innerHTML=`提出 ${names().length}名　`+
+  $("#oStatus").innerHTML=(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${names().length}名　`+
     (S.published?`<span class="pub">✅ 公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
   $("#decideBtn").textContent=S.published?"公開を取り消す":"この月をスタッフに公開";
   const today=new Date(), todayStr=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
@@ -700,10 +840,11 @@ function renderOwner(){
   document.querySelectorAll('#thead th.daycol').forEach(el=>el.onclick=()=>openDayView(+el.dataset.day));
   let rows="";
   STORES.forEach(st=>{
-    const list=storeStaff(st); if(!list.length) return;
+    const list=storeStaff(st);
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
+    const isOff=d=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);  /* この店舗のこの日が休みか */
     rows+=`<tr class="secrow"><td class="name secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）</td>`;
-    for(let d=1;d<=DAYS;d++){ const _dc=(S.decidedDays&&S.decidedDays[key(d)])?DEC_COLOR[st]:col.head; rows+=`<td class="sechead" style="background:${_dc}"></td>`; }
+    for(let d=1;d<=DAYS;d++){ const _dc=isOff(d)?STOFF_COLOR:((S.decidedDays&&S.decidedDays[key(d)])?DEC_COLOR[st]:col.head); rows+=`<td class="sechead" style="background:${_dc}"></td>`; }
     rows+=`</tr>`;
     list.forEach(nm=>{
       rows+=`<tr><td class="name"><span class="nmtxt">${esc(nm)}</span><button class="delstaff" data-n="${esc(nm)}" title="削除">×</button></td>`;
@@ -712,14 +853,23 @@ function renderOwner(){
         const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
         const cc=(key(d)===todayStr?" todayc":"");
         const w=wish[key(d)];
-        const wt=w?`<div class="wish">${wishChip(w,(dow===0||dow===6||hol))}</div>`:"";
+        let wt;
+        if(ownerMode==='decided'){ const dv=dec[key(d)]; wt=dv?`<div class="wish">${decChips(dv)}</div>`:""; }
+        else { wt=w?`<div class="wish">${wishChip(w,(dow===0||dow===6||hol))}</div>`:""; }
         const hasNote=!!((S.staff[nm].notes||{})[key(d)]);
         const bubble=hasNote?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
         const oo=(S.staff[nm].ooff||{})[key(d)];
-        rows+=`<td class="${cc}${hasNote?' hasnote':''}${oo?' ooff':''}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}</td>`;
+        const so=isOff(d)?' stoff':'';
+        rows+=`<td class="${cc}${hasNote?' hasnote':''}${oo?' ooff':''}${so}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}</td>`;
       }
       rows+="</tr>";
     });
+    const blanks=Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 目安の数。提出で埋まっても常にSPARE_ROWS行の空きを自動追加 */
+    for(let bi=0; bi<blanks; bi++){
+      rows+=`<tr class="blankrow"><td class="name blankname">&nbsp;</td>`;
+      for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
+      rows+=`</tr>`;
+    }
   });
   $("#tbody").innerHTML=rows;
   document.querySelectorAll("#tbody td[data-d]").forEach(td=>{
@@ -778,10 +928,12 @@ function openDayView(d){
   let html="";
   STORES.forEach(st=>{
     if(st==="鉄板"){ html+=dvTetsuSection(d,W); return; }
-    const list=storeStaff(st); if(!list.length) return;
+    const list=storeStaff(st);
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     const _sm=((S.storeMemo||{})[key(d)]||{})[st]||"";
-    html+=`<div class="drow sec secr" style="background:${col.head}"><div class="dname secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）</div><div class="dtime" style="width:${W}px;background:${col.head}">${ticks}</div><textarea class="storememo" data-st="${st}" placeholder="${st}のメモ">${esc(_sm)}</textarea></div>`;
+    const _soff=!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
+    const _hbg=_soff?STOFF_COLOR:col.head;
+    html+=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）<button type="button" class="storeoff-btn${_soff?' on':''}" data-st="${st}">休み</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${ticks}</div><textarea class="storememo" data-st="${st}" placeholder="${st}のメモ">${esc(_sm)}</textarea></div>`;
     list.forEach(nm=>{ html+=dvStaffRow(nm,d,W); });
   });
   const g=$("#dayGrid");
@@ -798,6 +950,13 @@ function openDayView(d){
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openTetsuPicker(+row.dataset.d));
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.onclick=(e)=>e.stopPropagation(); inp.onchange=()=>{ if(!S.storeMemo) S.storeMemo={}; const k=key(dayViewDay); if(!S.storeMemo[k]) S.storeMemo[k]={}; const st=inp.dataset.st, t=inp.value.trim(); if(t) S.storeMemo[k][st]=t; else delete S.storeMemo[k][st]; save(); }; });
+  g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation();
+    const st=b.dataset.st, k=key(dayViewDay);
+    if(!S.storeOff) S.storeOff={}; if(!S.storeOff[k]) S.storeOff[k]={};
+    if(S.storeOff[k][st]){ delete S.storeOff[k][st]; if(!Object.keys(S.storeOff[k]).length) delete S.storeOff[k]; }
+    else { S.storeOff[k][st]=true; }
+    save(); openDayView(dayViewDay); renderOwner();
+  });
   g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f); });
   $("#dayMask").style.display="flex"; _syncDayDecideBtn();
   // 横幅に合わせて縮小（縦は仕様どおりスクロールで下まで見る）
@@ -867,7 +1026,9 @@ function dvTetsuSection(d,W){
   const assigned=names().filter(nm=>{ const t=(S.staff[nm].tetsu||{})[key(d)]; return t&&(t.all||t.am||t.pm)&&(S.staff[nm].store!=="鉄板"); });
   let tk=""; for(let hh=AX0; hh<=AX1; hh++){ tk+=`<div class="tick" style="left:${(hh-AX0)*HW}px">${hh}</div>`; }
   const _sm=((S.storeMemo||{})[key(d)]||{})["鉄板"]||"";
-  let h=`<div class="drow sec secr" style="background:${col.head}"><div class="dname secname" style="background:${col.bg};color:${col.ink}">鉄板（${homeList.length+assigned.length}）</div><div class="dtime" style="width:${W}px;background:${col.head}">${tk}</div><textarea class="storememo" data-st="鉄板" placeholder="鉄板のメモ">${esc(_sm)}</textarea></div>`;
+  const _soff=!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)]["鉄板"]);
+  const _hbg=_soff?STOFF_COLOR:col.head;
+  let h=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}">鉄板（${homeList.length+assigned.length}）<button type="button" class="storeoff-btn${_soff?' on':''}" data-st="鉄板">休み</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${tk}</div><textarea class="storememo" data-st="鉄板" placeholder="鉄板のメモ">${esc(_sm)}</textarea></div>`;
   homeList.forEach(nm=>{ h+=dvStaffRow(nm,d,W); });
   assigned.forEach(nm=>{
     const t=(S.staff[nm].tetsu||{})[key(d)]; let bars="";
@@ -1057,7 +1218,9 @@ function pDayTable(d, blank){
   STORES.forEach(st=>{
     const list=storeStaff(st);
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
-    h+=`<tr class="pst"><td class="pn" style="color:${col.ink}">${st}</td><td colspan="${PX1-PX0}"></td></tr>`;
+    h+=`<tr class="pst"><td class="pn" style="color:${col.ink}">${st}</td>`;
+    for(let hr=PX0;hr<PX1;hr++) h+=`<td class="phr">${hr}</td>`;
+    h+=`</tr>`;
     const rowN=printStoreRows(st);
     for(let i=0;i<rowN;i++){
       const nm=list[i]||"";
@@ -1101,27 +1264,150 @@ function applyPrintSize(){
   };
   set($("#printArea")); set($("#ppBody"));
 }
-function buildPrint(blank){
+function buildPrintDays(days, blank, titleExtra){
   let html='';
-  for(let start=1; start<=DAYS; start+=3){
+  for(let i=0;i<days.length;i+=3){
     html+='<div class="psheet">';
     for(let k=0;k<3;k++){
-      const d=start+k;
-      html+= (d<=DAYS) ? `<div class="pday">${pDayTable(d, blank)}</div>` : '<div class="pday"></div>';
+      const d=days[i+k];
+      html+= d ? `<div class="pday">${pDayTable(d, blank)}</div>` : '<div class="pday"></div>';
     }
     html+='</div>';
   }
-  $("#printArea").innerHTML=html;   // 実際の印刷用（1か月ぜんぶ・1枚=3日）
+  $("#printArea").innerHTML=html;   // 実際の印刷用（1枚=3日）
   $("#ppBody").innerHTML=html;      // 画面プレビュー用
   applyPrintSize();
-  $("#ppTitle").textContent=`印刷プレビュー（A4 横・${M}月ぜんぶ / 1枚に3日）${blank?"　白紙":""}`;
+  $("#ppTitle").textContent=`印刷プレビュー（A4 横${titleExtra||''}）${blank?"　白紙":""}`;
   $("#ppMask").style.display="flex";
 }
-$("#printBtn").onclick=()=>buildPrint(false);
-$("#printBlankBtn").onclick=()=>buildPrint(true);
+function buildPrint(blank){
+  const days=[]; for(let d=1;d<=DAYS;d++) days.push(d);
+  buildPrintDays(days, blank, `・${M}月ぜんぶ / 1枚に3日`);
+}
+/* ---- 希望シフト：A4横1枚（月まるごと・時間表示）---- */
+function wishPrintText(w){
+  if(!w) return "";
+  if(w.off) return "✕";
+  const sh=t=>String(t||"").replace(/:00\b/,"").replace(/^0/,"");
+  if(w.allday) return "9-23";
+  let p=[];
+  if(w.all) p.push(`${sh(w.all.start)}-${sh(w.all.end)}`);
+  if(w.am) p.push(`AM${sh(w.am.start)}-${sh(w.am.end)}`);
+  if(w.pm) p.push(`PM${sh(w.pm.start)}-${sh(w.pm.end)}`);
+  if(!p.length && (w.start||w.end)) p.push(`${sh(w.start)}-${sh(w.end)}`);
+  return p.join(" ");
+}
+function pOverviewSheet(mode){  /* mode: 'wish'=希望 / 'decided'=決定 */
+  const _off=(st,d)=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
+  let h=`<table class="wovgrid"><tbody>`;
+  STORES.forEach(st=>{
+    const list=storeStaff(st); const col=STORE_COLOR[st]||STORE_COLOR["大須"];
+    /* 店舗ごとに「店舗名＋日にち曜日」の見出し行をくり返す */
+    h+=`<tr class="wsthead"><td class="wpn" style="color:${col.ink};background:${col.bg};">${st}（${list.length}）</td>`;
+    for(let d=1;d<=DAYS;d++){ const dow=DOW[new Date(Y,M-1,d).getDay()]; const hol=isHol(d);
+      const wk=(dow==="日"||hol)?' wsun':(dow==="土")?' wsat':'';
+      h+=`<td class="wdh${wk}" style="background:${col.head}">${M}/${d}<br>${dow}</td>`; }
+    h+=`</tr>`;
+    list.forEach(nm=>{
+      const src=(mode==='decided')?(S.staff[nm].decided||{}):(S.staff[nm].wish||{});
+      h+=`<tr><td class="wpn">${esc(nm)}</td>`;
+      for(let d=1;d<=DAYS;d++){ const v=src[key(d)]; h+=`<td${_off(st,d)?' class="woff"':''}>${v?esc(wishPrintText(v)):""}</td>`; }
+      h+=`</tr>`;
+    });
+    const blanks=Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 画面と同じ数の空欄行 */
+    for(let bi=0;bi<blanks;bi++){ h+=`<tr><td class="wpn">&nbsp;</td>`; for(let d=1;d<=DAYS;d++){ h+=`<td${_off(st,d)?' class="woff"':''}></td>`; } h+=`</tr>`; }
+  });
+  return h+`</tbody></table>`;
+}
+function buildOverviewPrint(mode){
+  const html=`<div class="wovsheet">${pOverviewSheet(mode)}</div>`;
+  $("#printArea").innerHTML=html; $("#ppBody").innerHTML=html;
+  /* 一覧は独自レイアウトなのでpgrid用の変数リセット */
+  ['--rowH','--fs','--fsN','--fsS','--fsT','--nameW'].forEach(v=>{ const a=$("#printArea"),b=$("#ppBody"); if(a)a.style.removeProperty(v); if(b)b.style.removeProperty(v); });
+  /* 下までフィット：総行数からA4横の縦幅を割って行の高さを決める */
+  let rowsTotal=0;
+  STORES.forEach(st=>{ const n=storeStaff(st).length; const blanks=Math.max((BLANK_SLOTS[st]||0)-n, SPARE_ROWS); rowsTotal += 1.8/*見出し行ぶん*/ + n + blanks; });
+  const availMM=183;
+  let rowMM=availMM/rowsTotal; if(rowMM>11) rowMM=11; if(rowMM<3.6) rowMM=3.6;
+  const cfs =Math.max(5.5, rowMM*0.92);   // マスの時間文字
+  const nfs =Math.max(7,   rowMM*1.02);   // 名前
+  const dhfs=Math.max(9,   rowMM*1.45);   // 日にち・曜日（大きめ）
+  const shfs=Math.max(9,   rowMM*1.45);   // 店舗名
+  [$("#printArea"),$("#ppBody")].forEach(el=>{ if(!el) return; const s=el.style;
+    s.setProperty('--wrh',  rowMM.toFixed(2)+'mm');
+    s.setProperty('--wcfs', cfs.toFixed(1)+'px');
+    s.setProperty('--wnfs', nfs.toFixed(1)+'px');
+    s.setProperty('--wdhfs',dhfs.toFixed(1)+'px');
+    s.setProperty('--wshfs',shfs.toFixed(1)+'px');
+  });
+  $("#ppTitle").textContent=`印刷プレビュー（${mode==='decided'?'決定シフト':'希望シフト'}・A4横1枚・${M}月）`;
+  $("#ppMask").style.display="flex";
+}
+/* ---- 決定シフト：日にちを選んで印刷 ---- */
+let dpSel={}, dpBlank=false;
+function openDpPicker(blank){
+  dpBlank=!!blank;
+  const t=$("#dpTtl"); if(t) t.textContent=dpBlank?"🖨 白紙：印刷する日を選ぶ":"🖨 決定シフト：印刷する日を選ぶ";
+  dpSel={};
+  const wrap=$("#dpList"); let h="";
+  for(let d=1;d<=DAYS;d++){ const dow=DOW[new Date(Y,M-1,d).getDay()]; const hol=isHol(d);
+    const wk=(dow==="日"||hol)?' sun':(dow==="土")?' sat':'';
+    h+=`<span class="dpday${wk}" data-d="${d}">${d}<small style="margin-left:2px;font-weight:600;">${dow}</small></span>`; }
+  wrap.innerHTML=h;
+  wrap.querySelectorAll('.dpday').forEach(el=>el.onclick=()=>{ const d=+el.dataset.d; if(dpSel[d]){ delete dpSel[d]; el.classList.remove('on'); } else { dpSel[d]=true; el.classList.add('on'); } });
+  $("#dpMask").style.display="flex";
+}
+$("#dpAll").onclick=()=>{ dpSel={}; for(let d=1;d<=DAYS;d++) dpSel[d]=true; $("#dpList").querySelectorAll('.dpday').forEach(el=>el.classList.add('on')); };
+$("#dpClear").onclick=()=>{ dpSel={}; $("#dpList").querySelectorAll('.dpday').forEach(el=>el.classList.remove('on')); };
+$("#dpClose").onclick=()=>$("#dpMask").style.display="none";
+$("#dpMask").onclick=e=>{ if(e.target.id==="dpMask") $("#dpMask").style.display="none"; };
+$("#dpPrint").onclick=()=>{
+  const days=Object.keys(dpSel).map(Number).sort((a,b)=>a-b);
+  if(!days.length){ alert("印刷する日をタップして選んでください"); return; }
+  $("#dpMask").style.display="none";
+  buildPrintDays(days, dpBlank, `・${dpBlank?'白紙・':''}選んだ${days.length}日 / 1枚に3日`);
+};
+$("#wishPrintBtn").onclick=()=>buildOverviewPrint('wish');
+$("#printBtn").onclick=()=>buildOverviewPrint('decided');
+$("#printPickBtn").onclick=()=>openDpPicker(false);
+$("#printBlankBtn").onclick=()=>openDpPicker(true);
 $("#ppPrint").onclick=()=>window.print();
 $("#ppClose").onclick=()=>$("#ppMask").style.display="none";
 $("#ppMask").onclick=e=>{ if(e.target.id==="ppMask") $("#ppMask").style.display="none"; };
+/* ---- 月表の 希望⇔決定 切替 ---- */
+$("#ovWish").onclick=()=>{ ownerMode='wish'; $("#ovWish").classList.add('on'); $("#ovDec").classList.remove('on'); renderOwner(); };
+$("#ovDec").onclick=()=>{ ownerMode='decided'; $("#ovDec").classList.add('on'); $("#ovWish").classList.remove('on'); renderOwner(); };
+
+/* ---- 設定：入力内容のクリア／戻す（動作確認用）---- */
+const BK_KEY=STORE_KEY+"_bk";
+$("#setBtn").onclick=()=>{ $("#setUndo").disabled=!hasClearBackup(); $("#setUndo").style.opacity=hasClearBackup()?"1":".5"; $("#setMask").style.display="flex"; };
+$("#setClose").onclick=()=>$("#setMask").style.display="none";
+$("#setMask").onclick=e=>{ if(e.target.id==="setMask") $("#setMask").style.display="none"; };
+function hasClearBackup(){ try{ return !!localStorage.getItem(BK_KEY); }catch(e){ return false; } }
+$("#setClear").onclick=()=>{
+  if(!confirm("入力内容をぜんぶ消して、まっさらにします。\n（動作確認で入れたデータの消去用・共有クラウドも消えます）\n\nこのあと「戻す」で元に戻せます。消しますか？")) return;
+  try{ localStorage.setItem(BK_KEY, JSON.stringify(S)); }catch(e){}
+  const oldNames=Object.keys(S.staff||{});
+  S=seed();
+  saveLocal();
+  oldNames.forEach(nm=>{ if(window.fbRemoveStaff) window.fbRemoveStaff(nm); });  /* クラウドのスタッフも消す */
+  save();  /* meta（公開・決定など）も空でクラウドへ */
+  $("#setMask").style.display="none";
+  renderOwner();
+  alert("クリアしました。元に戻すときは ⚙設定 →「戻す」。");
+};
+$("#setUndo").onclick=()=>{
+  if(!hasClearBackup()){ alert("戻せる内容がありません（まだクリアしていません）。"); return; }
+  if(!confirm("さっきクリアした内容に戻します。今の状態は上書きされます。戻しますか？")) return;
+  let bk=null; try{ bk=localStorage.getItem(BK_KEY); }catch(e){}
+  try{ S=JSON.parse(bk); }catch(e){ alert("戻すデータが読めませんでした。"); return; }
+  saveLocal();
+  save();  /* 復元した全員＋metaをクラウドへ戻す */
+  try{ localStorage.removeItem(BK_KEY); }catch(e){}
+  $("#setMask").style.display="none";
+  renderOwner();
+  alert("元に戻しました。");
+};
 
 function openEditor(nm,d){
   editing={nm,d};
@@ -1191,8 +1477,11 @@ function initWho(){
 function fillYM(){
   const ys=$("#yearSel"); ys.innerHTML=""; for(let y=2026;y<=2030;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; ys.appendChild(o); }
   const ms=$("#monthSel"); ms.innerHTML=""; for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"; if(m===M)o.selected=true; ms.appendChild(o); }
+  const oy=$("#oYearSel"); if(oy){ oy.innerHTML=""; for(let y=2026;y<=2030;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; oy.appendChild(o); } }
+  const om=$("#oMonthSel"); if(om){ om.innerHTML=""; for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"; if(m===M)o.selected=true; om.appendChild(o); } }
 }
-function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); renderStaff(); }
+function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderStaff(); }
+function setYMOwner(){ Y=+$("#oYearSel").value; M=+$("#oMonthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderOwner(); }
 function fillNames(){
   const dl=$("#nameList"); if(dl) dl.innerHTML=""; /* 候補（記録）は残さない */
 }
@@ -1366,18 +1655,25 @@ $("#who").onchange=()=>renderStaff();
 $("#whoOk").onclick=()=>{ const nm=($("#who").value||"").trim(); if(!nm){ $("#who").focus(); return; } ensureStaff(nm); S.staff[nm].store=$("#whoStore").value; save(); applyStaffHeader(); renderStaff(); };
 $("#who").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); $("#whoOk").click(); } });
 $("#yearSel").onchange=setYM; $("#monthSel").onchange=setYM;
-$("#shareBtn").onclick=()=>{
-  const url = location.origin + location.pathname;   // 今開いているページのURLを自動で使う
-  const msg = "シフト希望をお願いします🙏\n" + url;
-  window.open("https://line.me/R/msg/text/?" + encodeURIComponent(msg), "_blank");  // LINEを直接ひらく（PC・スマホ両対応）
+$("#oYearSel").onchange=setYMOwner; $("#oMonthSel").onchange=setYMOwner;
+$("#shareBtn").onclick=async ()=>{
+  const url = "https://zaiko-app-two.vercel.app/shift-staff.html";   // スタッフに配る公開URL（固定）
+  try{ await navigator.clipboard.writeText(url); alert("スタッフ用URLをコピーしました。LINEに貼り付けて送ってください：\n\n"+url); }
+  catch(e){ alert("このスタッフ用URLをLINEに貼り付けて送ってください：\n\n"+url); }
+};
+$("#shareOwnerBtn").onclick=async ()=>{
+  const url = "https://zaiko-app-two.vercel.app/shift-owner.html";   // オーナー用の公開URL（固定）
+  try{ await navigator.clipboard.writeText(url); alert("オーナー用URLをコピーしました。自分のスマホなどで開いてください：\n\n"+url); }
+  catch(e){ alert("このオーナー用URLをブラウザで開いてください：\n\n"+url); }
 };
 
 /* ================= 画面切替 ================= */
 function showStaff(){ $("#staffView").style.display=""; $("#ownerView").style.display="none";
+  $("#shareOwnerBtn").style.display="none";
   $("#tbStaff").classList.add("on"); $("#tbOwner").classList.remove("on"); applyStaffHeader(); renderStaff(); }
 function showOwner(){ $("#staffView").style.display="none"; $("#ownerView").style.display="";
-  document.querySelector("header").style.background="#2b2b2b"; $("#shareBtn").style.display="none";
-  $("#tbOwner").classList.add("on"); $("#tbStaff").classList.remove("on"); { const _o=$("#oMonthLabel"); if(_o) _o.innerHTML='<span style="color:#c74a68">大須</span>・<span style="color:#8a6d00">那古野</span>・<span style="color:#1e6f95">鉄板</span> / '+Y+"年"+M+"月"; } renderOwner(); }
+  document.querySelector("header").style.background="#2b2b2b"; $("#shareBtn").style.display=""; $("#shareOwnerBtn").style.display="";
+  $("#tbOwner").classList.add("on"); $("#tbStaff").classList.remove("on"); fillYM(); renderOwner(); }
 $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
 
 initWho(); buildPalette(); showOwner();
