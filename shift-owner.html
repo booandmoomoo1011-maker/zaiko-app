@@ -525,7 +525,7 @@
 <!-- PWA_INSTALL_KIT_END -->
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.56</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.57</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -739,7 +739,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.56"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.57"; window.APP_UPDATED="2026-08-01";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -864,15 +864,18 @@ function renderOwner(){
   document.querySelectorAll('#thead th.daycol').forEach(el=>el.onclick=()=>openDayView(+el.dataset.day));
   let rows="";
   STORES.forEach(st=>{
-    const list=storeStaff(st);
+    const R=getRoster();
+    const list=(R[st]||[]).slice();            /* 登録した名前（roster）を先に */
+    storeStaff(st).forEach(nm=>{ if(list.indexOf(nm)<0) list.push(nm); });  /* 提出だけの人も足す */
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     const isOff=d=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);  /* この店舗のこの日が休みか */
     rows+=`<tr class="secrow"><td class="name secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）</td>`;
     for(let d=1;d<=DAYS;d++){ const _dc=isOff(d)?STOFF_COLOR:((S.decidedDays&&S.decidedDays[key(d)])?DEC_COLOR[st]:col.head); rows+=`<td class="sechead" style="background:${_dc}"></td>`; }
     rows+=`</tr>`;
     list.forEach(nm=>{
-      rows+=`<tr><td class="name"><span class="nmtxt">${esc(nm)}</span><button class="delstaff" data-n="${esc(nm)}" title="削除">×</button></td>`;
-      const wish=S.staff[nm].wish||{}, dec=S.staff[nm].decided||{};
+      const stf=S.staff[nm]||{};
+      rows+=`<tr><td class="name"><span class="nmtxt">${esc(nm)}</span><button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button></td>`;
+      const wish=stf.wish||{}, dec=stf.decided||{};
       for(let d=1;d<=DAYS;d++){
         const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
         const cc=(key(d)===todayStr?" todayc":"");
@@ -880,14 +883,18 @@ function renderOwner(){
         let wt;
         if(ownerMode==='decided'){ const dv=dec[key(d)]; wt=dv?`<div class="wish">${decChips(dv)}</div>`:""; }
         else { wt=w?`<div class="wish">${wishChip(w,(dow===0||dow===6||hol))}</div>`:""; }
-        const hasNote=!!((S.staff[nm].notes||{})[key(d)]);
+        const hasNote=!!((stf.notes||{})[key(d)]);
         const bubble=hasNote?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
-        const oo=(S.staff[nm].ooff||{})[key(d)];
+        const oo=(stf.ooff||{})[key(d)];
         const so=isOff(d)?' stoff':'';
         rows+=`<td class="${cc}${hasNote?' hasnote':''}${oo?' ooff':''}${so}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}</td>`;
       }
       rows+="</tr>";
     });
+    /* ＋名前を記入（この店舗に直接追加）*/
+    rows+=`<tr class="addrow"><td class="name addname"><input class="addinp" data-st="${esc(st)}" type="text" placeholder="＋ 名前を記入" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;background:transparent;font-size:13px;color:#2fa04a;font-weight:700;padding:2px;"></td>`;
+    for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
+    rows+=`</tr>`;
     const blanks=Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 目安の数。提出で埋まっても常にSPARE_ROWS行の空きを自動追加 */
     for(let bi=0; bi<blanks; bi++){
       rows+=`<tr class="blankrow"><td class="name blankname">&nbsp;</td>`;
@@ -899,15 +906,32 @@ function renderOwner(){
   document.querySelectorAll("#tbody td[data-d]").forEach(td=>{
     td.ondblclick=(e)=>{ if(e.target.closest && e.target.closest('.cbubble')) return;
       const nm=td.dataset.n, k=key(+td.dataset.d);
+      if(!S.staff[nm]) return;                 /* まだ提出のない登録名は対象外 */
       if(!S.staff[nm].ooff) S.staff[nm].ooff={};
       if(S.staff[nm].ooff[k]){ delete S.staff[nm].ooff[k]; td.classList.remove('ooff'); }
       else { S.staff[nm].ooff[k]=true; td.classList.add('ooff'); }
       save(); };
   });
   document.querySelectorAll("#tbody .cbubble").forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
-    showComment(el.dataset.n, +el.dataset.d, (S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)]); });
+    showComment(el.dataset.n, +el.dataset.d, ((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)]); });
   document.querySelectorAll("#tbody .delstaff").forEach(b=>b.onclick=(e)=>{ e.stopPropagation();
-    const nm=b.dataset.n; if(confirm(`${nm} さんを削除しますか？（希望・シフトも消えます）`)){ if(window.fbRemoveStaff) window.fbRemoveStaff(nm); delete S.staff[nm]; save(); renderOwner(); } });
+    const nm=b.dataset.n, st=b.dataset.st;
+    if(confirm(`${nm} さんを削除しますか？（希望・シフトも消えます）`)){
+      const R=getRoster(); const i=R[st]?R[st].indexOf(nm):-1; if(i>=0) R[st].splice(i,1);   /* 登録名から削除 */
+      if(window.fbRemoveStaff && S.staff[nm]) window.fbRemoveStaff(nm);
+      delete S.staff[nm]; save(); renderOwner();
+    }
+  });
+  document.querySelectorAll("#tbody .addinp").forEach(inp=>{
+    inp.onclick=(e)=>e.stopPropagation();
+    inp.ondblclick=(e)=>e.stopPropagation();
+    inp.onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault();
+      const st=inp.dataset.st, nm=(inp.value||"").trim(); if(!nm) return;
+      const R=getRoster(); if(R[st].indexOf(nm)>=0){ alert("「"+nm+"」はすでにあります。"); inp.value=""; return; }
+      R[st].push(nm); save(); renderOwner();
+      const again=document.querySelector('#tbody .addinp[data-st="'+st.replace(/"/g,'\\"')+'"]'); if(again) again.focus();
+    } };
+  });
 }
 function showComment(nm,d,note){
   $("#cmtTtl").textContent=`💬 ${nm}さん ${M}/${d}`;
