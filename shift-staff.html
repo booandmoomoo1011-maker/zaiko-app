@@ -484,7 +484,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.50</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.51</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -514,9 +514,8 @@
     <select id="whoStore"></select>
     <select id="yearSel" class="ymsel"></select><select id="monthSel" class="ymsel"></select>
     <span class="nmeBreak"></span>
-    <input id="who" type="text" placeholder="名前を記入" list="nameList" autocomplete="off">
+    <select id="who" style="appearance:auto;-webkit-appearance:menulist;"><option value="">名前を選ぶ</option></select>
     <button id="whoOk" type="button">決定</button>
-    <datalist id="nameList"></datalist>
   </div>
   <div class="howto" style="margin:8px 12px 0;padding:10px 12px;background:#fff;border:1.5px solid #e8607f;border-radius:10px;color:#555;font-size:13px;line-height:1.9;">
     <div class="howtoHead" id="howtoHead" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-weight:700;color:#c74a68;user-select:none;">
@@ -656,7 +655,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.50"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.51"; window.APP_UPDATED="2026-08-01";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -741,8 +740,9 @@ function shiftApplyRemote(val){ try{
   /* 自分の入力がクラウドにまだ届いていない時、手元の入力を消さない */
   var _me=(document.getElementById('who')?document.getElementById('who').value:'')||''; _me=_me.trim();
   if(_me && S.staff && S.staff[_me] && !staff[_me]) staff[_me]=S.staff[_me];
-  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.staff=staff;
+  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.roster=meta.roster||S.roster||{}; S.staff=staff;
   saveLocal();
+  if(typeof fillNames==='function'){ try{ fillNames(); }catch(e){} }
   var ov=document.querySelector('#ownerView'), sv=document.querySelector('#staffView');
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
   if(typeof renderStaff==='function' && sv && sv.style.display!=='none') renderStaff();
@@ -1265,13 +1265,21 @@ function fillYM(){
 }
 function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); saveSel(); renderStaff(); }
 function fillNames(){
-  const dl=$("#nameList"); if(!dl) return;
+  const sel=$("#who"); if(!sel || sel.tagName!=="SELECT") return;
   const store=$("#whoStore").value;
-  const names=Object.keys(S.staff||{}).filter(nm=>{
-    const st=S.staff[nm]; if(!st) return false;
-    return store ? (st.store===store) : true;   /* 店舗を選んでいたらその店の人だけ */
-  }).sort((a,b)=>a.localeCompare(b,'ja'));
-  dl.innerHTML = names.map(nm=>`<option value="${String(nm).replace(/"/g,'&quot;')}"></option>`).join("");
+  const cur=(sel.value||"").trim();
+  const R=(S.roster&&typeof S.roster==="object")?S.roster:{};
+  let list=[];
+  if(store){ list=Array.isArray(R[store])?R[store].slice():[]; }
+  else{ STORES.forEach(function(s){ (Array.isArray(R[s])?R[s]:[]).forEach(function(n){ if(list.indexOf(n)<0) list.push(n); }); }); }
+  list.sort((a,b)=>a.localeCompare(b,'ja'));
+  const enc=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+  let html='<option value="">名前を選ぶ</option>';
+  list.forEach(function(nm){ html+='<option value="'+enc(nm)+'">'+enc(nm)+'</option>'; });
+  /* 以前選んでいた名前が一覧に無くても残す（消えないように） */
+  if(cur && list.indexOf(cur)<0){ html+='<option value="'+enc(cur)+'">'+enc(cur)+'</option>'; }
+  sel.innerHTML=html;
+  sel.value=cur;
 }
 function ensureStaff(nm){
   if(!nm) return;
@@ -1291,7 +1299,7 @@ function renderStaff(){
   const me=($("#who").value||"").trim();
   $("#shareBtn").style.display="";
   if(!me){
-    $("#sStatus").innerHTML="店舗を選んで、名前を記入してください。";
+    $("#sStatus").innerHTML="店舗を選んで、名前を選んでください。";
     $("#staffMine").innerHTML=""; return;
   }
   ensureStaff(me);
@@ -1468,7 +1476,7 @@ $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
   if(sel){
     if(sel.store){ var st=document.getElementById('whoStore'); if(st) st.value=sel.store; }
     fillNames();
-    if(sel.who){ var w=document.getElementById('who'); if(w) w.value=sel.who; }
+    if(sel.who){ var w=document.getElementById('who'); if(w){ if(!Array.prototype.some.call(w.options,function(o){return o.value===sel.who;})){ var o=document.createElement('option'); o.value=sel.who; o.textContent=sel.who; w.appendChild(o);} w.value=sel.who; } }
   }
   showStaff();
 })();
