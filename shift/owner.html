@@ -108,9 +108,10 @@
   thead th{position:sticky; top:0; background:#fff; color:#222; z-index:5; padding:3px 3px; min-width:80px; font-size:11px;}
   th.corner{left:0; z-index:7; min-width:74px;}
   thead th.sun{color:var(--sun); background:#fbe6ec;} thead th.sat{color:var(--sat); background:#fbe6ec;} thead th.today{background:var(--today);}
-  td.name, th.name{position:sticky; left:0; background:#fff; z-index:4; min-width:74px; max-width:74px;
-    padding:2px 4px 2px 6px; font-weight:700; font-size:12px; text-align:left; word-break:break-all;}
-  td.name .nmtxt{display:inline;}
+  td.name, th.name{position:sticky; left:0; background:#fff; z-index:4; min-width:74px; max-width:74px; width:74px;
+    padding:2px 4px 2px 6px; font-weight:700; font-size:12px; text-align:left; white-space:nowrap; overflow:hidden;}
+  td.name .nmtxt{display:inline-block; max-width:54px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle;}
+  .addinp{width:56px !important; max-width:56px; min-width:0; box-sizing:border-box;}
   .delstaff{float:right; border:none; background:transparent; color:#cfcfcf; font-weight:700; font-size:12px; line-height:1; cursor:pointer; padding:0 1px;}
   .delstaff:hover{color:#c0392b;}
   tbody td{height:26px; vertical-align:top; cursor:pointer; padding:0; position:relative;}
@@ -262,7 +263,8 @@
   .mfoot .save{background:var(--pink); color:#fff; border:none; border-radius:8px; padding:9px 18px; font-weight:700; cursor:pointer;}
 
   /* day timeline */
-  thead th.daycol{cursor:pointer;}
+  thead th.daycol{cursor:pointer; touch-action:manipulation;}
+  thead th.daycol *{pointer-events:none;}
   thead th.daycol:hover{background:#f7d0dc;}
   .daymask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:60; padding:12px;}
   .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:96vw; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
@@ -525,7 +527,7 @@
 <!-- PWA_INSTALL_KIT_END -->
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.55</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.61</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -552,6 +554,7 @@
     <button class="btn gray" id="printPickBtn" type="button">🖨 日別(選ぶ)</button>
     <button class="btn gray" id="printBlankBtn" type="button">🖨 白紙</button>
     <button class="btn decide" id="decideBtn" type="button">この月をスタッフに公開</button>
+    <button class="btn gray" id="rosterBtn" type="button" title="名前を登録">👥 名前</button>
     <button class="btn gray" id="setBtn" type="button" title="設定">⚙ 設定</button>
   </div>
   <div class="gridwrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
@@ -635,6 +638,21 @@
     <button id="setClear" type="button" style="background:#c0596b;">🧹 入力内容をぜんぶクリア</button>
     <button id="setUndo" type="button" style="background:#2f9ad0;margin-top:8px;">↩ 戻す（さっきのクリアを取り消す）</button>
     <button id="setClose" type="button" style="background:#c9c9c9;margin-top:8px;">閉じる</button>
+  </div>
+</div>
+
+<!-- 名前の登録（店舗ごと） -->
+<div class="cmtmask" id="rosterMask">
+  <div class="cmtbox" style="max-width:420px; text-align:left;">
+    <div class="ttl" style="text-align:center;">👥 名前の登録</div>
+    <div style="font-size:12px;color:#666;line-height:1.7;margin-bottom:10px;">店舗ごとにスタッフの名前を登録します。登録するとスタッフ用アプリで選べるようになります。× で削除できます。</div>
+    <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
+      <select id="rosterStore" style="padding:9px;border:1px solid var(--line);border-radius:8px;font-size:15px;"></select>
+      <input id="rosterName" type="text" placeholder="名前を記入" autocomplete="off" style="flex:1;min-width:0;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:15px;">
+      <button id="rosterAdd" type="button" style="background:#222;color:#fff;border:none;border-radius:8px;padding:9px 15px;font-weight:700;cursor:pointer;">決定</button>
+    </div>
+    <div id="rosterList"></div>
+    <button id="rosterClose" type="button" style="background:#c9c9c9;margin-top:12px;">閉じる</button>
   </div>
 </div>
 
@@ -723,7 +741,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.55"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.61"; window.APP_UPDATED="2026-08-01";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -776,13 +794,13 @@ let _fbPushT=null;
 function save(){ saveLocal(); if(window.fbTouch) window.fbTouch(); try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){} }
 function buildFbPayload(){ /* オーナー: 全員分＋公開状態をクラウドへ */
   var staffOut={}; Object.keys(S.staff||{}).forEach(function(nm){ var nd=Object.assign({},S.staff[nm]); nd.nm=nm; staffOut[nm]=nd; });
-  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{}, storeOff:S.storeOff||{} }, staff:staffOut };
+  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{}, storeOff:S.storeOff||{}, roster:S.roster||{} }, staff:staffOut };
 }
 function shiftApplyRemote(val){ try{
   if(!val || (!val.meta && !val.staff)) return; /* クラウドが空ならローカル維持 */
   var meta=val.meta||{}, raw=val.staff||{}, staff={};
   Object.keys(raw).forEach(function(k){ var nd=raw[k]||{}; var nm=nd.nm||k; nd.store=nd.store||"大須"; nd.wish=nd.wish||{}; nd.decided=nd.decided||{}; nd.notes=nd.notes||{}; staff[nm]=nd; });
-  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.storeOff=meta.storeOff||{}; S.staff=staff;
+  S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.storeOff=meta.storeOff||{}; S.roster=meta.roster||S.roster||{}; S.staff=staff;
   saveLocal();
   var ov=document.querySelector('#ownerView'), sv=document.querySelector('#staffView');
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
@@ -845,18 +863,21 @@ function renderOwner(){
     const cls=((dow===0||hol)?"sun ":dow===6?"sat ":"")+(key(d)===todayStr?"today":"");
     th+=`<th class="daycol ${cls}" data-day="${d}" title="${HOL[key(d)]||''}">${DOW[dow]}<br>${M}/${d}</th>`; }
   $("#thead").innerHTML=th+"</tr>";
-  document.querySelectorAll('#thead th.daycol').forEach(el=>el.onclick=()=>openDayView(+el.dataset.day));
+  $("#thead").onclick=(e)=>{ const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day) openDayView(+th.dataset.day); };
   let rows="";
   STORES.forEach(st=>{
-    const list=storeStaff(st);
+    const R=getRoster();
+    const list=(R[st]||[]).slice();            /* 登録した名前（roster）を先に */
+    storeStaff(st).forEach(nm=>{ if(list.indexOf(nm)<0) list.push(nm); });  /* 提出だけの人も足す */
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     const isOff=d=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);  /* この店舗のこの日が休みか */
     rows+=`<tr class="secrow"><td class="name secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）</td>`;
     for(let d=1;d<=DAYS;d++){ const _dc=isOff(d)?STOFF_COLOR:((S.decidedDays&&S.decidedDays[key(d)])?DEC_COLOR[st]:col.head); rows+=`<td class="sechead" style="background:${_dc}"></td>`; }
     rows+=`</tr>`;
     list.forEach(nm=>{
-      rows+=`<tr><td class="name"><span class="nmtxt">${esc(nm)}</span><button class="delstaff" data-n="${esc(nm)}" title="削除">×</button></td>`;
-      const wish=S.staff[nm].wish||{}, dec=S.staff[nm].decided||{};
+      const stf=S.staff[nm]||{};
+      rows+=`<tr><td class="name"><span class="nmtxt">${esc(nm)}</span><button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button></td>`;
+      const wish=stf.wish||{}, dec=stf.decided||{};
       for(let d=1;d<=DAYS;d++){
         const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
         const cc=(key(d)===todayStr?" todayc":"");
@@ -864,14 +885,18 @@ function renderOwner(){
         let wt;
         if(ownerMode==='decided'){ const dv=dec[key(d)]; wt=dv?`<div class="wish">${decChips(dv)}</div>`:""; }
         else { wt=w?`<div class="wish">${wishChip(w,(dow===0||dow===6||hol))}</div>`:""; }
-        const hasNote=!!((S.staff[nm].notes||{})[key(d)]);
+        const hasNote=!!((stf.notes||{})[key(d)]);
         const bubble=hasNote?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
-        const oo=(S.staff[nm].ooff||{})[key(d)];
+        const oo=(stf.ooff||{})[key(d)];
         const so=isOff(d)?' stoff':'';
         rows+=`<td class="${cc}${hasNote?' hasnote':''}${oo?' ooff':''}${so}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}</td>`;
       }
       rows+="</tr>";
     });
+    /* ＋名前を記入（この店舗に直接追加）*/
+    rows+=`<tr class="addrow"><td class="name addname"><input class="addinp" data-st="${esc(st)}" type="text" placeholder="＋" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;background:transparent;font-size:13px;color:#2fa04a;font-weight:700;padding:2px;"></td>`;
+    for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
+    rows+=`</tr>`;
     const blanks=Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 目安の数。提出で埋まっても常にSPARE_ROWS行の空きを自動追加 */
     for(let bi=0; bi<blanks; bi++){
       rows+=`<tr class="blankrow"><td class="name blankname">&nbsp;</td>`;
@@ -883,15 +908,32 @@ function renderOwner(){
   document.querySelectorAll("#tbody td[data-d]").forEach(td=>{
     td.ondblclick=(e)=>{ if(e.target.closest && e.target.closest('.cbubble')) return;
       const nm=td.dataset.n, k=key(+td.dataset.d);
+      if(!S.staff[nm]) return;                 /* まだ提出のない登録名は対象外 */
       if(!S.staff[nm].ooff) S.staff[nm].ooff={};
       if(S.staff[nm].ooff[k]){ delete S.staff[nm].ooff[k]; td.classList.remove('ooff'); }
       else { S.staff[nm].ooff[k]=true; td.classList.add('ooff'); }
       save(); };
   });
   document.querySelectorAll("#tbody .cbubble").forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
-    showComment(el.dataset.n, +el.dataset.d, (S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)]); });
+    showComment(el.dataset.n, +el.dataset.d, ((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)]); });
   document.querySelectorAll("#tbody .delstaff").forEach(b=>b.onclick=(e)=>{ e.stopPropagation();
-    const nm=b.dataset.n; if(confirm(`${nm} さんを削除しますか？（希望・シフトも消えます）`)){ if(window.fbRemoveStaff) window.fbRemoveStaff(nm); delete S.staff[nm]; save(); renderOwner(); } });
+    const nm=b.dataset.n, st=b.dataset.st;
+    if(confirm(`${nm} さんを削除しますか？（希望・シフトも消えます）`)){
+      const R=getRoster(); const i=R[st]?R[st].indexOf(nm):-1; if(i>=0) R[st].splice(i,1);   /* 登録名から削除 */
+      if(window.fbRemoveStaff && S.staff[nm]) window.fbRemoveStaff(nm);
+      delete S.staff[nm]; save(); renderOwner();
+    }
+  });
+  document.querySelectorAll("#tbody .addinp").forEach(inp=>{
+    inp.onclick=(e)=>e.stopPropagation();
+    inp.ondblclick=(e)=>e.stopPropagation();
+    inp.onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault();
+      const st=inp.dataset.st, nm=(inp.value||"").trim(); if(!nm) return;
+      const R=getRoster(); if(R[st].indexOf(nm)>=0){ alert("「"+nm+"」はすでにあります。"); inp.value=""; return; }
+      R[st].push(nm); save(); renderOwner();
+      const again=document.querySelector('#tbody .addinp[data-st="'+st.replace(/"/g,'\\"')+'"]'); if(again) again.focus();
+    } };
+  });
 }
 function showComment(nm,d,note){
   $("#cmtTtl").textContent=`💬 ${nm}さん ${M}/${d}`;
@@ -917,10 +959,11 @@ function dEditBar(nm,d,seg,cls,ss,ee){
   return `<div class="dbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" style="left:${l}px;width:${w}px;${_bg}"><span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-edge="start"></span><span class="btime bstart" data-f="start">${ss||''}</span><span class="btime bend" data-f="end">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-edge="end"></span></div>`;
 }
 function _segsOf(o,out){ if(!o||o.off) return; ['all','am','pm'].forEach(k=>{ if(o[k]){ const s=pHM(o[k].start),e=pHM(o[k].end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }); if(!o.all&&!o.am&&!o.pm&&(o.start||o.end)){ const s=pHM(o.start),e=pHM(o.end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }
-function staffDayConflict(nm,d){ const segs=[]; _segsOf((S.staff[nm].decided||{})[key(d)],segs); _segsOf((S.staff[nm].tetsu||{})[key(d)],segs);
+function staffDayConflict(nm,d){ const segs=[], stf=S.staff[nm]||{}; _segsOf((stf.decided||{})[key(d)],segs); _segsOf((stf.tetsu||{})[key(d)],segs);
   for(let i=0;i<segs.length;i++) for(let j=i+1;j<segs.length;j++){ if(segs[i][0]<segs[j][1] && segs[j][0]<segs[i][1]) return true; } return false; }
 function reqBars(nm,d){
-  const r=(S.staff[nm].req||{})[key(d)]; if(!r||(!r.start&&!r.end)) return "";
+  const stf=S.staff[nm]||{};
+  const r=(stf.req||{})[key(d)]; if(!r||(!r.start&&!r.end)) return "";
   const s=pHM(r.start), e=pHM(r.end); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
   if(r.rejected) return `<div class="dbar reqrej" style="left:${l}px;width:${w}px">拒否</div>`;
@@ -936,7 +979,8 @@ function openDayView(d){
   let html="";
   STORES.forEach(st=>{
     if(st==="鉄板"){ html+=dvTetsuSection(d,W); return; }
-    const list=storeStaff(st);
+    const _R=getRoster();
+    const list=(_R[st]||[]).slice(); storeStaff(st).forEach(nm=>{ if(list.indexOf(nm)<0) list.push(nm); });
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     const _sm=((S.storeMemo||{})[key(d)]||{})[st]||"";
     const _soff=!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
@@ -1010,8 +1054,9 @@ $("#reqSend").onclick=()=>{
 
 /* ---- 鉄板：オーナーが配置（提出者から選ぶ→AM/PM時間→本人のカレンダーに反映）---- */
 function dvStaffRow(nm,d,W){
-  const v=(S.staff[nm].decided||{})[key(d)]; let bars="";
-  const w=(S.staff[nm].wish||{})[key(d)];
+  const stf=S.staff[nm]||{};
+  const v=(stf.decided||{})[key(d)]; let bars="";
+  const w=(stf.wish||{})[key(d)];
   if(w&&w.allday){
     bars+=`<div class="dbar availbar" style="left:${(9-AX0)*HW}px;width:${(23-9)*HW}px">9:00〜23:00</div>`;
   } else if(v&&!v.off){
@@ -1023,14 +1068,15 @@ function dvStaffRow(nm,d,W){
   const wtxt=w?wishMini(w):"";
   let wcls="gray"; if(w&&w.off) wcls="ng"; else if(w&&w.allday) wcls="maru";
   const wishHtml=wtxt?`<span class="dwish ${wcls}">${wtxt}</span>`:"";
-  const note=(S.staff[nm].notes||{})[key(d)];
+  const note=(stf.notes||{})[key(d)];
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
   return `<div class="drow dedit${cf?' conflict':''}" data-n="${esc(nm)}" data-d="${d}" title="タップして時間を編集"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠かぶり</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請">✈</button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
 }
 function dvTetsuSection(d,W){
   const col=STORE_COLOR["鉄板"], c=col.hd;
-  const homeList=storeStaff("鉄板");
+  const _R=getRoster();
+  const homeList=(_R["鉄板"]||[]).slice(); storeStaff("鉄板").forEach(nm=>{ if(homeList.indexOf(nm)<0) homeList.push(nm); });
   const assigned=names().filter(nm=>{ const t=(S.staff[nm].tetsu||{})[key(d)]; return t&&(t.all||t.am||t.pm)&&(S.staff[nm].store!=="鉄板"); });
   let tk=""; for(let hh=AX0; hh<=AX1; hh++){ tk+=`<div class="tick" style="left:${(hh-AX0)*HW}px">${hh}</div>`; }
   const _sm=((S.storeMemo||{})[key(d)]||{})["鉄板"]||"";
@@ -1071,6 +1117,7 @@ $("#pickMask").onclick=e=>{ if(e.target.id==="pickMask") $("#pickMask").style.di
 
 let teTarget=null;
 function openTetsu(nm,d){
+  ensureStaffOwner(nm);
   teTarget={nm,d};
   $("#teTtl").textContent=`🔧 鉄板の配置　${nm}さん　${M}/${d}`;
   const t=(S.staff[nm].tetsu||{})[key(d)]||{};
@@ -1106,7 +1153,8 @@ $("#teDel").onclick=()=>{
 
 /* ---- 日別タイムライン：棒＝時間編集／空き＝薄水色の仮ブロック ---- */
 function holdbars(nm,d){
-  const hs=(S.staff[nm].hold||{})[key(d)]||[];
+  const stf=S.staff[nm]||{};
+  const hs=(stf.hold||{})[key(d)]||[];
   return hs.map(h=>`<div class="dbar holdbar" data-h="${h}" style="left:${(h-AX0)*HW}px;width:${HW/2}px" title="タップで消す"></div>`).join("");
 }
 function toggleHold(nm,d,h){
@@ -1136,8 +1184,9 @@ function dayRowClick(e,row,mode){
   // 棒・名前をタップ → 編集
   if(t.closest('.dbar') || t.closest('.dname')){ return; } // 直接操作（時間の数字タップ・端ドラッグ）で編集
   // 空きをタップ → その時間で直接作成（すでにシフトがある人は編集を開く）
-  if((S.staff[nm].decided||{})[key(d)]){ return; }
   const dt=t.closest('.dtime'); if(!dt) return;
+  ensureStaffOwner(nm);   // まだ提出のない登録名でも編集できるように
+  if((S.staff[nm].decided||{})[key(d)]){ return; }
   let hour=Math.min(_xToHour(e,dt,false), AX1-1);
   if(!S.staff[nm].decided) S.staff[nm].decided={};
   S.staff[nm].decided[key(d)]={all:{start:hourToStr(hour),end:hourToStr(Math.min(hour+1,AX1))}, color:'#8bc98f'};
@@ -1497,6 +1546,13 @@ function ensureStaff(nm){
   if(!nm) return;
   if(!S.staff[nm]){ S.staff[nm]={store:$("#whoStore").value, wish:{}, decided:{}, notes:{}}; save(); }
 }
+/* 登録名（roster）だけの人を、オーナー操作時に本登録する（店舗はrosterから判定）*/
+function ensureStaffOwner(nm){
+  if(!nm || S.staff[nm]) return;
+  var st="大須", R=getRoster();
+  for(var i=0;i<STORES.length;i++){ if((R[STORES[i]]||[]).indexOf(nm)>=0){ st=STORES[i]; break; } }
+  S.staff[nm]={store:st, wish:{}, decided:{}, notes:{}};
+}
 function applyStaffHeader(){
   const c=STORE_COLOR[$("#whoStore").value];
   const head=document.querySelector("header");
@@ -1683,6 +1739,37 @@ function showOwner(){ $("#staffView").style.display="none"; $("#ownerView").styl
   document.querySelector("header").style.background="#2b2b2b"; $("#shareBtn").style.display=""; $("#shareOwnerBtn").style.display="";
   $("#tbOwner").classList.add("on"); $("#tbStaff").classList.remove("on"); fillYM(); renderOwner(); }
 $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
+
+/* ================= 名前の登録（店舗ごと・roster） ================= */
+function getRoster(){ if(!S.roster||typeof S.roster!=="object") S.roster={}; STORES.forEach(function(s){ if(!Array.isArray(S.roster[s])) S.roster[s]=[]; }); return S.roster; }
+function rosterFillStore(){ const sel=$("#rosterStore"); if(!sel) return; if(!sel.options.length){ STORES.forEach(function(s){ const o=document.createElement("option"); o.value=s; o.textContent=s; sel.appendChild(o); }); } }
+function renderRosterList(){
+  const box=$("#rosterList"); if(!box) return;
+  const R=getRoster(); const st=$("#rosterStore").value||STORES[0]; const arr=R[st]||[];
+  const c=STORE_COLOR[st];
+  let h='<div style="font-weight:700;color:'+(c?c.ink:'#333')+';margin:2px 0 6px;">'+esc(st)+'（'+arr.length+'）</div>';
+  if(!arr.length){ h+='<div style="color:#999;font-size:13px;padding:6px 2px;">まだ登録がありません。上に名前を入れて「決定」を押してください。</div>'; }
+  arr.forEach(function(nm,i){
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:9px 4px;">'
+      +'<span style="font-size:15px;">'+esc(nm)+'</span>'
+      +'<button type="button" class="rosterDel" data-st="'+esc(st)+'" data-i="'+i+'" style="background:none;border:none;color:#c0596b;font-size:20px;line-height:1;cursor:pointer;padding:0 6px;">×</button>'
+      +'</div>';
+  });
+  box.innerHTML=h;
+  box.querySelectorAll(".rosterDel").forEach(function(b){ b.onclick=function(){ rosterRemove(b.dataset.st, +b.dataset.i); }; });
+}
+function rosterAddName(){
+  const st=$("#rosterStore").value||STORES[0]; const nm=($("#rosterName").value||"").trim(); if(!nm) return;
+  const R=getRoster(); if(R[st].indexOf(nm)>=0){ alert("「"+nm+"」はすでに登録されています。"); return; }
+  R[st].push(nm); $("#rosterName").value=""; save(); renderRosterList();
+}
+function rosterRemove(st,i){ const R=getRoster(); if(!R[st]||i<0||i>=R[st].length) return; const nm=R[st][i]; if(!confirm("「"+nm+"」を削除しますか？"))return; R[st].splice(i,1); save(); renderRosterList(); }
+$("#rosterBtn").onclick=()=>{ rosterFillStore(); renderRosterList(); $("#rosterMask").style.display="flex"; setTimeout(()=>{ const n=$("#rosterName"); if(n) n.focus(); },50); };
+$("#rosterClose").onclick=()=>$("#rosterMask").style.display="none";
+$("#rosterMask").onclick=e=>{ if(e.target.id==="rosterMask") $("#rosterMask").style.display="none"; };
+$("#rosterStore").onchange=renderRosterList;
+$("#rosterAdd").onclick=rosterAddName;
+$("#rosterName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); rosterAddName(); } });
 
 initWho(); buildPalette(); showOwner();
 </script>
