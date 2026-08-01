@@ -1,67 +1,202 @@
-name: Shift file safety check
+name: Zaikon app safety check
 
 on:
   push:
     paths:
+      - "my-management.html"
+      - "index.html"
+      - "sales-input.html"
+      - "sales-owner.html"
       - "shift/index.html"
       - "shift-staff.html"
       - "shift/owner.html"
       - "shift-owner.html"
+      - "sw.js"
+      - "ZAIKON-HANDOFF.md"
       - ".github/workflows/shift-sync-check.yml"
   pull_request:
     paths:
+      - "my-management.html"
+      - "index.html"
+      - "sales-input.html"
+      - "sales-owner.html"
       - "shift/index.html"
       - "shift-staff.html"
       - "shift/owner.html"
       - "shift-owner.html"
+      - "sw.js"
+      - "ZAIKON-HANDOFF.md"
       - ".github/workflows/shift-sync-check.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  verify-shift-files:
+  verify-apps:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Confirm paired files are identical
+      - name: Confirm formal app files and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(
+            my-management.html
+            index.html
+            sales-input.html
+            sales-owner.html
+            shift/index.html
+            shift-staff.html
+            shift/owner.html
+            shift-owner.html
+          )
+          for file in "${files[@]}"; do
+            test -s "$file" || {
+              echo "::error file=$file::Formal app file is missing or empty."
+              exit 1
+            }
+            grep -Fq 'property="og:title"' "$file" || {
+              echo "::error file=$file::og:title is missing."
+              exit 1
+            }
+            grep -Fq 'property="og:url"' "$file" || {
+              echo "::error file=$file::og:url is missing."
+              exit 1
+            }
+            grep -Fq 'property="og:image"' "$file" || {
+              echo "::error file=$file::og:image is missing."
+              exit 1
+            }
+            grep -Eq 'rel=["'\'' ]*manifest' "$file" || {
+              echo "::error file=$file::PWA manifest link is missing."
+              exit 1
+            }
+          done
+
+      - name: Confirm app previews are not shared accidentally
+        shell: python
+        run: |
+          import re
+          from pathlib import Path
+
+          files = [
+              "my-management.html",
+              "index.html",
+              "sales-input.html",
+              "sales-owner.html",
+              "shift/index.html",
+              "shift/owner.html",
+          ]
+          seen_urls = {}
+          seen_images = {}
+          for file in files:
+              text = Path(file).read_text(encoding="utf-8")
+              for prop, seen in (("og:url", seen_urls), ("og:image", seen_images)):
+                  match = re.search(
+                      rf'<meta\s+property=["\x27]{re.escape(prop)}["\x27]\s+content=["\x27]([^"\x27]+)',
+                      text,
+                      re.I,
+                  )
+                  if not match:
+                      raise SystemExit(f"{file}: {prop} is missing")
+                  value = match.group(1)
+                  if value in seen:
+                      raise SystemExit(
+                          f"{file}: {prop} duplicates {seen[value]} ({value})"
+                      )
+                  seen[value] = file
+
+      - name: Confirm paired shift files are identical
         shell: bash
         run: |
           set -euo pipefail
           cmp --silent shift/index.html shift-staff.html || {
-            echo "::error::Staff shift files are different. Update both files with the same content."
+            echo "::error::Staff shift files differ. Update both with identical content."
             exit 1
           }
           cmp --silent shift/owner.html shift-owner.html || {
-            echo "::error::Owner shift files are different. Update both files with the same content."
+            echo "::error::Owner shift files differ. Update both with identical content."
             exit 1
           }
 
-      - name: Protect the mobile staff selector and roster order sync
+      - name: Protect important app behavior
         shell: bash
         run: |
           set -euo pipefail
-          file="shift/index.html"
 
-          grep -Fq '<select id="who"' "$file" || {
-            echo "::error::The staff name selector is missing."
+          grep -Eq "cache[[:space:]]*:[[:space:]]*['\x22]no-store['\x22]" sw.js || {
+            echo "::error file=sw.js::Network-first no-store navigation is missing."
             exit 1
           }
-          grep -Fq 'S.roster=meta.roster' "$file" || {
-            echo "::error::Firebase roster synchronization is missing."
+
+          grep -Fq '<select id="who"' shift/index.html || {
+            echo "::error file=shift/index.html::The staff name selector is missing."
             exit 1
           }
-          grep -Fq "if(typeof fillNames==='function')" "$file" || {
-            echo "::error::Immediate roster dropdown refresh is missing."
+          grep -Fq 'S.roster=meta.roster' shift/index.html || {
+            echo "::error file=shift/index.html::Roster synchronization is missing."
             exit 1
           }
-          grep -Fq '<!-- PULL_TO_REFRESH_V1 -->' "$file" || {
-            echo "::error::Pull-to-refresh is missing."
+          grep -Fq "if(typeof fillNames==='function')" shift/index.html || {
+            echo "::error file=shift/index.html::Immediate roster refresh is missing."
             exit 1
           }
-          if grep -Fq '<input id="who"' "$file"; then
-            echo "::error::An obsolete text name input was detected."
+          grep -Fq '<!-- PULL_TO_REFRESH_V1 -->' shift/index.html || {
+            echo "::error file=shift/index.html::Pull-to-refresh is missing."
+            exit 1
+          }
+          if grep -Fq '<input id="who"' shift/index.html; then
+            echo "::error file=shift/index.html::Obsolete free-text staff input detected."
             exit 1
           fi
+
+          grep -Fq 'last_store' sales-input.html || {
+            echo "::error file=sales-input.html::Remembered store selection is missing."
+            exit 1
+          }
+
+      - name: Reject an app version rollback
+        if: github.event_name != 'workflow_dispatch'
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            old_ref="$BASE_SHA"
+          else
+            old_ref="$BEFORE_SHA"
+          fi
+          if [ -z "$old_ref" ] || [[ "$old_ref" =~ ^0+$ ]]; then
+            exit 0
+          fi
+
+          files=(
+            my-management.html
+            index.html
+            sales-input.html
+            sales-owner.html
+            shift/index.html
+            shift-staff.html
+            shift/owner.html
+            shift-owner.html
+          )
+          for file in "${files[@]}"; do
+            git cat-file -e "$old_ref:$file" 2>/dev/null || continue
+            old_version="$(git show "$old_ref:$file" | grep -Eo 'v[0-9]+\.[0-9]+' | sort -V | tail -1 || true)"
+            new_version="$(grep -Eo 'v[0-9]+\.[0-9]+' "$file" | sort -V | tail -1 || true)"
+            [ -n "$old_version" ] && [ -n "$new_version" ] || continue
+            lowest="$(printf '%s\n%s\n' "$old_version" "$new_version" | sort -V | head -1)"
+            if [ "$lowest" != "$old_version" ]; then
+              echo "::error file=$file::Version rollback detected: $old_version -> $new_version"
+              exit 1
+            fi
+          done
