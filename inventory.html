@@ -27,7 +27,7 @@
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Firebase設定
 const firebaseConfig = {
@@ -49,6 +49,7 @@ let _isSyncing = false;  // 二重保存防止フラグ
 let _syncTimer = null;   // デバウンス用タイマー
 let _lastSyncData = '';  // 前回保存データ（差分チェック用）
 let _saveQueued = false; // 保存中に追加変更が来た場合の再保存フラグ
+let _lastCloudData = null; // 最後に確認したクラウド状態（差分統合の基準）
 
 function firestoreComparable(data) {
   return JSON.stringify({
@@ -58,6 +59,77 @@ function firestoreComparable(data) {
     nextItemId: data.nextItemId,
     categories: data.categories
   });
+}
+
+function syncState(data) {
+  return {
+    stores: JSON.parse(JSON.stringify(data.stores || [])),
+    allItems: JSON.parse(JSON.stringify(data.allItems || [])).map(i=>({...i,active:i.active!==false})),
+    nextStoreId: data.nextStoreId || 5,
+    nextItemId: data.nextItemId || 903,
+    categories: JSON.parse(JSON.stringify(data.categories || {}))
+  };
+}
+
+function mergeEntities(baseList, localList, remoteList) {
+  const base = new Map((baseList || []).map(v => [String(v.id), v]));
+  const local = new Map((localList || []).map(v => [String(v.id), v]));
+  const merged = new Map((remoteList || []).map(v => [String(v.id), v]));
+
+  // 基準から端末側で削除・変更されたものだけをリモート最新版へ反映
+  base.forEach((baseValue, id) => {
+    if (!local.has(id)) {
+      merged.delete(id);
+      return;
+    }
+    const localValue = local.get(id);
+    if (JSON.stringify(localValue) !== JSON.stringify(baseValue)) merged.set(id, localValue);
+  });
+
+  // 端末側で新しく追加されたものを反映
+  local.forEach((localValue, id) => {
+    if (!base.has(id)) merged.set(id, localValue);
+  });
+
+  return Array.from(merged.values());
+}
+
+function mergeCategories(baseCategories, localCategories, remoteCategories) {
+  const base = baseCategories || {};
+  const local = localCategories || {};
+  const merged = JSON.parse(JSON.stringify(remoteCategories || {}));
+  const keys = new Set([...Object.keys(base), ...Object.keys(local)]);
+  keys.forEach(key => {
+    if (!(key in local) && key in base) {
+      delete merged[key];
+      return;
+    }
+    if (!(key in base) || JSON.stringify(local[key]) !== JSON.stringify(base[key])) {
+      merged[key] = JSON.parse(JSON.stringify(local[key]));
+    }
+  });
+  return merged;
+}
+
+function mergeInventoryChanges(baseData, localData, remoteData) {
+  const base = syncState(baseData || {});
+  const local = syncState(localData || {});
+  const remote = syncState(remoteData || {});
+  return {
+    stores: mergeEntities(base.stores, local.stores, remote.stores),
+    allItems: mergeEntities(base.allItems, local.allItems, remote.allItems),
+    nextStoreId: Math.max(remote.nextStoreId || 5, local.nextStoreId || 5),
+    nextItemId: Math.max(remote.nextItemId || 903, local.nextItemId || 903),
+    categories: mergeCategories(base.categories, local.categories, remote.categories)
+  };
+}
+
+function applySyncState(data) {
+  window._appStores = data.stores;
+  window._appAllItems = data.allItems.map(i => ({...i, active:i.active!==false, image: ''}));
+  window._appNextStoreId = data.nextStoreId || 5;
+  window._appNextItemId = data.nextItemId || 903;
+  window._appStoreCategories = data.categories || {};
 }
 
 function localSavedTime() {
@@ -79,22 +151,42 @@ async function performFirestoreSave() {
   _isSyncing = true;
   if (typeof window.setSaveStatus === 'function') window.setSaveStatus('saving', 'クラウド保存中');
   try {
-    const data = {
+    const submitted = syncState({
       stores: window._appStores,
       allItems: window._appAllItems.map(i => ({...i, image: ''})), // 画像は除外
       nextStoreId: window._appNextStoreId,
       nextItemId: window._appNextItemId,
-      categories: window._appStoreCategories,
-      updatedAt: new Date().toISOString()
-    };
-    const comparable = firestoreComparable(data);
+      categories: window._appStoreCategories
+    });
+    const comparable = firestoreComparable(submitted);
     if (comparable === _lastSyncData) {
       if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド保存済み');
       return;
     }
 
-    await setDoc(doc(db, 'inventory', 'main'), data);
-    _lastSyncData = comparable;
+    const ref = doc(db, 'inventory', 'main');
+    const merged = await runTransaction(db, async transaction => {
+      const snap = await transaction.get(ref);
+      const remote = snap.exists() ? snap.data() : {};
+      const resolved = mergeInventoryChanges(_lastCloudData, submitted, remote);
+      const saved = {...resolved, updatedAt: new Date().toISOString()};
+      transaction.set(ref, saved);
+      return saved;
+    });
+
+    // 保存中に端末側で追加変更があっても、クラウド側の別変更を保持して再統合する
+    const latestLocal = syncState({
+      stores: window._appStores,
+      allItems: window._appAllItems.map(i => ({...i, image: ''})),
+      nextStoreId: window._appNextStoreId,
+      nextItemId: window._appNextItemId,
+      categories: window._appStoreCategories
+    });
+    const resolvedLocal = mergeInventoryChanges(submitted, latestLocal, merged);
+    _lastCloudData = syncState(merged);
+    _lastSyncData = firestoreComparable(merged);
+    applySyncState(resolvedLocal);
+    if (typeof saveData === 'function') saveData({ skipFirestore: true });
     if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド保存済み');
     console.log('Firestore保存完了');
   } catch(e) {
@@ -135,6 +227,7 @@ window.loadFromFirestore = async function() {
     }
     const d = snap.data();
     if (!d.stores || !d.allItems) return false;
+    _lastCloudData = syncState(d);
 
     // localStorageのデータと比較して新しい方を使う
     const localRaw = localStorage.getItem('zaikoApp_v1');
@@ -144,11 +237,7 @@ window.loadFromFirestore = async function() {
 
     if (cloudTime > localTime) {
       // クラウドの方が新しい → クラウドを適用
-      window._appStores = d.stores;
-      window._appAllItems = d.allItems.map(i => ({...i, image: ''}));
-      window._appNextStoreId = d.nextStoreId || 5;
-      window._appNextItemId = d.nextItemId || 903;
-      if (d.categories) window._appStoreCategories = d.categories;
+      applySyncState(syncState(d));
       _lastSyncData = firestoreComparable(d);
       if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド同期済み');
       console.log('Firestoreデータを適用（クラウドが新しい）');
@@ -173,27 +262,31 @@ window.startFirestoreSync = function() {
     // 自分が保存中なら無視（自分の保存による更新通知をスキップ）
     if (_isSyncing) return;
 
+    // 直前に保存・受信したものと同じ通知は再適用しない
+    const newDataStr = firestoreComparable(d);
+    if (newDataStr === _lastSyncData) {
+      _lastCloudData = syncState(d);
+      if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド同期済み');
+      return;
+    }
+
     // 端末側の保存日時より古いクラウドデータは適用しない
     const cloudTime = d.updatedAt ? new Date(d.updatedAt).getTime() : 0;
     const localTime = localSavedTime();
     if (Number.isFinite(cloudTime) && cloudTime < localTime) {
       console.log('古いFirestoreデータを無視（端末データが新しい）');
+      _lastCloudData = syncState(d);
       // 端末側の最新版を待たずにクラウドへ戻す
       void window.saveToFirestore({ immediate: true });
       return;
     }
 
-    // データが実際に変わっているか確認
-    const newDataStr = firestoreComparable(d);
-    if (newDataStr === _lastSyncData) return;
+    // データが実際に変わっているため最新版として適用
     _lastSyncData = newDataStr;
+    _lastCloudData = syncState(d);
 
     // アプリの状態を更新
-    window._appStores = d.stores;
-    window._appAllItems = d.allItems.map(i => ({...i, image: ''}));
-    window._appNextStoreId = d.nextStoreId || 5;
-    window._appNextItemId = d.nextItemId || 903;
-    if (d.categories) window._appStoreCategories = d.categories;
+    applySyncState(syncState(d));
     if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド同期済み');
 
     // 受信した最新版を端末にも保存する（Firestoreへの再送信はしない）
@@ -224,7 +317,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 <script>
 // LINEで共有
 function shareToLine(){
-  const url = 'https://zaiko-app-two.vercel.app/inventory.html';
+  const storeAlias={1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[window._appCurrentStoreId]||'osu';
+  const url = 'https://zaiko-app-two.vercel.app/inventory.html?store='+storeAlias;
   // クリップボードにコピー
   navigator.clipboard.writeText(url).then(()=>{
     alert('URLをコピーしました！\nLINEのトーク画面に貼り付けて送ってください。\n\n' + url);
@@ -464,7 +558,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.3.1';
+const APP_VERSION   = '4.5.0';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -479,6 +573,21 @@ const DEFAULT_PW    = '2026';
 
 const STORE_COLORS = ['#E8547A','#F5A623','#4BBFD6','#A78BFA','#1D9E75','#D85A30'];
 const FIXED_STORES = ['大須店','那古野店','鉄板','岐阜鎌倉'];
+const STORE_URL_ALIASES = {
+  '1':1,'osu':1,'大須':1,'大須店':1,
+  '2':2,'nagono':2,'那古野':2,'那古野店':2,
+  '3':3,'teppan':3,'鉄板':3,
+  '4':4,'kamakura':4,'鎌倉':4,'岐阜鎌倉':4
+};
+function resolveFixedStoreId(){
+  try{
+    const value=new URLSearchParams(location.search).get('store');
+    if(!value) return null;
+    return STORE_URL_ALIASES[String(value).trim().toLowerCase()]||STORE_URL_ALIASES[String(value).trim()]||null;
+  }catch(_){return null;}
+}
+const FIXED_STORE_ID_FROM_URL=resolveFixedStoreId();
+window._fixedInventoryStoreId=FIXED_STORE_ID_FROM_URL;
 
 const CAT_KEY = 'zaikoApp_categories';
 
@@ -608,7 +717,7 @@ let _undoStack     = [];
 let _searchTimer   = null;
 
 let stores   = JSON.parse(JSON.stringify(DEFAULT_STORES));
-let allItems = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+let allItems = JSON.parse(JSON.stringify(DEFAULT_ITEMS)).map(i=>({...i,active:true}));
 
 // Firebaseコードからアクセスできるようwindowに公開
 // （type=moduleスクリプトとの橋渡し）
@@ -618,6 +727,7 @@ Object.defineProperties(window, {
   _appNextStoreId:     { get: ()=>nextStoreId,       set: v=>{ nextStoreId=v; },       configurable:true },
   _appNextItemId:      { get: ()=>nextItemId,        set: v=>{ nextItemId=v; },        configurable:true },
   _appStoreCategories: { get: ()=>STORE_CATEGORIES,  set: v=>{ STORE_CATEGORIES=v; },  configurable:true },
+  _appCurrentStoreId:  { get: ()=>currentStoreId,    set: v=>{ currentStoreId=v; },    configurable:true },
 });
 
 // ============================================================
@@ -635,6 +745,14 @@ function getCategories(){
   }
   return STORE_CATEGORIES[currentStoreId];
 }
+function isActiveItem(item){ return item?.active!==false; }
+function getStoreItems(storeId,{includeInactive=false}={}){
+  return allItems.filter(i=>i.storeId===storeId&&(includeInactive||isActiveItem(i)));
+}
+function normalizeProductName(name){
+  return String(name||'').normalize('NFKC').replace(/[\s　]+/g,'').toLowerCase();
+}
+function masterGroupStoreIds(storeId){ return storeId===4?[4]:[1,2,3]; }
 function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
@@ -651,7 +769,7 @@ window.setSaveStatus=setSaveStatus;
 let _selectedCat='';
 
 function openCatModal2(){
-  const si=allItems.filter(i=>i.storeId===currentStoreId);
+  const si=getStoreItems(currentStoreId);
   // 登録済みカテゴリー全て（商品がなくても表示）
   const regCats=STORE_CATEGORIES[currentStoreId]||[];
   const usedInItems=[...new Set(si.map(i=>i.cat))].filter(Boolean);
@@ -882,6 +1000,7 @@ function loadData(){
         qty:     Number(item.qty)     || 0,
         price:   Number(item.price)   || 0,
         done:    !!item.done,
+        active:  item.active !== false,
         image:   '', // 画像はIndexedDBから取得するためここでは空
       }));
       nextStoreId    = d.nextStoreId    || 5;
@@ -1020,18 +1139,19 @@ async function submitRolePw(){
 // ============================================================
 function renderTabs(){
   const r=ROLES[currentRole];
+  const visibleStores=FIXED_STORE_ID_FROM_URL?stores.filter(s=>s.id===FIXED_STORE_ID_FROM_URL):stores;
   document.getElementById('store-tabs').innerHTML=
-    stores.map(s=>{
+    visibleStores.map(s=>{
       const col=storeColor(s.id); const act=s.id===currentStoreId?'active':'';
       const activeStyle=act?` style="background:${col};border-color:${col};color:#fff"`:'';
       const inactiveStyle=!act?` style="color:${col};border-color:${col}"`:'';
       const btnStyle=act?activeStyle:inactiveStyle;
       return`<button class="stab ${act}"${btnStyle} onclick="selectStore(${s.id})">${esc(s.name)}</button>`;
     }).join('')
-    +(r.manageStores?`<button class="stab tab-add" onclick="openStoreModal()">＋ 店舗を追加</button>`:'');
+    +(!FIXED_STORE_ID_FROM_URL&&r.manageStores?`<button class="stab tab-add" onclick="openStoreModal()">＋ 店舗を追加</button>`:'');
 }
 
-function selectStore(id){ currentStoreId=id; saveData(); _selectedCat=''; document.getElementById('search').value=''; const lbl2=document.getElementById('cat-filter-label'); if(lbl2) lbl2.textContent='カテゴリー'; const btnr=document.getElementById('cat-filter-btn'); if(btnr){btnr.style.borderColor='var(--bd)';btnr.style.color='var(--tm)';btnr.style.background='var(--sf)';} const st=document.getElementById('search-text'); if(st) st.value=''; _selectedCat=''; document.getElementById('search').value=''; renderTabs(); render(); }
+function selectStore(id){ if(FIXED_STORE_ID_FROM_URL&&id!==FIXED_STORE_ID_FROM_URL)return; currentStoreId=id; saveData(); _selectedCat=''; document.getElementById('search').value=''; const lbl2=document.getElementById('cat-filter-label'); if(lbl2) lbl2.textContent='カテゴリー'; const btnr=document.getElementById('cat-filter-btn'); if(btnr){btnr.style.borderColor='var(--bd)';btnr.style.color='var(--tm)';btnr.style.background='var(--sf)';} const st=document.getElementById('search-text'); if(st) st.value=''; _selectedCat=''; document.getElementById('search').value=''; renderTabs(); render(); }
 
 function confirmDeleteStore(id){
   const r=getRole();
@@ -1090,7 +1210,7 @@ function saveStore(){
 // ============================================================
 function updateStats(){
   const r=ROLES[currentRole];
-  const si=allItems.filter(i=>i.storeId===currentStoreId);
+  const si=getStoreItems(currentStoreId);
   const out=si.filter(i=>i.qty===0).length;
   const val=si.reduce((s,i)=>s+i.qty*i.price,0);
   document.getElementById('stats').innerHTML=`
@@ -1121,7 +1241,7 @@ function completeInventory(){
       storeName: storeName,
       fiscal: fiscal,
       savedAt: nowStr(),
-      items: allItems.filter(i=>i.storeId===currentStoreId).map(i=>({
+      items: getStoreItems(currentStoreId).map(i=>({
         id:i.id, name:i.name, cat:i.cat, qty:i.qty, unit:i.unit, price:i.price
       }))
     };
@@ -1268,7 +1388,7 @@ function saveInventoryHistory(){
     const snapshot = {
       date: nowStr(),
       dateKey: new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit'}).replace(/\//g,'-'),
-      items: allItems.map(i=>({id:i.id, storeId:i.storeId, name:i.name, cat:i.cat, qty:i.qty, price:i.price, unit:i.unit}))
+      items: allItems.filter(isActiveItem).map(i=>({id:i.id, storeId:i.storeId, name:i.name, cat:i.cat, qty:i.qty, price:i.price, unit:i.unit}))
     };
     // 同じ月のデータは上書き
     const idx = histories.findIndex(h=>h.dateKey===snapshot.dateKey);
@@ -1394,10 +1514,10 @@ function renderHistoryStore(storeId, btn){
 function updateAllStoresTotal(){
   const area=document.getElementById('all-stores-total-area');
   if(!area) return;
-  if(currentRole!=='admin'){ area.innerHTML=''; return; }
-  const grandTotal=allItems.reduce((s,i)=>s+i.qty*i.price,0);
+  if(currentRole!=='admin'||FIXED_STORE_ID_FROM_URL){ area.innerHTML=''; return; }
+  const grandTotal=allItems.filter(isActiveItem).reduce((s,i)=>s+i.qty*i.price,0);
   const chips=stores.map(s=>{
-    const t=allItems.filter(i=>i.storeId===s.id).reduce((sum,i)=>sum+i.qty*i.price,0);
+    const t=getStoreItems(s.id).reduce((sum,i)=>sum+i.qty*i.price,0);
     return `<div class="ast-chip">${esc(s.name)} ${yen(t)}</div>`;
   }).join('');
   area.innerHTML=`
@@ -1528,7 +1648,7 @@ function render(){
   // カテゴリー選択値を取得（カスタムドロップダウン対応）
   const cur=_selectedCat||'';
   const textQ=(document.getElementById('search-text')?.value||'').trim().toLowerCase();
-  const si=allItems.filter(i=>i.storeId===currentStoreId);
+  const si=getStoreItems(currentStoreId);
   const usedCats=[...new Set(si.map(i=>i.cat))];
   // 選択中カテゴリーが存在しない場合はリセット
   if(cur && !usedCats.includes(cur)){ _selectedCat=''; document.getElementById('search').value=''; const lbl3=document.getElementById('cat-filter-label'); if(lbl3) lbl3.textContent='カテゴリー'; }
@@ -1633,6 +1753,132 @@ function render(){
 // ============================================================
 // 商品追加・編集
 // ============================================================
+function getProductCandidates(){
+  const groupIds=masterGroupStoreIds(currentStoreId);
+  const currentItems=getStoreItems(currentStoreId,{includeInactive:true});
+  const activeNames=new Set(currentItems.filter(isActiveItem).map(i=>normalizeProductName(i.name)));
+  const grouped=new Map();
+  allItems.filter(i=>groupIds.includes(i.storeId)).forEach(item=>{
+    const key=normalizeProductName(item.name);
+    if(!key||activeNames.has(key)) return;
+    if(!grouped.has(key)) grouped.set(key,{key,name:item.name,sources:[]});
+    grouped.get(key).sources.push(item);
+  });
+  return Array.from(grouped.values()).sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+}
+
+function openMasterCandidateModal(){
+  const isKamakura=currentStoreId===4;
+  const candidates=getProductCandidates();
+  window._inventoryCandidates=candidates;
+  document.getElementById('modal-content').innerHTML=`
+    <h2>${isKamakura?'🍵 鎌倉専用商品候補':'🔗 3店舗共通商品候補'}</h2>
+    <div style="font-size:12px;color:var(--tm);line-height:1.7;margin-bottom:12px">
+      ${isKamakura?'鎌倉で以前使用した商品を再追加できます。':'大須・那古野・鉄板で登録済みの商品を、この店舗へ追加できます。'}<br>
+      在庫数と仕入値は店舗ごとに別々に保存されます。
+    </div>
+    <input id="candidate-search" type="search" placeholder="商品名で検索" autocomplete="off"
+      style="width:100%;height:44px;padding:0 12px;border:1.5px solid var(--g);border-radius:var(--rs);background:var(--bg);color:var(--tx);font-size:15px;outline:none;box-sizing:border-box;margin-bottom:10px">
+    <div id="candidate-list" style="display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto"></div>
+    <div class="fa" style="margin-top:12px"><button class="btn btn-g" onclick="openItemModal()">手入力へ戻る</button></div>`;
+  document.getElementById('candidate-search').addEventListener('input',renderMasterCandidateList);
+  renderMasterCandidateList();
+  openOverlay();
+  setTimeout(()=>document.getElementById('candidate-search')?.focus(),80);
+}
+
+function renderMasterCandidateList(){
+  const list=document.getElementById('candidate-list');
+  if(!list) return;
+  const q=normalizeProductName(document.getElementById('candidate-search')?.value||'');
+  const all=window._inventoryCandidates||[];
+  const filtered=(q?all.filter(c=>normalizeProductName(c.name).includes(q)):all).slice(0,150);
+  if(!filtered.length){
+    list.innerHTML='<div style="text-align:center;padding:24px;color:var(--tf)">追加できる商品候補がありません</div>';
+    return;
+  }
+  window._visibleInventoryCandidates=filtered;
+  list.innerHTML=filtered.map((candidate,index)=>{
+    const storeNames=[...new Set(candidate.sources.map(i=>stores.find(s=>s.id===i.storeId)?.name||''))].filter(Boolean).join('・');
+    const prices=[...new Set(candidate.sources.map(i=>Number(i.price)||0))];
+    const priceText=prices.length===1?yen(prices[0]):prices.map(yen).join(' / ');
+    const inactiveHere=candidate.sources.some(i=>i.storeId===currentStoreId&&!isActiveItem(i));
+    return `<button type="button" class="candidate-row" data-candidate-index="${index}" style="width:100%;text-align:left;background:var(--sf);border:1.5px solid var(--bd);border-radius:var(--rs);padding:10px 12px;color:var(--tx);cursor:pointer;font-family:inherit">
+      <div style="font-size:14px;font-weight:700">${esc(candidate.name)}</div>
+      <div style="font-size:11px;color:var(--tm);margin-top:3px">${inactiveHere?'この店舗で再使用':'登録：'+esc(storeNames)} ／ 参考価格：${esc(priceText)}</div>
+    </button>`;
+  }).join('');
+  list.querySelectorAll('.candidate-row').forEach(row=>row.addEventListener('click',()=>useMasterCandidate(Number(row.dataset.candidateIndex))));
+}
+
+function useMasterCandidate(index){
+  const candidate=window._visibleInventoryCandidates?.[index];
+  if(!candidate) return;
+  const inactiveItem=candidate.sources.find(i=>i.storeId===currentStoreId&&!isActiveItem(i));
+  if(inactiveItem){
+    activateCandidateItem(inactiveItem);
+    return;
+  }
+  const priceChoices=[];
+  candidate.sources.forEach(source=>{
+    if(!priceChoices.some(p=>p.price===source.price&&p.unit===source.unit)) priceChoices.push(source);
+  });
+  if(priceChoices.length>1){
+    window._candidatePriceChoices={candidate,sources:priceChoices};
+    document.getElementById('modal-content').innerHTML=`
+      <h2>💰 参考価格を選ぶ</h2>
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px">${esc(candidate.name)}</div>
+      <div style="font-size:12px;color:var(--tm);margin-bottom:12px">追加後も、この店舗専用の価格へ変更できます。</div>
+      <div id="candidate-price-list" style="display:flex;flex-direction:column;gap:7px"></div>
+      <div class="fa" style="margin-top:12px"><button class="btn btn-g" onclick="openMasterCandidateModal()">戻る</button></div>`;
+    const list=document.getElementById('candidate-price-list');
+    list.innerHTML=priceChoices.map((source,sourceIndex)=>`<button type="button" class="btn btn-g candidate-price-row" data-source-index="${sourceIndex}" style="width:100%;height:48px;justify-content:space-between"><span>${esc(stores.find(s=>s.id===source.storeId)?.name||'参考')}</span><strong>${yen(Number(source.price)||0)}／${esc(source.unit)}</strong></button>`).join('');
+    list.querySelectorAll('.candidate-price-row').forEach(row=>row.addEventListener('click',()=>{
+      const source=window._candidatePriceChoices?.sources?.[Number(row.dataset.sourceIndex)];
+      if(source) addCandidateFromSource(window._candidatePriceChoices.candidate,source);
+    }));
+    return;
+  }
+  addCandidateFromSource(candidate,priceChoices[0]||candidate.sources[0]);
+}
+
+function activateCandidateItem(item){
+  if(!item) return;
+  item.active=true;
+  item.qty=0;
+  item.done=false;
+  if(!(STORE_CATEGORIES[currentStoreId]||[]).includes(item.cat)) item.cat=getCategories()[0]||'その他';
+  item.updatedAt=nowStr();
+  saveData();
+  render();
+  showToast('✅ 商品候補を再追加しました');
+  openItemModal(item.id);
+}
+
+function addCandidateFromSource(candidate,source){
+  if(!candidate||!source) return;
+  const category=(STORE_CATEGORIES[currentStoreId]||[]).includes(source.cat)?source.cat:(getCategories()[0]||'その他');
+  const item={id:nextItemId++,storeId:currentStoreId,name:source.name,cat:category,qty:0,unit:source.unit,price:Number(source.price)||0,updatedAt:nowStr(),createdAt:nowStr(),done:false,active:true,image:''};
+  allItems.push(item);
+  saveData();
+  render();
+  showToast('✅ 商品候補を追加しました');
+  openItemModal(item.id);
+}
+
+function deactivateItem(id){
+  const item=allItems.find(i=>i.id===id&&i.storeId===currentStoreId);
+  if(!item) return;
+  if(!confirm(`「${item.name}」をこの店舗の棚卸対象から外しますか？\n\n商品候補には残るため、後から再追加できます。`)) return;
+  item.active=false;
+  item.done=false;
+  item.updatedAt=nowStr();
+  saveData();
+  closeModal();
+  render();
+  showToast('この店舗では使用しない商品に変更しました');
+}
+
 async function openItemModal(id,cont=false){
   editingItem=id?allItems.find(i=>i.id===id):null;
   pendingImage=null;
@@ -1646,6 +1892,7 @@ async function openItemModal(id,cont=false){
   const isNew=!editingItem;
   document.getElementById('modal-content').innerHTML=`
     <h2>${editingItem?'商品を編集':'商品を追加'}</h2>
+    ${isNew?`<button type="button" class="btn btn-g" onclick="openMasterCandidateModal()" style="width:100%;height:44px;margin-bottom:12px;border-color:var(--g);color:var(--g)">🔗 商品候補から選ぶ</button>`:''}
     <div style="font-size:12px;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${storeColor(currentStoreId)};display:inline-block"></span>${esc(store?.name||'')}</div>
     <div class="fr"><label>商品名</label><input id="f-name" value="${esc(v.name)}" placeholder="例：オレンジジュース" autocomplete="off"></div>
     <div class="fr"><label>商品画像</label>
@@ -1667,7 +1914,7 @@ async function openItemModal(id,cont=false){
     </div>
     <div class="fr"><label>仕入れ単価（円）</label><input id="f-price" type="number" min="0" step="0.01" inputmode="decimal" value="${v.price}"></div>
     <div class="prev-box"><span>在庫金額（試算）</span><strong id="prev-val">${yen(v.qty*v.price)}</strong></div>
-    ${isNew?`<div style="display:flex;gap:8px"><button class="btn btn-g" onclick="closeModal()" style="flex:1;height:48px">閉じる</button><button class="btn btn-g" onclick="saveItem(false)" style="flex:1;height:48px;border-color:var(--g);color:var(--g)">✅ 保存</button><button class="btn btn-p" onclick="saveItem(true)" style="flex:1;height:48px">＋ 続けて入力</button></div>`:`<div class="fa"><button class="btn btn-g" onclick="closeModal()">キャンセル</button><button class="btn btn-p" onclick="saveItem(false)">保存する</button></div>`}`;
+    ${isNew?`<div style="display:flex;gap:8px"><button class="btn btn-g" onclick="closeModal()" style="flex:1;height:48px">閉じる</button><button class="btn btn-g" onclick="saveItem(false)" style="flex:1;height:48px;border-color:var(--g);color:var(--g)">✅ 保存</button><button class="btn btn-p" onclick="saveItem(true)" style="flex:1;height:48px">＋ 続けて入力</button></div>`:`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-g" onclick="deactivateItem(${editingItem.id})" style="color:var(--r);border-color:var(--r)">この店舗では使用しない</button><button class="btn btn-g" onclick="closeModal()" style="margin-left:auto">キャンセル</button><button class="btn btn-p" onclick="saveItem(false)">保存する</button></div>`}`;
   document.getElementById('f-qty').addEventListener('input',updatePrev);
   document.getElementById('f-price').addEventListener('input',updatePrev);
   openOverlay();
@@ -1735,7 +1982,7 @@ async function saveItem(cont=false){
   if(!name){alert('商品名を入力してください');return;}
   const selCat=document.getElementById('f-cat').value;
   const selUnit=document.getElementById('f-unit').value;
-  const obj={name,storeId:currentStoreId,cat:selCat,qty:Math.max(0,parseFloat(document.getElementById('f-qty').value)||0),unit:selUnit,price:Math.max(0,parseFloat(document.getElementById('f-price').value)||0),updatedAt:nowStr(),image:''};
+  const obj={name,storeId:currentStoreId,cat:selCat,qty:Math.max(0,parseFloat(document.getElementById('f-qty').value)||0),unit:selUnit,price:Math.max(0,parseFloat(document.getElementById('f-price').value)||0),updatedAt:nowStr(),active:true,image:''};
   let savedId;
   if(editingItem){
     Object.assign(editingItem,obj);
@@ -1837,7 +2084,7 @@ function addCat(){
   inp.value=''; // 入力欄をクリア
   saveData(); renderCatModal();
   // カテゴリー検索ボタンのモーダルも更新
-  const si=allItems.filter(i=>i.storeId===currentStoreId);
+  const si=getStoreItems(currentStoreId);
   window._catModalCats=[...new Set(si.map(i=>i.cat))].filter(Boolean).sort();
   window._catModalCounts={};
   window._catModalCats.forEach(c=>{window._catModalCounts[c]=si.filter(i=>i.cat===c).length;});
@@ -1876,14 +2123,15 @@ function editCat(i){
 // Excel出力
 // ============================================================
 function openExportModal(){
+  const exportStores=FIXED_STORE_ID_FROM_URL?stores.filter(s=>s.id===currentStoreId):stores;
   document.getElementById('modal-content').innerHTML=`
     <h2>📊 Excelに出力</h2>
     <div style="font-size:12px;color:var(--tm);margin-bottom:12px">出力する店舗を選んでください。タップで即ダウンロードします。</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-      <button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:var(--g);color:#fff;border-color:var(--g)" onclick="doExport('all')">
+      ${!FIXED_STORE_ID_FROM_URL?`<button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:var(--g);color:#fff;border-color:var(--g)" onclick="doExport('all')">
         📋 全店舗（${stores.length}店舗）＋サマリー
-      </button>
-      ${stores.map(s=>`
+      </button>`:''}
+      ${exportStores.map(s=>`
       <button class="btn btn-g" style="width:100%;height:44px;font-size:13px;justify-content:flex-start;gap:8px" onclick="doExport('${s.id}')">
         <span style="width:10px;height:10px;border-radius:50%;background:${storeColor(s.id)};display:inline-block;flex-shrink:0"></span>
         ${esc(s.name)}
@@ -1898,14 +2146,14 @@ function doExport(scope){
   const headers=['商品名','カテゴリ','現在庫','単位','仕入れ単価（円）','在庫金額（円）','状態','登録日時','更新日時'];
   const cols=[{wch:20},{wch:14},{wch:10},{wch:8},{wch:16},{wch:16},{wch:10},{wch:18},{wch:18}];
   const buildRows=sid=>{
-    const items=allItems.filter(i=>i.storeId===sid).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+    const items=getStoreItems(sid).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
     const rows=items.map(i=>[i.name,i.cat,i.qty,i.unit,i.price,parseFloat((i.qty*i.price).toFixed(2)),i.qty===0?'在庫切れ':'在庫あり',i.createdAt||'',i.updatedAt]);
     rows.push(['合計','','','','',parseFloat(items.reduce((s,i)=>s+i.qty*i.price,0).toFixed(2)),'','','']);
     return rows;
   };
   if(scope==='all'){
     stores.forEach(s=>{const ws=XLSX.utils.aoa_to_sheet([headers,...buildRows(s.id)]);ws['!cols']=cols;XLSX.utils.book_append_sheet(wb,ws,s.name.slice(0,28).replace(/[\/*?[\]:]/g,'_'));});
-    const ws2=XLSX.utils.aoa_to_sheet([['店舗名','商品数','在庫切れ数','在庫総額（円）'],...stores.map(s=>{const it=allItems.filter(i=>i.storeId===s.id);return[s.name,it.length,it.filter(i=>i.qty===0).length,parseFloat(it.reduce((a,i)=>a+i.qty*i.price,0).toFixed(2))];})]);
+    const ws2=XLSX.utils.aoa_to_sheet([['店舗名','商品数','在庫切れ数','在庫総額（円）'],...stores.map(s=>{const it=getStoreItems(s.id);return[s.name,it.length,it.filter(i=>i.qty===0).length,parseFloat(it.reduce((a,i)=>a+i.qty*i.price,0).toFixed(2))];})]);
     ws2['!cols']=[{wch:16},{wch:10},{wch:12},{wch:16}];XLSX.utils.book_append_sheet(wb,ws2,'サマリー');
   }else{
     const sid=parseInt(scope);
@@ -1945,7 +2193,7 @@ function openSettings(){
     <h2>⚙️ 設定・情報</h2>
     <div style="background:#E8F9EE;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #06C755;">
       <div style="font-size:12px;font-weight:700;color:#06C755;margin-bottom:4px;">🔗 アプリを共有</div>
-      <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;">URLをコピーしてLINE等で貼り付けて共有してください。</div>
+      <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;">現在の店舗に固定されたURLをコピーして共有します。</div>
       <button onclick="shareToLine()" style="width:100%;height:48px;background:#06C755;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">📤 LINEで共有する</button>
     </div>
     <div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px">
@@ -1982,8 +2230,8 @@ function openSettings(){
       <div style="font-size:12px;color:var(--r);margin-bottom:10px">選択した店舗の在庫数を0にします。<br>実行前に在庫データをExcelで自動保存します。</div>
       <div style="display:flex;gap:8px;margin-bottom:6px">
         <div class="sw" style="flex:1"><span class="si">🏪</span><select id="zero-scope" style="width:100%;height:40px;padding:0 12px 0 36px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--sf);color:var(--tx);font-size:13px;outline:none;appearance:none;-webkit-appearance:none">
-          <option value="all">全店舗</option>
-          ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
+          ${!FIXED_STORE_ID_FROM_URL?'<option value="all">全店舗</option>':''}
+          ${(FIXED_STORE_ID_FROM_URL?stores.filter(s=>s.id===currentStoreId):stores).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
         </select></div>
       </div>
       <button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:var(--r);color:#fff;border-color:var(--r)" onclick="resetAllQtyToZero()">🔴 在庫数をゼロにする（Excel保存付き）</button>
@@ -1991,7 +2239,7 @@ function openSettings(){
 
     <div style="background:var(--al);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;color:var(--a);margin-bottom:4px">🔄 アップデートの方法</div>
-      <div style="font-size:12px;color:var(--a)">1. Claudeに変更をお願いする<br>2. 新しいファイルをダウンロード<br>3. 古いファイルを上書き保存<br>4. アプリを開く → 自動で最新データに更新</div>
+      <div style="font-size:12px;color:var(--a)">GitHubの最新版は自動で公開されます。更新案内が表示されたら「今すぐ更新」を押してください。表示が変わらない場合は、アプリを一度閉じて開き直してください。</div>
     </div>
 
     <div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px">
@@ -2096,7 +2344,7 @@ function resetAllQtyToZero(){
   const scope=document.getElementById('zero-scope')?.value||'all';
   const targetStores = scope==='all' ? stores.map(s=>s.id) : [parseInt(scope)];
   const targetNames = targetStores.map(id=>stores.find(s=>s.id===id)?.name||'').join('・');
-  const targetItems = allItems.filter(i=>targetStores.includes(i.storeId)&&i.qty!==0);
+  const targetItems = allItems.filter(i=>targetStores.includes(i.storeId)&&isActiveItem(i)&&i.qty!==0);
 
   if(targetItems.length===0){
     showToast('ゼロでない在庫がありません。','#E24B4A');
@@ -2114,7 +2362,7 @@ function resetAllQtyToZero(){
 
     if(scope==='all'){
       stores.forEach(s=>{
-        const items=allItems.filter(i=>i.storeId===s.id).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+        const items=getStoreItems(s.id).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
         const rows=items.map(i=>[i.name,i.cat,i.qty,i.unit,i.price,parseFloat((i.qty*i.price).toFixed(2)),i.qty===0?'在庫切れ':'在庫あり',i.updatedAt]);
         rows.push(['合計','','','','',parseFloat(items.reduce((s,i)=>s+i.qty*i.price,0).toFixed(2)),'','']);
         const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);ws['!cols']=cols;
@@ -2123,13 +2371,13 @@ function resetAllQtyToZero(){
       // サマリーシート
       const ws2=XLSX.utils.aoa_to_sheet([
         ['店舗名','商品数','在庫切れ数','在庫総額（円）'],
-        ...stores.map(s=>{const it=allItems.filter(i=>i.storeId===s.id);return[s.name,it.length,it.filter(i=>i.qty===0).length,parseFloat(it.reduce((a,i)=>a+i.qty*i.price,0).toFixed(2))];})
+        ...stores.map(s=>{const it=getStoreItems(s.id);return[s.name,it.length,it.filter(i=>i.qty===0).length,parseFloat(it.reduce((a,i)=>a+i.qty*i.price,0).toFixed(2))];})
       ]);
       ws2['!cols']=[{wch:16},{wch:10},{wch:12},{wch:16}];
       XLSX.utils.book_append_sheet(wb,ws2,'サマリー');
     } else {
       const s=stores.find(s=>s.id===currentStoreId);
-      const items=allItems.filter(i=>i.storeId===currentStoreId).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+      const items=getStoreItems(currentStoreId).sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
       const rows=items.map(i=>[i.name,i.cat,i.qty,i.unit,i.price,parseFloat((i.qty*i.price).toFixed(2)),i.qty===0?'在庫切れ':'在庫あり',i.updatedAt]);
       rows.push(['合計','','','','',parseFloat(items.reduce((s,i)=>s+i.qty*i.price,0).toFixed(2)),'','']);
       const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);ws['!cols']=cols;
@@ -2286,6 +2534,11 @@ function handleOvClick(e){if(e.target===document.getElementById('overlay'))close
 // 1. まずlocalStorageからデータを読み込む
 checkEntryPassword();
 const dataFound=loadData();
+if(FIXED_STORE_ID_FROM_URL&&stores.some(s=>s.id===FIXED_STORE_ID_FROM_URL)){
+  currentStoreId=FIXED_STORE_ID_FROM_URL;
+  // 固定URLからホーム画面へ追加した場合も、共通manifest起動時に同じ店舗を開く
+  saveData({skipFirestore:true});
+}
 
 // アクセスパスワードチェック（有効な場合のみ）
 async function checkAccessPassword(){
@@ -2334,10 +2587,11 @@ if(savedDV!==DATA_VERSION){
         updatedAt: existing.updatedAt || def.updatedAt,
         createdAt: existing.createdAt || def.createdAt,
         done:      !!existing.done,
+        active:    existing.active !== false,
         image:     '', // 画像はIndexedDB管理
       };
     }
-    return {...def, image:''};
+    return {...def, active:true, image:''};
   });
   allItems=[...mergedDefaults, ...userItems];
   localStorage.setItem(DATA_VER_KEY,DATA_VERSION);
