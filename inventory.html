@@ -587,7 +587,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.6.1';
+const APP_VERSION   = '4.6.2';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -2351,24 +2351,20 @@ function openSettings(){
       <div style="font-size:12px;color:var(--a)">GitHubの最新版は自動で公開されます。更新案内が表示されたら「今すぐ更新」を押してください。表示が変わらない場合は、アプリを一度閉じて開き直してください。</div>
     </div>
 
-    <div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px">
+    ${isAdmin?`<div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px">
       <div style="font-size:12px;font-weight:700;margin-bottom:8px">🗃️ データのバックアップ・復元</div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <button class="btn btn-g" style="flex:1;height:44px;font-size:13px" onclick="exportBackup()">📥 バックアップ保存</button>
-        <button class="btn btn-g" style="flex:1;height:44px;font-size:13px" onclick="triggerImport()">📤 復元する</button>
+        <button class="btn" style="flex:1;height:44px;font-size:13px;background:var(--rl);color:var(--r);border-color:var(--r)" onclick="triggerImport()">⚠️ 復元する</button>
       </div>
       <button class="btn btn-g" style="width:100%;height:40px;font-size:12px;margin-bottom:8px" onclick="cleanupOrphanImages()">
         🧹 不要な写真データを削除（空き容量を確保）
       </button>
-      <button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:#4285F4;color:#fff;border-color:#4285F4" onclick="backupToGdrive()">
-        ☁️ バックアップ保存してGoogleドライブを開く
-      </button>
       <div style="font-size:11px;color:var(--tf);margin-top:6px;line-height:1.6">
-        ① ファイルが自動保存されます<br>
-        ② Googleドライブが開くのでファイルをアップロード<br>
-        ③ 相手はドライブからダウンロード→「復元する」で完了
+        バックアップには店舗・商品・数量・単価・年度・カテゴリーが含まれます。<br>
+        写真は端末内保存のため含まれません。保存したファイルはGoogleドライブ等へ保管してください。
       </div>
-    </div>
+    </div>`:''}
 
 
     ${isAdmin?`
@@ -2517,13 +2513,23 @@ function resetAllQtyToZero(){
 }
 
 function exportBackup(){
+  if(currentRole!=='admin'){
+    showToast('管理者だけがバックアップできます。','#E24B4A');
+    return;
+  }
   try{
-    const data={stores,allItems,nextStoreId,nextItemId,inventoryYear,categories:STORE_CATEGORIES,exportedAt:nowStr(),version:APP_VERSION};
+    const data={
+      stores,allItems,nextStoreId,nextItemId,inventoryYear,categories:STORE_CATEGORIES,
+      annualData:JSON.parse(localStorage.getItem(ANNUAL_KEY)||'{}'),
+      historyData:JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'),
+      exportedAt:nowStr(),version:APP_VERSION
+    };
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'text/plain'});
     const today=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'');
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`在庫バックアップ_${today}.txt`;
-    document.body.appendChild(a);a.click();setTimeout(()=>document.body.removeChild(a),1000);
-    showToast('✅ バックアップを保存しました！');
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`在庫バックアップ_${today}.txt`;
+    document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    showToast('✅ バックアップを保存しました（写真は含まれません）');
   }catch(err){alert('バックアップの保存に失敗しました：'+err.message);}
 }
 
@@ -2538,71 +2544,76 @@ function getDateStamp(){
   return `${y}${mm}${dd}`;
 }
 
-// ============================================================
-// Googleドライブ連携
-// ============================================================
-
-function backupToGdrive(){
-  try{
-    const data={stores,allItems,nextStoreId,nextItemId,inventoryYear,categories:STORE_CATEGORIES,exportedAt:nowStr(),version:APP_VERSION};
-    const json=JSON.stringify(data,null,2);
-    const today=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'');
-    const fileName='在庫バックアップ_'+today+'.txt';
-    const blob=new Blob([json],{type:'text/plain'});
-    // ダウンロードを確実に実行
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=fileName; a.style.display='none';
-    document.body.appendChild(a); a.click();
-    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },2000);
-    // モーダルで次のステップを案内
-    setTimeout(()=>{
-      document.getElementById('modal-content').innerHTML=`
-        <h2>☁️ Googleドライブにアップロード</h2>
-        <div style="background:var(--gl);border-radius:8px;padding:12px;margin-bottom:14px">
-          <div style="font-size:13px;font-weight:700;color:var(--gd);margin-bottom:8px">✅ 「${fileName}」を保存しました</div>
-          <div style="font-size:12px;color:var(--tx);line-height:1.9">
-            ① 下のボタンでGoogleドライブを開く<br>
-            ② 「＋新規」→「ファイルのアップロード」<br>
-            ③ ダウンロードフォルダから「${fileName}」を選択
-          </div>
-        </div>
-        <button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:#4285F4;color:#fff;border-color:#4285F4;margin-bottom:10px"
-          onclick="window.open('https://drive.google.com/drive/my-drive','_blank')">
-          ☁️ Googleドライブを開く
-        </button>
-        ${currentRole==='admin'?`
-    <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
-      <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:8px;">🗑️ 店舗を削除（管理者のみ）</div>
-      <select id="delete-store-select" style="width:100%;height:44px;border:1.5px solid var(--r);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx);margin-bottom:8px;">
-        ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
-      </select>
-      <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
-    </div>`:''}
-    <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
-      openOverlay();
-    },600);
-  }catch(e){ alert('失敗しました：'+e.message); }
-}
 function triggerImport(){
+  if(currentRole!=='admin'){
+    showToast('管理者だけが復元できます。','#E24B4A');
+    return;
+  }
   const inp=document.getElementById('global-import'); inp.value=''; inp.click();
 }
+function validateBackupData(d){
+  if(!d||!Array.isArray(d.stores)||!Array.isArray(d.allItems)||!d.stores.length){
+    return '店舗または商品データがありません。';
+  }
+  const storeIds=new Set();
+  for(const store of d.stores){
+    const id=Number(store?.id);
+    if(!Number.isFinite(id)||id<=0||typeof store?.name!=='string'||!store.name.trim()||storeIds.has(id)){
+      return '店舗データの形式が正しくありません。';
+    }
+    storeIds.add(id);
+  }
+  const itemIds=new Set();
+  for(const item of d.allItems){
+    const id=Number(item?.id),storeId=Number(item?.storeId),qty=Number(item?.qty),price=Number(item?.price);
+    if(!Number.isFinite(id)||id<=0||itemIds.has(id)||!storeIds.has(storeId)||typeof item?.name!=='string'||!item.name.trim()||!Number.isFinite(qty)||qty<0||!Number.isFinite(price)||price<0){
+      return '商品データの形式が正しくありません。';
+    }
+    itemIds.add(id);
+  }
+  if(d.inventoryYear!==undefined&&d.inventoryYear!==null&&!normalizeInventoryYear(d.inventoryYear)){
+    return '棚卸年度の形式が正しくありません。';
+  }
+  if(d.categories!==undefined&&(typeof d.categories!=='object'||Array.isArray(d.categories)||d.categories===null)){
+    return 'カテゴリーデータの形式が正しくありません。';
+  }
+  if(d.annualData!==undefined&&(typeof d.annualData!=='object'||Array.isArray(d.annualData)||d.annualData===null)){
+    return '年度別データの形式が正しくありません。';
+  }
+  if(d.historyData!==undefined&&!Array.isArray(d.historyData)){
+    return '棚卸履歴の形式が正しくありません。';
+  }
+  return '';
+}
 function importBackup(e){
+  if(currentRole!=='admin'){
+    e.target.value='';
+    showToast('管理者だけが復元できます。','#E24B4A');
+    return;
+  }
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     try{
       const d=JSON.parse(ev.target.result);
-      if(!d.stores||!d.allItems||!Array.isArray(d.stores)||!Array.isArray(d.allItems)){
-        alert('有効なバックアップファイルではありません。');return;
+      const validationError=validateBackupData(d);
+      if(validationError){
+        alert('有効なバックアップファイルではありません。\n'+validationError);return;
       }
-      if(!confirm(`バックアップ（${d.exportedAt||'日時不明'}）を復元しますか？\n現在のデータは上書きされます。`))return;
+      const password=prompt('復元には管理者パスワードが必要です。\nパスワードを入力してください。');
+      if(password===null)return;
+      if(await hashPw(password)!==await getRolePwHash()){
+        alert('管理者パスワードが違います。復元を中止しました。');return;
+      }
+      if(!confirm(`最終確認\n\nバックアップ（${d.exportedAt||'日時不明'}）を復元します。\n現在の共有データは全端末で上書きされます。\n写真は復元されません。\n\n本当に実行しますか？`))return;
 
       stores    = d.stores;
       allItems  = d.allItems.map(item=>({...item, image:''})); // 画像はIndexedDB管理のためクリア
       if(d.nextStoreId) nextStoreId=d.nextStoreId;
       inventoryYear=normalizeInventoryYear(d.inventoryYear);
       if(d.categories)  STORE_CATEGORIES=d.categories;
+      if(d.annualData) localStorage.setItem(ANNUAL_KEY,JSON.stringify(d.annualData));
+      if(d.historyData) localStorage.setItem(HISTORY_KEY,JSON.stringify(d.historyData));
 
       // nextItemId を全アイテムの最大ID+1 に設定（重複ID防止）
       const maxId = allItems.reduce((m,i)=>Math.max(m, Number(i.id)||0), 0);
@@ -2613,7 +2624,7 @@ function importBackup(e){
       if(!storeExists) currentStoreId=stores[0]?.id||1;
 
       saveData();renderTabs();render();closeModal();
-      showToast('✅ 復元が完了しました！（写真は各端末のIndexedDBに保存されます）');
+      showToast('✅ 復元が完了しました（写真は復元対象外です）');
     }catch(err){
       console.error('importBackup error', err);
       alert('ファイルの読み込みに失敗しました。JSONが破損している可能性があります。\n'+err.message);
