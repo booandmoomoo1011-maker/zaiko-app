@@ -29,9 +29,9 @@ function onOpen() {
     .createMenu('Zaikon連携')
     .addItem('① 初期設定（元シートは変更しない）', 'setupZaikonSafeSync')
     .addItem('② 連携シートへ安全同期', 'syncZaikonToStaging')
+    .addItem('③ 入力した年度で4店舗を保存', 'saveZaikonAnnualSnapshot')
     .addSeparator()
-    .addItem('1時間ごとの自動同期を開始', 'enableZaikonHourlySync')
-    .addItem('自動同期を停止', 'disableZaikonAutoSync')
+    .addItem('自動同期を停止（年1回運用）', 'disableZaikonAutoSync')
     .addToUi();
 }
 
@@ -49,15 +49,8 @@ function setupZaikonSafeSync() {
 
   const settings = getOrCreateSheet_(ss, ZAIKON_SYNC.settingsSheet);
   settings.clear();
-  settings.getRange('A1:B7').setValues([
-    ['Zaikon在庫連携', '設定値'],
-    ['モード', '安全確認（既存4シートは変更しない）'],
-    ['Firebaseプロジェクト', ZAIKON_SYNC.projectId],
-    ['Firestore保存先', ZAIKON_SYNC.documentPath],
-    ['同期先', '連携_大須／連携_那古野／連携_鉄板／連携_鎌倉'],
-    ['最終同期', '未実行'],
-    ['注意', '元シートへの書き戻し機能はありません'],
-  ]);
+  ensureSettingsLayout_(settings);
+  settings.getRange('B6:B8').setValues([['未実行'], ['未設定'], ['未保存']]);
   formatSettingsSheet_(settings);
 
   ZAIKON_SYNC.stores.forEach(store => {
@@ -95,12 +88,76 @@ function syncZaikonToStaging() {
     });
 
     const settings = ss.getSheetByName(ZAIKON_SYNC.settingsSheet);
+    ensureSettingsLayout_(settings);
     settings.getRange('B6').setValue(fetchedAt).setNumberFormat('yyyy/mm/dd hh:mm:ss');
+    settings.getRange('B7').setValue(normalizeInventoryYear_(inventory.inventoryYear) || '未設定');
     SpreadsheetApp.flush();
     ss.toast('既存4シートを変更せず、連携シートだけを更新しました。', 'Zaikon連携', 8);
+    return inventory;
   } finally {
     lock.releaseLock();
   }
+}
+
+function saveZaikonAnnualSnapshot() {
+  const ss = getZaikonSpreadsheet_();
+  const inventory = syncZaikonToStaging();
+  const year = normalizeInventoryYear_(inventory && inventory.inventoryYear);
+  if (!year) {
+    throw new Error('在庫アプリで棚卸年（西暦4桁）を入力してから実行してください。');
+  }
+
+  const targets = ZAIKON_SYNC.stores.map(store => ({
+    store,
+    name: '棚卸_' + year + '_' + store.sourceSheet,
+  }));
+  const existing = targets.filter(target => ss.getSheetByName(target.name));
+  if (existing.length) {
+    SpreadsheetApp.getUi().alert(
+      year + '年度の保存シートがすでにあります。\n\n' +
+      existing.map(target => target.name).join('\n') +
+      '\n\n前年・確定済みデータを守るため、上書きしませんでした。'
+    );
+    return;
+  }
+
+  const savedAt = new Date();
+  targets.forEach(target => {
+    const source = ss.getSheetByName(target.store.stageSheet);
+    const values = source.getDataRange().getValues();
+    const annual = ss.insertSheet(target.name);
+    if (annual.getMaxColumns() < ZAIKON_SYNC.headers.length) {
+      annual.insertColumnsAfter(
+        annual.getMaxColumns(),
+        ZAIKON_SYNC.headers.length - annual.getMaxColumns()
+      );
+    }
+    if (annual.getMaxRows() < values.length) {
+      annual.insertRowsAfter(annual.getMaxRows(), values.length - annual.getMaxRows());
+    }
+    annual.getRange(1, 1, values.length, values[0].length).setValues(values);
+    source.getDataRange().copyTo(
+      annual.getRange(1, 1, values.length, values[0].length),
+      SpreadsheetApp.CopyPasteType.PASTE_FORMAT,
+      false
+    );
+    annual.setFrozenRows(1);
+    annual.setTabColor('#BA7517');
+    const widths = [80, 190, 110, 120, 85, 75, 70, 60, 100, 100, 150, 190, 90, 150];
+    widths.forEach((width, index) => annual.setColumnWidth(index + 1, width));
+    annual.getRange('A1').setNote(
+      year + '年度の確定保存（' +
+      Utilities.formatDate(savedAt, Session.getScriptTimeZone(), 'yyyy/MM/dd HH:mm:ss') +
+      '）。このシートは自動更新されません。'
+    );
+  });
+
+  const settings = ss.getSheetByName(ZAIKON_SYNC.settingsSheet);
+  ensureSettingsLayout_(settings);
+  settings.getRange('B8').setValue(year + '年度 / ' +
+    Utilities.formatDate(savedAt, Session.getScriptTimeZone(), 'yyyy/MM/dd HH:mm:ss'));
+  SpreadsheetApp.flush();
+  ss.toast(year + '年度を4店舗分、上書きせず保存しました。', 'Zaikon年度保存', 10);
 }
 
 function enableZaikonHourlySync() {
@@ -315,9 +372,37 @@ function formatSettingsSheet_(sheet) {
     .setBackground('#1D9E75')
     .setFontColor('#FFFFFF')
     .setFontWeight('bold');
-  sheet.getRange('A2:A7').setFontWeight('bold').setBackground('#E1F5EE');
+  sheet.getRange('A2:A9').setFontWeight('bold').setBackground('#E1F5EE');
   sheet.setColumnWidth(1, 170);
   sheet.setColumnWidth(2, 430);
+}
+
+function ensureSettingsLayout_(sheet) {
+  sheet.getRange('A1:A9').setValues([
+    ['Zaikon在庫連携'],
+    ['モード'],
+    ['Firebaseプロジェクト'],
+    ['Firestore保存先'],
+    ['同期先'],
+    ['最終同期'],
+    ['アプリの棚卸年'],
+    ['最終年度保存'],
+    ['注意'],
+  ]);
+  sheet.getRange('B1:B5').setValues([
+    ['設定値'],
+    ['年1回・手動同期（既存4シートは変更しない）'],
+    [ZAIKON_SYNC.projectId],
+    [ZAIKON_SYNC.documentPath],
+    ['連携_大須／連携_那古野／連携_鉄板／連携_鎌倉'],
+  ]);
+  sheet.getRange('B9').setValue('元シートと過年度シートへの書き戻し・上書きはありません');
+  formatSettingsSheet_(sheet);
+}
+
+function normalizeInventoryYear_(value) {
+  const year = Number(value);
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
 }
 
 function getOrCreateSheet_(ss, name) {
