@@ -587,7 +587,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.6.0';
+const APP_VERSION   = '4.6.1';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -1684,7 +1684,10 @@ function inlineKeydown(e, id, field, el){
 }
 
 function undoLast(){
-  if(!_undoStack.length) return;
+  if(!_undoStack.length){
+    showToast('戻せる操作がありません。','#5B8DEF');
+    return;
+  }
   const u=_undoStack.pop();
   const item=allItems.find(i=>i.id===u.id); if(!item) return;
   // done・qty・price すべてのフィールドに対応
@@ -1729,9 +1732,9 @@ function updateUndoBtn(){
     btn.style.cursor='pointer';
   } else {
     btn.title='戻る操作がありません';
-    btn.style.opacity='0.35';
-    btn.style.pointerEvents='none';
-    btn.style.cursor='default';
+    btn.style.opacity='0.6';
+    btn.style.pointerEvents='auto';
+    btn.style.cursor='pointer';
   }
 }
 
