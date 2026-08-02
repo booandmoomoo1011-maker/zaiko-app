@@ -2454,10 +2454,11 @@ function resetAllQtyToZero(){
   const scope=document.getElementById('zero-scope')?.value||'all';
   const targetStores = scope==='all' ? stores.map(s=>s.id) : [parseInt(scope)];
   const targetNames = targetStores.map(id=>stores.find(s=>s.id===id)?.name||'').join('・');
-  const targetItems = allItems.filter(i=>targetStores.includes(i.storeId)&&isActiveItem(i)&&i.qty!==0);
+  // 数量0を入力して完了した品目も、次年度に「入力済み」が残らないよう対象に含める。
+  const targetItems = allItems.filter(i=>targetStores.includes(i.storeId)&&isActiveItem(i)&&(i.qty!==0||i.done));
 
   if(targetItems.length===0){
-    showToast('ゼロでない在庫がありません。','#E24B4A');
+    showToast('リセットする在庫・入力済み状態がありません。','#E24B4A');
     return;
   }
 
