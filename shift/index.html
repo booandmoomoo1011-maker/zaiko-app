@@ -158,6 +158,7 @@
   .cmtbox .qbtn.on-maru{background:#fef7cf; color:#7a5b00; border:2.5px solid #d4a017;}
   .cmtbox .qbtn.on-batu{background:#dcf0fa; color:#1f6f95; border:2.5px solid #2b7fa3;}
   .cmtbox .qsubmit{margin-left:auto; background:#c99a00; color:#fff; border:none; border-radius:8px; padding:6px 14px; font-weight:800; cursor:pointer; font-size:13px;}
+  .cmtbox .qclear{width:100%; margin-top:8px; background:#fff; color:#c0596b; border:1.5px solid #d9a5ae; border-radius:8px; padding:8px 12px; font-weight:800; cursor:pointer; font-size:13px;}
   .cmtbox .line.noteln{margin-top:4px;}
   .cmtbox .qbtn:disabled,.cmtbox input:disabled,.cmtbox .noteinp:disabled{opacity:.55;}
 
@@ -217,6 +218,9 @@
   .cmtmask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; z-index:70; padding:20px; overflow-y:auto; -webkit-overflow-scrolling:touch; box-sizing:border-box;}
   .cmtbox{background:#fff; border-radius:14px; max-width:340px; width:100%; padding:16px; box-sizing:border-box; margin:auto;}
   .cmtbox .ttl{font-weight:700; color:var(--pink-d); margin-bottom:8px; font-size:14px;}
+  .cmtbox .dihead{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+  .cmtbox .dihead .ttl{margin-bottom:0;}
+  .cmtbox .di-close{width:auto; margin:0; padding:6px 12px; background:#e7e7e7; color:#444; border:1px solid #d0d0d0; border-radius:8px; font-size:13px; line-height:1.2; flex:0 0 auto;}
   .cmtbox .txt{font-size:14px; line-height:1.6; white-space:pre-wrap; background:#fff8fb; border:1px solid var(--line); border-radius:8px; padding:11px;}
   .cmtbox button{margin-top:12px; width:100%; background:var(--pink); color:#fff; border:none; border-radius:8px; padding:10px; font-weight:700; cursor:pointer;}
   .segTitle{font-size:13px; font-weight:700; margin:6px 0 4px;}
@@ -484,7 +488,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.53</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.54</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -621,7 +625,7 @@
 <!-- スタッフ：1日ぶんの希望入力 -->
 <div class="cmtmask" id="diMask">
   <div class="cmtbox dibox">
-    <div class="ttl" id="diTitle"></div>
+    <div class="dihead"><div class="ttl" id="diTitle"></div><button type="button" class="di-close" id="diClose">閉じる</button></div>
     <div id="diBody"></div>
   </div>
 </div>
@@ -655,7 +659,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.53"; window.APP_UPDATED="2026-08-01";
+window.APP_VERSION="v1.54"; window.APP_UPDATED="2026-08-02";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1392,6 +1396,7 @@ function drawDayInput(){
     <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','start')}" data-seg="pm" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','end')}" data-seg="pm" data-f="end"></div>
     <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
     <div class="line qnote"><button class="qbtn ${w.allday?'on-maru':''}" data-q="maru">◎</button><button class="qbtn ${w.off?'on-batu':''}" data-q="batu">✕</button><button type="button" class="qsubmit" id="diSubmit">${(diHasInitial&&hasIn)?"変更":"決定"}</button><button type="button" class="qsubmit" id="diEdit" style="display:none;background:#5a6b7a;">変更</button></div>
+    ${hasIn?'<button type="button" class="qclear" id="diClear">この日の希望を解除</button>':''}
     <div class="line noteln"><span class="tg note">備考</span><input type="text" class="noteinp" value="${note}" placeholder=""></div>
   </div>`;
   $("#diBody").querySelectorAll('input.tinp').forEach(inp=>inp.onchange=()=>{
@@ -1413,6 +1418,13 @@ function drawDayInput(){
     else{ S.staff[me].wish[key(d)]=cur.allday?{}:{allday:true}; }
     save(); drawDayInput();
   });
+  const clearBtn=$("#diClear");
+  if(clearBtn) clearBtn.onclick=()=>{
+    delete S.staff[me].wish[key(d)];
+    save();
+    $("#diMask").style.display="none";
+    renderStaff();
+  };
   $("#diBody").querySelector('.noteinp').onchange=function(){
     if(!S.staff[me].notes) S.staff[me].notes={};
     const t=this.value.trim(); if(t) S.staff[me].notes[key(d)]=t; else delete S.staff[me].notes[key(d)];
@@ -1422,7 +1434,9 @@ function drawDayInput(){
   $("#diEdit").onclick=()=>{ diEditing=true; _diLock(false); };
   _diLock(!diEditing);
 }
-$("#diMask").onclick=e=>{ if(e.target.id==="diMask"){ $("#diMask").style.display="none"; renderStaff(); } };
+function closeDayInput(){ $("#diMask").style.display="none"; renderStaff(); }
+$("#diClose").onclick=closeDayInput;
+$("#diMask").onclick=e=>{ if(e.target.id==="diMask") closeDayInput(); };
 let raMe=null, raDay=null;
 function openReqApprove(me,d){
   raMe=me; raDay=d;
