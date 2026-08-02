@@ -587,7 +587,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.6.2';
+const APP_VERSION   = '4.7.0';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -2333,6 +2333,8 @@ function openSettings(){
         <button class="btn btn-p" style="flex:1;height:44px;font-size:13px" onclick="openAnnualModal()">📅 年度別データを見る</button>
         <button class="btn btn-g" style="flex:1;height:44px;font-size:13px" onclick="openHistoryModal()">📊 前回比を見る</button>
       </div>
+      <button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:#FF9800;color:#fff;border-color:#FF9800;margin-top:4px" onclick="startNextInventoryYear()">➡️ 翌年度を開始（単価・数量をリセット）</button>
+      <div style="font-size:11px;color:var(--tm);margin-top:7px;line-height:1.6">年度確定タブをスプレッドシートへ保存した後に使用します。商品名・仕入先／カテゴリー・単位・保管場所は残します。</div>
     </div>
     <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
       <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:6px">🔴 在庫数を全てゼロにする</div>
@@ -2512,10 +2514,57 @@ function resetAllQtyToZero(){
   showToast(`✅ ${targetItems.length}件の在庫をゼロにしました（Excel保存済み）`,'var(--r)');
 }
 
+async function startNextInventoryYear(){
+  if(currentRole!=='admin'){
+    showToast('管理者だけが翌年度を開始できます。','#E24B4A');
+    return;
+  }
+  const currentYear=requireInventoryYear();
+  if(!currentYear) return;
+  const nextYear=currentYear+1;
+  if(!normalizeInventoryYear(nextYear)){
+    alert('翌年度を設定できません。棚卸年度を確認してください。');
+    return;
+  }
+
+  const password=prompt(
+    `翌年度開始には管理者パスワードが必要です。\n\n${currentYear}年度の確定タブ（${currentYear}大須など）を、先にスプレッドシートへ保存してください。\n\nパスワードを入力してください。`
+  );
+  if(password===null) return;
+  if(await hashPw(password)!==await getRolePwHash()){
+    alert('管理者パスワードが違います。翌年度への更新を中止しました。');
+    return;
+  }
+
+  if(!confirm(
+    `最終確認\n\n${currentYear}年度から${nextYear}年度へ更新します。\n\n残すもの：\n・商品名\n・仕入先／カテゴリー\n・単位\n・店舗と商品ID\n\nリセットするもの：\n・仕入単価\n・数量\n・入力済み状態\n・更新日時\n\n${currentYear}年度の確定タブを保存済みですか？`
+  )) return;
+
+  // リセット直前の完全な文字データを端末へ保存する（写真は従来どおり端末内）。
+  if(!exportBackup()){
+    alert('安全バックアップを保存できなかったため、翌年度への更新を中止しました。');
+    return;
+  }
+  allItems.forEach(item=>{
+    item.price=0;
+    item.qty=0;
+    item.done=false;
+    item.updatedAt='';
+  });
+  inventoryYear=nextYear;
+  _undoStack=[];
+  saveData();
+  if(typeof window.flushFirestoreSave==='function') await window.flushFirestoreSave();
+  closeModal();
+  renderTabs();
+  render();
+  showToast(`✅ ${nextYear}年度を開始しました。商品情報を残し、単価・数量をリセットしました。`,'#FF9800');
+}
+
 function exportBackup(){
   if(currentRole!=='admin'){
     showToast('管理者だけがバックアップできます。','#E24B4A');
-    return;
+    return false;
   }
   try{
     const data={
@@ -2530,7 +2579,8 @@ function exportBackup(){
     const a=document.createElement('a');a.href=url;a.download=`在庫バックアップ_${today}.txt`;
     document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
     showToast('✅ バックアップを保存しました（写真は含まれません）');
-  }catch(err){alert('バックアップの保存に失敗しました：'+err.message);}
+    return true;
+  }catch(err){alert('バックアップの保存に失敗しました：'+err.message);return false;}
 }
 
 // ============================================================
