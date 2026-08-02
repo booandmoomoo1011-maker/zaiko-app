@@ -9,7 +9,7 @@
 - GitHub: `booandmoomoo1011-maker/zaiko-app`
 - 正式ブランチ: `main`
 - Vercel: `https://zaiko-app-two.vercel.app`
-- 2026-08-02時点の機能更新基準コミット: `d146b02d143f33c6c35f42c2379fef0d88385639`
+- 2026-08-02時点の機能更新基準コミット: `b9c03a7191655cf59601959d5dc2ce07bccf296e`
 - 過去のLINEプレビュー作業開始基準: `c70d595accc4fdc80bb1af78d6c5d6e2bc90b1f5`
 
 古い添付ファイルや過去チャットのコピーを直接デプロイせず、必ずGitHub `main` の現行ファイルを取得して差分を確認すること。
