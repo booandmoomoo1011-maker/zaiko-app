@@ -9,7 +9,7 @@
 - GitHub: `booandmoomoo1011-maker/zaiko-app`
 - 正式ブランチ: `main`
 - Vercel: `https://zaiko-app-two.vercel.app`
-- 2026-08-02時点の機能更新基準コミット: `7e30c8ce63dfc4725062b70b3b180080dec3542b`
+- 2026-08-02時点の機能更新基準コミット: `15881619faf32a49722b7e10eaea3de0e1b3655a`
 - 過去のLINEプレビュー作業開始基準: `c70d595accc4fdc80bb1af78d6c5d6e2bc90b1f5`
 
 古い添付ファイルや過去チャットのコピーを直接デプロイせず、必ずGitHub `main` の現行ファイルを取得して差分を確認すること。
@@ -28,12 +28,14 @@
 
 ### 在庫管理の店舗固定URL
 
-- 大須: `https://zaiko-app-two.vercel.app/inventory.html?store=osu`
-- 那古野: `https://zaiko-app-two.vercel.app/inventory.html?store=nagono`
-- 鉄板: `https://zaiko-app-two.vercel.app/inventory.html?store=teppan`
-- 鎌倉: `https://zaiko-app-two.vercel.app/inventory.html?store=kamakura`
+- 管理者（全店舗）: `https://zaiko-app-two.vercel.app/inventory.html?role=admin`
+- 大須・編集者: `https://zaiko-app-two.vercel.app/inventory.html?store=osu&role=editor`
+- 那古野・編集者: `https://zaiko-app-two.vercel.app/inventory.html?store=nagono&role=editor`
+- 鉄板・編集者: `https://zaiko-app-two.vercel.app/inventory.html?store=teppan&role=editor`
+- 鎌倉・編集者: `https://zaiko-app-two.vercel.app/inventory.html?store=kamakura&role=editor`
 
 店舗ごとにHTMLを複製せず、4 URLとも正式な `inventory.html` を使用する。固定URLでは該当店舗だけを表示し、端末側にも最後の固定店舗を記憶する。
+`role=editor` は暗証番号なしで編集者画面を開く。`role=admin` は管理者パスワード認証後だけ管理機能を表示する。画面上で役割を切り替えない。
 
 ### 携帯ホーム画面用の互換URL
 
@@ -61,7 +63,7 @@
 
 ## 4. 現在の主要アプリ最新版
 
-- 在庫管理: `v4.7.0`
+- 在庫管理: `v4.8.0`
 - シフト・スタッフ: `v1.53`
 - シフト・オーナー: `v1.63`
 
@@ -320,7 +322,7 @@
 
 ## 16. 2026-08-02対応済み: 在庫管理の年度・入力済み表示
 
-対象: `inventory.html`（現在 `v4.7.0`）
+対象: `inventory.html`（現在 `v4.8.0`）
 
 ### 対応結果
 
@@ -339,7 +341,13 @@
 - バックアップには店舗・商品・数量・単価・年度・カテゴリー・アプリ内年度別データ・履歴を含める。端末内の写真は含めない。
 - Googleドライブへの自動保存と誤解される導線、および保存後に店舗削除が表示される不要な画面を削除した。
 - 「スプレッドシートに送信」は最新データをFirestoreへ即時保存する操作。実際のシート取込はスプレッドシート側の「② 連携シートへ安全同期」で行う。
-- Firebase設定、Firestore保存先 `inventory/main`、既存商品ID、元の4店舗シート、LINE店舗固定URLは変更していない。
+- 編集者モードと年度欄の補足説明を削除し、年度と入力欄だけを簡潔に表示する。
+- 「棚卸完了」は商品一覧の操作列から設定画面へ移動し、管理者・編集者だけが実行できる。
+- カテゴリー検索、カテゴリー管理、商品追加・編集、商品候補の「閉じる／戻る」は右上へ統一する。
+- 管理者と編集者をURLで分離し、画面上の管理者・編集者・閲覧者の切替ボタンを廃止する。
+- 編集者URLは暗証番号なしで開き、管理者URLだけ管理者パスワードを要求する。旧入室パスワード・アクセスパスワードは使用しない。
+- LINE共有でコピーするURLは、現在の店舗に固定した編集者URLとする。管理者URLを誤ってスタッフへ共有しない。
+- Firebase設定、Firestore保存先 `inventory/main`、既存商品ID、元の4店舗シート、店舗を固定する `store` 値は変更していない。
 
 ### 確認結果
 
@@ -347,7 +355,7 @@
 - 同じ数量の再入力で完了になること、取り消しで元の完了状態へ戻ることを確認。
 - 年度保存は保存先の事前確認を行い、既存年度がある場合はシート作成前に中止することを確認。
 - 翌年度開始で2026から2027へ進み、単価・数量・完了状態だけが初期化され、商品名・仕入先／カテゴリー・単位が保持されることを確認。
-- `APP_VERSION` と画面表示バージョンは `4.7.0`。
+- `APP_VERSION` と画面表示バージョンは `4.8.0`。
 
 ## 17. 次のチャットへ渡す文章
 
