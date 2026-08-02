@@ -172,7 +172,7 @@
   .mine .off{color:#999;}
 
   /* 確定後カレンダー（スタッフ） */
-  .mcal{max-width:620px; margin:8px auto 60px; padding:0 8px;}
+  .mcal{max-width:620px; margin:8px auto 60px; padding:0 8px; touch-action:pan-y;}
   .mcalgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
   .mch{text-align:center; font-weight:700; font-size:12px; color:#666; padding:3px 0;}
   .mch.sun{color:var(--sun);} .mch.sat{color:var(--sat);}
@@ -488,7 +488,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.54</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.55</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -659,7 +659,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.54"; window.APP_UPDATED="2026-08-02";
+window.APP_VERSION="v1.55"; window.APP_UPDATED="2026-08-02";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1268,6 +1268,26 @@ function fillYM(){
   const ms=$("#monthSel"); ms.innerHTML=""; for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"; if(m===M)o.selected=true; ms.appendChild(o); }
 }
 function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); saveSel(); renderStaff(); }
+let staffSwipeBlockUntil=0;
+function changeStaffMonth(step){
+  const next=new Date(Y,M-1+step,1), ny=next.getFullYear(), nm=next.getMonth()+1;
+  if(ny<2026||ny>2030) return;
+  Y=ny; M=nm; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y);
+  fillYM(); saveSel(); renderStaff();
+}
+function attachStaffMonthSwipe(){
+  const cal=document.querySelector('#staffMine .mcal'); if(!cal) return;
+  let sx=0, sy=0, tracking=false;
+  cal.addEventListener('touchstart',e=>{ if(e.touches.length!==1) return; sx=e.touches[0].clientX; sy=e.touches[0].clientY; tracking=true; },{passive:true});
+  cal.addEventListener('touchend',e=>{
+    if(!tracking||!e.changedTouches.length) return; tracking=false;
+    const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)<55||Math.abs(dx)<=Math.abs(dy)*1.25) return;
+    staffSwipeBlockUntil=Date.now()+500;
+    changeStaffMonth(dx<0?1:-1);
+  },{passive:true});
+  cal.addEventListener('touchcancel',()=>{ tracking=false; },{passive:true});
+}
 function fillNames(){
   const sel=$("#who"); if(!sel || sel.tagName!=="SELECT") return;
   const store=$("#whoStore").value;
@@ -1368,8 +1388,9 @@ function renderMine(me){
   $("#staffMine").innerHTML=html;
   const _u=$("#updatedLbl"); if(_u) _u.textContent = S.updatedAt ? `更新日 ${S.updatedAt}` : "";
   $("#allMaru").onclick=()=>{ if(_locked) return; for(let d=1;d<=DAYS;d++) S.staff[me].wish[key(d)]={allday:true}; save(); renderMine(me); };
-  document.querySelectorAll('#staffMine .mcell.cclick').forEach(c=>c.onclick=()=>openDayInput(me, +c.dataset.d));
-  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); openReqApprove(me, +el.dataset.req); });
+  document.querySelectorAll('#staffMine .mcell.cclick').forEach(c=>c.onclick=()=>{ if(Date.now()<staffSwipeBlockUntil) return; openDayInput(me, +c.dataset.d); });
+  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); if(Date.now()<staffSwipeBlockUntil) return; openReqApprove(me, +el.dataset.req); });
+  attachStaffMonthSwipe();
 }
 let diMe=null, diDay=null; let diEditing=false; let diHasInitial=false;
 function openDayInput(me,d){ diMe=me; diDay=d; const _w0=S.staff[me].wish[key(d)]; diEditing=true; diHasInitial=!!(_w0&&Object.keys(_w0).length);
