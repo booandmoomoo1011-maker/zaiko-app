@@ -198,24 +198,48 @@ function readExistingMetadata_(sheet) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return {};
 
-  const width = Math.max(10, sheet.getLastColumn());
+  const width = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, width).getDisplayValues()[0];
+  const nameIndex = findHeaderIndex_(headers, ['物品名', '商品名', '品名']);
+  const locationIndex = findHeaderIndex_(headers, ['保管場所', '保存場所', '保管']);
+  const amount8Index = findHeaderIndex_(headers, ['棚卸額8%', '棚卸額8％', '8%棚卸額', '8％棚卸額']);
+  const amount10Index = findHeaderIndex_(headers, ['棚卸額10%', '棚卸額10％', '10%棚卸額', '10％棚卸額']);
+  const noteIndex = findHeaderIndex_(headers, ['備考', 'メモ']);
+  if (nameIndex < 0) return {};
+
   const rows = sheet.getRange(2, 1, lastRow - 1, width).getValues();
   const metadata = {};
   rows.forEach(row => {
-    const name = String(row[0] || '').trim();
+    const name = String(row[nameIndex] || '').trim();
     if (!name) return;
     const key = normalizeProductName_(name);
     if (!key || metadata[key]) return;
 
-    const amount8 = Number(row[6]) || 0;
-    const amount10 = Number(row[7]) || 0;
+    const amount8 = amount8Index >= 0 ? (Number(row[amount8Index]) || 0) : 0;
+    const amount10 = amount10Index >= 0 ? (Number(row[amount10Index]) || 0) : 0;
     metadata[key] = {
-      location: row[2] || '',
+      location: locationIndex >= 0 ? (row[locationIndex] || '') : '',
       taxRate: amount10 !== 0 ? 10 : (amount8 !== 0 ? 8 : ''),
-      note: row[9] || '',
+      note: noteIndex >= 0 ? (row[noteIndex] || '') : '',
     };
   });
   return metadata;
+}
+
+function findHeaderIndex_(headers, candidates) {
+  const normalized = headers.map(normalizeHeader_);
+  for (const candidate of candidates) {
+    const index = normalized.indexOf(normalizeHeader_(candidate));
+    if (index >= 0) return index;
+  }
+  return -1;
+}
+
+function normalizeHeader_(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/[\s　]+/g, '')
+    .toLowerCase();
 }
 
 function writeStageSheet_(sheet, items, metadata, fetchedAt) {
