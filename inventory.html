@@ -57,8 +57,14 @@ function firestoreComparable(data) {
     allItems: data.allItems,
     nextStoreId: data.nextStoreId,
     nextItemId: data.nextItemId,
-    categories: data.categories
+    categories: data.categories,
+    inventoryYear: data.inventoryYear
   });
+}
+
+function normalizeSyncYear(value) {
+  const year = Number(value);
+  return Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : null;
 }
 
 function syncState(data) {
@@ -67,7 +73,8 @@ function syncState(data) {
     allItems: JSON.parse(JSON.stringify(data.allItems || [])).map(i=>({...i,active:i.active!==false})),
     nextStoreId: data.nextStoreId || 5,
     nextItemId: data.nextItemId || 903,
-    categories: JSON.parse(JSON.stringify(data.categories || {}))
+    categories: JSON.parse(JSON.stringify(data.categories || {})),
+    inventoryYear: normalizeSyncYear(data.inventoryYear)
   };
 }
 
@@ -120,7 +127,8 @@ function mergeInventoryChanges(baseData, localData, remoteData) {
     allItems: mergeEntities(base.allItems, local.allItems, remote.allItems),
     nextStoreId: Math.max(remote.nextStoreId || 5, local.nextStoreId || 5),
     nextItemId: Math.max(remote.nextItemId || 903, local.nextItemId || 903),
-    categories: mergeCategories(base.categories, local.categories, remote.categories)
+    categories: mergeCategories(base.categories, local.categories, remote.categories),
+    inventoryYear: local.inventoryYear !== base.inventoryYear ? local.inventoryYear : remote.inventoryYear
   };
 }
 
@@ -130,6 +138,7 @@ function applySyncState(data) {
   window._appNextStoreId = data.nextStoreId || 5;
   window._appNextItemId = data.nextItemId || 903;
   window._appStoreCategories = data.categories || {};
+  window._appInventoryYear = normalizeSyncYear(data.inventoryYear);
 }
 
 function localSavedTime() {
@@ -156,12 +165,13 @@ async function performFirestoreSave() {
       allItems: window._appAllItems.map(i => ({...i, image: ''})), // 画像は除外
       nextStoreId: window._appNextStoreId,
       nextItemId: window._appNextItemId,
-      categories: window._appStoreCategories
+      categories: window._appStoreCategories,
+      inventoryYear: window._appInventoryYear
     });
     const comparable = firestoreComparable(submitted);
     if (comparable === _lastSyncData) {
       if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド保存済み');
-      return;
+      return true;
     }
 
     const ref = doc(db, 'inventory', 'main');
@@ -180,7 +190,8 @@ async function performFirestoreSave() {
       allItems: window._appAllItems.map(i => ({...i, image: ''})),
       nextStoreId: window._appNextStoreId,
       nextItemId: window._appNextItemId,
-      categories: window._appStoreCategories
+      categories: window._appStoreCategories,
+      inventoryYear: window._appInventoryYear
     });
     const resolvedLocal = mergeInventoryChanges(submitted, latestLocal, merged);
     _lastCloudData = syncState(merged);
@@ -189,12 +200,14 @@ async function performFirestoreSave() {
     if (typeof saveData === 'function') saveData({ skipFirestore: true });
     if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド保存済み');
     console.log('Firestore保存完了');
+    return true;
   } catch(e) {
     console.warn('Firestore保存エラー:', e);
     if (typeof window.setSaveStatus === 'function') {
       window.setSaveStatus(navigator.onLine ? 'error' : 'offline', navigator.onLine ? 'クラウド保存失敗' : 'オフライン・端末保存済み');
     }
     // オフライン時もlocalStorageに保存済みなので問題なし
+    return false;
   } finally {
     _isSyncing = false;
     if (_saveQueued) {
@@ -326,10 +339,24 @@ function shareToLine(){
     prompt('このURLをコピーしてLINEで送ってください', url);
   });
 }
+
+// Apps ScriptはFirestoreの保存データを読み込むため、まずクラウドへ確実に保存する。
+// 年1回の確定保存はスプレッドシート側の「Zaikon連携」メニューから実行する。
+async function sendToSpreadsheet(){
+  const year=typeof requireInventoryYear==='function'?requireInventoryYear():null;
+  if(!year) return;
+  try{
+    const saved=typeof window.flushFirestoreSave==='function'?await window.flushFirestoreSave():false;
+    if(saved===false) throw new Error('cloud save failed');
+    alert(`${year}年度の最新データを送信用に保存しました。\n\nスプレッドシートを開き、\n「Zaikon連携」→「② 連携シートへ安全同期」\nを押すと取り込めます。`);
+  }catch(e){
+    alert('送信用データの保存に失敗しました。通信状態を確認して、もう一度お試しください。');
+  }
+}
 </script>
 <style>
-:root{--g:#1D9E75;--gd:#0F6E56;--gl:#E1F5EE;--r:#E24B4A;--rl:#FCEBEB;--a:#BA7517;--al:#FAEEDA;--p:#534AB7;--pl:#EEEDFE;--gr:#5F5E5A;--grl:#F1EFE8;--bg:#F7F6F3;--sf:#FFF;--bd:rgba(0,0,0,0.1);--bds:rgba(0,0,0,0.18);--tx:#1a1a18;--tm:#6b6a66;--tf:#9e9c97;--ra:12px;--rs:8px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);--shm:0 4px 12px rgba(0,0,0,.1),0 2px 4px rgba(0,0,0,.06)}
-@media(prefers-color-scheme:dark){:root{--bg:#1a1a18;--sf:#242422;--bd:rgba(255,255,255,.1);--bds:rgba(255,255,255,.18);--tx:#f0efeb;--tm:#9e9c97;--tf:#6b6a66;--gl:#042C53;--rl:#501313;--al:#412402;--pl:#26215C;--grl:#2C2C2A}}
+:root{--g:#1D9E75;--gd:#0F6E56;--gl:#E1F5EE;--r:#E24B4A;--rl:#FCEBEB;--a:#BA7517;--al:#FAEEDA;--p:#534AB7;--pl:#EEEDFE;--gr:#5F5E5A;--grl:#F1EFE8;--done-bg:#ECEBE7;--done-bd:#C8C7C2;--bg:#F7F6F3;--sf:#FFF;--bd:rgba(0,0,0,0.1);--bds:rgba(0,0,0,0.18);--tx:#1a1a18;--tm:#6b6a66;--tf:#9e9c97;--ra:12px;--rs:8px;--sh:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);--shm:0 4px 12px rgba(0,0,0,.1),0 2px 4px rgba(0,0,0,.06)}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1a18;--sf:#242422;--bd:rgba(255,255,255,.1);--bds:rgba(255,255,255,.18);--tx:#f0efeb;--tm:#9e9c97;--tf:#6b6a66;--gl:#042C53;--rl:#501313;--al:#412402;--pl:#26215C;--grl:#2C2C2A;--done-bg:#343432;--done-bd:#575653}}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
 .app{display:flex;flex-direction:column;min-height:100vh;max-width:900px;margin:0 auto}
@@ -418,7 +445,8 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .tbl-wrap th.r{text-align:right}.tbl-wrap td{font-size:13px;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:middle}
 .tbl-wrap td.r{text-align:right}.tbl-wrap tr:last-child td{border-bottom:none}.tbl-wrap tr:hover td{background:var(--bg)}
 .tbl-wrap .total-row td{font-weight:700;background:var(--bg)}.tlabel{font-size:11px;color:var(--tf)}
-.tbl-wrap tr.done-row td{background:var(--al);opacity:.85}.tbl-wrap tr.done-row:hover td{background:var(--al)}
+.card.done-card{background:var(--done-bg);border:1.5px solid var(--done-bd);opacity:.88}
+.tbl-wrap tr.done-row td{background:var(--done-bg);opacity:.88}.tbl-wrap tr.done-row:hover td{background:var(--done-bg)}
 .empty{text-align:center;padding:48px 20px;color:var(--tf)}.empty-icon{font-size:48px;margin-bottom:16px}
 .empty p{font-size:14px;line-height:1.7}
 .empty-btn{display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:12px 24px;background:var(--g);color:#fff;border:none;border-radius:var(--ra);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -516,6 +544,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
   <div class="store-bar"><div class="store-tabs" id="store-tabs"></div></div>
   <div class="main">
     <div id="notice-area"></div>
+    <div id="inventory-year-area"></div>
     <div id="all-stores-total-area"></div>
     <div class="stats" id="stats"></div>
     <div class="toolbar">
@@ -558,7 +587,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.5.0';
+const APP_VERSION   = '4.6.0';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -709,6 +738,7 @@ let currentRole    = 'editor';
 let currentStoreId = 1;
 let nextStoreId    = 5;
 let nextItemId     = NEXT_ITEM_ID;
+let inventoryYear  = null;
 let editingItem    = null;
 let pendingImage   = null;
 let _lastCat       = null;
@@ -728,6 +758,7 @@ Object.defineProperties(window, {
   _appNextItemId:      { get: ()=>nextItemId,        set: v=>{ nextItemId=v; },        configurable:true },
   _appStoreCategories: { get: ()=>STORE_CATEGORIES,  set: v=>{ STORE_CATEGORIES=v; },  configurable:true },
   _appCurrentStoreId:  { get: ()=>currentStoreId,    set: v=>{ currentStoreId=v; },    configurable:true },
+  _appInventoryYear:   { get: ()=>inventoryYear,     set: v=>{ inventoryYear=normalizeInventoryYear(v); }, configurable:true },
 });
 
 // ============================================================
@@ -753,6 +784,41 @@ function normalizeProductName(name){
   return String(name||'').normalize('NFKC').replace(/[\s　]+/g,'').toLowerCase();
 }
 function masterGroupStoreIds(storeId){ return storeId===4?[4]:[1,2,3]; }
+function normalizeInventoryYear(value){
+  const year=Number(value);
+  return Number.isInteger(year)&&year>=2000&&year<=2100?year:null;
+}
+function requireInventoryYear(){
+  const year=normalizeInventoryYear(inventoryYear);
+  if(year) return year;
+  alert('棚卸年を西暦4桁で入力してください。（例：2026）');
+  document.getElementById('inventory-year-input')?.focus();
+  return null;
+}
+function saveInventoryYear(value){
+  const year=normalizeInventoryYear(value);
+  if(!year){
+    inventoryYear=null;
+    saveData();
+    renderInventoryYear();
+    showToast('棚卸年を西暦4桁で入力してください。','#E24B4A');
+    return;
+  }
+  inventoryYear=year;
+  saveData();
+  renderInventoryYear();
+  showToast(`✅ 棚卸年を${year}年度に設定しました`);
+}
+function renderInventoryYear(){
+  const area=document.getElementById('inventory-year-area');
+  if(!area) return;
+  const canEdit=ROLES[currentRole].canEdit;
+  const valid=normalizeInventoryYear(inventoryYear);
+  area.innerHTML=`<div style="background:${valid?'var(--gl)':'var(--rl)'};border:1.5px solid ${valid?'var(--g)':'var(--r)'};border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div><div style="font-size:16px;font-weight:900;color:${valid?'var(--gd)':'var(--r)'}">📅 ${valid?`${valid}年 棚卸`:'年度未設定'}</div><div style="font-size:11px;color:var(--tm);margin-top:2px">西暦・必須／全店舗と年度別スプレッドシートに共通</div></div>
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0"><input id="inventory-year-input" type="number" min="2000" max="2100" step="1" inputmode="numeric" placeholder="2026" value="${valid||''}" ${canEdit?'':'disabled'} onchange="saveInventoryYear(this.value)" style="width:92px;height:40px;border:2px solid ${valid?'var(--g)':'var(--r)'};border-radius:var(--rs);padding:0 8px;background:var(--sf);color:var(--tx);font-size:17px;font-weight:800;text-align:center"><span style="font-size:13px;font-weight:700">年度</span></div>
+  </div>`;
+}
 function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
@@ -928,7 +994,7 @@ function showToast(msg,color='#1D9E75'){
 function saveData(options={}){
   try{
     // 画像はIndexedDBで管理するのでlocalStorageには保存しない
-    const noImg={stores,allItems:allItems.map(i=>({...i,image:''})),nextStoreId,nextItemId,currentStoreId,currentRole,savedAt:new Date().toISOString()};
+    const noImg={stores,allItems:allItems.map(i=>({...i,image:''})),nextStoreId,nextItemId,currentStoreId,currentRole,inventoryYear,savedAt:new Date().toISOString()};
     const p=JSON.stringify(noImg);
 
     // ── 容量チェック（推定サイズが4.5MB超なら警告） ──
@@ -1006,6 +1072,7 @@ function loadData(){
       nextStoreId    = d.nextStoreId    || 5;
       nextItemId     = d.nextItemId     || NEXT_ITEM_ID;
       currentStoreId = d.currentStoreId || 1;
+      inventoryYear  = normalizeInventoryYear(d.inventoryYear);
       // ロールはsessionStorageで管理（localStorage改ざん防止）
       // ページリロード時はsessionStorageから復元、なければeditorに固定
       const sessionRole = sessionStorage.getItem('currentRole');
@@ -1092,6 +1159,7 @@ function applyRoleUI(){
   if(currentRole==='viewer') na.innerHTML=`<div class="notice viewer">👁 閲覧専用モード。追加・編集・削除・金額表示不可。</div>`;
   else if(currentRole==='editor') na.innerHTML=`<div class="notice editor">✏️ 編集者モード。追加・編集・仕入単価の入力が可能。在庫総額・Excel出力は管理者のみ。</div>`;
   else na.innerHTML='';
+  renderInventoryYear();
   updateAllStoresTotal();
 }
 
@@ -1225,12 +1293,14 @@ function updateStats(){
 const ANNUAL_KEY = 'zaikoApp_annual'; // 年度別棚卸データ
 
 function completeInventory(){
+  const year=requireInventoryYear();
+  if(!year) return;
   const storeName = stores.find(s=>s.id===currentStoreId)?.name||'';
-  const fiscal = getFiscalLabel().split('_')[0]; // 例: 2027年3月期
+  const fiscal = `${year}年度`;
   if(!confirm(storeName+'の棚卸を完了してExcelに保存しますか？\n\n年度: '+fiscal)){return;}
 
   // 1. Excelを自動出力
-  doExport(currentStoreId);
+  if(!doExport(currentStoreId)) return;
 
   // 2. 年度別データに保存
   try{
@@ -1536,18 +1606,40 @@ function updateAllStoresTotal(){
 function inlineUpdate(id,field,val){
   const item=allItems.find(i=>i.id===id); if(!item) return;
   const num=parseFloat(val); if(isNaN(num)||num<0) return;
-  if(item[field]===num) return;
+  const marksComplete=field==='qty';
+  if(item[field]===num && !(marksComplete&&!item.done)) return;
   // Undo用に変更前の状態を記録
-  _undoStack.push({id,field,prev:item[field],next:num,name:item.name});
+  _undoStack.push({id,field,prev:item[field],next:num,name:item.name,donePrev:!!item.done});
   if(_undoStack.length>20) _undoStack.shift(); // 最大20件
   updateUndoBtn();
-  item[field]=num; item.updatedAt=nowStr(); saveData();
+  item[field]=num;
+  if(marksComplete) item.done=true;
+  item.updatedAt=nowStr(); saveData();
   const el=document.getElementById(`val-${id}`); if(el) el.textContent=yen(item.qty*item.price);
   const elc=document.getElementById(`cval-${id}`); if(elc) elc.textContent=yen(item.qty*item.price);
   updateStats();
   updateAllStoresTotal();
+  applyInputCompleteVisual(id);
   // Undoボタンをrender後に再適用（DOMが残っている場合も確実に有効化）
   updateUndoBtn();
+}
+
+function applyInputCompleteVisual(id){
+  const card=document.querySelector(`.card[data-item-id="${id}"]`);
+  if(card) card.classList.add('done-card');
+  const row=document.querySelector(`tr[data-item-id="${id}"]`);
+  if(row) row.classList.add('done-row');
+  document.querySelectorAll(`[data-status-id="${id}"]`).forEach(status=>{
+    status.textContent='✅ 入力済み';
+    status.style.background='var(--done-bd)';
+    status.style.color='var(--gr)';
+  });
+  document.querySelectorAll(`[data-done-action-id="${id}"]`).forEach(button=>{
+    button.textContent=button.closest('tr')?'↩':'↩ 戻す';
+    button.style.background='var(--sf)';
+    button.style.color='var(--g)';
+    button.style.borderColor='var(--g)';
+  });
 }
 
 function inlineKeydown(e, id, field, el){
@@ -1560,17 +1652,20 @@ function inlineKeydown(e, id, field, el){
   const item = allItems.find(i=>i.id===id);
   if(item){
     const num = parseFloat(el.value);
-    if(!isNaN(num) && num >= 0 && item[field] !== num){
-      _undoStack.push({id, field, prev:item[field], next:num, name:item.name});
+    const marksComplete=field==='qty';
+    if(!isNaN(num) && num >= 0 && (item[field] !== num || (marksComplete&&!item.done))){
+      _undoStack.push({id, field, prev:item[field], next:num, name:item.name, donePrev:!!item.done});
       if(_undoStack.length>20) _undoStack.shift();
       updateUndoBtn();
-      item[field] = num; item.updatedAt = nowStr(); saveData();
+      item[field] = num;
+      if(marksComplete) item.done=true;
+      item.updatedAt = nowStr(); saveData();
       const valEl = document.getElementById(`val-${id}`);
       if(valEl) valEl.textContent = yen(item.qty*item.price);
       const cvalEl = document.getElementById(`cval-${id}`);
       if(cvalEl) cvalEl.textContent = yen(item.qty*item.price);
       updateStats(); updateAllStoresTotal();
-      // 入力済み行をテーブル末尾（合計行の前）に移動＆薄黄色に
+      // 入力済み行をテーブル末尾（合計行の前）に移動＆薄グレーに
       const tbody = document.getElementById('tbody');
       if(tbody){
         const row = el.closest('tr');
@@ -1598,6 +1693,7 @@ function undoLast(){
     item.done=false;
   } else {
     item[u.field]=u.prev;
+    if(Object.prototype.hasOwnProperty.call(u,'donePrev')) item.done=u.donePrev;
   }
   // 戻した商品を一番上に表示するため updatedAt を現在時刻に
   item.updatedAt=nowStr();
@@ -1644,6 +1740,7 @@ function updateUndoBtn(){
 // ============================================================
 function render(){
   const r=ROLES[currentRole];
+  renderInventoryYear();
   const cats=getCategories();
   // カテゴリー選択値を取得（カスタムドロップダウン対応）
   const cur=_selectedCat||'';
@@ -1680,10 +1777,9 @@ function render(){
       const isOut=i.qty===0;
       const isDone=!!i.done;
       const badge=isDone
-        ?`<span class="badge" style="background:var(--pl);color:var(--p)">✅ 完了</span>`
-        :isOut?`<span class="badge out">在庫切れ</span>`:`<span class="badge ok">在庫あり</span>`;
+        ?`<span class="badge" data-status-id="${i.id}" style="background:var(--done-bd);color:var(--gr)">✅ 入力済み</span>`
+        :isOut?`<span class="badge out" data-status-id="${i.id}">在庫切れ</span>`:`<span class="badge ok" data-status-id="${i.id}">在庫あり</span>`;
       const th=`<div class="thumb-ph" id="thumb-c-${i.id}" onclick="openLightbox('${i.id}')" style="cursor:pointer">📦</div>`;
-      const cardStyle=isDone?`style="background:var(--al);border:1.5px solid var(--a)"`:'';
       const qtyF=r.canEdit
         ?`<div class="cf"><div class="cf-label">在庫数</div><input class="cf-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.qty}" onblur="inlineUpdate(${i.id},'qty',this.value)" onfocus="this.select()"><span style="font-size:12px;color:var(--tm);margin-top:2px">${i.unit}</span></div>`
         :`<div class="cf"><div class="cf-label">在庫数</div><div class="cf-value">${fmt(i.qty)} ${esc(i.unit)}</div></div>`;
@@ -1693,11 +1789,11 @@ function render(){
       const valF=r.seePrice?`<div class="cf"><div class="cf-label">在庫金額</div><div style="font-size:12px;font-weight:600;color:var(--g)" id="cval-${i.id}">${yen(i.qty*i.price)}</div></div>`:'';
       const doneBtn=r.canEdit
         ? isDone
-          ? `<button class="btn-sm" onclick="toggleDone(${i.id})" style="color:var(--g);border-color:var(--g)">↩ 戻す</button>`
-          : `<button class="btn-sm" onclick="toggleDone(${i.id})" style="background:var(--pl);color:var(--p);border-color:var(--p)">✅ 完了</button>`
+          ? `<button class="btn-sm" data-done-action-id="${i.id}" onclick="toggleDone(${i.id})" style="color:var(--g);border-color:var(--g)">↩ 戻す</button>`
+          : `<button class="btn-sm" data-done-action-id="${i.id}" onclick="toggleDone(${i.id})" style="background:var(--pl);color:var(--p);border-color:var(--p)">✅ 完了</button>`
         : '';
       const act=(r.canEdit||r.canDelete)?`<div style="display:flex;gap:6px;flex-wrap:wrap">${doneBtn}${r.canEdit?`<button class="btn-sm" onclick="openItemModal(${i.id})">✏️ 編集</button>`:''}${r.canDelete?`<button class="btn-sm danger" onclick="deleteItem(${i.id})">🗑</button>`:''}</div>`:'';
-      return`<div class="card" ${cardStyle}><div class="card-hdr"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">${th}<div style="min-width:0"><div style="font-weight:700;font-size:15px">${esc(i.name)}</div><div style="font-size:12px;color:var(--tm)">${esc(i.cat)}</div></div></div>${badge}</div><div class="card-body">${qtyF}${priceF}${valF}</div><div class="card-ftr"><span class="tlabel">🕐 ${esc(i.updatedAt)}</span>${act}</div></div>`;
+      return`<div class="card${isDone?' done-card':''}" data-item-id="${i.id}"><div class="card-hdr"><div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">${th}<div style="min-width:0"><div style="font-weight:700;font-size:15px">${esc(i.name)}</div><div style="font-size:12px;color:var(--tm)">${esc(i.cat)}</div></div></div>${badge}</div><div class="card-body">${qtyF}${priceF}${valF}</div><div class="card-ftr"><span class="tlabel">🕐 ${esc(i.updatedAt)}</span>${act}</div></div>`;
     }).join('');
     // カード画像を非同期でIndexedDBから取得
     filtered.forEach(i=>{
@@ -1717,20 +1813,19 @@ function render(){
     const isOut=i.qty===0;
     const isDone=!!i.done;
     const badge=isDone
-      ?`<span class="badge" style="background:var(--pl);color:var(--p)">✅ 完了</span>`
-      :isOut?`<span class="badge out">在庫切れ</span>`:`<span class="badge ok">在庫あり</span>`;
-    const rowStyle=isDone?` style="background:var(--al)"`:'';
+      ?`<span class="badge" data-status-id="${i.id}" style="background:var(--done-bd);color:var(--gr)">✅ 入力済み</span>`
+      :isOut?`<span class="badge out" data-status-id="${i.id}">在庫切れ</span>`:`<span class="badge ok" data-status-id="${i.id}">在庫あり</span>`;
     const th=`<span class="thumb-sph" id="thumb-t-${i.id}" style="margin-right:8px;cursor:pointer" onclick="openLightbox('${i.id}')">📦</span>`;
     const qtyTd=r.canEdit?`<td class="r"><input class="inline-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.qty}" data-id="${i.id}" data-field="qty" onblur="inlineUpdate(${i.id},'qty',this.value)" onkeydown="inlineKeydown(event,${i.id},'qty',this)" onfocus="this.select()"></td>`:`<td class="r" style="font-weight:700">${fmt(i.qty)}</td>`;
     const priceTd=r.seePrice&&r.canEdit?`<td class="r"><input class="inline-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.price}" data-id="${i.id}" data-field="price" onblur="inlineUpdate(${i.id},'price',this.value)" onkeydown="inlineKeydown(event,${i.id},'price',this)" onfocus="this.select()"></td>`:r.seePrice?`<td class="r">${yen(i.price)}</td>`:`<td style="display:none"></td>`;
     const valTd=r.seePrice?`<td class="r" style="font-weight:700;color:var(--g)" id="val-${i.id}">${yen(i.qty*i.price)}</td>`:`<td style="display:none"></td>`;
     const doneBtn=r.canEdit
       ? isDone
-        ? `<button class="btn-sm" onclick="toggleDone(${i.id})" style="color:var(--g);border-color:var(--g)">↩</button>`
-        : `<button class="btn-sm" onclick="toggleDone(${i.id})" style="background:var(--pl);color:var(--p);border-color:var(--p)">✅</button>`
+        ? `<button class="btn-sm" data-done-action-id="${i.id}" onclick="toggleDone(${i.id})" style="color:var(--g);border-color:var(--g)">↩</button>`
+        : `<button class="btn-sm" data-done-action-id="${i.id}" onclick="toggleDone(${i.id})" style="background:var(--pl);color:var(--p);border-color:var(--p)">✅</button>`
       : '';
     const ac=(r.canEdit||r.canDelete)?`<td style="text-align:right;white-space:nowrap">${doneBtn}${r.canEdit?`<button class="btn-sm" onclick="openItemModal(${i.id})" style="margin-left:4px">✏️</button>`:''}${r.canDelete?`<button class="btn-sm danger" onclick="deleteItem(${i.id})" style="margin-left:4px">🗑</button>`:''}</td>`:`<td></td>`;
-    return`<tr${rowStyle}><td style="font-weight:700"><div style="display:flex;align-items:center">${th}${esc(i.name)}</div></td><td style="color:var(--tm)">${esc(i.cat)}</td>${qtyTd}<td style="color:var(--tm)">${esc(i.unit)}</td>${priceTd}${valTd}<td>${badge}</td><td class="tlabel">${esc(i.updatedAt)}</td>${ac}</tr>`;
+    return`<tr${isDone?' class="done-row"':''} data-item-id="${i.id}"><td style="font-weight:700"><div style="display:flex;align-items:center">${th}${esc(i.name)}</div></td><td style="color:var(--tm)">${esc(i.cat)}</td>${qtyTd}<td style="color:var(--tm)">${esc(i.unit)}</td>${priceTd}${valTd}<td>${badge}</td><td class="tlabel">${esc(i.updatedAt)}</td>${ac}</tr>`;
   }).join('');
   const trow=filtered.length&&r.seeTotal?`<tr class="total-row"><td colspan="5" style="color:var(--tm)">合計（${filtered.length}品）</td><td class="r" style="color:var(--g)">${yen(totalVal)}</td><td colspan="3"></td></tr>`:'';
   const emptyTd = si.length===0
@@ -2141,6 +2236,8 @@ function openExportModal(){
   openOverlay();
 }
 function doExport(scope){
+  const year=requireInventoryYear();
+  if(!year) return false;
   if(scope===undefined) scope='all';
   const wb=XLSX.utils.book_new();
   const headers=['商品名','カテゴリ','現在庫','単位','仕入れ単価（円）','在庫金額（円）','状態','登録日時','更新日時'];
@@ -2161,7 +2258,8 @@ function doExport(scope){
     const ws=XLSX.utils.aoa_to_sheet([headers,...buildRows(sid)]);ws['!cols']=cols;
     XLSX.utils.book_append_sheet(wb,ws,s?.name||'在庫');
   }
-  XLSX.writeFile(wb,`在庫管理_${getFiscalLabel()}.xlsx`);closeModal();
+  XLSX.writeFile(wb,`在庫管理_${year}年度_${getDateStamp()}.xlsx`);closeModal();
+  return true;
 }
 
 // ============================================================
@@ -2196,6 +2294,14 @@ function openSettings(){
       <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;">現在の店舗に固定されたURLをコピーして共有します。</div>
       <button onclick="shareToLine()" style="width:100%;height:48px;background:#06C755;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">📤 LINEで共有する</button>
     </div>
+    <div style="background:#EAF2FF;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #4285F4;">
+      <div style="font-size:12px;font-weight:700;color:#2563B9;margin-bottom:4px;">📊 スプレッドシート連携</div>
+      <div style="font-size:11px;color:#315F9B;margin-bottom:8px;">最新データを送信用にクラウドへ保存します。</div>
+      <button onclick="sendToSpreadsheet()" style="width:100%;height:48px;background:#4285F4;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">📤 スプレッドシートに送信</button>
+    </div>
+    <details style="margin-bottom:14px">
+      <summary style="cursor:pointer;padding:12px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--tm)">詳細設定を開く</summary>
+      <div style="padding-top:12px">
     <div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px">
       <div style="font-size:11px;color:var(--tf);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">バージョン</div>
       <div style="font-size:16px;font-weight:700;color:var(--g)">v${APP_VERSION}</div>
@@ -2270,6 +2376,8 @@ function openSettings(){
       </select>
       <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
     </div>`:''}
+      </div>
+    </details>
     <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
   openOverlay();
 }
@@ -2341,6 +2449,8 @@ async function saveRolePw(){
 }
 
 function resetAllQtyToZero(){
+  const year=requireInventoryYear();
+  if(!year) return;
   const scope=document.getElementById('zero-scope')?.value||'all';
   const targetStores = scope==='all' ? stores.map(s=>s.id) : [parseInt(scope)];
   const targetNames = targetStores.map(id=>stores.find(s=>s.id===id)?.name||'').join('・');
@@ -2385,7 +2495,7 @@ function resetAllQtyToZero(){
     }
 
     const time=new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}).replace(/:/g,'');
-    XLSX.writeFile(wb,`在庫ゼロリセット前_${getFiscalLabel()}_${time}.xlsx`);
+    XLSX.writeFile(wb,`在庫ゼロリセット前_${year}年度_${getDateStamp()}_${time}.xlsx`);
   }catch(e){
     alert('Excelの保存に失敗しました：'+e.message+'\n\n在庫ゼロリセットを中止します。');
     return;
@@ -2393,7 +2503,7 @@ function resetAllQtyToZero(){
 
   // ② ゼロリセット実行
   const resetNow=nowStr();
-  targetItems.forEach(i=>{ i.qty=0; i.updatedAt=resetNow; });
+  targetItems.forEach(i=>{ i.qty=0; i.done=false; i.updatedAt=resetNow; });
   saveData();
   closeModal();
   render();
@@ -2404,7 +2514,7 @@ function resetAllQtyToZero(){
 
 function exportBackup(){
   try{
-    const data={stores,allItems,nextStoreId,nextItemId,categories:STORE_CATEGORIES,exportedAt:nowStr(),version:APP_VERSION};
+    const data={stores,allItems,nextStoreId,nextItemId,inventoryYear,categories:STORE_CATEGORIES,exportedAt:nowStr(),version:APP_VERSION};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'text/plain'});
     const today=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'');
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`在庫バックアップ_${today}.txt`;
@@ -2416,15 +2526,12 @@ function exportBackup(){
 // ============================================================
 // 決算期ファイル名生成
 // ============================================================
-function getFiscalLabel(){
+function getDateStamp(){
   const now = new Date();
   const y = now.getFullYear();
-  const m = now.getMonth() + 1; // 1-12
-  // 4月〜12月 → 翌年3月期　/ 1月〜3月 → 当年3月期
-  const fiscalYear = m >= 4 ? y + 1 : y;
   const mm = String(now.getMonth() + 1).padStart(2,'0');
   const dd = String(now.getDate()).padStart(2,'0');
-  return `${fiscalYear}年3月期_${y}${mm}${dd}`;
+  return `${y}${mm}${dd}`;
 }
 
 // ============================================================
@@ -2433,7 +2540,7 @@ function getFiscalLabel(){
 
 function backupToGdrive(){
   try{
-    const data={stores,allItems,nextStoreId,nextItemId,categories:STORE_CATEGORIES,exportedAt:nowStr(),version:APP_VERSION};
+    const data={stores,allItems,nextStoreId,nextItemId,inventoryYear,categories:STORE_CATEGORIES,exportedAt:nowStr(),version:APP_VERSION};
     const json=JSON.stringify(data,null,2);
     const today=new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'');
     const fileName='在庫バックアップ_'+today+'.txt';
@@ -2490,6 +2597,7 @@ function importBackup(e){
       stores    = d.stores;
       allItems  = d.allItems.map(item=>({...item, image:''})); // 画像はIndexedDB管理のためクリア
       if(d.nextStoreId) nextStoreId=d.nextStoreId;
+      inventoryYear=normalizeInventoryYear(d.inventoryYear);
       if(d.categories)  STORE_CATEGORIES=d.categories;
 
       // nextItemId を全アイテムの最大ID+1 に設定（重複ID防止）
