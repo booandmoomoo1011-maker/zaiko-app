@@ -331,7 +331,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 // LINEで共有
 function shareToLine(){
   const storeAlias={1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[window._appCurrentStoreId]||'osu';
-  const url = 'https://zaiko-app-two.vercel.app/inventory.html?store='+storeAlias;
+  const url = 'https://zaiko-app-two.vercel.app/inventory.html?store='+storeAlias+'&role=editor';
   // クリップボードにコピー
   navigator.clipboard.writeText(url).then(()=>{
     alert('URLをコピーしました！\nLINEのトーク画面に貼り付けて送ってください。\n\n' + url);
@@ -365,7 +365,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .hdr-title{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .hdr-icon{width:28px;height:28px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hdr-ctrl{display:flex;align-items:center;gap:4px;flex:1}
-.role-pill{display:inline-flex;align-items:center;justify-content:center;gap:3px;height:40px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid transparent;white-space:nowrap;flex:1;min-width:0;padding:0 4px}
+.role-pill{display:inline-flex;align-items:center;justify-content:center;gap:3px;height:40px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid transparent;white-space:nowrap;min-width:78px;padding:0 8px}
 .role-pill.admin{background:var(--pl);color:var(--p);border-color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd);border-color:var(--gd)}.role-pill.viewer{background:var(--grl);color:var(--gr);border-color:var(--gr)}
 .role-pill.inactive{opacity:0.28;filter:grayscale(0.5)}
 .save-status{position:fixed;left:12px;bottom:12px;z-index:8500;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 11px;border-radius:16px;background:var(--sf);color:var(--tm);border:1px solid var(--bd);box-shadow:var(--sh);font-size:11px;font-weight:700;pointer-events:none;transition:background .2s,color .2s,border-color .2s}
@@ -533,9 +533,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
         </div>
       </div>
       <div class="hdr-ctrl">
-        <button class="role-pill admin" id="role-btn-admin" onclick="switchRole('admin')">🛡 管理者</button>
-        <button class="role-pill editor" id="role-btn-editor" onclick="switchRole('editor')">✏️ 編集者</button>
-        <button class="role-pill viewer" id="role-btn-viewer" onclick="switchRole('viewer')">👁 閲覧者</button>
+        <span class="role-pill editor" id="role-mode-label">✏️ 編集者</span>
         <button id="undo-btn" class="btn-sm" style="width:40px;height:40px;padding:0;justify-content:center;font-size:20px;opacity:0.35;flex-shrink:0" title="">↩️</button>
         <button class="btn-sm" onclick="openSettings()" style="width:40px;height:40px;padding:0;justify-content:center;font-size:20px;color:#fff;background:#555;border-color:#444;flex-shrink:0">⚙️</button>
       </div>
@@ -554,7 +552,6 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
       </div>
       <div class="toolbar-row">
         <button class="btn btn-p" id="btn-add" onclick="openItemModal()" style="flex:1;height:46px;font-size:15px;font-weight:700">＋ 追加</button>
-        <button class="btn" id="btn-complete" onclick="completeInventory()" style="flex:1;background:#FF9800;color:#fff;border-color:#FF9800;height:46px;font-size:14px;font-weight:700">✅ 棚卸完了</button>
         <button class="btn btn-g" id="btn-cat" onclick="openCatModal()" style="height:46px;font-size:18px;flex-shrink:0" title="カテゴリー管理">🏷</button>
         <button class="btn btn-g" id="btn-export" onclick="openExportModal()" style="height:46px;font-size:18px;flex-shrink:0" title="Excel出力">📊</button>
       </div>
@@ -587,16 +584,14 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.7.0';
+const APP_VERSION   = '4.8.0';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
 const VERSION_KEY   = 'zaikoApp_version';
 const DATA_VER_KEY  = 'zaikoApp_dataVer';
 const ROLE_PW_KEY   = 'zaikoApp_rolePw';
-const ENTRY_PW_KEY  = 'zaikoApp_entryPw'; // 入室パスワード
-const ACCESS_PW_KEY = 'zaikoApp_accessPw';  // アクセスパスワード
-const ACCESS_ENABLED_KEY = 'zaikoApp_accessEnabled'; // アクセスPW有効フラグ
+const ADMIN_AUTH_SESSION_KEY = 'zaikoApp_adminUrlAuthenticated';
 const HISTORY_KEY   = 'zaikoApp_history'; // 棚卸履歴
 const DEFAULT_PW    = '2026';
 
@@ -617,6 +612,12 @@ function resolveFixedStoreId(){
 }
 const FIXED_STORE_ID_FROM_URL=resolveFixedStoreId();
 window._fixedInventoryStoreId=FIXED_STORE_ID_FROM_URL;
+function resolveRoleFromUrl(){
+  try{return new URLSearchParams(location.search).get('role')==='admin'?'admin':'editor';}
+  catch(_){return 'editor';}
+}
+const FIXED_ROLE_FROM_URL=resolveRoleFromUrl();
+window._fixedInventoryRole=FIXED_ROLE_FROM_URL;
 
 const CAT_KEY = 'zaikoApp_categories';
 
@@ -636,8 +637,6 @@ const ROLES = {
   editor:{label:'編集者',icon:'✏️',cls:'editor',canAdd:true, canEdit:true, canDelete:false,seePrice:true, seeTotal:false,seeExport:false,manageStores:false},
   viewer:{label:'閲覧者',icon:'👁',cls:'viewer',canAdd:false,canEdit:false,canDelete:false,seePrice:false,seeTotal:false,seeExport:false,manageStores:false},
 };
-const ROLE_ORDER = ['admin','editor','viewer'];
-
 const DEFAULT_STORES = [
   {id:1,name:'大須店'},{id:2,name:'那古野店'},
   {id:3,name:'鉄板'},{id:4,name:'岐阜鎌倉'},
@@ -744,6 +743,7 @@ let pendingImage   = null;
 let _lastCat       = null;
 let _lastUnit      = null;
 let _undoStack     = [];
+let adminLoginRequired = false;
 let _searchTimer   = null;
 
 let stores   = JSON.parse(JSON.stringify(DEFAULT_STORES));
@@ -815,7 +815,7 @@ function renderInventoryYear(){
   const canEdit=ROLES[currentRole].canEdit;
   const valid=normalizeInventoryYear(inventoryYear);
   area.innerHTML=`<div style="background:${valid?'var(--gl)':'var(--rl)'};border:1.5px solid ${valid?'var(--g)':'var(--r)'};border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-    <div><div style="font-size:16px;font-weight:900;color:${valid?'var(--gd)':'var(--r)'}">📅 ${valid?`${valid}年 棚卸`:'年度未設定'}</div><div style="font-size:11px;color:var(--tm);margin-top:2px">西暦・必須／全店舗と年度別スプレッドシートに共通</div></div>
+    <div style="font-size:16px;font-weight:900;color:${valid?'var(--gd)':'var(--r)'}">📅 ${valid?`${valid}年 棚卸`:'年度未設定'}</div>
     <div style="display:flex;align-items:center;gap:5px;flex-shrink:0"><input id="inventory-year-input" type="number" min="2000" max="2100" step="1" inputmode="numeric" placeholder="2026" value="${valid||''}" ${canEdit?'':'disabled'} onchange="saveInventoryYear(this.value)" style="width:92px;height:40px;border:2px solid ${valid?'var(--g)':'var(--r)'};border-radius:var(--rs);padding:0 8px;background:var(--sf);color:var(--tx);font-size:17px;font-weight:800;text-align:center"><span style="font-size:13px;font-weight:700">年度</span></div>
   </div>`;
 }
@@ -845,15 +845,14 @@ function openCatModal2(){
   allCats.forEach(c=>{ counts[c]=si.filter(i=>i.cat===c).length; });
   const usedCats=allCats;
   document.getElementById('modal-content').innerHTML=`
-    <h2>🏷 カテゴリーで検索</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px"><h2 style="margin:0">🏷 カテゴリーで検索</h2><button class="btn btn-g" onclick="closeModal()" style="height:38px;padding:0 14px;flex-shrink:0">閉じる</button></div>
     <div style="position:relative;margin-bottom:12px">
       <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tf);font-size:16px;pointer-events:none">🔍</span>
       <input id="cat-modal-search" type="search" placeholder="カテゴリー名を入力..." autocomplete="off"
         style="width:100%;height:42px;padding:0 12px 0 36px;border:1.5px solid var(--g);border-radius:var(--rs);background:var(--bg);color:var(--tx);font-size:14px;outline:none;-webkit-appearance:none;box-sizing:border-box"
         oninput="renderCatList()" autofocus>
     </div>
-    <div id="cat-modal-list" style="display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto"></div>
-    <div class="fa" style="margin-top:14px"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
+    <div id="cat-modal-list" style="display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto"></div>`;
   window._catModalCats=usedCats;
   window._catModalCounts=counts;
   window._catModalTotal=si.length;
@@ -912,72 +911,6 @@ function selectCat2(val){
 function debouncedRender(){
   clearTimeout(_searchTimer);
   _searchTimer=setTimeout(()=>render(), 120);
-}
-
-function checkEntryPassword(){
-  const saved=localStorage.getItem(ENTRY_PW_KEY);
-  if(!saved) return; // 未設定なら通過
-  // すでに認証済みならスキップ（sessionStorageで管理）
-  if(sessionStorage.getItem('entryAuth')==='1') return;
-
-  // ── body.innerHTML書き換えは既存DOMを破壊するためoverlay方式に変更 ──
-  // スクリプト実行フェーズではDOMがまだ準備中のためDOMContentLoaded後に表示
-  window._entryPwRequired = true; // フラグを立てておき、DOM準備後に表示
-}
-
-// DOM準備後に呼ばれる入室PW表示処理
-function showEntryPasswordScreen(){
-  if(!window._entryPwRequired) return;
-  const overlay=document.getElementById('overlay');
-  const content=document.getElementById('modal-content');
-  if(!overlay||!content) return;
-
-  content.innerHTML=`
-    <div style="text-align:center;padding:8px 0 16px">
-      <div style="font-size:48px;margin-bottom:12px">📦</div>
-      <div style="font-size:20px;font-weight:700;margin-bottom:4px">在庫管理アプリ</div>
-      <div style="font-size:13px;color:var(--tm);margin-bottom:24px">パスワードを入力してください</div>
-      <input id="entry-pw-inp" type="password" placeholder="パスワード"
-        style="width:100%;height:48px;border:2px solid var(--g);border-radius:10px;padding:0 16px;font-size:18px;text-align:center;letter-spacing:4px;outline:none;box-sizing:border-box;margin-bottom:12px"
-        onkeydown="if(event.key==='Enter')verifyEntryPassword()">
-      <div id="entry-pw-err" style="font-size:12px;color:#E24B4A;min-height:18px;margin-bottom:12px"></div>
-      <button onclick="verifyEntryPassword()"
-        style="width:100%;height:48px;background:#1D9E75;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit">
-        入室する
-      </button>
-    </div>`;
-
-  // このモーダルは閉じられないようにする（バックグラウンドクリック無効）
-  overlay.style.display='flex';
-  overlay.onclick=null; // 背景クリックで閉じない
-
-  setTimeout(()=>document.getElementById('entry-pw-inp')?.focus(),100);
-}
-
-async function verifyEntryPassword(){
-  const inp=document.getElementById('entry-pw-inp');
-  const err=document.getElementById('entry-pw-err');
-  if(!inp||!err) return;
-  const val=inp.value;
-  if(!val){ err.textContent='パスワードを入力してください'; return; }
-  const saved=localStorage.getItem(ENTRY_PW_KEY);
-  try{
-    const hash=await hashPw(val);
-    if(hash===saved){
-      sessionStorage.setItem('entryAuth','1');
-      window._entryPwRequired=false;
-      // overlayを閉じて背景クリック機能を復元
-      const overlay=document.getElementById('overlay');
-      if(overlay){ overlay.style.display='none'; overlay.onclick=handleOvClick; }
-      showToast('✅ 認証成功');
-    } else {
-      err.textContent='パスワードが違います';
-      inp.value=''; inp.focus();
-    }
-  }catch(e){
-    err.textContent='認証に失敗しました。再試行してください。';
-    console.warn('verifyEntryPassword error',e);
-  }
 }
 
 function showToast(msg,color='#1D9E75'){
@@ -1073,10 +1006,6 @@ function loadData(){
       nextItemId     = d.nextItemId     || NEXT_ITEM_ID;
       currentStoreId = d.currentStoreId || 1;
       inventoryYear  = normalizeInventoryYear(d.inventoryYear);
-      // ロールはsessionStorageで管理（localStorage改ざん防止）
-      // ページリロード時はsessionStorageから復元、なければeditorに固定
-      const sessionRole = sessionStorage.getItem('currentRole');
-      currentRole = (sessionRole==='admin'||sessionRole==='editor'||sessionRole==='viewer') ? sessionRole : 'editor';
       if(key!==STORAGE_KEY) saveData();
       return true;
     }catch(e){
@@ -1140,46 +1069,31 @@ async function getRolePwHash(){
 
 function applyRoleUI(){
   const r=ROLES[currentRole];
-  // 3ボタンのアクティブ/非アクティブ制御
-  ['admin','editor','viewer'].forEach(role=>{
-    const btn=document.getElementById('role-btn-'+role);
-    if(!btn) return;
-    if(role===currentRole){
-      btn.classList.remove('inactive');
-    } else {
-      btn.classList.add('inactive');
-    }
-  });
+  const label=document.getElementById('role-mode-label');
+  if(label){
+    label.className=`role-pill ${currentRole}`;
+    label.textContent=currentRole==='admin'?'🛡 管理者':'✏️ 編集者';
+  }
   document.getElementById('btn-add').disabled=!r.canAdd;
   const ex=document.getElementById('btn-export');
   if(ex) ex.style.display=r.seeExport?'':'none';
-  const bc=document.getElementById('btn-complete');
-  if(bc) bc.style.display=(currentRole==='admin'||currentRole==='editor')?'':'none';
   const na=document.getElementById('notice-area');
   if(currentRole==='viewer') na.innerHTML=`<div class="notice viewer">👁 閲覧専用モード。追加・編集・削除・金額表示不可。</div>`;
-  else if(currentRole==='editor') na.innerHTML=`<div class="notice editor">✏️ 編集者モード。追加・編集・仕入単価の入力が可能。在庫総額・Excel出力は管理者のみ。</div>`;
   else na.innerHTML='';
   renderInventoryYear();
   updateAllStoresTotal();
 }
 
-function switchRole(role){
-  if(role===currentRole) return; // すでに同じロールなら何もしない
-  if(role==='admin'){
-    // 管理者への切り替えはPW必須
-    document.getElementById('modal-content').innerHTML=`
-      <h2>🔑 管理者パスワード</h2>
-      <div style="font-size:13px;color:var(--tm);margin-bottom:16px">管理者モードに切り替えるにはパスワードを入力してください。</div>
-      <div class="fr"><label>パスワード</label><input type="password" id="role-pw-inp" placeholder="パスワード" style="text-align:center;letter-spacing:4px;font-size:18px" onkeydown="if(event.key==='Enter')submitRolePw()"></div>
-      <div id="role-pw-err" style="font-size:12px;color:var(--r);text-align:center;min-height:18px;margin-bottom:8px"></div>
-      <div class="fa"><button class="btn btn-g" onclick="closeModal()">キャンセル</button><button class="btn btn-p" onclick="submitRolePw()">確認</button></div>`;
-    openOverlay();
-    setTimeout(()=>document.getElementById('role-pw-inp')?.focus(),80);
-  } else {
-    currentRole=role;
-    sessionStorage.setItem('currentRole', role); // セッション中のみ保持
-    saveData(); applyRoleUI(); renderTabs(); render(); checkAccessPassword();
-  }
+function showAdminLoginFromUrl(){
+  if(FIXED_ROLE_FROM_URL!=='admin'||currentRole==='admin') return;
+  adminLoginRequired=true;
+  document.getElementById('modal-content').innerHTML=`
+    <h2>🔑 管理者パスワード</h2>
+    <div class="fr"><label>パスワード</label><input type="password" id="role-pw-inp" placeholder="パスワード" style="text-align:center;letter-spacing:4px;font-size:18px" onkeydown="if(event.key==='Enter')submitRolePw()"></div>
+    <div id="role-pw-err" style="font-size:12px;color:var(--r);text-align:center;min-height:18px;margin-bottom:8px"></div>
+    <div class="fa"><button class="btn btn-p" onclick="submitRolePw()">確認</button></div>`;
+  openOverlay();
+  setTimeout(()=>document.getElementById('role-pw-inp')?.focus(),80);
 }
 
 async function submitRolePw(){
@@ -1189,9 +1103,10 @@ async function submitRolePw(){
     const storedHash=await getRolePwHash();
     if(inputHash===storedHash){
       currentRole='admin';
-      sessionStorage.setItem('currentRole','admin'); // セッション中のみ保持
+      sessionStorage.setItem(ADMIN_AUTH_SESSION_KEY,'1');
+      adminLoginRequired=false;
       saveData(); closeModal(); applyRoleUI(); renderTabs(); render();
-      showToast('✅ 管理者モードに切り替えました');
+      showToast('✅ 管理者画面を開きました');
     } else {
       document.getElementById('role-pw-err').textContent='パスワードが違います。';
       document.getElementById('role-pw-inp').value='';
@@ -1323,6 +1238,11 @@ function completeInventory(){
   }catch(e){
     showToast('⚠️ 年度データの保存に失敗しました','#E24B4A');
   }
+}
+
+function completeInventoryFromSettings(){
+  closeModal();
+  setTimeout(completeInventory,0);
 }
 
 function openAnnualModal(){
@@ -1870,15 +1790,14 @@ function openMasterCandidateModal(){
   const candidates=getProductCandidates();
   window._inventoryCandidates=candidates;
   document.getElementById('modal-content').innerHTML=`
-    <h2>${isKamakura?'🍵 鎌倉専用商品候補':'🔗 3店舗共通商品候補'}</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px"><h2 style="margin:0">${isKamakura?'🍵 鎌倉専用商品候補':'🔗 3店舗共通商品候補'}</h2><button class="btn btn-g" onclick="openItemModal()" style="height:38px;padding:0 14px;flex-shrink:0">戻る</button></div>
     <div style="font-size:12px;color:var(--tm);line-height:1.7;margin-bottom:12px">
       ${isKamakura?'鎌倉で以前使用した商品を再追加できます。':'大須・那古野・鉄板で登録済みの商品を、この店舗へ追加できます。'}<br>
       在庫数と仕入値は店舗ごとに別々に保存されます。
     </div>
     <input id="candidate-search" type="search" placeholder="商品名で検索" autocomplete="off"
       style="width:100%;height:44px;padding:0 12px;border:1.5px solid var(--g);border-radius:var(--rs);background:var(--bg);color:var(--tx);font-size:15px;outline:none;box-sizing:border-box;margin-bottom:10px">
-    <div id="candidate-list" style="display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto"></div>
-    <div class="fa" style="margin-top:12px"><button class="btn btn-g" onclick="openItemModal()">手入力へ戻る</button></div>`;
+    <div id="candidate-list" style="display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto"></div>`;
   document.getElementById('candidate-search').addEventListener('input',renderMasterCandidateList);
   renderMasterCandidateList();
   openOverlay();
@@ -1924,11 +1843,10 @@ function useMasterCandidate(index){
   if(priceChoices.length>1){
     window._candidatePriceChoices={candidate,sources:priceChoices};
     document.getElementById('modal-content').innerHTML=`
-      <h2>💰 参考価格を選ぶ</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px"><h2 style="margin:0">💰 参考価格を選ぶ</h2><button class="btn btn-g" onclick="openMasterCandidateModal()" style="height:38px;padding:0 14px;flex-shrink:0">戻る</button></div>
       <div style="font-size:14px;font-weight:700;margin-bottom:4px">${esc(candidate.name)}</div>
       <div style="font-size:12px;color:var(--tm);margin-bottom:12px">追加後も、この店舗専用の価格へ変更できます。</div>
-      <div id="candidate-price-list" style="display:flex;flex-direction:column;gap:7px"></div>
-      <div class="fa" style="margin-top:12px"><button class="btn btn-g" onclick="openMasterCandidateModal()">戻る</button></div>`;
+      <div id="candidate-price-list" style="display:flex;flex-direction:column;gap:7px"></div>`;
     const list=document.getElementById('candidate-price-list');
     list.innerHTML=priceChoices.map((source,sourceIndex)=>`<button type="button" class="btn btn-g candidate-price-row" data-source-index="${sourceIndex}" style="width:100%;height:48px;justify-content:space-between"><span>${esc(stores.find(s=>s.id===source.storeId)?.name||'参考')}</span><strong>${yen(Number(source.price)||0)}／${esc(source.unit)}</strong></button>`).join('');
     list.querySelectorAll('.candidate-price-row').forEach(row=>row.addEventListener('click',()=>{
@@ -1989,7 +1907,7 @@ async function openItemModal(id,cont=false){
   const imgSrc = editingItem ? (await idbGetImage(editingItem.id) || '') : '';
   const isNew=!editingItem;
   document.getElementById('modal-content').innerHTML=`
-    <h2>${editingItem?'商品を編集':'商品を追加'}</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px"><h2 style="margin:0">${editingItem?'商品を編集':'商品を追加'}</h2><button class="btn btn-g" onclick="closeModal()" style="height:38px;padding:0 14px;flex-shrink:0">閉じる</button></div>
     ${isNew?`<button type="button" class="btn btn-g" onclick="openMasterCandidateModal()" style="width:100%;height:44px;margin-bottom:12px;border-color:var(--g);color:var(--g)">🔗 商品候補から選ぶ</button>`:''}
     <div style="font-size:12px;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${storeColor(currentStoreId)};display:inline-block"></span>${esc(store?.name||'')}</div>
     <div class="fr"><label>商品名</label><input id="f-name" value="${esc(v.name)}" placeholder="例：オレンジジュース" autocomplete="off"></div>
@@ -2012,7 +1930,7 @@ async function openItemModal(id,cont=false){
     </div>
     <div class="fr"><label>仕入れ単価（円）</label><input id="f-price" type="number" min="0" step="0.01" inputmode="decimal" value="${v.price}"></div>
     <div class="prev-box"><span>在庫金額（試算）</span><strong id="prev-val">${yen(v.qty*v.price)}</strong></div>
-    ${isNew?`<div style="display:flex;gap:8px"><button class="btn btn-g" onclick="closeModal()" style="flex:1;height:48px">閉じる</button><button class="btn btn-g" onclick="saveItem(false)" style="flex:1;height:48px;border-color:var(--g);color:var(--g)">✅ 保存</button><button class="btn btn-p" onclick="saveItem(true)" style="flex:1;height:48px">＋ 続けて入力</button></div>`:`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-g" onclick="deactivateItem(${editingItem.id})" style="color:var(--r);border-color:var(--r)">この店舗では使用しない</button><button class="btn btn-g" onclick="closeModal()" style="margin-left:auto">キャンセル</button><button class="btn btn-p" onclick="saveItem(false)">保存する</button></div>`}`;
+    ${isNew?`<div style="display:flex;gap:8px"><button class="btn btn-g" onclick="saveItem(false)" style="flex:1;height:48px;border-color:var(--g);color:var(--g)">✅ 保存</button><button class="btn btn-p" onclick="saveItem(true)" style="flex:1;height:48px">＋ 続けて入力</button></div>`:`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-g" onclick="deactivateItem(${editingItem.id})" style="color:var(--r);border-color:var(--r)">この店舗では使用しない</button><button class="btn btn-p" onclick="saveItem(false)" style="margin-left:auto">保存する</button></div>`}`;
   document.getElementById('f-qty').addEventListener('input',updatePrev);
   document.getElementById('f-price').addEventListener('input',updatePrev);
   openOverlay();
@@ -2143,7 +2061,7 @@ function renderCatModal(){
   const store=stores.find(s=>s.id===currentStoreId);
   const cats=STORE_CATEGORIES[currentStoreId]||[];
   document.getElementById('modal-content').innerHTML=`
-    <h2>🏷 カテゴリー管理</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px"><h2 style="margin:0">🏷 カテゴリー管理</h2><button class="btn btn-g" onclick="closeModal()" style="height:38px;padding:0 14px;flex-shrink:0">閉じる</button></div>
     <div style="font-size:13px;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px">
       <span style="width:8px;height:8px;border-radius:50%;background:${storeColor(currentStoreId)};display:inline-block"></span>
       ${esc(store?.name||'')}のカテゴリー
@@ -2168,8 +2086,7 @@ function renderCatModal(){
         ${stores.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
       </select>
       <button onclick="confirmDeleteStore(parseInt(document.getElementById('delete-store-select').value))" style="width:100%;height:44px;background:var(--r);border:none;border-radius:var(--rs);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">🗑️ この店舗を削除する</button>
-    </div>`:''}
-    <div class="fa"><button class="btn btn-g" onclick="closeModal()">閉じる</button></div>`;
+    </div>`:''}`;
 }
 
 function addCat(){
@@ -2302,6 +2219,7 @@ function openSettings(){
       <div style="font-size:11px;color:#315F9B;margin-bottom:8px;">最新データを送信用にクラウドへ保存します。</div>
       <button onclick="sendToSpreadsheet()" style="width:100%;height:48px;background:#4285F4;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">📤 スプレッドシートに送信</button>
     </div>
+    ${currentRole==='admin'||currentRole==='editor'?`<button onclick="completeInventoryFromSettings()" style="width:100%;height:48px;background:#FF9800;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;">✅ 棚卸完了</button>`:''}
     <details style="margin-bottom:14px">
       <summary style="cursor:pointer;padding:12px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--tm)">詳細設定を開く</summary>
       <div style="padding-top:12px">
@@ -2311,14 +2229,6 @@ function openSettings(){
     </div>
     ${isAdmin?`
     <div style="background:var(--bg);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px">
-      <div style="font-size:12px;font-weight:700;margin-bottom:6px">🚪 入室パスワード設定</div>
-      <div style="font-size:11px;color:var(--tm);margin-bottom:8px">設定するとアプリを開いた時にパスワード入力が必要になります。未設定は誰でも開けます。</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
-        <input id="entry-pw1" type="password" placeholder="新しい入室パスワード" style="width:100%;height:44px;border:1.5px solid var(--bd);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx)">
-        <input id="entry-pw2" type="password" placeholder="確認（もう一度）" style="width:100%;height:44px;border:1.5px solid var(--bd);border-radius:var(--rs);padding:0 12px;font-size:14px;background:var(--sf);color:var(--tx)">
-        <button class="btn btn-p" style="width:100%;height:44px;font-size:13px" onclick="saveEntryPw()">💾 設定する</button>
-        <button class="btn btn-g" style="width:100%;height:44px;font-size:13px" onclick="clearEntryPw()">🗑️ 解除する</button>
-      </div>
       <div style="font-size:12px;font-weight:700;margin-bottom:8px">🔑 管理者パスワードの変更</div>
       <div class="fg">
         <div class="fr"><label>新しいPW</label><input type="password" id="s-pw1" placeholder="4文字以上" style="letter-spacing:2px"></div>
@@ -2383,57 +2293,6 @@ function openSettings(){
   openOverlay();
 }
 
-function toggleAccessPw(enabled){
-  localStorage.setItem(ACCESS_ENABLED_KEY, enabled?'1':'0');
-  document.getElementById('access-pw-fields').style.display = enabled?'block':'none';
-  if(!enabled){
-    localStorage.removeItem(ACCESS_PW_KEY);
-    showToast('✅ アクセスパスワードを無効にしました');
-  }
-}
-
-async function saveAccessPw(){
-  try{
-    const pw = document.getElementById('access-pw1').value.trim();
-    const pw2 = document.getElementById('access-pw2').value.trim();
-    if(!pw||pw.length<4){alert('4文字以上で入力してください');return;}
-    if(pw!==pw2){alert('パスワードが一致しません');return;}
-    const h = await hashPw(pw);
-    localStorage.setItem(ACCESS_PW_KEY, h);
-    localStorage.setItem(ACCESS_ENABLED_KEY,'1');
-    document.getElementById('access-pw1').value='';
-    document.getElementById('access-pw2').value='';
-    closeModal();
-    showToast('✅ アクセスパスワードを設定しました');
-  }catch(e){
-    console.warn('アクセスPW設定エラー',e);
-    showToast('❌ パスワード設定に失敗しました。','#E24B4A');
-  }
-}
-
-async function saveEntryPw(){
-  try{
-    const pw=document.getElementById('entry-pw1')?.value.trim();
-    const pw2=document.getElementById('entry-pw2')?.value.trim();
-    if(!pw||pw.length<4){alert('パスワードは4文字以上で入力してください');return;}
-    if(pw!==pw2){alert('パスワードが一致しません');return;}
-    const h=await hashPw(pw);
-    localStorage.setItem(ENTRY_PW_KEY,h);
-    document.getElementById('entry-pw1').value='';
-    document.getElementById('entry-pw2').value='';
-    closeModal();
-    showToast('✅ 入室パスワードを設定しました！');
-  }catch(e){
-    console.warn('入室PW設定エラー',e);
-    showToast('❌ パスワード設定に失敗しました。','#E24B4A');
-  }
-}
-function clearEntryPw(){
-  if(!confirm('入室パスワードを解除します。誰でも開けるようになります。よろしいですか？'))return;
-  localStorage.removeItem(ENTRY_PW_KEY);
-  closeModal();
-  showToast('✅ 入室パスワードを解除しました');
-}
 async function saveRolePw(){
   try{
     const pw=document.getElementById('s-pw1').value.trim();
@@ -2698,49 +2557,23 @@ async function openLightbox(itemId){
   document.body.appendChild(lb);
 }
 function openOverlay(){document.getElementById('overlay').style.display='flex';}
-function closeModal(){document.getElementById('overlay').style.display='none';}
+function closeModal(){if(adminLoginRequired)return;document.getElementById('overlay').style.display='none';}
 function handleOvClick(e){if(e.target===document.getElementById('overlay'))closeModal();}
 
 // ============================================================
 // 起動処理
 // ============================================================
 // 1. まずlocalStorageからデータを読み込む
-checkEntryPassword();
 const dataFound=loadData();
+if(FIXED_ROLE_FROM_URL==='admin'&&sessionStorage.getItem(ADMIN_AUTH_SESSION_KEY)==='1') currentRole='admin';
+else{
+  currentRole='editor';
+  if(FIXED_ROLE_FROM_URL==='editor') sessionStorage.removeItem(ADMIN_AUTH_SESSION_KEY);
+}
 if(FIXED_STORE_ID_FROM_URL&&stores.some(s=>s.id===FIXED_STORE_ID_FROM_URL)){
   currentStoreId=FIXED_STORE_ID_FROM_URL;
   // 固定URLからホーム画面へ追加した場合も、共通manifest起動時に同じ店舗を開く
   saveData({skipFirestore:true});
-}
-
-// アクセスパスワードチェック（有効な場合のみ）
-async function checkAccessPassword(){
-  const enabled = localStorage.getItem(ACCESS_ENABLED_KEY)==='1';
-  if(!enabled) return; // 無効なら何もしない
-  const storedHash = localStorage.getItem(ACCESS_PW_KEY);
-  if(!storedHash) return;
-  // パスワード入力モーダルを表示
-  document.getElementById('modal-content').innerHTML=`
-    <h2>🔐 パスワードを入力</h2>
-    <div style="font-size:13px;color:var(--tm);margin-bottom:16px">このアプリにアクセスするにはパスワードが必要です。</div>
-    <div class="fr"><label>パスワード</label>
-    <input type="password" id="access-pw-inp" placeholder="パスワード" style="text-align:center;letter-spacing:4px;font-size:18px" onkeydown="if(event.key==='Enter')verifyAccessPassword()"></div>
-    <div id="access-pw-err" style="font-size:12px;color:var(--r);text-align:center;min-height:18px;margin-bottom:8px"></div>
-    <div class="fa"><button class="btn btn-p" onclick="verifyAccessPassword()">入力</button></div>`;
-  openOverlay();
-  setTimeout(()=>document.getElementById('access-pw-inp')?.focus(),80);
-}
-
-async function verifyAccessPassword(){
-  const input = document.getElementById('access-pw-inp').value;
-  const inputHash = await hashPw(input);
-  const storedHash = localStorage.getItem(ACCESS_PW_KEY);
-  if(inputHash===storedHash){
-    closeModal();
-  } else {
-    document.getElementById('access-pw-err').textContent='パスワードが違います。';
-    document.getElementById('access-pw-inp').value='';
-  }
 }
 
 // 2. DATA_VERSIONが変わっていたら安全にマイグレーション（ユーザーデータを保持）
@@ -2800,9 +2633,7 @@ window.addEventListener('offline',()=>setSaveStatus('offline','オフライン�
 setSaveStatus(navigator.onLine ? 'local' : 'offline', navigator.onLine ? '端末保存済み' : 'オフライン・端末保存済み');
 renderTabs();
 render();
-
-// 入室パスワード画面（DOM準備完了後に表示）
-showEntryPasswordScreen();
+showAdminLoginFromUrl();
 
 // Undoボタンはinline onclickではなくaddEventListenerで登録（インラインスタイル干渉を回避）
 document.getElementById('undo-btn').addEventListener('click', function(e){
