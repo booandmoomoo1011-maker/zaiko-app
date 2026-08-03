@@ -1,0 +1,62 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "zaiko": {
+      "history": { ".read": true, ".write": true },
+      "items": { ".read": true, ".write": true },
+      "sales": { ".read": true, ".write": true },
+      "temp_records": { ".read": true, ".write": true },
+      "warabi_master": { ".read": true, ".write": true },
+      "warabi_records": { ".read": true, ".write": true },
+      "shift": {
+        ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+        "access": {
+          "admins": {
+            "$uid": {
+              ".read": "auth != null && auth.uid === $uid && data.val() === true",
+              ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".validate": "newData.val() === true || newData.val() === null"
+            }
+          },
+          "tokens": {
+            "$token": {
+              ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || root.child('zaiko/shift/sessions').child(auth.uid).val() === $token)",
+              ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".validate": "newData.val() === null || (newData.hasChildren(['active','staffKey','name','store']) && newData.child('active').isBoolean() && newData.child('staffKey').isString() && newData.child('name').isString() && newData.child('store').isString())"
+            }
+          },
+          "byStaff": {
+            ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true"
+          }
+        },
+        "sessions": {
+          "$uid": {
+            ".read": "auth != null && (auth.uid === $uid || root.child('zaiko/shift/access/admins').child(auth.uid).val() === true)",
+            ".write": "auth != null && auth.uid === $uid && newData.isString() && root.child('zaiko/shift/access/tokens').child(newData.val()).child('active').val() === true"
+          }
+        },
+        "meta": {
+          ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('active').val() === true)",
+          ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true"
+        },
+        "staff": {
+          "$staffKey": {
+            ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || (root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('active').val() === true && root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('staffKey').val() === $staffKey))",
+            ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            "wish": {
+              ".write": "auth != null && root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('active').val() === true && root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('staffKey').val() === $staffKey"
+            },
+            "notes": {
+              ".write": "auth != null && root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('active').val() === true && root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('staffKey').val() === $staffKey"
+            },
+            "req": {
+              ".write": "auth != null && root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('active').val() === true && root.child('zaiko/shift/access/tokens').child(root.child('zaiko/shift/sessions').child(auth.uid).val()).child('staffKey').val() === $staffKey"
+            }
+          }
+        }
+      }
+    }
+  }
+}
