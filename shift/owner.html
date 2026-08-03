@@ -248,6 +248,11 @@
   .cmtbox .ttl{font-weight:700; color:var(--pink-d); margin-bottom:8px; font-size:14px;}
   .cmtbox .txt{font-size:14px; line-height:1.6; white-space:pre-wrap; background:#fff8fb; border:1px solid var(--line); border-radius:8px; padding:11px;}
   .cmtbox button{margin-top:12px; width:100%; background:var(--pink); color:#fff; border:none; border-radius:8px; padding:10px; font-weight:700; cursor:pointer;}
+  #rosterMask{padding:12px;}
+  #rosterMask .cmtbox{position:relative;display:flex;flex-direction:column;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:hidden;box-sizing:border-box;}
+  #rosterList{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-right:3px;}
+  #rosterList button{width:auto;margin-top:0;white-space:nowrap;}
+  #rosterCloseTop{position:absolute;right:9px;top:8px;width:34px!important;height:34px;margin:0!important;padding:0!important;border-radius:50%!important;background:#eee!important;color:#555!important;font-size:20px!important;line-height:34px!important;z-index:2;}
   .segTitle{font-size:13px; font-weight:700; margin:6px 0 4px;}
   .segTitle.am{color:#2fa04a;} .segTitle.pm{color:var(--pink-d);}
   .row{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
@@ -586,7 +591,7 @@
 <!-- PWA_INSTALL_KIT_END -->
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.64</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.65</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -703,6 +708,7 @@
 <!-- 名前の登録（店舗ごと） -->
 <div class="cmtmask" id="rosterMask">
   <div class="cmtbox" style="max-width:420px; text-align:left;">
+    <button id="rosterCloseTop" type="button" aria-label="閉じる">×</button>
     <div class="ttl" style="text-align:center;">👥 名前の登録</div>
     <div style="font-size:12px;color:#666;line-height:1.7;margin-bottom:10px;">店舗ごとにスタッフの名前を登録します。登録するとスタッフ用アプリで選べるようになります。× で削除できます。</div>
     <div style="display:flex; gap:6px; align-items:center; margin-bottom:10px;">
@@ -800,7 +806,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.64"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.65"; window.APP_UPDATED="2026-08-03";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -1918,6 +1924,7 @@ async function rosterRemove(st,i){
 }
 $("#rosterBtn").onclick=()=>{ rosterFillStore(); renderRosterList(); $("#rosterMask").style.display="flex"; setTimeout(()=>{ const n=$("#rosterName"); if(n) n.focus(); },50); };
 $("#rosterClose").onclick=()=>$("#rosterMask").style.display="none";
+$("#rosterCloseTop").onclick=()=>$("#rosterMask").style.display="none";
 $("#rosterMask").onclick=e=>{ if(e.target.id==="rosterMask") $("#rosterMask").style.display="none"; };
 $("#rosterStore").onchange=renderRosterList;
 $("#rosterAdd").onclick=rosterAddName;
