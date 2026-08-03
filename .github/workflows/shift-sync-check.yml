@@ -11,6 +11,8 @@ on:
       - "shift-staff.html"
       - "shift/owner.html"
       - "shift-owner.html"
+      - "database.rules.json"
+      - "firebase.json"
       - "sw.js"
       - "ZAIKON-HANDOFF.md"
       - ".github/workflows/shift-sync-check.yml"
@@ -24,6 +26,8 @@ on:
       - "shift-staff.html"
       - "shift/owner.html"
       - "shift-owner.html"
+      - "database.rules.json"
+      - "firebase.json"
       - "sw.js"
       - "ZAIKON-HANDOFF.md"
       - ".github/workflows/shift-sync-check.yml"
@@ -138,12 +142,12 @@ jobs:
             echo "::error file=shift/index.html::The staff name selector is missing."
             exit 1
           }
-          grep -Fq 'S.roster=meta.roster' shift/index.html || {
-            echo "::error file=shift/index.html::Roster synchronization is missing."
+          grep -Fq 'SHIFT_ACCESS_TOKEN' shift/index.html || {
+            echo "::error file=shift/index.html::Dedicated staff URL validation is missing."
             exit 1
           }
-          grep -Fq "if(typeof fillNames==='function')" shift/index.html || {
-            echo "::error file=shift/index.html::Immediate roster refresh is missing."
+          grep -Fq 'signInAnonymously' shift/index.html || {
+            echo "::error file=shift/index.html::Anonymous staff authentication is missing."
             exit 1
           }
           grep -Fq '<!-- PULL_TO_REFRESH_V1 -->' shift/index.html || {
@@ -154,6 +158,26 @@ jobs:
             echo "::error file=shift/index.html::Obsolete free-text staff input detected."
             exit 1
           fi
+
+          grep -Fq 'GoogleAuthProvider' shift/owner.html || {
+            echo "::error file=shift/owner.html::Google owner authentication is missing."
+            exit 1
+          }
+          grep -Fq 'fbIssueStaffUrl' shift/owner.html || {
+            echo "::error file=shift/owner.html::Dedicated staff URL issuing is missing."
+            exit 1
+          }
+          grep -Fq "changes['access/tokens/'+token+'/active']=false" shift/owner.html || {
+            echo "::error file=shift/owner.html::Token revocation on staff deletion is missing."
+            exit 1
+          }
+
+          python -m json.tool database.rules.json >/dev/null
+          python -m json.tool firebase.json >/dev/null
+          grep -Fq '".read": false' database.rules.json || {
+            echo "::error file=database.rules.json::Database root must be closed by default."
+            exit 1
+          }
 
           grep -Fq 'last_store' sales-input.html || {
             echo "::error file=sales-input.html::Remembered store selection is missing."
