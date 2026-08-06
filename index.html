@@ -365,7 +365,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.63';
+window.APP_VERSION = 'v10.64';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -639,7 +639,7 @@ function changePasscode(){
   localStorage.setItem('pc_unlocked', np);
   alert('パスコードを変更しました：' + np);
 }
-window.APP_UPDATED = '2026-08-03';
+window.APP_UPDATED = '2026-08-06';
 
 // setSyncStatus：DOM生成後も呼べるようキューイング方式
 window._syncQueue = [];
@@ -3739,6 +3739,10 @@ function restoreLastValues(){
 
 let _autoSaveTimer = null;
 function saveDraft(){
+  // [v10.64] さかのぼり編集中（過去の日を編集中）は、今日の下書き・自動保存に一切触らない。
+  // 過去日の保存は「保存ボタン(doSave)」が editingDate 宛てに正しく行う。
+  // これを入れないと、過去日の数字が今日の下書き/記録を上書きして当日の入力中がおかしくなる。
+  if(editingDate && editingDate !== dateStr){ return; }
   try{
     const draft = {
       date: dateStr,
@@ -3779,6 +3783,8 @@ function saveDraft(){
 }
 
 function autoSaveToFirebase(){
+  // [v10.64] さかのぼり編集中は、今日の記録に触らない（過去日は保存ボタンが担当）。
+  if(editingDate && editingDate !== dateStr){ return; }
   const t = new Date();
   const timeStr = t.getHours().toString().padStart(2,'0')+':'+t.getMinutes().toString().padStart(2,'0');
   const staff = document.getElementById('staff') ? document.getElementById('staff').value.trim() : '';
