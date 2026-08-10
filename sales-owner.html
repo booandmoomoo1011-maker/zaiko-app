@@ -79,6 +79,19 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
 
 #loading { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
 #fb-status { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 4px; }
+#owner-access-gate {
+  position: fixed; inset: 0; z-index: 2147483646; display: flex;
+  align-items: center; justify-content: center; padding: 24px;
+  background: #f7f7f7;
+}
+#owner-access-card {
+  width: min(420px,100%); background: #fff; border-radius: 16px;
+  padding: 26px 22px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.12);
+}
+#owner-login-btn {
+  border: 0; border-radius: 9px; background: #1a237e; color: #fff;
+  padding: 12px 18px; font: 700 15px inherit; cursor: pointer;
+}
 
 /* 設定パネル */
 #settings-overlay {
@@ -114,11 +127,19 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
 <script type="importmap">
 { "imports": {
   "firebase/app":      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-  "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+  "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js",
+  "firebase/auth":     "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
 } }
 </script>
 </head>
 <body>
+<div id="owner-access-gate">
+  <div id="owner-access-card">
+    <div style="font-size:22px;font-weight:900;color:#1a237e;margin-bottom:10px;">売上オーナー確認</div>
+    <div id="owner-access-text" style="font-size:14px;line-height:1.8;color:#666;margin-bottom:16px;">シフト・オーナーと同じGoogle管理者アカウントでログインしてください。</div>
+    <button id="owner-login-btn" type="button">Googleで管理者ログイン</button>
+  </div>
+</div>
 <!-- PWA_INSTALL_KIT_START (ホーム画面追加：SW登録＋インストールボタン＋LINE案内) -->
 <div id="pwaBar" style="display:none;position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#111;color:#fff;padding:12px 14px;font-size:14px;line-height:1.7;box-shadow:0 2px 10px rgba(0,0,0,.35);font-family:sans-serif;">
   <div style="font-weight:700;margin-bottom:4px;">📱 ホーム画面に追加する方法</div>
@@ -223,13 +244,20 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
   </div>
 
   <!-- 各店舗URL -->
-  <p style="font-size:11px;color:#999;margin-bottom:10px;">各店舗スタッフ用</p>
+  <p style="font-size:11px;color:#999;margin-bottom:10px;">各店舗スタッフ用（店舗専用URL）</p>
   <div id="url-copy-btns"></div>
+  <p style="font-size:11px;color:#999;margin:16px 0 10px;">毎日在庫（鎌倉）</p>
+  <div class="url-row">
+    <span class="url-store-name">毎日在庫</span>
+    <button class="url-copy-btn" style="background:#2f9ad0;" onclick="copyDailyInventoryUrl()">📋 専用URL</button>
+    <button class="url-copy-btn" style="background:#c0596b;padding-left:12px;padding-right:12px;" onclick="regenerateDailyInventoryUrl()">再発行</button>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, onValue } from 'firebase/database';
+import { getDatabase, ref, onValue, get, update } from 'firebase/database';
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 
 const STORE_KEY  = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLOR = {
@@ -254,9 +282,50 @@ document.getElementById('url-copy-btns').innerHTML = STORES_ORDER.map(s => {
   const textColor = STORE_TEXT[s] || '#ffffff';
   return `<div class="url-row">
     <span class="url-store-name">${s}店</span>
-    <button class="url-copy-btn" style="background:${color};color:${textColor};" onclick="copyUrl('${s}')">📋 URLをコピー</button>
+    <button class="url-copy-btn" style="background:${color};color:${textColor};" onclick="copyUrl('${s}')">📋 専用URL</button>
+    <button class="url-copy-btn" style="background:#c0596b;padding-left:12px;padding-right:12px;" onclick="regenerateUrl('${s}')">再発行</button>
   </div>`;
 }).join('');
+
+let db = null;
+let auth = null;
+let ownerAuthorized = false;
+let ownerDataStarted = false;
+
+function randomToken() {
+  const bytes = new Uint8Array(48);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+function storeKeyForName(store) { return STORE_KEY[store] || store; }
+
+async function ensureStoreToken(appName, store, forceNew) {
+  if (!ownerAuthorized || !db) throw new Error('管理者ログインが必要です');
+  const storeKey = storeKeyForName(store);
+  const mapPath = `zaiko/app_access/byAppStore/${appName}/${storeKey}`;
+  const mapSnap = await get(ref(db, mapPath));
+  let token = mapSnap.val();
+  if (token && !forceNew) {
+    const oldSnap = await get(ref(db, `zaiko/app_access/tokens/${token}`));
+    const old = oldSnap.val();
+    if (!old || old.active !== true || old.app !== appName || old.storeKey !== storeKey) token = null;
+  }
+  const changes = {};
+  if (token && forceNew) changes[`tokens/${token}/active`] = false;
+  if (!token || forceNew) {
+    token = randomToken();
+    changes[`tokens/${token}`] = { active:true, app:appName, storeKey, storeName:store, issuedAt:Date.now() };
+    changes[`byAppStore/${appName}/${storeKey}`] = token;
+    await update(ref(db,'zaiko/app_access'), changes);
+  }
+  return token;
+}
+
+async function copyText(text, message) {
+  await navigator.clipboard.writeText(text);
+  alert(message);
+}
 
 window.copyOwnerUrl = function() {
   const url = 'https://zaiko-app-two.vercel.app/sales-owner.html';
@@ -265,11 +334,36 @@ window.copyOwnerUrl = function() {
   });
 };
 
-window.copyUrl = function(store) {
-  const url = APP_URL + '?store=' + encodeURIComponent(store);
-  navigator.clipboard.writeText(url).then(() => {
-    alert(store + '店のURLをコピーしました。\nLINEに貼り付けて送ってください。');
-  });
+window.copyUrl = async function(store) {
+  try {
+    const token = await ensureStoreToken('sales-input', store, false);
+    const url = APP_URL + '?store=' + encodeURIComponent(store) + '&access=' + encodeURIComponent(token);
+    await copyText(url, store + '店の専用URLをコピーしました。\nLINEに貼り付けて送ってください。');
+  } catch(e) { alert('専用URLを作成できませんでした：' + e.message); }
+};
+
+window.regenerateUrl = async function(store) {
+  if (!confirm(store + '店の古い専用URLを無効にして、新しいURLを発行しますか？')) return;
+  try {
+    const token = await ensureStoreToken('sales-input', store, true);
+    const url = APP_URL + '?store=' + encodeURIComponent(store) + '&access=' + encodeURIComponent(token);
+    await copyText(url, store + '店の新しい専用URLをコピーしました。');
+  } catch(e) { alert('再発行できませんでした：' + e.message); }
+};
+
+window.copyDailyInventoryUrl = async function() {
+  try {
+    const token = await ensureStoreToken('daily-inventory', '鎌倉', false);
+    await copyText('https://zaiko-app-two.vercel.app/?access=' + encodeURIComponent(token), '毎日在庫の専用URLをコピーしました。');
+  } catch(e) { alert('専用URLを作成できませんでした：' + e.message); }
+};
+
+window.regenerateDailyInventoryUrl = async function() {
+  if (!confirm('毎日在庫の古い専用URLを無効にして、新しいURLを発行しますか？')) return;
+  try {
+    const token = await ensureStoreToken('daily-inventory', '鎌倉', true);
+    await copyText('https://zaiko-app-two.vercel.app/?access=' + encodeURIComponent(token), '毎日在庫の新しい専用URLをコピーしました。');
+  } catch(e) { alert('再発行できませんでした：' + e.message); }
 };
 
 window.openSettings = function() {
@@ -284,24 +378,9 @@ window.closeSettings = function() {
 // allData をスコープ外に移動
 const allData = {};
 
-try {
-  const app = initializeApp({
-    apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
-    authDomain:       'zaiko2017inb.firebaseapp.com',
-    databaseURL:      'https://zaiko2017inb-default-rtdb.asia-southeast1.firebasedatabase.app',
-    projectId:        'zaiko2017inb',
-    storageBucket:    'zaiko2017inb.firebasestorage.app',
-    messagingSenderId:'705085250436',
-    appId:            '1:705085250436:web:5bda2efcc70e4ffca25bd1'
-  }, 'owner');
-  const db = getDatabase(app);
-
-  onValue(ref(db, '.info/connected'), snap => {
-    const el = document.getElementById('fb-status');
-    if (el) el.textContent = snap.val() ? '🟢 接続中' : '🔴 未接続';
-  });
-
-
+function startOwnerData() {
+  if (ownerDataStarted) return;
+  ownerDataStarted = true;
   Object.keys(STORE_KEY).forEach(storeName => {
     const key = STORE_KEY[storeName];
     onValue(ref(db, 'zaiko/sales/' + key + '/history'), snap => {
@@ -314,6 +393,59 @@ try {
       renderHistory();
     });
   });
+}
+
+try {
+  const app = initializeApp({
+    apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
+    authDomain:       'zaiko2017inb.firebaseapp.com',
+    databaseURL:      'https://zaiko2017inb-default-rtdb.asia-southeast1.firebasedatabase.app',
+    projectId:        'zaiko2017inb',
+    storageBucket:    'zaiko2017inb.firebasestorage.app',
+    messagingSenderId:'705085250436',
+    appId:            '1:705085250436:web:5bda2efcc70e4ffca25bd1'
+  }, 'sales-owner-secure');
+  db = getDatabase(app);
+  auth = getAuth(app);
+
+  onValue(ref(db, '.info/connected'), snap => {
+    const el = document.getElementById('fb-status');
+    if (el) el.textContent = snap.val() ? '🟢 接続中' : '🔴 未接続';
+  });
+
+  onAuthStateChanged(auth, async user => {
+    const gate = document.getElementById('owner-access-gate');
+    const text = document.getElementById('owner-access-text');
+    const button = document.getElementById('owner-login-btn');
+    if (!user) {
+      ownerAuthorized = false;
+      gate.style.display = 'flex';
+      text.textContent = 'シフト・オーナーと同じGoogle管理者アカウントでログインしてください。';
+      button.style.display = '';
+      return;
+    }
+    try {
+      const admin = await get(ref(db, 'zaiko/shift/access/admins/' + user.uid));
+      if (admin.val() !== true) throw new Error('このGoogleアカウントは管理者に登録されていません。');
+      ownerAuthorized = true;
+      gate.style.display = 'none';
+      startOwnerData();
+    } catch(e) {
+      ownerAuthorized = false;
+      gate.style.display = 'flex';
+      text.textContent = e.message || '管理者確認に失敗しました。';
+      button.style.display = '';
+    }
+  });
+
+  document.getElementById('owner-login-btn').onclick = async function() {
+    const provider = new GoogleAuthProvider();
+    try { await signInWithPopup(auth, provider); }
+    catch(e) {
+      if (e && /popup|operation-not-supported/i.test(e.code || e.message || '')) await signInWithRedirect(auth, provider);
+      else document.getElementById('owner-access-text').textContent = 'ログインできませんでした：' + (e.message || e);
+    }
+  };
 
 } catch(e) {
   document.getElementById('loading').textContent = 'Firebase接続エラー: ' + e.message;
@@ -335,8 +467,11 @@ window.changeMonth = function(diff) {
   if (viewMonth < 1)  { viewMonth = 12; viewYear--; }
   renderHistory();
 };
-window.openStore = function(store) {
-  window.location.href = 'sales-input.html?store=' + encodeURIComponent(store);
+window.openStore = async function(store) {
+  try {
+    const token = await ensureStoreToken('sales-input', store, false);
+    window.location.href = 'sales-input.html?store=' + encodeURIComponent(store) + '&access=' + encodeURIComponent(token);
+  } catch(e) { alert('店舗を開けませんでした：' + e.message); }
 };
 
 function renderHistory() {
