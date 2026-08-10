@@ -26,8 +26,8 @@
   <script>
     (function(){
       var p = new URLSearchParams(location.search);
-      if (p.get('v') !== '2.71') {
-        p.set('v', '2.71');
+      if (p.get('v') !== '2.72') {
+        p.set('v', '2.72');
         history.replaceState(null, '', location.pathname + '?' + p.toString());
       }
     })();
@@ -307,7 +307,8 @@
   <script type="importmap">
   { "imports": {
     "firebase/app":      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-    "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+    "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js",
+    "firebase/auth":     "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
   } }
   </script>
   <script>
@@ -318,7 +319,8 @@
   </script>
   <script type="module">
   import { initializeApp } from 'firebase/app';
-  import { getDatabase, ref, set, onValue } from 'firebase/database';
+  import { getDatabase, ref, set, get, onValue } from 'firebase/database';
+  import { getAuth, signInAnonymously } from 'firebase/auth';
   try {
     const app = initializeApp({
       apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
@@ -330,8 +332,29 @@
       appId:            '1:705085250436:web:5bda2efcc70e4ffca25bd1'
     }, 'sales');
     const db = getDatabase(app);
+    const auth = getAuth(app);
     const STORE_KEY = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
     const spath = (s) => 'zaiko/sales/' + (STORE_KEY[s] || s);
+    const tokenFromUrl = (new URLSearchParams(location.search).get('access') || '').trim();
+    const savedToken = localStorage.getItem('zaiko_sales_access_token') || '';
+    const accessToken = tokenFromUrl || savedToken;
+    if (accessToken) {
+      if (!/^[A-Za-z0-9_-]{43,128}$/.test(accessToken)) throw new Error('店舗専用URLが正しくありません。');
+      const user = auth.currentUser || (await signInAnonymously(auth)).user;
+      await set(ref(db, 'zaiko/app_access/sessions/' + user.uid), accessToken);
+      const accessSnap = await get(ref(db, 'zaiko/app_access/tokens/' + accessToken));
+      const access = accessSnap.val();
+      if (!access || access.active !== true || access.app !== 'sales-input') throw new Error('この店舗専用URLは利用停止されています。');
+      window.SALES_ACCESS_VALID = true;
+      window.SALES_ACCESS_STORE_NAME = access.storeName;
+      window.SALES_ACCESS_STORE_KEY = access.storeKey;
+      localStorage.setItem('zaiko_sales_access_token', accessToken);
+      localStorage.setItem('last_store', access.storeName);
+      window.dispatchEvent(new CustomEvent('sales-access-ready', {detail:access}));
+    } else {
+      window.SALES_ACCESS_VALID = false;
+      window.SALES_ACCESS_LEGACY = true;
+    }
 
     // 接続状態
     onValue(ref(db, '.info/connected'), (snap) => {
@@ -402,10 +425,22 @@
       }
     });
 
-  } catch(e) { console.warn('Firebase初期化エラー', e); }
+  } catch(e) {
+    console.warn('Firebase初期化エラー', e);
+    const gate = document.getElementById('sales-access-stopped');
+    const text = document.getElementById('sales-access-stopped-text');
+    if (text) text.textContent = e.message || '店舗専用URLを確認できませんでした。';
+    if (gate) gate.style.display = 'flex';
+  }
   </script>
 </head>
 <body>
+<div id="sales-access-stopped" style="display:none;position:fixed;inset:0;z-index:2147483646;background:#f7f7f7;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
+  <div style="width:min(420px,100%);background:#fff;border-radius:16px;padding:26px 22px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.12);">
+    <div style="font-size:20px;font-weight:900;color:#b71c1c;margin-bottom:10px;">店舗専用URLを確認してください</div>
+    <div id="sales-access-stopped-text" style="font-size:14px;line-height:1.8;color:#666;">このURLでは入力・閲覧・保存できません。</div>
+  </div>
+</div>
 <!-- PWA_INSTALL_KIT_START (ホーム画面追加：SW登録＋インストールボタン＋LINE案内) -->
 <div id="pwaBar" style="display:none;position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#111;color:#fff;padding:12px 14px;font-size:14px;line-height:1.7;box-shadow:0 2px 10px rgba(0,0,0,.35);font-family:sans-serif;">
   <div style="font-weight:700;margin-bottom:4px;">📱 ホーム画面に追加する方法</div>
@@ -894,7 +929,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.71';
+const APP_VERSION = 'v2.72';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -1037,6 +1072,10 @@ function trySelectStore(s) {
 
 // 店舗選択画面に戻る（ページをリロード）
 function backToStoreSelect() {
+  if (window.SALES_ACCESS_STORE_NAME) {
+    alert('この端末は' + window.SALES_ACCESS_STORE_NAME + '店専用です。別店舗へは切り替えできません。');
+    return;
+  }
   // 店舗固定中の端末は戻れない（他店を見せない）
   try { if (localStorage.getItem('locked_store')) return; } catch(e) {}
   try { localStorage.removeItem('last_store'); } catch(e) {}
@@ -1371,6 +1410,7 @@ const STORE_DOT_COLORS = {
 };
 
 function selectStore(s) {
+  if (window.SALES_ACCESS_STORE_NAME && s !== window.SALES_ACCESS_STORE_NAME) s = window.SALES_ACCESS_STORE_NAME;
   currentStore = s;
   localStorage.setItem('last_store', s);
 
@@ -1412,6 +1452,11 @@ function selectStore(s) {
   applyFieldSettings(loadFieldSettings(s));
   if (typeof window.fbSyncStore === 'function') window.fbSyncStore(s);
 }
+
+window.addEventListener('sales-access-ready', function(e) {
+  var store = e && e.detail && e.detail.storeName;
+  if (store && typeof selectStore === 'function') selectStore(store);
+});
 
 function toggle(id, show) {
   document.getElementById(id).classList.toggle('hidden', !show);
