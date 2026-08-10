@@ -484,8 +484,56 @@
 - 個別の「専用URLをコピー」と削除時のURL無効化が残っていること。
 - GitHub ActionsとVercel本番公開が成功すること。
 
-## 21. 次のチャットへ渡す文章
+## 21. 次回作業: 全アプリのGitHub記録・安全確認
+
+次のチャットでは、現在作成済みの全アプリについて、正式なプログラムと運用資料がGitHubへ安全に記録されているか確認する。確認結果を先にユーザーへ報告し、未記録・同期漏れ・検査不足がある場合だけ修正する。
+
+### 確認対象
+
+- 私の管理: `my-management.html`
+- 毎日在庫: `index.html`
+- 在庫管理: `inventory.html`
+- 売上入力: `sales-input.html`
+- 売上オーナー: `sales-owner.html`
+- シフト・スタッフ: `shift/index.html` と `shift-staff.html`
+- シフト・オーナー: `shift/owner.html` と `shift-owner.html`
+- 各アプリのmanifest、Service Worker、正式アイコン、OGP画像
+- `firebase.json`、`database.rules.json`、GitHub Actions、自動検査
+- `OFFICIAL-STRUCTURE.md`、`CLAUDE.md`、`ZAIKON-HANDOFF.md`
+
+### 次回の進め方
+
+1. 最初にGitHub `main` の `ZAIKON-HANDOFF.md`、`OFFICIAL-STRUCTURE.md`、`CLAUDE.md` を全文読む。
+2. `main` の最新コミットと全対象ファイルを取得し、正式URL・互換URL・Vercel公開内容と照合する。
+3. 各アプリがGitHubへ記録済みか、通常版／携帯互換版が同期しているか、自動検査対象になっているかを一覧で報告する。
+4. 変更が必要な場合も、ユーザーへ対象と影響を説明してから、不足分だけを変更する。
+5. 変更後はGitHubの安全検査、`main` 反映、Vercel本番、デスクトップ／携帯アプリの最新版表示まで確認する。
+6. 完了後、この引継ぎメモへ結果・バージョン・基準コミットを追記する。
+
+### GitHubへ記録するもの
+
+- HTML、JavaScript、CSS、画像、manifest、Service Worker
+- Firebaseの公開用設定とセキュリティルール
+- GitHub Actions、自動検査、正式URL、バージョン、変更履歴、引継ぎ資料
+
+### GitHubへ記録しないもの
+
+- パスワード、秘密鍵、管理用トークン、サービスアカウントJSON、`.env`
+- 発行済みスタッフ専用URLとアクセストークン
+- 実際の売上・在庫・シフトデータ、スタッフの個人情報、データベースのバックアップ
+- 一時ファイル、端末固有ファイル、古い添付HTMLを正式版として上書きすること
+
+### 絶対に守ること
+
+- アプリを統合しない。各利用者向けの画面・URL・保存領域を分離したまま維持する。
+- Firebase設定、保存先、保存キー、認証、LINE共有URL、既存データを確認なしに変更しない。
+- `zaiko-app/owner.html`（売上オーナー）と `shift/owner.html`（シフト・オーナー）を混同しない。
+- 古い添付ファイルをGitHub `main` へそのまま上書きせず、必ず現行 `main` との差分だけを適用する。
+- シフトの通常版と携帯互換版は必ず同一内容・同一バージョンにする。
+- GitHubだけを唯一のバックアップにせず、秘密情報を含まないリポジトリバックアップも別途検討する。
+
+## 22. 次のチャットへ渡す文章
 
 次の文章だけで開始できる。ただし、作業者は必ずこのファイルを全文読むこと。
 
-> `booandmoomoo1011-maker/zaiko-app` の `main` にある `ZAIKON-HANDOFF.md` を最初に全文読んでください。シフト・スタッフv1.57とシフト・オーナーv1.66が正式版です。セクション17のスタッフ専用URL・Firebase認証・削除時の完全無効化は本番確認まで完了しています。オーナー名簿には、選択店舗のスタッフ名＋本人専用URLをLINE用一覧としてまとめてコピーする機能があります。Firebase設定、Realtime Databaseルール、既存シフトデータ、オーナーURL、シフト2画面の既存機能を壊さず、通常版と携帯互換版を必ず同期してください。新しい変更後は本番確認を行い、ZAIKON-HANDOFF.mdも同時に更新してください。
+> `booandmoomoo1011-maker/zaiko-app` の `main` にある `ZAIKON-HANDOFF.md` を最初に全文読んでください。シフト・スタッフv1.57とシフト・オーナーv1.66が正式版です。次回はセクション21に従い、全アプリのプログラム・通常版／互換版・自動検査・運用資料がGitHubへ安全に記録されているかを最初に確認し、結果を報告してから不足分だけを修正してください。セクション17のスタッフ専用URL・Firebase認証・削除時の完全無効化は本番確認まで完了しています。オーナー名簿には、選択店舗のスタッフ名＋本人専用URLをLINE用一覧としてまとめてコピーする機能があります。Firebase設定、Realtime Databaseルール、既存シフトデータ、オーナーURL、シフト2画面の既存機能を壊さず、通常版と携帯互換版を必ず同期してください。新しい変更後は本番確認を行い、ZAIKON-HANDOFF.mdも同時に更新してください。
