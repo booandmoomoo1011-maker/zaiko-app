@@ -5,6 +5,7 @@ on:
     paths:
       - "my-management.html"
       - "index.html"
+      - "inventory.html"
       - "sales-input.html"
       - "sales-owner.html"
       - "shift/index.html"
@@ -14,12 +15,18 @@ on:
       - "database.rules.json"
       - "firebase.json"
       - "sw.js"
+      - "*.webmanifest"
+      - "icons/**"
+      - "my-management-icon-*.png"
+      - "OFFICIAL-STRUCTURE.md"
+      - "CLAUDE.md"
       - "ZAIKON-HANDOFF.md"
       - ".github/workflows/shift-sync-check.yml"
   pull_request:
     paths:
       - "my-management.html"
       - "index.html"
+      - "inventory.html"
       - "sales-input.html"
       - "sales-owner.html"
       - "shift/index.html"
@@ -29,6 +36,11 @@ on:
       - "database.rules.json"
       - "firebase.json"
       - "sw.js"
+      - "*.webmanifest"
+      - "icons/**"
+      - "my-management-icon-*.png"
+      - "OFFICIAL-STRUCTURE.md"
+      - "CLAUDE.md"
       - "ZAIKON-HANDOFF.md"
       - ".github/workflows/shift-sync-check.yml"
   workflow_dispatch:
@@ -52,6 +64,7 @@ jobs:
           files=(
             my-management.html
             index.html
+            inventory.html
             sales-input.html
             sales-owner.html
             shift/index.html
@@ -82,6 +95,47 @@ jobs:
             }
           done
 
+      - name: Confirm manifests and formal icons
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          manifests = [
+              "my-management.webmanifest",
+              "daily-inventory.webmanifest",
+              "inventory.webmanifest",
+              "sales-input.webmanifest",
+              "sales-owner.webmanifest",
+              "shift-staff.webmanifest",
+              "shift-owner.webmanifest",
+          ]
+          icon_bases = [
+              "icons/daily-inventory",
+              "icons/inventory",
+              "icons/sales-input",
+              "icons/sales-owner",
+              "icons/shift-staff",
+              "icons/shift-owner",
+          ]
+          for manifest in manifests:
+              data = json.loads(Path(manifest).read_text(encoding="utf-8"))
+              if not data.get("start_url") or not data.get("icons"):
+                  raise SystemExit(f"{manifest}: start_url or icons is missing")
+              for icon in data["icons"]:
+                  icon_path = Path(str(icon["src"]).split("?", 1)[0].lstrip("/"))
+                  if not icon_path.is_file() or icon_path.stat().st_size == 0:
+                      raise SystemExit(f"{manifest}: referenced icon is missing: {icon_path}")
+          for size in (16, 32, 180, 192, 512):
+              path = Path(f"my-management-icon-{size}.png")
+              if not path.is_file() or path.stat().st_size == 0:
+                  raise SystemExit(f"Missing My Management icon: {path}")
+          for base in icon_bases:
+              for size in (16, 32, 180, 192, 512):
+                  path = Path(f"{base}-{size}.png")
+                  if not path.is_file() or path.stat().st_size == 0:
+                      raise SystemExit(f"Missing formal app icon: {path}")
+
       - name: Confirm app previews are not shared accidentally
         shell: python
         run: |
@@ -91,6 +145,7 @@ jobs:
           files = [
               "my-management.html",
               "index.html",
+              "inventory.html",
               "sales-input.html",
               "sales-owner.html",
               "shift/index.html",
@@ -206,6 +261,7 @@ jobs:
           files=(
             my-management.html
             index.html
+            inventory.html
             sales-input.html
             sales-owner.html
             shift/index.html
