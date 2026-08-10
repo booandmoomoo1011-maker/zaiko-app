@@ -591,7 +591,7 @@
 <!-- PWA_INSTALL_KIT_END -->
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.65</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.66</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -717,6 +717,7 @@
       <button id="rosterAdd" type="button" style="background:#222;color:#fff;border:none;border-radius:8px;padding:9px 15px;font-weight:700;cursor:pointer;">決定</button>
     </div>
     <div id="rosterList"></div>
+    <button id="rosterCopyStore" type="button" style="background:#06c755;margin-top:12px;">店舗全員のURLをまとめてコピー</button>
     <button id="rosterClose" type="button" style="background:#c9c9c9;margin-top:12px;">閉じる</button>
   </div>
 </div>
@@ -806,7 +807,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.65"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.66"; window.APP_UPDATED="2026-08-03";
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -1880,9 +1881,23 @@ $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
 /* ================= 名前の登録（店舗ごと・roster） ================= */
 function getRoster(){ if(!S.roster||typeof S.roster!=="object") S.roster={}; STORES.forEach(function(s){ if(!Array.isArray(S.roster[s])) S.roster[s]=[]; }); return S.roster; }
 function rosterFillStore(){ const sel=$("#rosterStore"); if(!sel) return; if(!sel.options.length){ STORES.forEach(function(s){ const o=document.createElement("option"); o.value=s; o.textContent=s; sel.appendChild(o); }); } }
+async function copyRosterText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }
+  catch(e){
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=text; ta.setAttribute('readonly','');
+      ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0;';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,ta.value.length);
+      const ok=document.execCommand('copy'); document.body.removeChild(ta); return !!ok;
+    }catch(e2){ return false; }
+  }
+}
 function renderRosterList(){
   const box=$("#rosterList"); if(!box) return;
   const R=getRoster(); const st=$("#rosterStore").value||STORES[0]; const arr=R[st]||[];
+  const allBtn=$("#rosterCopyStore");
+  if(allBtn){ allBtn.disabled=!arr.length; allBtn.style.opacity=arr.length?'1':'.5'; allBtn.textContent=st+'全員のURLをまとめてコピー'; }
   const c=STORE_COLOR[st];
   let h='<div style="font-weight:700;color:'+(c?c.ink:'#333')+';margin:2px 0 6px;">'+esc(st)+'（'+arr.length+'）</div>';
   if(!arr.length){ h+='<div style="color:#999;font-size:13px;padding:6px 2px;">まだ登録がありません。上に名前を入れて「決定」を押してください。</div>'; }
@@ -1922,6 +1937,24 @@ async function rosterRemove(st,i){
     delete S.staff[nm]; saveLocal(); renderRosterList(); renderOwner();
   }catch(e){ S.roster=backup; alert('削除に失敗しました。通信を確認してもう一度お試しください。'); }
 }
+$("#rosterCopyStore").onclick=async function(){
+  const b=this, store=$("#rosterStore").value||STORES[0];
+  const arr=(getRoster()[store]||[]).slice();
+  if(!arr.length){ alert('この店舗には、まだ名前が登録されていません。'); return; }
+  b.disabled=true; b.textContent='全員分を準備中…';
+  try{
+    const lines=['【'+store+'店 スタッフ専用URL】','※自分の名前のURLを開いてください。他の方のURLは開かないでください。',''];
+    for(const name of arr){
+      ensureStaffOwner(name);
+      const url=await window.fbIssueStaffUrl(name,store,S.staff[name]);
+      lines.push(name+'さん： '+url);
+    }
+    const text=lines.join('\n');
+    if(await copyRosterText(text)) alert(store+'店の全員分をコピーしました。\nLINEグループに貼り付けて送ってください。');
+    else window.prompt('自動コピーできませんでした。下の一覧を長押ししてコピーしてください。',text);
+  }catch(e){ alert('全員分の専用URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
+  b.disabled=false; b.textContent=store+'全員のURLをまとめてコピー';
+};
 $("#rosterBtn").onclick=()=>{ rosterFillStore(); renderRosterList(); $("#rosterMask").style.display="flex"; setTimeout(()=>{ const n=$("#rosterName"); if(n) n.focus(); },50); };
 $("#rosterClose").onclick=()=>$("#rosterMask").style.display="none";
 $("#rosterCloseTop").onclick=()=>$("#rosterMask").style.display="none";
