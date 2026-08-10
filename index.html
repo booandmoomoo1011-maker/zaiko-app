@@ -320,6 +320,12 @@ input[list]::-webkit-list-button{display:none!important;}
 
 </head>
 <body>
+<div id="daily-access-stopped" style="display:none;position:fixed;inset:0;z-index:2147483646;background:#f7f7f7;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">
+  <div style="width:min(420px,100%);background:#fff;border-radius:16px;padding:26px 22px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.12);">
+    <div style="font-size:20px;font-weight:900;color:#b71c1c;margin-bottom:10px;">毎日在庫の専用URLを確認してください</div>
+    <div id="daily-access-stopped-text" style="font-size:14px;line-height:1.8;color:#666;">このURLでは入力・閲覧・保存できません。</div>
+  </div>
+</div>
 <!-- PWA_INSTALL_KIT_START (ホーム画面追加：SW登録＋インストールボタン＋LINE案内) -->
 <div id="pwaBar" style="display:none;position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#111;color:#fff;padding:12px 14px;font-size:14px;line-height:1.7;box-shadow:0 2px 10px rgba(0,0,0,.35);font-family:sans-serif;">
   <div style="font-weight:700;margin-bottom:4px;">📱 ホーム画面に追加する方法</div>
@@ -365,7 +371,7 @@ input[list]::-webkit-list-button{display:none!important;}
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.64';
+window.APP_VERSION = 'v10.65';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -639,7 +645,7 @@ function changePasscode(){
   localStorage.setItem('pc_unlocked', np);
   alert('パスコードを変更しました：' + np);
 }
-window.APP_UPDATED = '2026-08-06';
+window.APP_UPDATED = '2026-08-10';
 
 // setSyncStatus：DOM生成後も呼べるようキューイング方式
 window._syncQueue = [];
@@ -686,13 +692,15 @@ window.manualSync        = function(){
 {
   "imports": {
     "firebase/app":      "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
-    "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"
+    "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js",
+    "firebase/auth":     "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"
   }
 }
 </script>
 <script type="module">
 import { initializeApp }                           from 'firebase/app';
 import { getDatabase, ref, set, get, onValue }    from 'firebase/database';
+import { getAuth, signInAnonymously }              from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo",
@@ -705,8 +713,27 @@ const firebaseConfig = {
 };
 
 try {
-  const app = initializeApp(firebaseConfig);
+  const app = initializeApp(firebaseConfig, 'daily-inventory-access');
   const db  = getDatabase(app);
+  const auth = getAuth(app);
+  const tokenFromUrl = (new URLSearchParams(location.search).get('access') || '').trim();
+  const savedToken = localStorage.getItem('zaiko_daily_access_token') || '';
+  const accessToken = tokenFromUrl || savedToken;
+  if (accessToken) {
+    if (!/^[A-Za-z0-9_-]{43,128}$/.test(accessToken)) throw new Error('毎日在庫の専用URLが正しくありません。');
+    const user = auth.currentUser || (await signInAnonymously(auth)).user;
+    await set(ref(db, 'zaiko/app_access/sessions/' + user.uid), accessToken);
+    const accessSnap = await get(ref(db, 'zaiko/app_access/tokens/' + accessToken));
+    const access = accessSnap.val();
+    if (!access || access.active !== true || access.app !== 'daily-inventory' || access.storeKey !== 'kamakura') {
+      throw new Error('この毎日在庫専用URLは利用停止されています。');
+    }
+    window.DAILY_ACCESS_VALID = true;
+    localStorage.setItem('zaiko_daily_access_token', accessToken);
+  } else {
+    window.DAILY_ACCESS_VALID = false;
+    window.DAILY_ACCESS_LEGACY = true;
+  }
 
   // ── 接続状態をリアルタイム監視 ──
   onValue(ref(db, '.info/connected'), (snap) => {
@@ -934,6 +961,10 @@ try {
 } catch(e) {
   console.error('Firebase初期化エラー', e);
   window.setSyncStatus('error', 'init');
+  const gate = document.getElementById('daily-access-stopped');
+  const text = document.getElementById('daily-access-stopped-text');
+  if (text) text.textContent = e.message || '毎日在庫の専用URLを確認できませんでした。';
+  if (gate) gate.style.display = 'flex';
 }
 </script>
 <div id="passcode-screen" style="display:none;">
