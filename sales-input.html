@@ -26,8 +26,8 @@
   <script>
     (function(){
       var p = new URLSearchParams(location.search);
-      if (p.get('v') !== '2.72') {
-        p.set('v', '2.72');
+      if (p.get('v') !== '2.73') {
+        p.set('v', '2.73');
         history.replaceState(null, '', location.pathname + '?' + p.toString());
       }
     })();
@@ -316,6 +316,11 @@
   window.fbWriteHistory  = function(){};
   window.fbWriteHolidays = function(){};
   window.fbSyncStore     = function(s){ window.__pendingStore = s; };
+  // 専用URLのFirebase匿名認証が完了するまで、GAS通信を待機させる。
+  // 従来URLは認証なしのまま解決し、第1段階では既存端末を止めない。
+  window.SALES_GAS_AUTH_READY = new Promise(function(resolve) {
+    window.__resolveSalesGasAuthReady = resolve;
+  });
   </script>
   <script type="module">
   import { initializeApp } from 'firebase/app';
@@ -350,10 +355,12 @@
       window.SALES_ACCESS_STORE_KEY = access.storeKey;
       localStorage.setItem('zaiko_sales_access_token', accessToken);
       localStorage.setItem('last_store', access.storeName);
+      window.__resolveSalesGasAuthReady({ user:user, dedicated:true, access:access });
       window.dispatchEvent(new CustomEvent('sales-access-ready', {detail:access}));
     } else {
       window.SALES_ACCESS_VALID = false;
       window.SALES_ACCESS_LEGACY = true;
+      window.__resolveSalesGasAuthReady({ user:null, legacy:true });
     }
 
     // 接続状態
@@ -427,6 +434,7 @@
 
   } catch(e) {
     console.warn('Firebase初期化エラー', e);
+    window.__resolveSalesGasAuthReady({ user:null, error:e });
     const gate = document.getElementById('sales-access-stopped');
     const text = document.getElementById('sales-access-stopped-text');
     if (text) text.textContent = e.message || '店舗専用URLを確認できませんでした。';
@@ -532,7 +540,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.72</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.73</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -929,7 +937,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.72';
+const APP_VERSION = 'v2.73';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -957,6 +965,32 @@ setInterval(checkForUpdate, 5 * 60 * 1000);
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUUbcAkNo1czgDCamnPhdRicP8BTH3ePex9fbyoYAooratkz70oTrmDLNu-8J8Xc/exec';
 const NIPPO_GAS_URL = 'https://script.google.com/macros/s/AKfycbwRLa71Rdm9tgI5W8GAfiRivdh0TImj3idG7WFOzcIxhVKeTIB09Y7IuudlBXMDzq0/exec';
 
+// 専用URLではFirebase IDトークンをGASへ渡す。
+// 従来URLでは本文・URLを変更せず、そのまま送る（段階移行の第1段階）。
+async function authenticatedGasFetch(url, options) {
+  const authState = await window.SALES_GAS_AUTH_READY;
+  if (authState && authState.error) throw authState.error;
+  const requestOptions = Object.assign({}, options || {});
+  if (!authState || !authState.user) return fetch(url, requestOptions);
+
+  const firebaseIdToken = await authState.user.getIdToken();
+  const method = String(requestOptions.method || 'GET').toUpperCase();
+  if (method === 'GET') {
+    const authenticatedUrl = new URL(url);
+    authenticatedUrl.searchParams.set('firebaseIdToken', firebaseIdToken);
+    return fetch(authenticatedUrl.toString(), requestOptions);
+  }
+
+  let payload = {};
+  if (requestOptions.body) {
+    try { payload = JSON.parse(requestOptions.body); }
+    catch (_) { throw new Error('GAS送信データを確認できませんでした。'); }
+  }
+  payload.firebaseIdToken = firebaseIdToken;
+  requestOptions.body = JSON.stringify(payload);
+  return fetch(url, requestOptions);
+}
+
 let STORE_PASSWORDS = {
   '那古野': '1001',
   '大須':   '2002',
@@ -980,7 +1014,7 @@ let originalData = null;
     if (cached && Date.now() - cacheTime < 3600000) {
       STORE_PASSWORDS = JSON.parse(cached); return;
     }
-    const res = await fetch(GAS_URL + '?action=getPasswords');
+    const res = await authenticatedGasFetch(GAS_URL + '?action=getPasswords');
     const result = await res.json();
     if (result.success && result.passwords) {
       STORE_PASSWORDS = result.passwords;
@@ -1009,7 +1043,7 @@ async function loadAdminPasswords() {
     setAdminInputs(STORE_PASSWORDS); return;
   }
   try {
-    const res = await fetch(GAS_URL + '?action=getPasswords');
+    const res = await authenticatedGasFetch(GAS_URL + '?action=getPasswords');
     const result = await res.json();
     if (result.success) setAdminInputs(result.passwords);
   } catch(e) { setAdminInputs(STORE_PASSWORDS); }
@@ -1036,7 +1070,7 @@ async function saveAdminPasswords() {
     showAdmMsg('GAS URLが設定されていません', 'ng'); return;
   }
   try {
-    const res = await fetch(GAS_URL, {
+    const res = await authenticatedGasFetch(GAS_URL, {
       method: 'POST',
       body: JSON.stringify({ action: 'setPasswords', passwords })
     });
@@ -1300,7 +1334,7 @@ async function saveSettingsPasswords() {
   if (Object.keys(toSave).length === 0) {
     showSPwMsg('変更するパスワードを入力してください', 'ng'); return;
   }
-  try { await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'setPasswords', passwords: toSave }) }); } catch(e) {}
+  try { await authenticatedGasFetch(GAS_URL, { method:'POST', body: JSON.stringify({ action:'setPasswords', passwords: toSave }) }); } catch(e) {}
   Object.assign(STORE_PASSWORDS, toSave);
   // Fix: pw_cache キーに統一
   const existingCache = JSON.parse(localStorage.getItem('pw_cache') || '{}');
@@ -1474,7 +1508,7 @@ async function loadData(viewOnly) {
 
   try {
     const url = GAS_URL + '?action=read&store=' + encodeURIComponent(currentStore) + '&date=' + date;
-    const res = await fetch(url);
+    const res = await authenticatedGasFetch(url);
     const result = await res.json();
 
     if (result.success) {
@@ -1706,7 +1740,7 @@ function calActionReset() {
   if (typeof window.fbWriteHistory  === 'function') window.fbWriteHistory(currentStore, hist);
   // スプレッドシートのその日の行もクリアする（B〜Z列）
   try {
-    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'resetDay', store: currentStore, date: calPopupDate, staffName: '' }) });
+    authenticatedGasFetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'resetDay', store: currentStore, date: calPopupDate, staffName: '' }) });
   } catch(ex) {}
   renderCalendar();
   renderHistory();
@@ -2112,7 +2146,7 @@ async function sendHoliday(dateStr, staffName) {
   const zero = {kumi:0,male:0,female:0,netSales:0,sales10:0,tax10:0,sales8:0,tax8:0,credit:0,point:0,emoney:0,coupon:0,buhin:0,buhinCash:0,buhinOther:0,buhinBrand:'',weather:'',lunchSales:0,lunchGuests:0,uber:0,menu:0,rocket:0};
   const payload = { store: currentStore, date: dateStr, staffName: staffName, submitTime: submitTime, isEdit: true, values: zero };
   try {
-    await fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload) });
+    await authenticatedGasFetch(GAS_URL, { method:'POST', body: JSON.stringify(payload) });
   } catch(e) {}
   markHoliday(dateStr);
   showLoadMsg('🔵 ' + dateStr + ' を休みとして登録しました', 'ok');
@@ -2386,7 +2420,7 @@ async function submitData() {
   };
 
   try {
-    const res = await fetch(GAS_URL, {
+    const res = await authenticatedGasFetch(GAS_URL, {
       method: 'POST',
       body: JSON.stringify(payload)
     });
@@ -2419,7 +2453,7 @@ async function submitData() {
         afternoonComment: nippoPayload.afternoonComment
       });
       resetEditMode();
-      fetch(NIPPO_GAS_URL, { method: 'POST', body: JSON.stringify(nippoPayload) }).catch(() => {});
+      authenticatedGasFetch(NIPPO_GAS_URL, { method: 'POST', body: JSON.stringify(nippoPayload) }).catch(() => {});
       clearMorningReport(currentStore, date);
       clearForm();
       clearAutoSave();
