@@ -438,7 +438,7 @@
   <script type="module">
   import { initializeApp } from 'firebase/app';
   import { getDatabase, ref, set, remove, update, get, onValue } from 'firebase/database';
-  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signInWithRedirect } from 'firebase/auth';
   try{
     const app = initializeApp({
       apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
@@ -472,7 +472,11 @@
             .then(()=>{ badge.textContent='✅ 送信 '+new Date().toLocaleTimeString('ja-JP'); })
             .catch(e=>{ _suppressUntil=0; badge.textContent='❌ 送信失敗'; console.warn(e); });
         } else if(payload.mode==='owner'){
-          set(ref(db,BASE+'/meta'), payload.meta).catch(e=>{ _suppressUntil=0; console.warn(e); });
+          if(window.shiftEditorMode){
+            const m=payload.meta||{};
+            update(ref(db,BASE+'/meta'),{published:!!m.published,updatedAt:m.updatedAt||'',decidedMonths:m.decidedMonths||{},decidedDays:m.decidedDays||{},storeMemo:m.storeMemo||{},storeOff:m.storeOff||{}})
+              .catch(e=>{ _suppressUntil=0; console.warn(e); });
+          } else set(ref(db,BASE+'/meta'), payload.meta).catch(e=>{ _suppressUntil=0; console.warn(e); });
           const st=payload.staff||{};
           Object.keys(st).forEach(nm=> set(ref(db,BASE+'/staff/'+fbKey(nm)), st[nm]).catch(e=>console.warn(e)) );
           badge.textContent='✅ 送信 '+new Date().toLocaleTimeString('ja-JP');
@@ -485,7 +489,7 @@
       return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
     window.fbIssueStaffUrl=async function(nm,store,node){
-      if(!window.fbOwnerReady) throw new Error('管理者ログインが必要です');
+      if(!window.fbOwnerReady || window.shiftEditorMode) throw new Error('管理者ログインが必要です');
       const staffKey=fbKey(nm), mapSnap=await get(ref(db,BASE+'/access/byStaff/'+staffKey));
       let token=mapSnap.val();
       if(token){ const old=await get(ref(db,BASE+'/access/tokens/'+token)); if(!old.exists()||old.val().active!==true) token=null; }
@@ -500,6 +504,7 @@
     };
     window.fbRemoveStaff=async function(nm,roster){
       if(!window.fbOwnerReady) return;
+      if(window.shiftEditorMode) throw new Error('編集者はスタッフを削除できません');
       _suppressUntil=Date.now()+1500;
       try{
         const staffKey=fbKey(nm), mapSnap=await get(ref(db,BASE+'/access/byStaff/'+staffKey)), token=mapSnap.val();
@@ -508,6 +513,25 @@
         if(token) changes['access/tokens/'+token+'/active']=false;
         await update(ref(db,BASE),changes);
       }catch(e){ console.warn(e); throw e; }
+    };
+
+    window.fbIssueEditorUrl=async function(slot,force){
+      if(!window.fbOwnerReady || window.shiftEditorMode) throw new Error('管理者ログインが必要です');
+      slot=(slot==='editor2')?'editor2':'editor1';
+      const slotRef=ref(db,BASE+'/access/editorSlots/'+slot);
+      const oldSnap=await get(slotRef); let token=oldSnap.val();
+      if(token && !force){
+        const current=await get(ref(db,BASE+'/access/editorTokens/'+token));
+        if(!current.exists() || current.val().active!==true) token=null;
+      }
+      if(!token || force){
+        const oldToken=token; token=randomToken(); const changes={};
+        if(oldToken) changes['access/editorTokens/'+oldToken+'/active']=false;
+        changes['access/editorSlots/'+slot]=token;
+        changes['access/editorTokens/'+token]={active:true,slot:slot,createdAt:new Date().toISOString()};
+        await update(ref(db,BASE),changes);
+      }
+      return 'https://zaiko-app-two.vercel.app/shift/owner.html?editor='+encodeURIComponent(token);
     };
 
     async function beginOwner(user){
@@ -530,12 +554,26 @@
         },e=>{ console.warn(e); window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid); });
       }catch(e){ window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid); }
     }
+    async function beginEditor(user,token){
+      try{
+        await set(ref(db,BASE+'/access/editorSessions/'+user.uid),token);
+        const permit=await get(ref(db,BASE+'/access/editorTokens/'+token));
+        if(!permit.exists() || permit.val().active!==true) throw new Error('inactive-editor');
+        window.shiftEditorMode=true; window.fbOwnerReady=true;
+        if(typeof window.shiftOwnerAuthorized==='function') window.shiftOwnerAuthorized(user.uid,true);
+        const remote={meta:null,staff:null};
+        const apply=()=>{ if(remote.meta!==null && remote.staff!==null && typeof window.shiftApplyRemote==='function') window.shiftApplyRemote(remote); };
+        onValue(ref(db,BASE+'/meta'),snap=>{ if(Date.now()<_suppressUntil) return; remote.meta=snap.val()||{}; apply(); badge.textContent='📥 受信 '+new Date().toLocaleTimeString('ja-JP'); },()=>window.shiftOwnerDenied(user.uid,true));
+        onValue(ref(db,BASE+'/staff'),snap=>{ if(Date.now()<_suppressUntil) return; remote.staff=snap.val()||{}; apply(); },()=>window.shiftOwnerDenied(user.uid,true));
+      }catch(e){ window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid,true); }
+    }
     window.shiftOwnerLogin=async function(){
       const provider=new GoogleAuthProvider();
       try{ await signInWithPopup(auth,provider); }
       catch(e){ if(e&&/popup|operation-not-supported/i.test(e.code||e.message||'')) await signInWithRedirect(auth,provider); else throw e; }
     };
-    onAuthStateChanged(auth,user=>{ if(user) beginOwner(user); else if(typeof window.shiftOwnerSignedOut==='function') window.shiftOwnerSignedOut(); });
+    const editorToken=new URLSearchParams(location.search).get('editor')||'';
+    onAuthStateChanged(auth,user=>{ if(user){ if(editorToken) beginEditor(user,editorToken); else beginOwner(user); } else if(editorToken){ signInAnonymously(auth).catch(()=>window.shiftOwnerDenied('',true)); } else if(typeof window.shiftOwnerSignedOut==='function') window.shiftOwnerSignedOut(); });
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _suppressUntil=0; });
   }catch(e){ console.warn('Firebase初期化エラー', e); }
   </script>
@@ -591,7 +629,7 @@
 <!-- PWA_INSTALL_KIT_END -->
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.66</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.67</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -619,9 +657,26 @@
     <button class="btn gray" id="printBlankBtn" type="button">🖨 白紙</button>
     <button class="btn decide" id="decideBtn" type="button">この月をスタッフに公開</button>
     <button class="btn gray" id="rosterBtn" type="button" title="名前を登録">👥 名前</button>
+    <button class="btn gray" id="editorUrlBtn" type="button" title="編集者専用URL">🔗 編集者</button>
     <button class="btn gray" id="setBtn" type="button" title="設定">⚙ 設定</button>
   </div>
   <div class="gridwrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+</div>
+
+<!-- シフト編集者専用URL（オーナーだけが発行） -->
+<div class="cmtmask" id="editorUrlMask">
+  <div class="cmtbox" style="max-width:420px;text-align:left;">
+    <div class="ttl" style="text-align:center;">🔗 シフト編集者専用URL</div>
+    <div style="font-size:13px;color:#666;line-height:1.7;margin-bottom:12px;">Google登録なしでシフトを編集できます。名前の登録・削除、スタッフURL発行、全データ消去はできません。</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;">
+      <button id="editor1Copy" type="button" style="background:#2f9ad0;">編集者1 URLをコピー</button>
+      <button id="editor1Reissue" type="button" style="background:#c0596b;">再発行</button>
+      <button id="editor2Copy" type="button" style="background:#2f9ad0;">編集者2 URLをコピー</button>
+      <button id="editor2Reissue" type="button" style="background:#c0596b;">再発行</button>
+    </div>
+    <div style="font-size:12px;color:#a33;line-height:1.6;">「再発行」を押すと、その人の古いURLは使えなくなります。</div>
+    <button id="editorUrlClose" type="button" style="background:#c9c9c9;margin-top:12px;">閉じる</button>
+  </div>
 </div>
 
 <!-- ============ スタッフ ============ -->
@@ -807,7 +862,8 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.66"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.67"; window.APP_UPDATED="2026-08-11";
+window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -878,12 +934,16 @@ window.shiftOwnerSignedOut=function(){
   if(t) t.textContent='Firebaseを管理しているGoogleアカウントでログインしてください。';
   if(b) b.style.display='inline-block'; if(g) g.style.display='flex';
 };
-window.shiftOwnerAuthorized=function(){
+window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
+  if(isEditor){
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.67</span>';
+    ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+  }
 };
-window.shiftOwnerDenied=function(uid){
+window.shiftOwnerDenied=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'),t=document.getElementById('ownerAccessText'),b=document.getElementById('ownerLoginBtn');
-  if(t) t.textContent='このGoogleアカウントにはオーナー権限がありません。管理者ID: '+uid;
+  if(t) t.textContent=isEditor?'この編集者専用URLは利用停止されています。オーナーに新しいURLを確認してください。':'このGoogleアカウントにはオーナー権限がありません。管理者ID: '+uid;
   if(b) b.style.display='none'; if(g) g.style.display='flex';
 };
 document.getElementById('ownerLoginBtn').onclick=function(){
@@ -893,6 +953,7 @@ document.getElementById('ownerLoginBtn').onclick=function(){
 function touchUpdated(){ const t=new Date(); S.updatedAt=`${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`; if(!S.decidedMonths) S.decidedMonths={}; S.decidedMonths[Y+'-'+M]=true; }
 function names(){ return Object.keys(S.staff); }
 function storeStaff(st){ return names().filter(n=>(S.staff[n].store||"大須")===st); }
+function canManageStaff(){ return !window.shiftEditorMode; }
 
 /* ---- 希望テキスト ---- */
 function wishText(w){
@@ -959,7 +1020,7 @@ function renderOwner(){
     rows+=`</tr>`;
     list.forEach(nm=>{
       const stf=S.staff[nm]||{};
-      rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="nmtxt" title="長押しして並べ替え">${esc(nm)}</span><button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button></td>`;
+      rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="nmtxt" title="長押しして並べ替え">${esc(nm)}</span>${canManageStaff()?`<button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button>`:''}</td>`;
       const wish=stf.wish||{}, dec=stf.decided||{};
       for(let d=1;d<=DAYS;d++){
         const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
@@ -976,10 +1037,12 @@ function renderOwner(){
       }
       rows+="</tr>";
     });
-    /* ＋名前を記入（この店舗に直接追加）*/
-    rows+=`<tr class="addrow"><td class="name addname"><input class="addinp" data-st="${esc(st)}" type="text" placeholder="＋" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;background:transparent;font-size:13px;color:#2fa04a;font-weight:700;padding:2px;"></td>`;
-    for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
-    rows+=`</tr>`;
+    /* ＋名前を記入（オーナーだけ。この店舗に直接追加）*/
+    if(canManageStaff()){
+      rows+=`<tr class="addrow"><td class="name addname"><input class="addinp" data-st="${esc(st)}" type="text" placeholder="＋" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;background:transparent;font-size:13px;color:#2fa04a;font-weight:700;padding:2px;"></td>`;
+      for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
+      rows+=`</tr>`;
+    }
     const blanks=Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 目安の数。提出で埋まっても常にSPARE_ROWS行の空きを自動追加 */
     for(let bi=0; bi<blanks; bi++){
       rows+=`<tr class="blankrow"><td class="name blankname">&nbsp;</td>`;
@@ -1025,6 +1088,7 @@ function renderOwner(){
 
 /* 同じ店舗内の名前を長押しして並べ替え */
 function attachRosterReorder(){
+  if(!canManageStaff()) return;
   document.querySelectorAll('#tbody tr.staffrow .nmtxt').forEach(handle=>{
     handle.onpointerdown=(e)=>{
       if(e.pointerType==='mouse' && e.button!==0) return;
@@ -1962,6 +2026,26 @@ $("#rosterMask").onclick=e=>{ if(e.target.id==="rosterMask") $("#rosterMask").st
 $("#rosterStore").onchange=renderRosterList;
 $("#rosterAdd").onclick=rosterAddName;
 $("#rosterName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); rosterAddName(); } });
+
+/* ================= シフト編集者専用URL（2人分） ================= */
+async function copyEditorUrl(slot,force){
+  if(force && !confirm('この編集者の古いURLを利用停止にして、新しいURLを発行しますか？')) return;
+  const id=slot+(force?'Reissue':'Copy'), b=document.getElementById(id);
+  const old=b.textContent; b.disabled=true; b.textContent='準備中…';
+  try{
+    const url=await window.fbIssueEditorUrl(slot,!!force);
+    try{ await navigator.clipboard.writeText(url); alert((force?'新しい':'')+'編集者専用URLをコピーしました。\nこのURLだけを本人へ送ってください。'); }
+    catch(e){ window.prompt('この編集者専用URLをコピーしてください。',url); }
+  }catch(e){ alert('編集者URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
+  b.disabled=false; b.textContent=old;
+}
+$("#editorUrlBtn").onclick=()=>$("#editorUrlMask").style.display='flex';
+$("#editorUrlClose").onclick=()=>$("#editorUrlMask").style.display='none';
+$("#editorUrlMask").onclick=e=>{ if(e.target.id==='editorUrlMask') $("#editorUrlMask").style.display='none'; };
+$("#editor1Copy").onclick=()=>copyEditorUrl('editor1',false);
+$("#editor2Copy").onclick=()=>copyEditorUrl('editor2',false);
+$("#editor1Reissue").onclick=()=>copyEditorUrl('editor1',true);
+$("#editor2Reissue").onclick=()=>copyEditorUrl('editor2',true);
 
 initWho(); buildPalette(); showOwner();
 </script>
