@@ -226,6 +226,45 @@ jobs:
             echo "::error file=shift/owner.html::Token revocation on staff deletion is missing."
             exit 1
           }
+          grep -Fq 'fbIssueEditorUrl' shift/owner.html || {
+            echo "::error file=shift/owner.html::Shift-editor URL issuing is missing."
+            exit 1
+          }
+          grep -Fq 'signInAnonymously' shift/owner.html || {
+            echo "::error file=shift/owner.html::Anonymous shift-editor authentication is missing."
+            exit 1
+          }
+          grep -Fq 'canManageStaff()' shift/owner.html || {
+            echo "::error file=shift/owner.html::Shift-editor staff-management UI guard is missing."
+            exit 1
+          }
+          grep -Fq '"editorTokens"' database.rules.json || {
+            echo "::error file=database.rules.json::Shift-editor token rules are missing."
+            exit 1
+          }
+          grep -Fq '"editorSessions"' database.rules.json || {
+            echo "::error file=database.rules.json::Shift-editor session rules are missing."
+            exit 1
+          }
+          grep -Fq 'data.exists() && newData.exists()' database.rules.json || {
+            echo "::error file=database.rules.json::Shift-editor staff create/delete protection is missing."
+            exit 1
+          }
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          rules = json.loads(Path("database.rules.json").read_text(encoding="utf-8"))["rules"]["zaiko"]["shift"]
+          meta = rules["meta"]
+          if "editorTokens" in meta[".write"]:
+              raise SystemExit("Shift editors must not have parent-level meta write access")
+          for key in ("published", "updatedAt", "decidedMonths", "decidedDays", "storeMemo", "storeOff"):
+              if "editorTokens" not in meta.get(key, {}).get(".write", ""):
+                  raise SystemExit(f"Shift editor write rule is missing for meta/{key}")
+          if "editorTokens" in meta.get("roster", {}).get(".write", ""):
+              raise SystemExit("Shift editors must not be able to change the roster")
+          PY
 
           python -m json.tool database.rules.json >/dev/null
           python -m json.tool firebase.json >/dev/null
