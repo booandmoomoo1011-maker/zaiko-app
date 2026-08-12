@@ -1459,7 +1459,8 @@ function renderMine(me){
   const hc=(STORE_COLOR[home]||STORE_COLOR["大須"]).hd;
   const first=new Date(Y,M-1,1).getDay();
   const _locked=false;   /* スタッフの「全部◎」はいつでも使える（オーナー操作で無効化しない） */
-  const _allDayCount=Object.keys(wsh).filter(k=>wsh[k]&&wsh[k].allday).length;\n  const _hasBulkAllDay=Object.keys(wsh).some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
+  const _allDayCount=Object.keys(wsh).filter(k=>wsh[k]&&wsh[k].allday).length;
+  const _hasBulkAllDay=Object.keys(wsh).some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
   let html=`<div class="caltools"><button type="button" class="allbtn${_locked?' locked':''}${_hasBulkAllDay?' clr':''}" id="allMaru" ${_locked?'disabled':''}>${_hasBulkAllDay?'全部一日OKを解除':'全部 ◎ 一日OK'}</button><span class="monthlbl${Date.now()<staffMonthChangedUntil?' changed':''}" id="monthLbl">${Y}年${M}月</span><span class="updatedlbl" id="updatedLbl"></span></div>`;
   html+='<div class="mcal"><div class="mcalgrid">';
   DOW.forEach((dw,i)=>html+=`<div class="mch ${i===0?'sun':i===6?'sat':''}">${dw}</div>`);
