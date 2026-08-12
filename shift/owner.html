@@ -421,6 +421,32 @@
   .cmtbox .noteinp:disabled{opacity:1; color:#555; -webkit-text-fill-color:#555; background:#f4f4f4;}
   .cmtbox input.tinp:disabled{opacity:1; color:#2a2a2a; -webkit-text-fill-color:#2a2a2a; font-weight:700;}
   .cmtbox input.tinp{color:#2a2a2a; font-weight:700;}
+
+  /* アプリ専用の確認・案内ポップアップ */
+  .appdialog-mask{position:fixed;inset:0;z-index:2147483600;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(34,34,34,.48);backdrop-filter:blur(2px);}
+  .appdialog{position:relative;width:min(520px,100%);max-height:88vh;overflow:auto;background:#fffdf8;border:2px solid #f3cf5c;border-radius:26px;padding:28px 26px 24px;text-align:center;box-shadow:0 18px 50px rgba(55,40,15,.28);}
+  .appdialog-close{position:absolute;right:14px;top:12px;width:38px;height:38px;border:1px solid #f0d8df;border-radius:50%;background:#fff7f9;color:#5a4038;font-size:24px;line-height:34px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.12);}
+  .appdialog-icon{display:flex;align-items:center;justify-content:center;width:76px;height:76px;margin:0 auto 14px;border-radius:50%;background:#fff4c8;font-size:38px;box-shadow:inset 0 0 0 1px #f8df88;}
+  .appdialog-title{margin:0 42px 10px;font-size:24px;font-weight:900;color:#2f2f2f;line-height:1.35;}
+  .appdialog-message{font-size:16px;line-height:1.8;color:#454545;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .appdialog-value{display:none;width:100%;min-height:120px;margin-top:14px;padding:12px;border:1.5px solid #edcbd5;border-radius:12px;background:#fff9fb;color:#333;font-size:14px;line-height:1.5;resize:vertical;}
+  .appdialog-actions{display:flex;gap:12px;margin-top:22px;}
+  .appdialog-actions button{flex:1;min-height:52px;border:0;border-radius:18px;padding:12px 16px;font-size:17px;font-weight:900;cursor:pointer;box-shadow:0 3px 7px rgba(0,0,0,.12);}
+  .appdialog-cancel{background:#fde8ef;color:#543b44;}
+  .appdialog-ok{background:linear-gradient(180deg,#ffe270 0%,#f5c83f 100%);color:#332a13;}
+  .appdialog.danger{border-color:#ef9aae;}
+  .appdialog.danger .appdialog-icon{background:#ffe8ed;box-shadow:inset 0 0 0 1px #f6bdc9;}
+  .appdialog.danger .appdialog-ok{background:linear-gradient(180deg,#ef8ca4 0%,#db6682 100%);color:#fff;}
+  .appdialog.info{border-color:#f1c7d3;}
+  .appdialog.info .appdialog-icon{background:#fff0f5;box-shadow:inset 0 0 0 1px #f1c7d3;}
+  @media(max-width:600px){
+    .appdialog{border-radius:22px;padding:24px 18px 18px;}
+    .appdialog-icon{width:64px;height:64px;font-size:32px;}
+    .appdialog-title{font-size:20px;margin-left:34px;margin-right:34px;}
+    .appdialog-message{font-size:15px;text-align:left;}
+    .appdialog-actions button{font-size:16px;min-height:50px;}
+  }
+
 </style>
   <!-- ===== Firebase（シフト共有 / 売上と同じDBの zaiko/shift）===== -->
   <script type="importmap">
@@ -618,7 +644,7 @@
     window.addEventListener('appinstalled',function(){ if(btn) btn.style.display='none'; if(bar) bar.style.display='none'; });
     if(btn) btn.onclick=async function(){ if(deferred){ deferred.prompt(); try{ await deferred.userChoice; }catch(e){} deferred=null; btn.style.display='none'; } else { showBar(); } };
     var cbtn=document.getElementById('pwaBarClose'); if(cbtn) cbtn.onclick=function(){ if(bar) bar.style.display='none'; };
-    var copyb=document.getElementById('pwaBarCopy'); if(copyb) copyb.onclick=async function(){ var u=location.href.split('#')[0]; try{ await navigator.clipboard.writeText(u); alert("URLをコピーしました。SafariまたはChromeのアドレス欄に貼り付けて開いてください：\n\n"+u); }catch(e){ alert("このURLをSafari/Chromeで開いてください：\n\n"+u); } };
+    var copyb=document.getElementById('pwaBarCopy'); if(copyb) copyb.onclick=async function(){ var u=location.href.split('#')[0]; try{ await navigator.clipboard.writeText(u); appAlert("URLをコピーしました。SafariまたはChromeのアドレス欄に貼り付けて開いてください：\n\n"+u); }catch(e){ appAlert("このURLをSafari/Chromeで開いてください：\n\n"+u); } };
     if(standalone) return;
     if(inLine){ showBar(); }
     else if(isIOS){ showBar(); }
@@ -628,8 +654,24 @@
 </script>
 <!-- PWA_INSTALL_KIT_END -->
 
+<!-- アプリ専用の確認・案内ポップアップ -->
+<div class="appdialog-mask" id="appDialogMask" role="dialog" aria-modal="true" aria-labelledby="appDialogTitle">
+  <div class="appdialog" id="appDialogCard">
+    <button class="appdialog-close" id="appDialogClose" type="button" aria-label="閉じる">×</button>
+    <div class="appdialog-icon" id="appDialogIcon" aria-hidden="true">📅</div>
+    <div class="appdialog-title" id="appDialogTitle"></div>
+    <div class="appdialog-message" id="appDialogMessage"></div>
+    <textarea class="appdialog-value" id="appDialogValue" readonly></textarea>
+    <div class="appdialog-actions">
+      <button class="appdialog-cancel" id="appDialogCancel" type="button">キャンセル</button>
+      <button class="appdialog-ok" id="appDialogOk" type="button">確認する</button>
+    </div>
+  </div>
+</div>
+
+
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.68</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.69</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -862,11 +904,61 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.68"; window.APP_UPDATED="2026-08-11";
+window.APP_VERSION="v1.69"; window.APP_UPDATED="2026-08-11";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
+
+/* ブラウザ標準ではなく、アプリの色に合わせた確認・案内画面 */
+let appDialogResolve=null;
+function closeAppDialog(result){
+  const mask=$("#appDialogMask");
+  if(mask) mask.style.display="none";
+  const resolve=appDialogResolve; appDialogResolve=null;
+  if(resolve) resolve(result);
+}
+function appDialog(options){
+  const o=options||{}, mask=$("#appDialogMask"), card=$("#appDialogCard");
+  if(!mask||!card) return Promise.resolve(false);
+  if(appDialogResolve) closeAppDialog(false);
+  card.className="appdialog "+(o.kind||"");
+  $("#appDialogIcon").textContent=o.icon||(o.kind==="danger"?"⚠️":o.kind==="info"?"💡":"📅");
+  $("#appDialogTitle").textContent=o.title||"確認";
+  $("#appDialogMessage").textContent=o.message||"";
+  const value=$("#appDialogValue");
+  value.value=o.value||"";
+  value.style.display=o.value?"block":"none";
+  const cancel=$("#appDialogCancel"), ok=$("#appDialogOk");
+  cancel.textContent=o.cancelText||"キャンセル";
+  cancel.style.display=o.hideCancel?"none":"block";
+  ok.textContent=o.confirmText||"確認する";
+  mask.style.display="flex";
+  setTimeout(()=>ok.focus(),20);
+  return new Promise(resolve=>{ appDialogResolve=resolve; });
+}
+function appConfirm(message,options){
+  return appDialog(Object.assign({message:message},options||{}));
+}
+function appAlert(message,options){
+  const text=String(message==null?"":message);
+  const failed=/失敗|できません|読めません|エラー/.test(text);
+  const done=/コピーしました|クリアしました|戻しました|完了/.test(text);
+  return appDialog(Object.assign({
+    title:failed?"うまくできませんでした":done?"できました":"お知らせ",
+    message:text,kind:failed?"danger":"info",icon:failed?"⚠️":done?"✓":"💡",
+    confirmText:"閉じる",hideCancel:true
+  },options||{}));
+}
+function appPrompt(message,value){
+  return appDialog({title:"内容を確認してください",message:String(message||""),value:String(value||""),kind:"info",icon:"🔗",confirmText:"閉じる",hideCancel:true});
+}
+$("#appDialogOk").onclick=()=>closeAppDialog(true);
+$("#appDialogCancel").onclick=()=>closeAppDialog(false);
+$("#appDialogClose").onclick=()=>closeAppDialog(false);
+$("#appDialogMask").onclick=e=>{ if(e.target.id==="appDialogMask") closeAppDialog(false); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#appDialogMask").style.display==="flex") closeAppDialog(false); });
+
 const isLightColor=hex=>{const h=String(hex).replace("#","");const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return (0.299*r+0.587*g+0.114*b)>175;};
 const pad=n=>String(n).padStart(2,"0");
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -937,7 +1029,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.68</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.69</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -948,7 +1040,7 @@ window.shiftOwnerDenied=function(uid,isEditor){
 };
 document.getElementById('ownerLoginBtn').onclick=function(){
   this.disabled=true;
-  Promise.resolve(window.shiftOwnerLogin&&window.shiftOwnerLogin()).catch(e=>{ alert('Googleログインに失敗しました。もう一度お試しください。'); console.warn(e); }).finally(()=>{ this.disabled=false; });
+  Promise.resolve(window.shiftOwnerLogin&&window.shiftOwnerLogin()).catch(e=>{ appAlert('Googleログインに失敗しました。もう一度お試しください。'); console.warn(e); }).finally(()=>{ this.disabled=false; });
 };
 function touchUpdated(){ const t=new Date(); S.updatedAt=`${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`; if(!S.decidedMonths) S.decidedMonths={}; S.decidedMonths[Y+'-'+M]=true; }
 function names(){ return Object.keys(S.staff); }
@@ -1064,13 +1156,13 @@ function renderOwner(){
     showComment(el.dataset.n, +el.dataset.d, ((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)]); });
   document.querySelectorAll("#tbody .delstaff").forEach(b=>b.onclick=async(e)=>{ e.stopPropagation();
     const nm=b.dataset.n, st=b.dataset.st;
-    if(confirm(`${nm} さんを削除しますか？（希望・シフトも消えます）`)){
+    if(await appConfirm(`${nm} さんを削除しますか？\n希望・シフトも一緒に消えます。`,{title:"スタッフを削除しますか？",confirmText:"削除する",kind:"danger",icon:"🗑️"})){
       const R=getRoster(), backup=JSON.parse(JSON.stringify(R));
       STORES.forEach(function(s){ R[s]=(R[s]||[]).filter(function(x){ return x!==nm; }); });
       try{
         if(window.fbRemoveStaff) await window.fbRemoveStaff(nm,R);
         delete S.staff[nm]; saveLocal(); renderOwner();
-      }catch(err){ S.roster=backup; alert('削除に失敗しました。通信を確認してもう一度お試しください。'); }
+      }catch(err){ S.roster=backup; appAlert('削除に失敗しました。通信を確認してもう一度お試しください。'); }
     }
   });
   document.querySelectorAll("#tbody .addinp").forEach(inp=>{
@@ -1078,7 +1170,7 @@ function renderOwner(){
     inp.ondblclick=(e)=>e.stopPropagation();
     inp.onkeydown=(e)=>{ if(e.key==="Enter"){ e.preventDefault();
       const st=inp.dataset.st, nm=(inp.value||"").trim(); if(!nm) return;
-      const R=getRoster(); if(R[st].indexOf(nm)>=0){ alert("「"+nm+"」はすでにあります。"); inp.value=""; return; }
+      const R=getRoster(); if(R[st].indexOf(nm)>=0){ appAlert("「"+nm+"」はすでにあります。"); inp.value=""; return; }
       R[st].push(nm); save(); renderOwner();
       const again=document.querySelector('#tbody .addinp[data-st="'+st.replace(/"/g,'\\"')+'"]'); if(again) again.focus();
     } };
@@ -1245,7 +1337,7 @@ $("#reqMask").onclick=e=>{ if(e.target.id==="reqMask") $("#reqMask").style.displ
 $("#reqSend").onclick=()=>{
   if(!reqTarget) return;
   const s=normTime($("#reqStart").value), e=normTime($("#reqEnd").value);
-  if(!s&&!e){ alert("要請する時間を入れてください"); return; }
+  if(!s&&!e){ appAlert("要請する時間を入れてください"); return; }
   if(!S.staff[reqTarget.nm].req) S.staff[reqTarget.nm].req={};
   S.staff[reqTarget.nm].req[key(reqTarget.d)]={start:s,end:e,approved:false};
   save();
@@ -1342,7 +1434,7 @@ $("#teSave").onclick=()=>{
   if(!teTarget) return;
   const am=($("#teAmS").value||$("#teAmE").value)?{start:normTime($("#teAmS").value),end:normTime($("#teAmE").value)}:null;
   const pm=($("#tePmS").value||$("#tePmE").value)?{start:normTime($("#tePmS").value),end:normTime($("#tePmE").value)}:null;
-  if(!am&&!pm){ alert("AMかPMの時間を入れてください（消す場合は『消す』）"); return; }
+  if(!am&&!pm){ appAlert("AMかPMの時間を入れてください（消す場合は『消す』）"); return; }
   setSupport(teTarget.nm,teTarget.d,teTarget.st,{am,pm}); touchUpdated();
   $("#teMask").style.display="none"; supportRefresh();
 };
@@ -1446,7 +1538,7 @@ function openOneTime(nm,d,seg,f){
 }
 $("#oneOk").onclick=()=>{
   if(!oneT) return;
-  const v=normTime($("#oneInput").value); if(!v){ alert("時間を入れてください（例 9:00）"); return; }
+  const v=normTime($("#oneInput").value); if(!v){ appAlert("時間を入れてください（例 9:00）"); return; }
   const dec=S.staff[oneT.nm].decided[key(oneT.d)];
   if(dec&&dec[oneT.seg]){ dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
   $("#oneMask").style.display="none";
@@ -1621,7 +1713,7 @@ $("#dpClose").onclick=()=>$("#dpMask").style.display="none";
 $("#dpMask").onclick=e=>{ if(e.target.id==="dpMask") $("#dpMask").style.display="none"; };
 $("#dpPrint").onclick=()=>{
   const days=Object.keys(dpSel).map(Number).sort((a,b)=>a-b);
-  if(!days.length){ alert("印刷する日をタップして選んでください"); return; }
+  if(!days.length){ appAlert("印刷する日をタップして選んでください"); return; }
   $("#dpMask").style.display="none";
   buildPrintDays(days, dpBlank, `・${dpBlank?'白紙・':''}選んだ${days.length}日 / 1枚に3日`);
 };
@@ -1642,8 +1734,8 @@ $("#setBtn").onclick=()=>{ $("#setUndo").disabled=!hasClearBackup(); $("#setUndo
 $("#setClose").onclick=()=>$("#setMask").style.display="none";
 $("#setMask").onclick=e=>{ if(e.target.id==="setMask") $("#setMask").style.display="none"; };
 function hasClearBackup(){ try{ return !!localStorage.getItem(BK_KEY); }catch(e){ return false; } }
-$("#setClear").onclick=()=>{
-  if(!confirm("入力内容をぜんぶ消して、まっさらにします。\n（動作確認で入れたデータの消去用・共有クラウドも消えます）\n\nこのあと「戻す」で元に戻せます。消しますか？")) return;
+$("#setClear").onclick=async()=>{
+  if(!await appConfirm("入力内容をぜんぶ消して、まっさらにします。\n動作確認で入れたデータと共有クラウドの内容も消えます。\n\nこのあと「戻す」で元に戻せます。",{title:"入力内容をすべて消しますか？",confirmText:"すべて消す",kind:"danger",icon:"🗑️"})) return;
   try{ localStorage.setItem(BK_KEY, JSON.stringify(S)); }catch(e){}
   const oldNames=Object.keys(S.staff||{});
   S=seed();
@@ -1652,19 +1744,19 @@ $("#setClear").onclick=()=>{
   save();  /* meta（公開・決定など）も空でクラウドへ */
   $("#setMask").style.display="none";
   renderOwner();
-  alert("クリアしました。元に戻すときは ⚙設定 →「戻す」。");
+  appAlert("クリアしました。元に戻すときは ⚙設定 →「戻す」。");
 };
-$("#setUndo").onclick=()=>{
-  if(!hasClearBackup()){ alert("戻せる内容がありません（まだクリアしていません）。"); return; }
-  if(!confirm("さっきクリアした内容に戻します。今の状態は上書きされます。戻しますか？")) return;
+$("#setUndo").onclick=async()=>{
+  if(!hasClearBackup()){ appAlert("戻せる内容がありません（まだクリアしていません）。"); return; }
+  if(!await appConfirm("さっきクリアした内容に戻します。\n現在の状態は上書きされます。",{title:"元の内容に戻しますか？",confirmText:"元に戻す",icon:"↩️"})) return;
   let bk=null; try{ bk=localStorage.getItem(BK_KEY); }catch(e){}
-  try{ S=JSON.parse(bk); }catch(e){ alert("戻すデータが読めませんでした。"); return; }
+  try{ S=JSON.parse(bk); }catch(e){ appAlert("戻すデータが読めませんでした。"); return; }
   saveLocal();
   save();  /* 復元した全員＋metaをクラウドへ戻す */
   try{ localStorage.removeItem(BK_KEY); }catch(e){}
   $("#setMask").style.display="none";
   renderOwner();
-  alert("元に戻しました。");
+  appAlert("元に戻しました。");
 };
 
 function openEditor(nm,d){
@@ -1697,7 +1789,7 @@ $("#mSave").onclick=()=>{
   const av=($("#mAllStart").value||$("#mAllEnd").value)?{start:$("#mAllStart").value,end:$("#mAllEnd").value}:null;
   const am=($("#mAmStart").value||$("#mAmEnd").value)?{start:$("#mAmStart").value,end:$("#mAmEnd").value}:null;
   const pm=($("#mPmStart").value||$("#mPmEnd").value)?{start:$("#mPmStart").value,end:$("#mPmEnd").value}:null;
-  if(!av&&!am&&!pm){ alert("一日・AM・PMのどれかに時間を入れてください（休みは✕）"); return; }
+  if(!av&&!am&&!pm){ appAlert("一日・AM・PMのどれかに時間を入れてください（休みは✕）"); return; }
   setDecided({all:av,am,pm,color:pickColor});
 };
 $("#mDelete").onclick=()=>setDecided(null);
@@ -1706,7 +1798,7 @@ $("#mReq").onclick=()=>{
   const nm=editing.nm, dd=editing.d;
   const s2=$("#mAllStart").value||$("#mAmStart").value||$("#mPmStart").value;
   const e2=$("#mAllEnd").value||$("#mAmEnd").value||$("#mPmEnd").value;
-  if(!s2&&!e2){ alert("要請する時間を入れてください（一日／AM／PMのどれか）"); return; }
+  if(!s2&&!e2){ appAlert("要請する時間を入れてください（一日／AM／PMのどれか）"); return; }
   if(!S.staff[nm].req) S.staff[nm].req={};
   S.staff[nm].req[key(dd)]={start:s2,end:e2,approved:false,rejected:false};
   save();
@@ -1717,9 +1809,9 @@ document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{
   if(b.dataset.q==="batu") setDecided({off:true});
 });
 $("#mask").onclick=e=>{ if(e.target.id==="mask") closeEditor(); };
-$("#decideBtn").onclick=()=>{
+$("#decideBtn").onclick=async()=>{
   const next=!S.published;
-  if(!confirm(next?"確定した日をスタッフに公開します。\nスタッフが自分の出勤時間を見られるようになります。":"公開を取り消します。\nスタッフからシフトが見えなくなります。")) return;
+  if(!await appConfirm(next?"確定した日をスタッフに公開します。\nスタッフが自分の出勤時間を見られるようになります。":"公開を取り消します。\nスタッフからシフトが見えなくなります。",{title:next?"シフトを公開しますか？":"公開を取り消しますか？",confirmText:next?"公開する ✓":"取り消す",kind:next?"":"danger",icon:next?"📅":"⚠️"})) return;
   S.published=next;
   if(next) touchUpdated();
   save(); renderOwner();
@@ -1907,7 +1999,7 @@ $("#raApprove").onclick=()=>{
   if(raMe==null) return;
   const s=normTime($("#raAllS").value||$("#raAmS").value||$("#raPmS").value);
   const e=normTime($("#raAllE").value||$("#raAmE").value||$("#raPmE").value);
-  if(!s&&!e){ alert("承認する時間を入れてください"); return; }
+  if(!s&&!e){ appAlert("承認する時間を入れてください"); return; }
   if(!S.staff[raMe].req) S.staff[raMe].req={};
   S.staff[raMe].req[key(raDay)]={start:s,end:e,approved:true,rejected:false};
   save(); $("#raMask").style.display="none"; renderStaff();
@@ -1925,12 +2017,12 @@ $("#yearSel").onchange=setYM; $("#monthSel").onchange=setYM;
 $("#oYearSel").onchange=setYMOwner; $("#oMonthSel").onchange=setYMOwner;
 $("#shareBtn").onclick=async ()=>{
   rosterFillStore(); renderRosterList(); $("#rosterMask").style.display="flex";
-  alert('スタッフ共通URLは停止しました。名前ごとの「専用URLをコピー」を使用してください。');
+  appAlert('スタッフ共通URLは停止しました。名前ごとの「専用URLをコピー」を使用してください。');
 };
 $("#shareOwnerBtn").onclick=async ()=>{
   const url = "https://zaiko-app-two.vercel.app/shift/owner.html";   // オーナー用の公開URL（固定）
-  try{ await navigator.clipboard.writeText(url); alert("オーナー用URLをコピーしました。自分のスマホなどで開いてください：\n\n"+url); }
-  catch(e){ alert("このオーナー用URLをブラウザで開いてください：\n\n"+url); }
+  try{ await navigator.clipboard.writeText(url); appAlert("オーナー用URLをコピーしました。自分のスマホなどで開いてください：\n\n"+url); }
+  catch(e){ appAlert("このオーナー用URLをブラウザで開いてください：\n\n"+url); }
 };
 
 /* ================= 画面切替 ================= */
@@ -1979,32 +2071,32 @@ function renderRosterList(){
     try{
       ensureStaffOwner(name);
       const url=await window.fbIssueStaffUrl(name,store,S.staff[name]);
-      try{ await navigator.clipboard.writeText(url); alert('「'+name+'」さん専用URLをコピーしました。\n\n'+url); }
-      catch(e){ alert('「'+name+'」さん専用URLです。LINEに貼り付けてください。\n\n'+url); }
-    }catch(e){ alert('専用URLを発行できませんでした。管理者ログインと通信状態を確認してください。'); }
+      try{ await navigator.clipboard.writeText(url); appAlert('「'+name+'」さん専用URLをコピーしました。\n\n'+url); }
+      catch(e){ appAlert('「'+name+'」さん専用URLです。LINEに貼り付けてください。\n\n'+url); }
+    }catch(e){ appAlert('専用URLを発行できませんでした。管理者ログインと通信状態を確認してください。'); }
     b.disabled=false; b.textContent='専用URLをコピー';
   }; });
   box.querySelectorAll(".rosterDel").forEach(function(b){ b.onclick=function(){ rosterRemove(b.dataset.st, +b.dataset.i); }; });
 }
 function rosterAddName(){
   const st=$("#rosterStore").value||STORES[0]; const nm=($("#rosterName").value||"").trim(); if(!nm) return;
-  const R=getRoster(); if(R[st].indexOf(nm)>=0){ alert("「"+nm+"」はすでに登録されています。"); return; }
+  const R=getRoster(); if(R[st].indexOf(nm)>=0){ appAlert("「"+nm+"」はすでに登録されています。"); return; }
   R[st].push(nm); $("#rosterName").value=""; save(); renderRosterList();
 }
 async function rosterRemove(st,i){
   const R=getRoster(); if(!R[st]||i<0||i>=R[st].length) return; const nm=R[st][i];
-  if(!confirm('「'+nm+'」を削除しますか？\n専用URLも直ちに利用停止になります。')) return;
+  if(!await appConfirm('「'+nm+'」を削除します。\n専用URLも直ちに利用停止になります。',{title:'スタッフを削除しますか？',confirmText:'削除する',kind:'danger',icon:'🗑️'})) return;
   const backup=JSON.parse(JSON.stringify(R));
   STORES.forEach(function(s){ R[s]=(R[s]||[]).filter(function(x){ return x!==nm; }); });
   try{
     await window.fbRemoveStaff(nm,R);
     delete S.staff[nm]; saveLocal(); renderRosterList(); renderOwner();
-  }catch(e){ S.roster=backup; alert('削除に失敗しました。通信を確認してもう一度お試しください。'); }
+  }catch(e){ S.roster=backup; appAlert('削除に失敗しました。通信を確認してもう一度お試しください。'); }
 }
 $("#rosterCopyStore").onclick=async function(){
   const b=this, store=$("#rosterStore").value||STORES[0];
   const arr=(getRoster()[store]||[]).slice();
-  if(!arr.length){ alert('この店舗には、まだ名前が登録されていません。'); return; }
+  if(!arr.length){ appAlert('この店舗には、まだ名前が登録されていません。'); return; }
   b.disabled=true; b.textContent='全員分を準備中…';
   try{
     const lines=['【'+store+'店 スタッフ専用URL】','※自分の名前のURLを開いてください。他の方のURLは開かないでください。',''];
@@ -2014,9 +2106,9 @@ $("#rosterCopyStore").onclick=async function(){
       lines.push(name+'さん',url,'');
     }
     const text=lines.join('\n');
-    if(await copyRosterText(text)) alert(store+'店の全員分をコピーしました。\nLINEグループに貼り付けて送ってください。');
-    else window.prompt('自動コピーできませんでした。下の一覧を長押ししてコピーしてください。',text);
-  }catch(e){ alert('全員分の専用URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
+    if(await copyRosterText(text)) appAlert(store+'店の全員分をコピーしました。\nLINEグループに貼り付けて送ってください。');
+    else appPrompt('自動コピーできませんでした。下の一覧を長押ししてコピーしてください。',text);
+  }catch(e){ appAlert('全員分の専用URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
   b.disabled=false; b.textContent=store+'全員のURLをまとめてコピー';
 };
 $("#rosterBtn").onclick=()=>{ rosterFillStore(); renderRosterList(); $("#rosterMask").style.display="flex"; setTimeout(()=>{ const n=$("#rosterName"); if(n) n.focus(); },50); };
@@ -2029,14 +2121,14 @@ $("#rosterName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventD
 
 /* ================= シフト編集者専用URL（2人分） ================= */
 async function copyEditorUrl(slot,force){
-  if(force && !confirm('この編集者の古いURLを利用停止にして、新しいURLを発行しますか？')) return;
+  if(force && !await appConfirm('この編集者の古いURLを利用停止にして、新しいURLを発行します。',{title:'URLを再発行しますか？',confirmText:'再発行する',kind:'danger',icon:'🔗'})) return;
   const id=slot+(force?'Reissue':'Copy'), b=document.getElementById(id);
   const old=b.textContent; b.disabled=true; b.textContent='準備中…';
   try{
     const url=await window.fbIssueEditorUrl(slot,!!force);
-    try{ await navigator.clipboard.writeText(url); alert((force?'新しい':'')+'編集者専用URLをコピーしました。\nこのURLだけを本人へ送ってください。'); }
-    catch(e){ window.prompt('この編集者専用URLをコピーしてください。',url); }
-  }catch(e){ alert('編集者URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
+    try{ await navigator.clipboard.writeText(url); appAlert((force?'新しい':'')+'編集者専用URLをコピーしました。\nこのURLだけを本人へ送ってください。'); }
+    catch(e){ appPrompt('この編集者専用URLをコピーしてください。',url); }
+  }catch(e){ appAlert('編集者URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
   b.disabled=false; b.textContent=old;
 }
 $("#editorUrlBtn").onclick=()=>$("#editorUrlMask").style.display='flex';
