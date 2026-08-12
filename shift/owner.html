@@ -121,6 +121,12 @@
   #tbody td.blankcell{background:#fff; cursor:default;}
   #tbody td.stoff{background:#eaf6fd !important;}
   .storeoff-btn{margin-left:6px; border:1px solid #9cc9e6; background:#eaf6fd; color:#2b7fa3; font-size:10px; font-weight:800; border-radius:6px; padding:1px 7px; cursor:pointer; white-space:nowrap;}
+  .ownerclosedstatus{display:inline-block;color:#735f17;background:#fff3bd;border:1px solid #e5c85c;border-radius:8px;padding:3px 8px;font-weight:900;}
+  #ownerView.closedmonth #decideBtn{background:#ddd;color:#777;cursor:not-allowed;}
+  #ownerView.closedmonth #tbody td[data-d]{cursor:default;}
+  #dayGrid.closedmonth .drow.dedit,#dayGrid.closedmonth .drow.sedit,#dayGrid.closedmonth .drow.tadd,#dayGrid.closedmonth .dresize,#dayGrid.closedmonth .btime{cursor:default;}
+  #dayGrid.closedmonth .storememo{background:#f3f3f3;color:#666;resize:none;}
+  #dayGrid.closedmonth .storeoff-btn{opacity:.65;cursor:not-allowed;}
   .storeoff-btn.on{background:#57b7e3; color:#fff; border-color:#3a9bd0;}
   tr.secrow td.secname{background:#f3d9e1; color:var(--pink-d); font-weight:800; font-size:11px; white-space:nowrap; padding:1px 6px;}
   tr.secrow td.sechead{background:#f9e7ee; height:13px;}
@@ -672,7 +678,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.71</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.72</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -906,7 +912,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.71"; window.APP_UPDATED="2026-08-11";
+window.APP_VERSION="v1.72"; window.APP_UPDATED="2026-08-11";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -964,7 +970,32 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#appDialogMask"
 const isLightColor=hex=>{const h=String(hex).replace("#","");const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return (0.299*r+0.587*g+0.114*b)>175;};
 const pad=n=>String(n).padStart(2,"0");
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let Y=2026, M=7, DAYS=31;
+const SHIFT_START_YEAR=2026, SHIFT_START_MONTH=9, SHIFT_END_YEAR=2030;
+let Y=SHIFT_START_YEAR, M=SHIFT_START_MONTH, DAYS=30;
+function japanToday(){
+  try{
+    const values={};
+    new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tokyo",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(new Date()).forEach(p=>{ if(p.type!=="literal") values[p.type]=+p.value; });
+    return {year:values.year,month:values.month,day:values.day};
+  }catch(e){
+    const now=new Date();
+    return {year:now.getFullYear(),month:now.getMonth()+1,day:now.getDate()};
+  }
+}
+function shiftMonthBeforeStart(y,m){ return y<SHIFT_START_YEAR||(y===SHIFT_START_YEAR&&m<SHIFT_START_MONTH); }
+function ownerMonthIsClosed(y=Y,m=M){
+  const today=japanToday();
+  return y<today.year||(y===today.year&&m<today.month);
+}
+function normalizeShiftMonth(){
+  if(shiftMonthBeforeStart(Y,M)){ Y=SHIFT_START_YEAR; M=SHIFT_START_MONTH; }
+  if(Y>SHIFT_END_YEAR){ Y=SHIFT_END_YEAR; M=12; }
+}
+function closedMonthEditBlocked(){
+  if(!ownerMonthIsClosed()) return false;
+  ["mask","reqMask","pickMask","teMask","oneMask"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display="none"; });
+  return true;
+}
 const key=d=>`${Y}-${pad(M)}-${pad(d)}`;
 const STORE_KEY="shiftDemoState_v10";
 const STORES=["大須","那古野","鉄板"];
@@ -1031,7 +1062,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.71</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.72</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1092,9 +1123,12 @@ function buildPalette(){
     d.onclick=()=>{ pickColor=c; buildPalette(); }; p.appendChild(d); });
 }
 function renderOwner(){
-  $("#oStatus").innerHTML=(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${names().length}名　`+
+  const _monthClosed=ownerMonthIsClosed();
+  $("#ownerView").classList.toggle("closedmonth",_monthClosed);
+  $("#oStatus").innerHTML=(_monthClosed?'<span class="ownerclosedstatus">🔒 受付終了・閲覧のみ　</span>':'')+(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${names().length}名　`+
     (S.published?`<span class="pub">✅ 公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
-  $("#decideBtn").textContent=S.published?"公開を取り消す":"この月をスタッフに公開";
+  $("#decideBtn").textContent=_monthClosed?"受付終了":(S.published?"公開を取り消す":"この月をスタッフに公開");
+  $("#decideBtn").disabled=_monthClosed;
   const today=new Date(), todayStr=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
   let th=`<tr><th class="corner name">スタッフ</th>`;
   for(let d=1;d<=DAYS;d++){ const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
@@ -1146,7 +1180,7 @@ function renderOwner(){
   });
   $("#tbody").innerHTML=rows;
   document.querySelectorAll("#tbody td[data-d]").forEach(td=>{
-    td.ondblclick=(e)=>{ if(e.target.closest && e.target.closest('.cbubble')) return;
+    td.ondblclick=(e)=>{ if(_monthClosed||(e.target.closest && e.target.closest('.cbubble'))) return;
       const nm=td.dataset.n, k=key(+td.dataset.d);
       if(!S.staff[nm]) return;                 /* まだ提出のない登録名は対象外 */
       if(!S.staff[nm].ooff) S.staff[nm].ooff={};
@@ -1275,8 +1309,9 @@ function reqBars(nm,d){
 }
 function openDayView(d){
   dayViewDay=d;
+  const _closed=ownerMonthIsClosed();
   const dow=DOW[new Date(Y,M-1,d).getDay()];
-  $("#dayTitle").textContent=`${Y}年${M}月${d}日(${dow})`;
+  $("#dayTitle").textContent=`${Y}年${M}月${d}日(${dow})`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   const W=(AX1-AX0)*HW;
   let ticks=""; for(let h=AX0; h<=AX1; h++){ ticks+=`<div class="tick" style="left:${(h-AX0)*HW}px">${h}</div>`; }
   let html="";
@@ -1286,7 +1321,11 @@ function openDayView(d){
   const g=$("#dayGrid");
   g.style.transform="none";
   g.innerHTML=html;
-  g.classList.toggle('holdmode', holdMode);
+  g.classList.toggle('holdmode', holdMode&&!_closed);
+  g.classList.toggle('closedmonth',_closed);
+  g.querySelectorAll('.storememo').forEach(inp=>{ inp.disabled=_closed; });
+  g.querySelectorAll('.storeoff-btn,.dreq').forEach(b=>{ b.disabled=_closed; });
+  { const hb=$("#holdToggle"); if(hb) hb.disabled=_closed; }
   { const ht=$("#holdToggle"); if(ht) ht.classList.toggle('on', holdMode); }
   { const hh=$("#holdHint"); if(hh) hh.style.display=holdMode?'inline-block':'none'; }
   g.querySelectorAll('.cbubble').forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
@@ -1296,8 +1335,8 @@ function openDayView(d){
   g.querySelectorAll('.drow.sedit').forEach(row=>row.onclick=()=>openSupport(row.dataset.n,+row.dataset.d,row.dataset.st));
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openSupportPicker(+row.dataset.d,row.dataset.st));
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
-  g.querySelectorAll('.storememo').forEach(inp=>{ inp.onclick=(e)=>e.stopPropagation(); inp.onchange=()=>{ if(!S.storeMemo) S.storeMemo={}; const k=key(dayViewDay); if(!S.storeMemo[k]) S.storeMemo[k]={}; const st=inp.dataset.st, t=inp.value.trim(); if(t) S.storeMemo[k][st]=t; else delete S.storeMemo[k][st]; save(); }; });
-  g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation();
+  g.querySelectorAll('.storememo').forEach(inp=>{ inp.onclick=(e)=>e.stopPropagation(); inp.onchange=()=>{ if(closedMonthEditBlocked()) return; if(!S.storeMemo) S.storeMemo={}; const k=key(dayViewDay); if(!S.storeMemo[k]) S.storeMemo[k]={}; const st=inp.dataset.st, t=inp.value.trim(); if(t) S.storeMemo[k][st]=t; else delete S.storeMemo[k][st]; save(); }; });
+  g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); if(closedMonthEditBlocked()) return;
     const st=b.dataset.st, k=key(dayViewDay);
     if(!S.storeOff) S.storeOff={}; if(!S.storeOff[k]) S.storeOff[k]={};
     if(S.storeOff[k][st]){ delete S.storeOff[k][st]; if(!Object.keys(S.storeOff[k]).length) delete S.storeOff[k]; }
@@ -1319,13 +1358,14 @@ function openDayView(d){
 })();
 function fitDayGrid(){ const g=$("#dayGrid"); const sc=document.querySelector('.dayscroll'); if(!g||!sc) return; g.style.transform="none"; const gw=g.scrollWidth, gh=g.scrollHeight; const availW=sc.clientWidth, availH=sc.clientHeight; const scale=Math.min(availW/gw, availH/gh, 2); g.style.transformOrigin="top left"; g.style.transform="scale("+scale+")"; }
 (function(){ const sc=document.querySelector('.dayscroll'); if(sc && window.ResizeObserver){ new ResizeObserver(()=>{ const m=$("#dayMask"); if(m && m.style.display==="flex") fitDayGrid(); }).observe(sc); } })();
-function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.textContent=on?"✓ 決定ずみ（解除）":"この日を決定"; b.style.background=on?"#8a8f98":"#2fa04a"; b.style.color="#fff"; }
-$("#dayDecide").onclick=()=>{ if(dayViewDay==null) return; if(!S.decidedDays) S.decidedDays={}; const k=key(dayViewDay); const willDecide=!S.decidedDays[k]; if(S.decidedDays[k]) delete S.decidedDays[k]; else S.decidedDays[k]=true; touchUpdated(); save(); _syncDayDecideBtn(); renderOwner(); if(document.querySelector("#staffView").style.display!=="none") renderStaff(); if(willDecide) $("#dayMask").style.display="none"; };
-$("#holdToggle").onclick=()=>{ holdMode=!holdMode; const g=$("#dayGrid"); g.classList.toggle('holdmode',holdMode); $("#holdToggle").classList.toggle('on',holdMode); const hh=$("#holdHint"); if(hh) hh.style.display=holdMode?'inline-block':'none'; };
+function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"この日を決定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#2fa04a"); b.style.color="#fff"; }
+$("#dayDecide").onclick=()=>{ if(closedMonthEditBlocked()||dayViewDay==null) return; if(!S.decidedDays) S.decidedDays={}; const k=key(dayViewDay); const willDecide=!S.decidedDays[k]; if(S.decidedDays[k]) delete S.decidedDays[k]; else S.decidedDays[k]=true; touchUpdated(); save(); _syncDayDecideBtn(); renderOwner(); if(document.querySelector("#staffView").style.display!=="none") renderStaff(); if(willDecide) $("#dayMask").style.display="none"; };
+$("#holdToggle").onclick=()=>{ if(closedMonthEditBlocked()) return; holdMode=!holdMode; const g=$("#dayGrid"); g.classList.toggle('holdmode',holdMode); $("#holdToggle").classList.toggle('on',holdMode); const hh=$("#holdHint"); if(hh) hh.style.display=holdMode?'inline-block':'none'; };
 $("#dayMask").onclick=e=>{ if(e.target.id==="dayMask") $("#dayMask").style.display="none"; };
 /* ---- 要請（名前の横の✈要請ボタン）---- */
 let reqTarget=null;
 function openReq(nm,d){
+  if(closedMonthEditBlocked()) return;
   reqTarget={nm,d};
   $("#reqTtl").textContent=`${nm}さんへ要請　${M}/${d}`;
   const w=(S.staff[nm].wish||{})[key(d)]||{};
@@ -1337,7 +1377,7 @@ function openReq(nm,d){
 $("#reqClose").onclick=()=>$("#reqMask").style.display="none";
 $("#reqMask").onclick=e=>{ if(e.target.id==="reqMask") $("#reqMask").style.display="none"; };
 $("#reqSend").onclick=()=>{
-  if(!reqTarget) return;
+  if(closedMonthEditBlocked()||!reqTarget) return;
   const s=normTime($("#reqStart").value), e=normTime($("#reqEnd").value);
   if(!s&&!e){ appAlert("要請する時間を入れてください"); return; }
   if(!S.staff[reqTarget.nm].req) S.staff[reqTarget.nm].req={};
@@ -1391,6 +1431,7 @@ function dvStoreSection(st,d,W,ticks){
   return h;
 }
 function openSupportPicker(d,st){
+  if(closedMonthEditBlocked()) return;
   const ass=new Set(names().filter(nm=>{ const t=supportOf(nm,d,st); return t&&(t.all||t.am||t.pm); }));
   const cand=names().filter(nm=>(S.staff[nm].wish||{})[key(d)] && (S.staff[nm].store||"大須")!==st && !ass.has(nm));
   $("#pickTtl").textContent=`${st}に入れる人を選ぶ　${M}/${d}`;
@@ -1411,6 +1452,7 @@ $("#pickMask").onclick=e=>{ if(e.target.id==="pickMask") $("#pickMask").style.di
 
 let teTarget=null;
 function openSupport(nm,d,st){
+  if(closedMonthEditBlocked()) return;
   ensureStaffOwner(nm);
   teTarget={nm,d,st};
   $("#teTtl").textContent=`🔧 ${st}の配置　${nm}さん　${M}/${d}`;
@@ -1433,7 +1475,7 @@ function supportRefresh(){
 $("#teClose").onclick=()=>$("#teMask").style.display="none";
 $("#teMask").onclick=e=>{ if(e.target.id==="teMask") $("#teMask").style.display="none"; };
 $("#teSave").onclick=()=>{
-  if(!teTarget) return;
+  if(closedMonthEditBlocked()||!teTarget) return;
   const am=($("#teAmS").value||$("#teAmE").value)?{start:normTime($("#teAmS").value),end:normTime($("#teAmE").value)}:null;
   const pm=($("#tePmS").value||$("#tePmE").value)?{start:normTime($("#tePmS").value),end:normTime($("#tePmE").value)}:null;
   if(!am&&!pm){ appAlert("AMかPMの時間を入れてください（消す場合は『消す』）"); return; }
@@ -1441,7 +1483,7 @@ $("#teSave").onclick=()=>{
   $("#teMask").style.display="none"; supportRefresh();
 };
 $("#teDel").onclick=()=>{
-  if(!teTarget) return;
+  if(closedMonthEditBlocked()||!teTarget) return;
   setSupport(teTarget.nm,teTarget.d,teTarget.st,null);
   $("#teMask").style.display="none"; supportRefresh();
 };
@@ -1453,6 +1495,7 @@ function holdbars(nm,d){
   return hs.map(h=>`<div class="dbar holdbar" data-h="${h}" style="left:${(h-AX0)*HW}px;width:${HW/2}px" title="タップで消す"></div>`).join("");
 }
 function toggleHold(nm,d,h){
+  if(closedMonthEditBlocked()) return;
   if(!S.staff[nm].hold) S.staff[nm].hold={};
   const k=key(d); let arr=(S.staff[nm].hold[k]||[]).slice();
   if(arr.includes(h)) arr=arr.filter(x=>x!==h); else { arr.push(h); arr.sort((a,b)=>a-b); }
@@ -1467,6 +1510,7 @@ function _xToHour(e, dt, snapFloor){
   return Math.max(AX0, Math.min(AX1, hr));
 }
 function dayRowClick(e,row,mode){
+  if(closedMonthEditBlocked()) return;
   const nm=row.dataset.n, d=+row.dataset.d, t=e.target;
   if(t.closest && t.closest('.dresize')) return; // 端の伸縮はドラッグで処理
   if(t.classList && (t.classList.contains('holddel')||t.classList.contains('holdbar'))){ toggleHold(nm,d,+t.dataset.h); return; }
@@ -1490,6 +1534,7 @@ function dayRowClick(e,row,mode){
 /* 端ドラッグで終了時間を伸縮 */
 let rz=null;
 function onResizeDown(e){
+  if(closedMonthEditBlocked()) return;
   const h=e.target.closest && e.target.closest('.dresize'); if(!h) return;
   if(e.preventDefault) e.preventDefault(); if(e.stopPropagation) e.stopPropagation();
   const dt=h.closest('.dtime'); if(!dt) return;
@@ -1515,6 +1560,7 @@ function onResizeMove(e){
   }
 }
 function onResizeUp(e){
+  if(closedMonthEditBlocked()){ window.removeEventListener('pointermove',onResizeMove); window.removeEventListener('pointerup',onResizeUp); rz=null; return; }
   if(!rz) return; let hr=_rawHour(e.clientX);
   const dec=S.staff[rz.nm].decided[key(rz.d)];
   if(dec&&dec[rz.seg]){
@@ -1528,6 +1574,7 @@ function onResizeUp(e){
 /* 時間の数字をタップ → その時間だけ変更する吹き出し */
 let oneT=null;
 function openOneTime(nm,d,seg,f){
+  if(closedMonthEditBlocked()) return;
   oneT={nm,d,seg,f};
   const dec=(S.staff[nm].decided||{})[key(d)]||{};
   const cur=(dec[seg]&&dec[seg][f])||'';
@@ -1539,7 +1586,7 @@ function openOneTime(nm,d,seg,f){
   setTimeout(()=>{ try{ $("#oneInput").focus(); }catch(_){} },50);
 }
 $("#oneOk").onclick=()=>{
-  if(!oneT) return;
+  if(closedMonthEditBlocked()||!oneT) return;
   const v=normTime($("#oneInput").value); if(!v){ appAlert("時間を入れてください（例 9:00）"); return; }
   const dec=S.staff[oneT.nm].decided[key(oneT.d)];
   if(dec&&dec[oneT.seg]){ dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
@@ -1762,6 +1809,7 @@ $("#setUndo").onclick=async()=>{
 };
 
 function openEditor(nm,d){
+  if(closedMonthEditBlocked()) return;
   editing={nm,d};
   $("#mTitle").textContent=`${nm} - ${M}月${d}日(${DOW[new Date(Y,M-1,d).getDay()]})`;
   const w=S.staff[nm].wish[key(d)];
@@ -1781,13 +1829,14 @@ function openEditor(nm,d){
 }
 function closeEditor(){ $("#mask").style.display="none"; editing=null; }
 function setDecided(rec){
-  if(!editing) return;
+  if(closedMonthEditBlocked()||!editing) return;
   if(rec) S.staff[editing.nm].decided[key(editing.d)]=rec;
   else delete S.staff[editing.nm].decided[key(editing.d)];
   save(); closeEditor(); renderOwner();
   if(dayViewDay!=null && $("#dayMask").style.display==="flex") openDayView(dayViewDay);
 }
 $("#mSave").onclick=()=>{
+  if(closedMonthEditBlocked()) return;
   const av=($("#mAllStart").value||$("#mAllEnd").value)?{start:$("#mAllStart").value,end:$("#mAllEnd").value}:null;
   const am=($("#mAmStart").value||$("#mAmEnd").value)?{start:$("#mAmStart").value,end:$("#mAmEnd").value}:null;
   const pm=($("#mPmStart").value||$("#mPmEnd").value)?{start:$("#mPmStart").value,end:$("#mPmEnd").value}:null;
@@ -1796,7 +1845,7 @@ $("#mSave").onclick=()=>{
 };
 $("#mDelete").onclick=()=>setDecided(null);
 $("#mReq").onclick=()=>{
-  if(!editing) return;
+  if(closedMonthEditBlocked()||!editing) return;
   const nm=editing.nm, dd=editing.d;
   const s2=$("#mAllStart").value||$("#mAmStart").value||$("#mPmStart").value;
   const e2=$("#mAllEnd").value||$("#mAmEnd").value||$("#mPmEnd").value;
@@ -1812,6 +1861,7 @@ document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{
 });
 $("#mask").onclick=e=>{ if(e.target.id==="mask") closeEditor(); };
 $("#decideBtn").onclick=async()=>{
+  if(closedMonthEditBlocked()) return;
   const next=!S.published;
   if(!await appConfirm(next?"確定した日をスタッフに公開します。\nスタッフが自分の出勤時間を見られるようになります。":"公開を取り消します。\nスタッフからシフトが見えなくなります。",{title:next?"シフトを公開しますか？":"公開を取り消しますか？",confirmText:next?"公開する ✓":"取り消す",kind:next?"":"danger",icon:next?"📅":"⚠️"})) return;
   S.published=next;
@@ -1827,13 +1877,15 @@ function initWho(){
   fillNames(); fillYM();
 }
 function fillYM(){
-  const ys=$("#yearSel"); ys.innerHTML=""; for(let y=2026;y<=2030;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; ys.appendChild(o); }
-  const ms=$("#monthSel"); ms.innerHTML=""; for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"; if(m===M)o.selected=true; ms.appendChild(o); }
-  const oy=$("#oYearSel"); if(oy){ oy.innerHTML=""; for(let y=2026;y<=2030;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; oy.appendChild(o); } }
-  const om=$("#oMonthSel"); if(om){ om.innerHTML=""; for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"; if(m===M)o.selected=true; om.appendChild(o); } }
+  normalizeShiftMonth();
+  const firstMonth=Y===SHIFT_START_YEAR?SHIFT_START_MONTH:1;
+  const ys=$("#yearSel"); ys.innerHTML=""; for(let y=SHIFT_START_YEAR;y<=SHIFT_END_YEAR;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; ys.appendChild(o); }
+  const ms=$("#monthSel"); ms.innerHTML=""; for(let m=firstMonth;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"+(ownerMonthIsClosed(Y,m)?"（受付終了）":""); if(m===M)o.selected=true; ms.appendChild(o); }
+  const oy=$("#oYearSel"); if(oy){ oy.innerHTML=""; for(let y=SHIFT_START_YEAR;y<=SHIFT_END_YEAR;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; oy.appendChild(o); } }
+  const om=$("#oMonthSel"); if(om){ om.innerHTML=""; for(let m=firstMonth;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"+(ownerMonthIsClosed(Y,m)?"（受付終了）":""); if(m===M)o.selected=true; om.appendChild(o); } }
 }
-function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderStaff(); }
-function setYMOwner(){ Y=+$("#oYearSel").value; M=+$("#oMonthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderOwner(); }
+function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; normalizeShiftMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderStaff(); }
+function setYMOwner(){ Y=+$("#oYearSel").value; M=+$("#oMonthSel").value; normalizeShiftMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderOwner(); }
 function fillNames(){
   const dl=$("#nameList"); if(dl) dl.innerHTML=""; /* 候補（記録）は残さない */
 }
