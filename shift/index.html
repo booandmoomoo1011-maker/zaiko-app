@@ -172,7 +172,7 @@
   .mine .off{color:#999;}
 
   /* 確定後カレンダー（スタッフ） */
-  .mcal{width:100%; max-width:620px; margin:8px auto 60px; padding:0 8px; touch-action:pan-y;}
+  .mcal{width:100%; max-width:620px; margin:8px auto 60px; padding:0 8px; touch-action:pan-y pinch-zoom;}
   .mcalgrid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; width:100%; min-width:0;}
   .mch{text-align:center; font-weight:700; font-size:12px; color:#666; padding:3px 0;}
   .mch.sun{color:var(--sun);} .mch.sat{color:var(--sat);}
@@ -375,6 +375,7 @@
   .btn.share:hover{background:linear-gradient(180deg,#28d67a 0%,#05b84d 55%,#039a42 100%);}
   #whoOk{background:linear-gradient(180deg,#4d4d4d 0%,#222 55%,#000 100%); box-shadow:0 2px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.25);}
   #whoOk:hover{background:linear-gradient(180deg,#3a3a3a 0%,#111 55%,#000 100%);}
+  .sbar select:disabled,#who:disabled{opacity:1;color:#222;-webkit-text-fill-color:#222;background:#fff;font-weight:800;border-color:#b8b8b8;}
   @media (max-width:480px){
     .caltools{width:100%; max-width:100%; grid-template-columns:auto minmax(0,1fr) auto; gap:3px; padding:0 4px;}
     .caltools .allbtn{padding:5px 7px; font-size:10px;}
@@ -382,7 +383,7 @@
     .caltools .updatedlbl{font-size:8px;}
     .mcal{width:100%; max-width:100%; padding:0 4px;}
     .mcalgrid{grid-template-columns:repeat(7,minmax(0,1fr)); gap:2px; width:100%; min-width:0;}
-    .mch{font-size:10px; padding:2px 0;}
+    .mch{font-size:20px; line-height:1.15; padding:4px 0; font-weight:900;}
     .mcell{width:100%; min-width:0; min-height:48px; border-radius:5px; padding:1px; gap:1px;}
     .mnum{font-size:10px; padding-left:1px;}
     .mcell .mtop{gap:1px; padding-left:0;}
@@ -572,7 +573,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.59</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.60</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -743,7 +744,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.59"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.60"; window.APP_UPDATED="2026-08-03";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
