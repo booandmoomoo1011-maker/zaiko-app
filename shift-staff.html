@@ -416,10 +416,11 @@
     let _suppressUntil=0;
     window.fbTouch=function(){ _suppressUntil=Date.now()+1500; };
 
-    function stopAccess(){
+    function stopAccess(reason){
       window.SHIFT_ACCESS_VALID=false;
       window.SHIFT_STAFF_IDENTITY=null;
-      if(typeof window.shiftAccessStopped==='function') window.shiftAccessStopped();
+      window.SHIFT_ACCESS_ERROR=reason||'R0';
+      if(typeof window.shiftAccessStopped==='function') window.shiftAccessStopped(window.SHIFT_ACCESS_ERROR);
     }
 
     const badge=document.createElement('div');
@@ -455,14 +456,18 @@
     };
 
     if(!/^[A-Za-z0-9_-]{43,128}$/.test(accessToken)){
-      stopAccess();
+      stopAccess('U1');
     }else{
+      let accessStage='A1';
       signInAnonymously(auth).then(async cred=>{
         const uid=cred.user.uid;
+        accessStage='S1';
         await set(ref(db,BASE+'/sessions/'+uid),accessToken);
+        accessStage='T1';
         const tokenSnap=await get(ref(db,BASE+'/access/tokens/'+accessToken));
         const access=tokenSnap.val();
-        if(!access || access.active!==true || !access.staffKey || !access.name) throw new Error('revoked');
+        if(!access || access.active!==true || !access.staffKey || !access.name){ stopAccess('T2'); return; }
+        accessStage='D1';
         window.SHIFT_ACCESS_VALID=true;
         window.SHIFT_STAFF_IDENTITY={staffKey:access.staffKey,name:access.name,store:access.store||'大須'};
         let remoteMeta={}, remoteNode=null;
@@ -481,15 +486,15 @@
         };
         onValue(ref(db,BASE+'/access/tokens/'+accessToken),snap=>{
           const v=snap.val();
-          if(!v || v.active!==true || v.staffKey!==access.staffKey){ stopAccess(); return; }
-        },()=>stopAccess());
-        onValue(ref(db,BASE+'/meta'),snap=>{ remoteMeta=snap.val()||{}; apply(); },()=>stopAccess());
+          if(!v || v.active!==true || v.staffKey!==access.staffKey){ stopAccess('T3'); return; }
+        },()=>stopAccess('T4'));
+        onValue(ref(db,BASE+'/meta'),snap=>{ remoteMeta=snap.val()||{}; apply(); },()=>stopAccess('M1'));
         onValue(ref(db,BASE+'/staff/'+access.staffKey),snap=>{
           remoteNode=snap.val();
-          if(!remoteNode){ stopAccess(); return; }
+          if(!remoteNode){ stopAccess('D2'); return; }
           apply();
-        },()=>stopAccess());
-      }).catch(e=>{ console.warn('スタッフ認証エラー',e); badge.textContent='❌ 利用停止'; stopAccess(); });
+        },()=>stopAccess('D3'));
+      }).catch(e=>{ console.warn('スタッフ認証エラー',accessStage,e); badge.textContent='❌ 確認 '+accessStage; stopAccess(accessStage); });
     }
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _suppressUntil=0; });
   }catch(e){ console.warn('Firebase初期化エラー', e); }
@@ -498,8 +503,9 @@
 <body>
 <div id="accessStopped" style="position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:#f7f7f7;padding:24px;box-sizing:border-box;">
   <div style="max-width:420px;width:100%;background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px 22px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.10);">
-    <div style="font-size:22px;font-weight:800;color:#333;margin-bottom:10px;">専用URLを確認しています</div>
+    <div id="accessStoppedTitle" style="font-size:22px;font-weight:800;color:#333;margin-bottom:10px;">専用URLを確認しています</div>
     <div id="accessStoppedText" style="font-size:15px;line-height:1.8;color:#666;">少しお待ちください。</div>
+    <button id="accessRetry" type="button" style="display:none;margin:18px auto 0;border:0;border-radius:10px;background:#e8607f;color:#fff;padding:11px 20px;font-size:15px;font-weight:800;cursor:pointer;">もう一度確認</button>
   </div>
 </div>
 <!-- PWA_INSTALL_KIT_START (ホーム画面追加：SW登録＋インストールボタン＋LINE案内) -->
@@ -550,7 +556,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.57</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.58</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -721,7 +727,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.57"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.58"; window.APP_UPDATED="2026-08-03";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -822,12 +828,16 @@ function shiftApplyRemote(val){ try{
   if(typeof renderStaff==='function' && sv && sv.style.display!=='none') renderStaff();
 }catch(e){ console.warn('applyRemote',e); } }
 window.shiftApplyRemote=shiftApplyRemote;
-window.shiftAccessStopped=function(){
+window.shiftAccessStopped=function(reason){
   window.SHIFT_ACCESS_VALID=false;
   try{ clearTimeout(_fbPushT); }catch(e){}
   S=seed();
-  var block=document.getElementById('accessStopped'), txt=document.getElementById('accessStoppedText');
-  if(txt) txt.textContent='このURLは利用停止されています。入力・閲覧・保存はできません。';
+  reason=reason||window.SHIFT_ACCESS_ERROR||'R0';
+  var block=document.getElementById('accessStopped'), ttl=document.getElementById('accessStoppedTitle'), txt=document.getElementById('accessStoppedText'), retry=document.getElementById('accessRetry');
+  var stopped=/^(U1|T2|T3|R0)$/.test(reason);
+  if(ttl) ttl.textContent=stopped?'専用URLを確認できません':'接続を確認できません';
+  if(txt) txt.textContent=(stopped?'このURLは利用停止されているか、URLが正しくありません。':'認証または通信の確認中に問題が発生しました。')+' 入力・閲覧・保存は停止しています。\n確認番号：'+reason;
+  if(retry){ retry.style.display='inline-block'; retry.onclick=function(){ location.reload(); }; }
   if(block) block.style.display='flex';
   var mine=document.getElementById('staffMine'); if(mine) mine.innerHTML='';
 };
