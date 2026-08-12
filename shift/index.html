@@ -393,12 +393,23 @@
   #whoOk{background:linear-gradient(180deg,#4d4d4d 0%,#222 55%,#000 100%); box-shadow:0 2px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.25);}
   #whoOk:hover{background:linear-gradient(180deg,#3a3a3a 0%,#111 55%,#000 100%);}
   .sbar select:disabled,#who:disabled{opacity:1;color:#222;-webkit-text-fill-color:#222;background:#fff;font-weight:800;border-color:#b8b8b8;}
+  /* v1.64 スタッフカレンダーを淡いカード調に */
+  .mcal{background:linear-gradient(180deg,#fffafd 0%,#fff5f8 100%);border:1px solid #f2dce4;border-radius:18px;padding:10px;box-shadow:0 5px 18px rgba(190,95,125,.10);}
+  .mch{background:#fff0f5;border-radius:9px;color:#665b60;padding:5px 0;}
+  .mch.sun{background:#ffe7ec;color:#e65f73;}
+  .mch.sat{background:#e8f2ff;color:#3e87df;}
+  .mcell{border-color:#eadde2;background:linear-gradient(180deg,#fff 0%,#fffcfd 100%);box-shadow:0 2px 5px rgba(120,80,95,.07);transition:transform .12s ease,box-shadow .12s ease;}
+  .mcell.sun{background:linear-gradient(180deg,#fff5f7 0%,#ffedf1 100%);}
+  .mcell.sat{background:linear-gradient(180deg,#f5f9ff 0%,#eaf3ff 100%);}
+  .mcell.cclick:active{transform:scale(.97);box-shadow:0 1px 2px rgba(120,80,95,.10);}
+  .caltools .monthlbl{background:#fff;border:1px solid #f0dce3;box-shadow:0 2px 7px rgba(130,90,105,.08);}
+  .mcell.todaym{background:linear-gradient(180deg,#fffbe4 0%,#fff2b8 100%);}
   @media (max-width:480px){
     .caltools{width:100%; max-width:100%; grid-template-columns:auto minmax(0,1fr) auto; gap:3px; padding:0 4px;}
     .caltools .allbtn{padding:5px 7px; font-size:10px;}
     .caltools .monthlbl{font-size:15px; padding:3px 2px;}
     .caltools .updatedlbl{font-size:8px;}
-    .mcal{width:100%; max-width:100%; padding:0 4px;}
+    .mcal{width:100%; max-width:100%; padding:6px 4px; border-radius:14px;}
     .mcalgrid{grid-template-columns:repeat(7,minmax(0,1fr)); gap:2px; width:100%; min-width:0;}
     .mch{font-size:20px; line-height:1.15; padding:4px 0; font-weight:900;}
     .mcell{width:100%; min-width:0; min-height:48px; border-radius:5px; padding:1px; gap:1px;}
@@ -595,7 +606,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.63</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.64</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -775,7 +786,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.63"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.64"; window.APP_UPDATED="2026-08-03";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
