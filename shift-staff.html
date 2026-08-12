@@ -28,7 +28,8 @@
   :root{ --pink:#e8607f; --pink-d:#c74a68; --bg:#fafafa; --line:#e2e2e2; --ink:#3a3a3a;
     --sun:#f26d6d; --sat:#4a90e2; --today:#eef4fb; --wish:#9aa0a8; }
   *{box-sizing:border-box;}
-  html,body{max-width:100%; overflow-x:hidden;}\n  body{margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;}
+  html,body{max-width:100%; overflow-x:hidden;}
+  body{margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;}
   /* スタッフは携帯利用：細い画面向け調整 */
   @media (max-width:480px){
     header h1{font-size:15px;}
@@ -159,7 +160,12 @@
   .cmtbox .qbtn.on-batu{background:#dcf0fa; color:#1f6f95; border:2.5px solid #2b7fa3;}
   .cmtbox .qsubmit{margin-left:auto; background:#c99a00; color:#fff; border:none; border-radius:8px; padding:6px 14px; font-weight:800; cursor:pointer; font-size:13px;}
   .cmtbox .qclear{width:100%; margin-top:8px; background:#fff; color:#c0596b; border:1.5px solid #d9a5ae; border-radius:8px; padding:8px 12px; font-weight:800; cursor:pointer; font-size:13px;}
-  .cmtbox .line.noteln{margin-top:4px;}\n  .bulk-confirm-text{font-size:14px;line-height:1.65;color:#555;margin:4px 0 12px;}\n  .bulk-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}\n  .cmtbox .bulk-confirm-actions button{margin:0;width:100%;}\n  .cmtbox .bulk-cancel{background:#e7e7e7;color:#444;}\n  .cmtbox .bulk-remove{background:linear-gradient(180deg,#f07a95 0%,#e65375 100%);color:#fff;}
+  .cmtbox .line.noteln{margin-top:4px;}
+  .bulk-confirm-text{font-size:14px;line-height:1.65;color:#555;margin:4px 0 12px;}
+  .bulk-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .cmtbox .bulk-confirm-actions button{margin:0;width:100%;}
+  .cmtbox .bulk-cancel{background:#e7e7e7;color:#444;}
+  .cmtbox .bulk-remove{background:linear-gradient(180deg,#f07a95 0%,#e65375 100%);color:#fff;}
   .cmtbox .qbtn:disabled,.cmtbox input:disabled,.cmtbox .noteinp:disabled{opacity:.55;}
 
   /* staff decided view */
