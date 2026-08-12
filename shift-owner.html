@@ -395,7 +395,9 @@
   /* 希望／決定シフト A4横1枚（月間まるごと・下までフィット） */
   table.wovgrid{border-collapse:collapse; width:100%; table-layout:fixed; font-size:var(--wcfs,7px);}
   table.wovgrid td{border:0.7px solid #7a7a7a; text-align:center; padding:0; overflow:hidden; height:var(--wrh,15px); color:#333; line-height:1.1;}
-  table.wovgrid td.wpn{width:52px; text-align:left; padding:0 3px; white-space:nowrap; font-size:var(--wnfs,8px); font-weight:700;}
+  table.wovgrid td.wpn{width:56px; text-align:left; padding:0 3px; white-space:nowrap; font-size:var(--wnfs,9px); font-weight:800; letter-spacing:0;}
+  table.wovgrid td.wpn.wpn-mid{font-size:calc(var(--wnfs,9px) * .86); letter-spacing:-.15px;}
+  table.wovgrid td.wpn.wpn-long{font-size:calc(var(--wnfs,9px) * .72); letter-spacing:-.3px;}
   table.wovgrid td.woff{background:#eaf6fd;}
   /* 各店舗の先頭にくり返す「店舗名＋日にち曜日」見出し行 */
   table.wovgrid tr.wsthead td{height:auto; font-weight:800; background:#f4f4f4; line-height:1.25; padding:2px 0;}
@@ -678,7 +680,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.72</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.73</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -912,7 +914,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.72"; window.APP_UPDATED="2026-08-11";
+window.APP_VERSION="v1.73"; window.APP_UPDATED="2026-08-12";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1062,7 +1064,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.72</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.73</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1696,6 +1698,10 @@ function wishPrintText(w){
   if(!p.length && (w.start||w.end)) p.push(`${sh(w.start)}-${sh(w.end)}`);
   return p.join(" ");
 }
+function printNameFitClass(nm){
+  const len=Array.from(String(nm||"")).length;
+  return len>=7?"wpn wpn-long":len>=5?"wpn wpn-mid":"wpn";
+}
 function pOverviewSheet(mode){  /* mode: 'wish'=希望 / 'decided'=決定 */
   const _off=(st,d)=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
   let h=`<table class="wovgrid"><tbody>`;
@@ -1709,7 +1715,7 @@ function pOverviewSheet(mode){  /* mode: 'wish'=希望 / 'decided'=決定 */
     h+=`</tr>`;
     list.forEach(nm=>{
       const src=(mode==='decided')?(S.staff[nm].decided||{}):(S.staff[nm].wish||{});
-      h+=`<tr><td class="wpn">${esc(nm)}</td>`;
+      h+=`<tr><td class="${printNameFitClass(nm)}">${esc(nm)}</td>`;
       for(let d=1;d<=DAYS;d++){ const v=src[key(d)]; h+=`<td${_off(st,d)?' class="woff"':''}>${v?esc(wishPrintText(v)):""}</td>`; }
       h+=`</tr>`;
     });
@@ -1729,7 +1735,7 @@ function buildOverviewPrint(mode){
   const availMM=183;
   let rowMM=availMM/rowsTotal; if(rowMM>11) rowMM=11; if(rowMM<3.6) rowMM=3.6;
   const cfs =Math.max(5.5, rowMM*0.92);   // マスの時間文字
-  const nfs =Math.max(7,   rowMM*1.02);   // 名前
+  const nfs =Math.max(9,   rowMM*1.32);   // 名前（短い名前は大きく、長い名前はCSSで自動調整）
   const dhfs=Math.max(9,   rowMM*1.45);   // 日にち・曜日（大きめ）
   const shfs=Math.max(9,   rowMM*1.45);   // 店舗名
   [$("#printArea"),$("#ppBody")].forEach(el=>{ if(!el) return; const s=el.style;
