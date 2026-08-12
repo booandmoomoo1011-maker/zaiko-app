@@ -395,12 +395,11 @@
   /* 希望／決定シフト A4横1枚（月間まるごと・下までフィット） */
   table.wovgrid{border-collapse:collapse; width:100%; table-layout:fixed; font-size:var(--wcfs,7px);}
   table.wovgrid td{border:0.7px solid #7a7a7a; text-align:center; padding:0; overflow:hidden; height:var(--wrh,15px); color:#333; line-height:1.1;}
-  table.wovgrid td.wpn{width:88px; text-align:center; vertical-align:middle; padding:0 2px; white-space:nowrap; font-size:var(--wnfs,24px); font-weight:900; line-height:.82; letter-spacing:0;}
-  table.wovgrid td.wpn.wpn-3{font-size:calc(var(--wnfs,24px) * .92);}
-  table.wovgrid td.wpn.wpn-4{font-size:calc(var(--wnfs,24px) * .75);}
-  table.wovgrid td.wpn.wpn-5{font-size:calc(var(--wnfs,24px) * .62); letter-spacing:-.15px;}
-  table.wovgrid td.wpn.wpn-6{font-size:calc(var(--wnfs,24px) * .52); letter-spacing:-.25px;}
-  table.wovgrid td.wpn.wpn-long{font-size:calc(var(--wnfs,24px) * .44); letter-spacing:-.35px;}
+  table.wovgrid td.wpn{width:88px; text-align:center; vertical-align:middle; padding:0 2px; white-space:nowrap; font-size:var(--wnfs,18px); font-weight:900; line-height:.9; letter-spacing:0;}
+  table.wovgrid td.wpn.wpn-3,table.wovgrid td.wpn.wpn-4{font-size:var(--wnfs,18px);}
+  table.wovgrid td.wpn.wpn-5{font-size:calc(var(--wnfs,18px) * .82); letter-spacing:-.15px;}
+  table.wovgrid td.wpn.wpn-6{font-size:calc(var(--wnfs,18px) * .70); letter-spacing:-.25px;}
+  table.wovgrid td.wpn.wpn-long{font-size:calc(var(--wnfs,18px) * .58); letter-spacing:-.35px;}
   table.wovgrid td.woff{background:#eaf6fd;}
   /* 各店舗の先頭にくり返す「店舗名＋日にち曜日」見出し行 */
   table.wovgrid tr.wsthead td{height:auto; font-weight:800; background:#f4f4f4; line-height:1.25; padding:2px 0;}
@@ -683,7 +682,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.74</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.75</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -917,7 +916,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.74"; window.APP_UPDATED="2026-08-12";
+window.APP_VERSION="v1.75"; window.APP_UPDATED="2026-08-12";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1067,7 +1066,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.74</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.75</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1743,7 +1742,7 @@ function buildOverviewPrint(mode){
   const availMM=183;
   let rowMM=availMM/rowsTotal; if(rowMM>11) rowMM=11; if(rowMM<3.6) rowMM=3.6;
   const cfs =Math.max(5.5, rowMM*0.92);   // マスの時間文字
-  const nfs =Math.max(24,  rowMM*3.3);    // 名前（短い名前は約3倍、文字数ごとに1マスへ自動調整）
+  const nfs =Math.max(18,  rowMM*2.5);    // 名前（シファト相当へ統一し、長い名前だけ自動縮小）
   const dhfs=Math.max(9,   rowMM*1.45);   // 日にち・曜日（大きめ）
   const shfs=Math.max(9,   rowMM*1.45);   // 店舗名
   [$("#printArea"),$("#ppBody")].forEach(el=>{ if(!el) return; const s=el.style;
