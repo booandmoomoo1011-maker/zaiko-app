@@ -574,7 +574,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.61</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.62</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -712,7 +712,7 @@
 <div class="cmtmask" id="bulkAllDayMask">
   <div class="cmtbox">
     <div class="ttl" style="font-size:20px;">全部の一日OKを解除しますか？</div>
-    <div class="bulk-confirm-text">「全部 ◎ 一日OK」ボタンで追加した分だけ解除します。個別の時間・「×」・備考は消えません。</div>
+    <div class="bulk-confirm-text">この月の「一日OK」をすべて解除します。個別の時間・「×」・備考は消えません。</div>
     <div class="bulk-confirm-actions"><button type="button" class="bulk-cancel" id="bulkAllDayCancel">戻る</button><button type="button" class="bulk-remove" id="bulkAllDayRemove">解除する</button></div>
   </div>
 </div>
@@ -754,7 +754,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.61"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.62"; window.APP_UPDATED="2026-08-03";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1459,7 +1459,8 @@ function renderMine(me){
   const hc=(STORE_COLOR[home]||STORE_COLOR["大須"]).hd;
   const first=new Date(Y,M-1,1).getDay();
   const _locked=false;   /* スタッフの「全部◎」はいつでも使える（オーナー操作で無効化しない） */
-  const _hasBulkAllDay=Object.keys(wsh).some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true);
+  const _allDayCount=Object.keys(wsh).filter(k=>wsh[k]&&wsh[k].allday).length;
+  const _hasBulkAllDay=Object.keys(wsh).some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
   let html=`<div class="caltools"><button type="button" class="allbtn${_locked?' locked':''}${_hasBulkAllDay?' clr':''}" id="allMaru" ${_locked?'disabled':''}>${_hasBulkAllDay?'全部一日OKを解除':'全部 ◎ 一日OK'}</button><span class="monthlbl${Date.now()<staffMonthChangedUntil?' changed':''}" id="monthLbl">${Y}年${M}月</span><span class="updatedlbl" id="updatedLbl"></span></div>`;
   html+='<div class="mcal"><div class="mcalgrid">';
   DOW.forEach((dw,i)=>html+=`<div class="mch ${i===0?'sun':i===6?'sat':''}">${dw}</div>`);
@@ -1510,7 +1511,7 @@ function renderMine(me){
       $("#bulkAllDayRemove").onclick=()=>{
         for(let d=1;d<=DAYS;d++){
           const k=key(d), w=S.staff[me].wish[k];
-          if(w&&w.allday&&w.bulkAllDay===true) delete S.staff[me].wish[k];
+          if(w&&w.allday){ delete w.allday; delete w.bulkAllDay; if(Object.keys(w).length) S.staff[me].wish[k]=w; else delete S.staff[me].wish[k]; }
         }
         mask.style.display="none"; save(); renderMine(me);
       };
