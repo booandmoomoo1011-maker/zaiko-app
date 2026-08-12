@@ -211,7 +211,10 @@
   .mtime.dmaru{background:#fef7cf; border:1.5px dashed #b59a00; color:#8a6d00;}
   .caltools{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; max-width:620px; margin:8px auto 0; padding:0 8px;}
   .caltools .allbtn{flex:0 0 auto; padding:6px 12px; font-size:12px;}
-  .caltools .allbtn.locked{background:#eee; color:#bbb; border-color:#ddd; cursor:not-allowed; box-shadow:none;}
+  .caltools .allbtn.locked{background:#eee; color:#888; border-color:#ddd; cursor:not-allowed; box-shadow:none;}
+  .monthclosednotice{max-width:604px;margin:8px auto 0;padding:8px 12px;border:1.5px solid #e6c96a;border-radius:10px;background:#fff8d9;color:#735f17;font-size:12px;font-weight:800;text-align:center;}
+  .mcell.monthclosed{cursor:default;opacity:.82;}
+  .mcell.monthclosed .reqlink{cursor:default;}
   .caltools .monthlbl{justify-self:center; font-size:18px; color:#333; font-weight:900; padding:4px 9px; border-radius:8px; white-space:nowrap;}
   .caltools .monthlbl.changed{animation:monthChanged .55s ease-out;}
   .caltools .updatedlbl{justify-self:end; font-size:10px; color:#777; font-weight:600; white-space:nowrap;}
@@ -606,7 +609,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.64</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.66</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -786,7 +789,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.64"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.66"; window.APP_UPDATED="2026-08-03";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -813,7 +816,28 @@ const $=s=>document.querySelector(s);
 const isLightColor=hex=>{const h=String(hex).replace("#","");const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return (0.299*r+0.587*g+0.114*b)>175;};
 const pad=n=>String(n).padStart(2,"0");
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let Y=2026, M=7, DAYS=31;
+const STAFF_START_YEAR=2026, STAFF_START_MONTH=9, STAFF_END_YEAR=2030;
+let Y=STAFF_START_YEAR, M=STAFF_START_MONTH, DAYS=30;
+function japanToday(){
+  try{
+    const values={};
+    new Intl.DateTimeFormat("en-US",{timeZone:"Asia/Tokyo",year:"numeric",month:"numeric",day:"numeric"}).formatToParts(new Date()).forEach(p=>{ if(p.type!=="literal") values[p.type]=+p.value; });
+    const year=values.year, month=values.month, day=values.day;
+    return {year,month,day,dow:new Date(Date.UTC(year,month-1,day)).getUTCDay()};
+  }catch(e){
+    const now=new Date();
+    return {year:now.getFullYear(),month:now.getMonth()+1,day:now.getDate(),dow:now.getDay()};
+  }
+}
+function staffMonthBeforeStart(y,m){ return y<STAFF_START_YEAR||(y===STAFF_START_YEAR&&m<STAFF_START_MONTH); }
+function staffMonthIsClosed(y=Y,m=M){
+  const today=japanToday();
+  return y<today.year||(y===today.year&&m<today.month);
+}
+function normalizeStaffMonth(){
+  if(staffMonthBeforeStart(Y,M)){ Y=STAFF_START_YEAR; M=STAFF_START_MONTH; }
+  if(Y>STAFF_END_YEAR){ Y=STAFF_END_YEAR; M=12; }
+}
 const key=d=>`${Y}-${pad(M)}-${pad(d)}`;
 const STORE_KEY="shiftDemoState_v11_"+(window.SHIFT_ACCESS_TOKEN||"no-access");
 const STORES=["大須","那古野","鉄板"];
@@ -1418,14 +1442,20 @@ function initWho(){
   fillNames(); fillYM();
 }
 function fillYM(){
-  const ys=$("#yearSel"); ys.innerHTML=""; for(let y=2026;y<=2030;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; ys.appendChild(o); }
-  const ms=$("#monthSel"); ms.innerHTML=""; for(let m=1;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"; if(m===M)o.selected=true; ms.appendChild(o); }
+  normalizeStaffMonth();
+  const ys=$("#yearSel"); ys.innerHTML=""; for(let y=STAFF_START_YEAR;y<=STAFF_END_YEAR;y++){ const o=document.createElement("option"); o.value=y; o.textContent=y+"年"; if(y===Y)o.selected=true; ys.appendChild(o); }
+  const ms=$("#monthSel"); ms.innerHTML=""; const firstMonth=Y===STAFF_START_YEAR?STAFF_START_MONTH:1;
+  for(let m=firstMonth;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"+(staffMonthIsClosed(Y,m)?"（受付終了）":""); if(m===M)o.selected=true; ms.appendChild(o); }
 }
-function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); saveSel(); renderStaff(); }
+function setYM(){
+  let ny=+$("#yearSel").value, nm=+$("#monthSel").value;
+  if(staffMonthBeforeStart(ny,nm)){ ny=STAFF_START_YEAR; nm=STAFF_START_MONTH; }
+  Y=ny; M=nm; normalizeStaffMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); saveSel(); renderStaff();
+}
 let staffSwipeBlockUntil=0, staffMonthChangedUntil=0;
 function changeStaffMonth(step){
   const next=new Date(Y,M-1+step,1), ny=next.getFullYear(), nm=next.getMonth()+1;
-  if(ny<2026||ny>2030) return;
+  if(staffMonthBeforeStart(ny,nm)||ny>STAFF_END_YEAR) return;
   Y=ny; M=nm; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y);
   staffMonthChangedUntil=Date.now()+700;
   fillYM(); saveSel(); renderStaff();
@@ -1490,12 +1520,15 @@ function renderMine(me){
   const home=S.staff[me].store||"大須";
   const hc=(STORE_COLOR[home]||STORE_COLOR["大須"]).hd;
   const first=new Date(Y,M-1,1).getDay();
-  const _now=new Date(), _todayKey=`${_now.getFullYear()}-${pad(_now.getMonth()+1)}-${pad(_now.getDate())}`;
-  const _todayLabel=`${_now.getMonth()+1}月${_now.getDate()}日（${DOW[_now.getDay()]}）`;
-  const _locked=false;   /* スタッフの「全部◎」はいつでも使える（オーナー操作で無効化しない） */
-  const _allDayCount=Object.keys(wsh).filter(k=>wsh[k]&&wsh[k].allday).length;
-  const _hasBulkAllDay=Object.keys(wsh).some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
-  let html=`<div class="caltools"><button type="button" class="allbtn${_locked?' locked':''}${_hasBulkAllDay?' clr':''}" id="allMaru" ${_locked?'disabled':''}>${_hasBulkAllDay?'全部一日OKを解除':'全部 ◎ 一日OK'}</button><span class="monthlbl${Date.now()<staffMonthChangedUntil?' changed':''}" id="monthLbl">${Y}年${M}月</span><span class="updatedlbl" id="updatedLbl"></span></div>`;
+  const _now=japanToday(), _todayKey=`${_now.year}-${pad(_now.month)}-${pad(_now.day)}`;
+  const _todayLabel=`${_now.month}月${_now.day}日（${DOW[_now.dow]}）`;
+  const _locked=staffMonthIsClosed();
+  const _monthPrefix=`${Y}-${pad(M)}-`;
+  const _monthWishKeys=Object.keys(wsh).filter(k=>k.indexOf(_monthPrefix)===0);
+  const _allDayCount=_monthWishKeys.filter(k=>wsh[k]&&wsh[k].allday).length;
+  const _hasBulkAllDay=_monthWishKeys.some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
+  let html=`<div class="caltools"><button type="button" class="allbtn${_locked?' locked':''}${_hasBulkAllDay?' clr':''}" id="allMaru" ${_locked?'disabled':''}>${_locked?'受付終了':(_hasBulkAllDay?'全部一日OKを解除':'全部 ◎ 一日OK')}</button><span class="monthlbl${Date.now()<staffMonthChangedUntil?' changed':''}" id="monthLbl">${Y}年${M}月</span><span class="updatedlbl" id="updatedLbl"></span></div>`;
+  if(_locked) html+=`<div class="monthclosednotice">🔒 ${Y}年${M}月は受付終了です。内容は見られますが、変更はできません。</div>`;
   html+='<div class="mcal"><div class="mcalgrid">';
   DOW.forEach((dw,i)=>html+=`<div class="mch ${i===0?'sun':i===6?'sat':''}">${dw}</div>`);
   for(let i=0;i<first;i++) html+='<div class="mcell empty"></div>';
@@ -1531,7 +1564,7 @@ function renderMine(me){
       else if(rq.approved) reqInner=`<span class="reqokl">OK ${rq.start||''}-${rq.end||''}</span>`;
       else reqInner=`<span class="reqlink" data-req="${d}">要請</span>`;
     }
-    html+=`<div class="mcell cclick ${(dow===0||hol)?'sun':dow===6?'sat':''}${isToday?' todaym':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${isToday?'<span class="todaybadge">今日</span>':''}${nb}${wsmall}</div>${body}${reqInner}</div>`;
+    html+=`<div class="mcell${_locked?' monthclosed':' cclick'} ${(dow===0||hol)?'sun':dow===6?'sat':''}${isToday?' todaym':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${isToday?'<span class="todaybadge">今日</span>':''}${nb}${wsmall}</div>${body}${reqInner}</div>`;
   }
   html+='</div></div>';
   const _todayDecided=!!(S.published&&S.decidedDays&&S.decidedDays[_todayKey]);
@@ -1571,12 +1604,17 @@ function renderMine(me){
     }
     save(); renderMine(me);
   };
-  document.querySelectorAll('#staffMine .mcell.cclick').forEach(c=>c.onclick=()=>{ if(Date.now()<staffSwipeBlockUntil) return; openDayInput(me, +c.dataset.d); });
-  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); if(Date.now()<staffSwipeBlockUntil) return; openReqApprove(me, +el.dataset.req); });
+  document.querySelectorAll('#staffMine .mcell.cclick').forEach(c=>c.onclick=()=>{ if(_locked||Date.now()<staffSwipeBlockUntil) return; openDayInput(me, +c.dataset.d); });
+  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); if(_locked||Date.now()<staffSwipeBlockUntil) return; openReqApprove(me, +el.dataset.req); });
   attachStaffMonthSwipe();
 }
 let diMe=null, diDay=null; let diEditing=false; let diHasInitial=false;
-function openDayInput(me,d){ diMe=me; diDay=d; const _w0=S.staff[me].wish[key(d)]; diEditing=true; diHasInitial=!!(_w0&&Object.keys(_w0).length);
+function stopClosedMonthEdit(){
+  if(!staffMonthIsClosed()) return false;
+  const dm=$("#diMask"), rm=$("#raMask"); if(dm) dm.style.display="none"; if(rm) rm.style.display="none";
+  renderStaff(); return true;
+}
+function openDayInput(me,d){ if(staffMonthIsClosed()) return; diMe=me; diDay=d; const _w0=S.staff[me].wish[key(d)]; diEditing=true; diHasInitial=!!(_w0&&Object.keys(_w0).length);
   const dow=new Date(Y,M-1,d).getDay();
   $("#diTitle").textContent=`${M}/${d}（${DOW[dow]}）の希望を入れる`;
   drawDayInput(); $("#diMask").style.display="flex";
@@ -1603,7 +1641,7 @@ function drawDayInput(){
     ${hasIn?'<button type="button" class="qclear" id="diClear">この日の希望を解除</button>':''}
     <div class="line noteln"><span class="tg note">備考</span><input type="text" class="noteinp" value="${note}" placeholder=""></div>
   </div>`;
-  $("#diBody").querySelectorAll('input.tinp').forEach(inp=>inp.onchange=()=>{
+  $("#diBody").querySelectorAll('input.tinp').forEach(inp=>inp.onchange=()=>{ if(stopClosedMonthEdit()) return;
     const seg=inp.dataset.seg, f=inp.dataset.f;
     let w=S.staff[me].wish[key(d)]||{};
     delete w.off; delete w.allday; delete w.bulkAllDay; delete w.start; delete w.end;
@@ -1616,26 +1654,26 @@ function drawDayInput(){
     const _mb=$("#diBody").querySelector('.qbtn[data-q="maru"]'); if(_mb) _mb.classList.remove('on-maru');
     const _xb=$("#diBody").querySelector('.qbtn[data-q="batu"]'); if(_xb) _xb.classList.remove('on-batu');
   });
-  $("#diBody").querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
+  $("#diBody").querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{ if(stopClosedMonthEdit()) return;
     const cur=S.staff[me].wish[key(d)]||{};
     if(b.dataset.q==="batu"){ S.staff[me].wish[key(d)]=cur.off?{}:{off:true}; }
     else{ S.staff[me].wish[key(d)]=cur.allday?{}:{allday:true}; }
     save(); drawDayInput();
   });
   const clearBtn=$("#diClear");
-  if(clearBtn) clearBtn.onclick=()=>{
+  if(clearBtn) clearBtn.onclick=()=>{ if(stopClosedMonthEdit()) return;
     delete S.staff[me].wish[key(d)];
     save();
     $("#diMask").style.display="none";
     renderStaff();
   };
-  $("#diBody").querySelector('.noteinp').onchange=function(){
+  $("#diBody").querySelector('.noteinp').onchange=function(){ if(stopClosedMonthEdit()) return;
     if(!S.staff[me].notes) S.staff[me].notes={};
     const t=this.value.trim(); if(t) S.staff[me].notes[key(d)]=t; else delete S.staff[me].notes[key(d)];
     save();
   };
-  $("#diSubmit").onclick=()=>{ const cw=S.staff[me].wish[key(d)]||{}; if(diHasInitial && cw.off){ delete cw.off; S.staff[me].wish[key(d)]=cw; save(); drawDayInput(); return; } $("#diMask").style.display="none"; renderStaff(); };
-  $("#diEdit").onclick=()=>{ diEditing=true; _diLock(false); };
+  $("#diSubmit").onclick=()=>{ if(stopClosedMonthEdit()) return; const cw=S.staff[me].wish[key(d)]||{}; if(diHasInitial && cw.off){ delete cw.off; S.staff[me].wish[key(d)]=cw; save(); drawDayInput(); return; } $("#diMask").style.display="none"; renderStaff(); };
+  $("#diEdit").onclick=()=>{ if(stopClosedMonthEdit()) return; diEditing=true; _diLock(false); };
   _diLock(!diEditing);
 }
 function closeDayInput(){ $("#diMask").style.display="none"; renderStaff(); }
@@ -1643,6 +1681,7 @@ $("#diClose").onclick=closeDayInput;
 $("#diMask").onclick=e=>{ if(e.target.id==="diMask") closeDayInput(); };
 let raMe=null, raDay=null;
 function openReqApprove(me,d){
+  if(staffMonthIsClosed()) return;
   raMe=me; raDay=d;
   const r=(S.staff[me].req||{})[key(d)]||{};
   const dow=new Date(Y,M-1,d).getDay();
@@ -1655,7 +1694,7 @@ function openReqApprove(me,d){
   $("#raMask").style.display="flex";
 }
 $("#raApprove").onclick=()=>{
-  if(raMe==null) return;
+  if(stopClosedMonthEdit()||raMe==null) return;
   const s=normTime($("#raAllS").value||$("#raAmS").value||$("#raPmS").value);
   const e=normTime($("#raAllE").value||$("#raAmE").value||$("#raPmE").value);
   if(!s&&!e){ alert("承認する時間を入れてください"); return; }
@@ -1664,7 +1703,7 @@ $("#raApprove").onclick=()=>{
   save(); $("#raMask").style.display="none"; renderStaff();
 };
 $("#raReject").onclick=()=>{
-  if(raMe==null) return;
+  if(stopClosedMonthEdit()||raMe==null) return;
   if(S.staff[raMe].req&&S.staff[raMe].req[key(raDay)]){ const o=S.staff[raMe].req[key(raDay)]; o.approved=false; o.rejected=true; }
   save(); $("#raMask").style.display="none"; renderStaff();
 };
@@ -1684,7 +1723,8 @@ $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
 
 (function(){
   var sel=loadSel();
-  if(sel){ if(sel.y) Y=+sel.y; if(sel.m) M=+sel.m; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); }
+  if(sel){ if(sel.y) Y=+sel.y; if(sel.m) M=+sel.m; }
+  normalizeStaffMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y);
   initWho(); buildPalette();
   if(window.SHIFT_ACCESS_VALID) showStaff();
 })();
