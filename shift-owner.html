@@ -514,14 +514,15 @@
       let s=''; a.forEach(v=>s+=String.fromCharCode(v));
       return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
-    window.fbIssueStaffUrl=async function(nm,store,node){
+    window.fbIssueStaffUrl=async function(nm,store,node,force){
       if(!window.fbOwnerReady || window.shiftEditorMode) throw new Error('管理者ログインが必要です');
       const staffKey=fbKey(nm), mapSnap=await get(ref(db,BASE+'/access/byStaff/'+staffKey));
-      let token=mapSnap.val();
-      if(token){ const old=await get(ref(db,BASE+'/access/tokens/'+token)); if(!old.exists()||old.val().active!==true) token=null; }
-      if(!token) token=randomToken();
+      let token=mapSnap.val(), oldToken=token;
+      if(token && !force){ const old=await get(ref(db,BASE+'/access/tokens/'+token)); if(!old.exists()||old.val().active!==true) token=null; }
+      if(!token || force) token=randomToken();
       const staffNode=Object.assign({wish:{},decided:{},notes:{}},node||{}); staffNode.nm=nm; staffNode.store=store||staffNode.store||'大須';
       const changes={};
+      if(force && oldToken && oldToken!==token) changes['access/tokens/'+oldToken+'/active']=false;
       changes['access/tokens/'+token]={active:true,staffKey:staffKey,name:nm,store:staffNode.store,createdAt:new Date().toISOString()};
       changes['access/byStaff/'+staffKey]=token;
       changes['staff/'+staffKey]=staffNode;
@@ -671,7 +672,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.70</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.71</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -905,7 +906,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.70"; window.APP_UPDATED="2026-08-11";
+window.APP_VERSION="v1.71"; window.APP_UPDATED="2026-08-11";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1030,7 +1031,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.70</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.71</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2062,7 +2063,8 @@ function renderRosterList(){
   arr.forEach(function(nm,i){
     h+='<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:9px 4px;">'
       +'<span style="font-size:15px;">'+esc(nm)+'</span>'
-      +'<span style="display:flex;gap:6px;align-items:center;"><button type="button" class="rosterCopy" data-st="'+esc(st)+'" data-i="'+i+'" style="background:#06c755;border:none;color:#fff;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;padding:7px 10px;">専用URLをコピー</button>'
+      +'<span style="display:flex;gap:5px;align-items:center;"><button type="button" class="rosterCopy" data-st="'+esc(st)+'" data-i="'+i+'" style="background:#06c755;border:none;color:#fff;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;padding:7px 8px;">URLコピー</button>'
+      +'<button type="button" class="rosterReissue" data-st="'+esc(st)+'" data-i="'+i+'" style="background:#e8607f;border:none;color:#fff;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;padding:7px 8px;">新しいURL</button>'
       +'<button type="button" class="rosterDel" data-st="'+esc(st)+'" data-i="'+i+'" style="background:none;border:none;color:#c0596b;font-size:20px;line-height:1;cursor:pointer;padding:0 6px;">×</button></span>'
       +'</div>';
   });
@@ -2078,6 +2080,20 @@ function renderRosterList(){
       catch(e){ appPrompt('「'+name+'」さんの名前と専用URLをコピーしてください。',copyText); }
     }catch(e){ appAlert('専用URLを発行できませんでした。管理者ログインと通信状態を確認してください。'); }
     b.disabled=false; b.textContent='専用URLをコピー';
+  }; });
+  box.querySelectorAll(".rosterReissue").forEach(function(b){ b.onclick=async function(){
+    const store=b.dataset.st, name=(getRoster()[store]||[])[+b.dataset.i]; if(!name) return;
+    const ok=await appConfirm('「'+name+'」さんの古いURLを利用停止にして、新しいURLを発行します。\n他のスタッフのURLには影響しません。',{title:'新しいURLを発行しますか？',confirmText:'新しく発行する',kind:'danger',icon:'🔗'});
+    if(!ok) return;
+    const old=b.textContent; b.disabled=true; b.textContent='発行中…';
+    try{
+      ensureStaffOwner(name);
+      const url=await window.fbIssueStaffUrl(name,store,S.staff[name],true);
+      const copyText=name+'さん\n'+url;
+      try{ await navigator.clipboard.writeText(copyText); appAlert('古いURLを停止し、新しいURLをコピーしました。\n\n'+copyText); }
+      catch(e){ await appPrompt('「'+name+'」さんの新しい専用URLをコピーしてください。',copyText); }
+    }catch(e){ appAlert('新しいURLを発行できませんでした。管理者ログインと通信状態を確認してください。'); }
+    b.disabled=false; b.textContent=old;
   }; });
   box.querySelectorAll(".rosterDel").forEach(function(b){ b.onclick=function(){ rosterRemove(b.dataset.st, +b.dataset.i); }; });
 }
