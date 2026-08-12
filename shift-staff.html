@@ -190,6 +190,16 @@
   .mstore{font-size:8.5px; font-weight:800; color:#fff; border-radius:5px; padding:0 5px; line-height:1.5; white-space:nowrap; align-self:flex-start; margin-left:2px;}
   .mcell.cclick{cursor:pointer;}
   .mcell.cclick:hover{background:#fbf7fa;}
+  .mcell.todaym{border:3px solid #f0b400;background:#fff8cf;box-shadow:0 0 0 2px rgba(240,180,0,.18);}
+  .todaybadge{display:inline-block;background:#f0b400;color:#fff;font-size:8px;font-weight:900;border-radius:8px;padding:1px 4px;line-height:1.25;white-space:nowrap;}
+  .today-shift{width:calc(100% - 16px);max-width:604px;margin:-45px auto 70px;background:#fff;border:2px solid #efc53f;border-radius:14px;padding:12px 14px;box-shadow:0 4px 14px rgba(100,80,20,.12);}
+  .today-shift-title{font-size:16px;font-weight:900;color:#6f5700;margin-bottom:7px;}
+  .today-shift-date{font-size:12px;color:#777;margin-left:7px;font-weight:700;}
+  .today-shift-main{font-size:20px;font-weight:900;color:#333;line-height:1.5;}
+  .today-shift-main.pending{color:#888;}
+  .today-shift-main.off{color:#4a90a8;}
+  .today-shift-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .today-store{display:inline-block;color:#fff;border-radius:7px;padding:2px 8px;font-size:13px;font-weight:900;}
   .cmark{font-size:9px; align-self:flex-end; line-height:1;}
   .mbubble{position:relative; display:inline-block; width:7px; height:5px; border-radius:2px; background:currentColor; box-shadow:0 1px 1px rgba(0,0,0,.2); margin-left:2px; vertical-align:middle;}
   .mbubble::after{content:""; position:absolute; left:1px; bottom:-2px; border-width:2px 2px 0 0; border-style:solid; border-color:currentColor transparent transparent transparent;}
@@ -383,15 +393,31 @@
   #whoOk{background:linear-gradient(180deg,#4d4d4d 0%,#222 55%,#000 100%); box-shadow:0 2px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.25);}
   #whoOk:hover{background:linear-gradient(180deg,#3a3a3a 0%,#111 55%,#000 100%);}
   .sbar select:disabled,#who:disabled{opacity:1;color:#222;-webkit-text-fill-color:#222;background:#fff;font-weight:800;border-color:#b8b8b8;}
+  /* v1.64 スタッフカレンダーを淡いカード調に */
+  .mcal{background:linear-gradient(180deg,#fffafd 0%,#fff5f8 100%);border:1px solid #f2dce4;border-radius:18px;padding:10px;box-shadow:0 5px 18px rgba(190,95,125,.10);}
+  .mch{background:#fff0f5;border-radius:9px;color:#665b60;padding:5px 0;}
+  .mch.sun{background:#ffe7ec;color:#e65f73;}
+  .mch.sat{background:#e8f2ff;color:#3e87df;}
+  .mcell{border-color:#eadde2;background:linear-gradient(180deg,#fff 0%,#fffcfd 100%);box-shadow:0 2px 5px rgba(120,80,95,.07);transition:transform .12s ease,box-shadow .12s ease;}
+  .mcell.sun{background:linear-gradient(180deg,#fff5f7 0%,#ffedf1 100%);}
+  .mcell.sat{background:linear-gradient(180deg,#f5f9ff 0%,#eaf3ff 100%);}
+  .mcell.cclick:active{transform:scale(.97);box-shadow:0 1px 2px rgba(120,80,95,.10);}
+  .caltools .monthlbl{background:#fff;border:1px solid #f0dce3;box-shadow:0 2px 7px rgba(130,90,105,.08);}
+  .mcell.todaym{background:linear-gradient(180deg,#fffbe4 0%,#fff2b8 100%);}
   @media (max-width:480px){
     .caltools{width:100%; max-width:100%; grid-template-columns:auto minmax(0,1fr) auto; gap:3px; padding:0 4px;}
     .caltools .allbtn{padding:5px 7px; font-size:10px;}
     .caltools .monthlbl{font-size:15px; padding:3px 2px;}
     .caltools .updatedlbl{font-size:8px;}
-    .mcal{width:100%; max-width:100%; padding:0 4px;}
+    .mcal{width:100%; max-width:100%; padding:6px 4px; border-radius:14px;}
     .mcalgrid{grid-template-columns:repeat(7,minmax(0,1fr)); gap:2px; width:100%; min-width:0;}
     .mch{font-size:20px; line-height:1.15; padding:4px 0; font-weight:900;}
     .mcell{width:100%; min-width:0; min-height:48px; border-radius:5px; padding:1px; gap:1px;}
+    .mcell.todaym{border-width:2px;}
+    .todaybadge{font-size:7px;padding:1px 3px;}
+    .today-shift{width:calc(100% - 8px);margin:-45px 4px 70px;padding:11px 12px;}
+    .today-shift-title{font-size:16px;}
+    .today-shift-main{font-size:18px;}
     .mnum{font-size:10px; padding-left:1px;}
     .mcell .mtop{gap:1px; padding-left:0;}
     .mcell .wsmall{font-size:6.8px; line-height:1.12; word-break:normal;}
@@ -580,7 +606,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.62</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.64</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -760,7 +786,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.62"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.64"; window.APP_UPDATED="2026-08-03";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1464,6 +1490,8 @@ function renderMine(me){
   const home=S.staff[me].store||"大須";
   const hc=(STORE_COLOR[home]||STORE_COLOR["大須"]).hd;
   const first=new Date(Y,M-1,1).getDay();
+  const _now=new Date(), _todayKey=`${_now.getFullYear()}-${pad(_now.getMonth()+1)}-${pad(_now.getDate())}`;
+  const _todayLabel=`${_now.getMonth()+1}月${_now.getDate()}日（${DOW[_now.getDay()]}）`;
   const _locked=false;   /* スタッフの「全部◎」はいつでも使える（オーナー操作で無効化しない） */
   const _allDayCount=Object.keys(wsh).filter(k=>wsh[k]&&wsh[k].allday).length;
   const _hasBulkAllDay=Object.keys(wsh).some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
@@ -1472,7 +1500,7 @@ function renderMine(me){
   DOW.forEach((dw,i)=>html+=`<div class="mch ${i===0?'sun':i===6?'sat':''}">${dw}</div>`);
   for(let i=0;i<first;i++) html+='<div class="mcell empty"></div>';
   for(let d=1;d<=DAYS;d++){
-    const dow=new Date(Y,M-1,d).getDay(), hol=isHol(d);
+    const dow=new Date(Y,M-1,d).getDay(), hol=isHol(d), isToday=key(d)===_todayKey;
     const wv=wsh[key(d)], wt=wishMini(wv);
     const wsmall=wt?`<span class="wsmall${wv&&wv.allday?' alldaytime':''}">${wt}</span>`:"";
     let body="";
@@ -1503,9 +1531,23 @@ function renderMine(me){
       else if(rq.approved) reqInner=`<span class="reqokl">OK ${rq.start||''}-${rq.end||''}</span>`;
       else reqInner=`<span class="reqlink" data-req="${d}">要請</span>`;
     }
-    html+=`<div class="mcell cclick ${(dow===0||hol)?'sun':dow===6?'sat':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${nb}${wsmall}</div>${body}${reqInner}</div>`;
+    html+=`<div class="mcell cclick ${(dow===0||hol)?'sun':dow===6?'sat':''}${isToday?' todaym':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${isToday?'<span class="todaybadge">今日</span>':''}${nb}${wsmall}</div>${body}${reqInner}</div>`;
   }
   html+='</div></div>';
+  const _todayDecided=!!(S.published&&S.decidedDays&&S.decidedDays[_todayKey]);
+  const _todayV=dec[_todayKey]||null, _todayT=tet[_todayKey]||null;
+  const _segments=(v)=>{ const p=[]; if(v&&v.all) p.push(`${v.all.start||''}〜${v.all.end||''}`); if(v&&v.am) p.push(`AM ${v.am.start||''}〜${v.am.end||''}`); if(v&&v.pm) p.push(`PM ${v.pm.start||''}〜${v.pm.end||''}`); if(v&&!v.all&&!v.am&&!v.pm&&(v.start||v.end)) p.push(`${v.start||''}〜${v.end||''}`); return p; };
+  let _todayMain='';
+  if(!_todayDecided) _todayMain='<div class="today-shift-main pending">未定</div>';
+  else{
+    const _homeTimes=_segments(_todayV), _tetsuTimes=_segments(_todayT);
+    if((_todayV&&_todayV.off)||(!_homeTimes.length&&!_tetsuTimes.length)) _todayMain='<div class="today-shift-main off">お休み</div>';
+    else{
+      if(_homeTimes.length) _todayMain+=`<div class="today-shift-main today-shift-line"><span class="today-store" style="background:${hc};color:${isLightColor(hc)?'#333':'#fff'}">${esc(home)}</span><span>${esc(_homeTimes.join(' / '))}</span></div>`;
+      if(_tetsuTimes.length){ const _tc=STORE_COLOR['鉄板'].hd; _todayMain+=`<div class="today-shift-main today-shift-line"><span class="today-store" style="background:${_tc}">鉄板</span><span>${esc(_tetsuTimes.join(' / '))}</span></div>`; }
+    }
+  }
+  html+=`<div class="today-shift"><div class="today-shift-title">本日のシフト<span class="today-shift-date">${_todayLabel}</span></div>${_todayMain}</div>`;
   $("#staffMine").innerHTML=html;
   const _u=$("#updatedLbl"); if(_u) _u.textContent = S.updatedAt ? `最終更新 ${String(S.updatedAt).replace(/^\d{4}\//,'')}` : "";
   $("#allMaru").onclick=()=>{
