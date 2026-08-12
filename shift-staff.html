@@ -28,7 +28,7 @@
   :root{ --pink:#e8607f; --pink-d:#c74a68; --bg:#fafafa; --line:#e2e2e2; --ink:#3a3a3a;
     --sun:#f26d6d; --sat:#4a90e2; --today:#eef4fb; --wish:#9aa0a8; }
   *{box-sizing:border-box;}
-  body{margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;}
+  html,body{max-width:100%; overflow-x:hidden;}\n  body{margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;}
   /* スタッフは携帯利用：細い画面向け調整 */
   @media (max-width:480px){
     header h1{font-size:15px;}
@@ -172,8 +172,8 @@
   .mine .off{color:#999;}
 
   /* 確定後カレンダー（スタッフ） */
-  .mcal{max-width:620px; margin:8px auto 60px; padding:0 8px; touch-action:pan-y;}
-  .mcalgrid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+  .mcal{width:100%; max-width:620px; margin:8px auto 60px; padding:0 8px; touch-action:pan-y;}
+  .mcalgrid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; width:100%; min-width:0;}
   .mch{text-align:center; font-weight:700; font-size:12px; color:#666; padding:3px 0;}
   .mch.sun{color:var(--sun);} .mch.sat{color:var(--sat);}
   .mcell{position:relative; min-width:0; overflow:hidden; min-height:52px; border:1px solid var(--line); border-radius:7px; background:#fff; padding:2px; display:flex; flex-direction:column; align-items:center; gap:2px;}
@@ -375,6 +375,22 @@
   .btn.share:hover{background:linear-gradient(180deg,#28d67a 0%,#05b84d 55%,#039a42 100%);}
   #whoOk{background:linear-gradient(180deg,#4d4d4d 0%,#222 55%,#000 100%); box-shadow:0 2px 5px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.25);}
   #whoOk:hover{background:linear-gradient(180deg,#3a3a3a 0%,#111 55%,#000 100%);}
+  @media (max-width:480px){
+    .caltools{width:100%; max-width:100%; grid-template-columns:auto minmax(0,1fr) auto; gap:3px; padding:0 4px;}
+    .caltools .allbtn{padding:5px 7px; font-size:10px;}
+    .caltools .monthlbl{font-size:15px; padding:3px 2px;}
+    .caltools .updatedlbl{font-size:8px;}
+    .mcal{width:100%; max-width:100%; padding:0 4px;}
+    .mcalgrid{grid-template-columns:repeat(7,minmax(0,1fr)); gap:2px; width:100%; min-width:0;}
+    .mch{font-size:10px; padding:2px 0;}
+    .mcell{width:100%; min-width:0; min-height:48px; border-radius:5px; padding:1px; gap:1px;}
+    .mnum{font-size:10px; padding-left:1px;}
+    .mcell .mtop{gap:1px; padding-left:0;}
+    .mcell .wsmall{font-size:6.8px; line-height:1.12; word-break:normal;}
+    .mcell .wsmall.alldaytime{font-size:7.5px; line-height:1.05; color:#8a6d00;}
+    .mtime{font-size:7px; padding:1px; max-width:100%; overflow:hidden;}
+    .mstore{font-size:7px; padding:0 2px; margin-left:0;}
+  }
 </style>
   <!-- ===== Firebase（シフト共有 / 売上と同じDBの zaiko/shift）===== -->
   <script type="importmap">
@@ -556,7 +572,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.58</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.59</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -727,7 +743,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.58"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.59"; window.APP_UPDATED="2026-08-03";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1419,7 +1435,7 @@ function renderStaff(){
 function wishMini(w){
   if(!w) return "";
   if(w.off) return '<span style="color:#4aa8dd;font-weight:800;">✕</span>';
-  if(w.allday) return "◎";
+  if(w.allday) return "9:00<br>〜23:00";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`<span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}`);
@@ -1438,8 +1454,8 @@ function renderMine(me){
   for(let i=0;i<first;i++) html+='<div class="mcell empty"></div>';
   for(let d=1;d<=DAYS;d++){
     const dow=new Date(Y,M-1,d).getDay(), hol=isHol(d);
-    const wt=wishMini(wsh[key(d)]);
-    const wsmall=wt?`<span class="wsmall">${wt}</span>`:"";
+    const wv=wsh[key(d)], wt=wishMini(wv);
+    const wsmall=wt?`<span class="wsmall${wv&&wv.allday?' alldaytime':''}">${wt}</span>`:"";
     let body="";
     const v=(S.published&&S.decidedDays&&S.decidedDays[key(d)])?dec[key(d)]:null;
     if(v){
