@@ -685,7 +685,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.78</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.79</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -919,7 +919,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.78"; window.APP_UPDATED="2026-08-14";
+window.APP_VERSION="v1.79"; window.APP_UPDATED="2026-08-14";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1069,7 +1069,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.78</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.79</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1509,7 +1509,7 @@ $("#teDel").onclick=()=>{
 function holdbars(nm,d){
   const stf=S.staff[nm]||{};
   const hs=(stf.hold||{})[key(d)]||[];
-  return hs.map(h=>`<div class="dbar holdbar" data-h="${h}" style="left:${(h-AX0)*HW}px;width:${HW/2}px" title="タップで消す"></div>`).join("");
+  return hs.map(h=>`<div class="dbar holdbar" data-h="${h}" style="left:${(h-AX0)*HW}px;width:${HW/2}px" title="タップで消す"><span class="holddel" data-h="${h}" aria-label="この水色ブロックを消す">×</span></div>`).join("");
 }
 function toggleHold(nm,d,h){
   if(closedMonthEditBlocked()) return;
@@ -1537,8 +1537,9 @@ function dayRowClick(e,row,mode){
     let hour=Math.min(_xToHour(e,dt,true), AX1-0.5);
     toggleHold(nm,d,hour); return;
   }
-  // 棒・名前をタップ → 編集
-  if(t.closest('.dbar') || t.closest('.dname')){ return; } // 直接操作（時間の数字タップ・端ドラッグ）で編集
+  // 決定シフトの棒・名前をタップ → 全体編集（既存の「消す」を利用）
+  if(t.closest('.decisionbar') || t.closest('.dname')){ openEditor(nm,d); return; }
+  if(t.closest('.dbar')) return; // 要請など、その場の専用操作を優先
   // 空きをタップ → その時間で直接作成（すでにシフトがある人は編集を開く）
   const dt=t.closest('.dtime'); if(!dt) return;
   ensureStaffOwner(nm);   // まだ提出のない登録名でも編集できるように
