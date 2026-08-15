@@ -1204,5 +1204,26 @@
 
 ### 現在の公開状況
 
-- コードと引継ぎ記録の作成・静的確認まで実施中。
-- GitHub `main`、Firebase本番ルール、Vercel本番には未反映。ユーザーの明示的な公開指示後にまとめて反映する。
+- GitHub `main` はコミット `21234bbeb4ca8488f0aa830226b47f3429e607fd` へ反映済み。GitHub Actions「Zaikon app safety check」は成功している。
+- GitHub連携により2つのVercel本番へ自動公開され、`zaiko-app-qhy7` は `dpl_CsWE3NHxSpP7NeCQvM4qioJVEHQh`、`zaiko-app` は `dpl_F2MXLb7YXfcpEhkiAjGAyB53jWod` でともに `READY`。
+- Firebase管理画面から取得した現在のルール全文をGitHubの `database.rules.json` と照合し、完全一致を確認済み。`salesOwnerTokens`、`salesOwnerSlots`、`salesOwnerSessions` があり、既存6保存先の公開規則も維持されている。
+- **未完了:** Google管理者画面から共有者1の専用URLを実際に発行し、InPrivate相当で履歴確認・4店舗の起動・設定非表示・旧URL停止を確認する。
+
+## 51. 2026-08-15対応中: オーナー2アプリのアイコン配色統一
+
+対象: `icons/sales-owner.*`、`icons/shift-owner.*`、`my-management.html`、`sales-owner.html`、`shift/owner.html`、`shift-owner.html`、`sales-owner.webmanifest`、`shift-owner.webmanifest`
+
+### 対応内容
+
+- 売上オーナーとシフト・オーナーの正式アイコンを、シャンパンゴールド・アイボリー・濃いブラウンの明るくかわいい配色へ統一する。
+- 売上オーナーはグラフ、シフト・オーナーはカレンダーの図柄を維持し、同じ配色でも見分けられるようにする。
+- 両アイコンへ小さな星の装飾を追加し、重い金属調や黒背景は使用しない。
+- SVGを基準に16px、32px、180px、192px、512pxの正式PNGを同時生成する。
+- 「私の管理」、favicon、apple-touch-icon、OGP、webmanifestの参照番号を `v=5` へ更新し、アプリ更新後に新しいアイコンを再取得できるようにする。
+- シフト・オーナー通常版と携帯互換版は完全一致を維持する。
+- Firebase設定、Realtime Databaseルール、既存データ、発行済みURL、GAS設定、アプリ機能、正式ドメインは変更しない。
+
+### 現在の状況
+
+- ローカルでアイコン2種と全サイズPNGの生成、manifest JSON、画像サイズ、通常版／互換版同期、参照番号の静的確認まで完了。
+- GitHub `main` とVercel本番には未反映。ほかの確認事項とまとめ、ユーザーの公開指示後に2プロジェクトへ各1回だけ公開する。
