@@ -280,7 +280,7 @@
   thead th.daycol *{pointer-events:none;}
   thead th.daycol:hover{background:#f7d0dc;}
   .daymask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:60; padding:12px;}
-  .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:96vw; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
+  .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1120px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
   .dmz{position:absolute; z-index:12; touch-action:none;}
   .dmz-r{top:0; right:-2px; width:9px; height:100%; cursor:ew-resize;}
   .dmz-b{left:0; bottom:-2px; height:9px; width:100%; cursor:ns-resize;}
@@ -685,7 +685,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.79</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.80</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -770,7 +770,7 @@
       <button type="button" class="batu" data-q="batu">✕</button>
     </div>
     <div class="mfoot">
-      <button class="del" id="mDelete" type="button">🗑 消す</button>
+      <button class="del" id="mDelete" type="button">🗑 1日分を全部消す</button>
       <button class="mreq" id="mReq" type="button">✈ 要請</button>
       <button class="save" id="mSave" type="button">決定</button>
     </div>
@@ -894,6 +894,7 @@
     <div id="oneNote" class="onenote" style="display:none;"></div>
     <input type="text" class="tinp" placeholder="9:00" id="oneInput" style="width:100%; font-size:18px; padding:9px; border:1.5px solid var(--line); border-radius:8px; box-sizing:border-box;">
     <button id="oneOk" type="button">変更する</button>
+    <button id="oneDelete" type="button" style="background:#c0596b; margin-top:8px;">この時間帯だけ削除</button>
   </div>
 </div>
 
@@ -919,7 +920,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.79"; window.APP_UPDATED="2026-08-14";
+window.APP_VERSION="v1.80"; window.APP_UPDATED="2026-08-15";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1069,7 +1070,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.79</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.80</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1373,7 +1374,7 @@ function openDayView(d){
   function up(){ mz=null; }
   modal.querySelectorAll('.dmz').forEach(h=>{ h.addEventListener('pointerdown',down); h.addEventListener('pointermove',move); h.addEventListener('pointerup',up); h.addEventListener('pointercancel',up); });
 })();
-function fitDayGrid(){ const g=$("#dayGrid"); const sc=document.querySelector('.dayscroll'); if(!g||!sc) return; g.style.transform="none"; const gw=g.scrollWidth, gh=g.scrollHeight; const availW=sc.clientWidth, availH=sc.clientHeight; const scale=Math.min(availW/gw, availH/gh, 2); g.style.transformOrigin="top left"; g.style.transform="scale("+scale+")"; }
+function fitDayGrid(){ const g=$("#dayGrid"); const sc=document.querySelector('.dayscroll'); if(!g||!sc) return; g.style.transform="none"; const gw=g.scrollWidth; const availW=sc.clientWidth; const scale=Math.min(availW/gw,2); g.style.transformOrigin="top left"; g.style.transform="scale("+scale+")"; }
 (function(){ const sc=document.querySelector('.dayscroll'); if(sc && window.ResizeObserver){ new ResizeObserver(()=>{ const m=$("#dayMask"); if(m && m.style.display==="flex") fitDayGrid(); }).observe(sc); } })();
 function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"この日を決定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#2fa04a"); b.style.color="#fff"; }
 $("#dayDecide").onclick=()=>{ if(closedMonthEditBlocked()||dayViewDay==null) return; if(!S.decidedDays) S.decidedDays={}; const k=key(dayViewDay); const willDecide=!S.decidedDays[k]; if(S.decidedDays[k]) delete S.decidedDays[k]; else S.decidedDays[k]=true; touchUpdated(); save(); _syncDayDecideBtn(); renderOwner(); if(document.querySelector("#staffView").style.display!=="none") renderStaff(); if(willDecide) $("#dayMask").style.display="none"; };
@@ -1608,6 +1609,28 @@ $("#oneOk").onclick=()=>{
   const v=normTime($("#oneInput").value); if(!v){ appAlert("時間を入れてください（例 9:00）"); return; }
   const dec=S.staff[oneT.nm].decided[key(oneT.d)];
   if(dec&&dec[oneT.seg]){ dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
+  $("#oneMask").style.display="none";
+  const dd=dayViewDay; oneT=null; if(dd!=null) openDayView(dd);
+};
+function deleteDecisionSegment(nm,d,seg){
+  const stf=S.staff[nm]||{};
+  const decided=stf.decided||{};
+  const k=key(d), dec=decided[k];
+  if(!dec) return false;
+  if(seg==='all' && !dec.all && (dec.start||dec.end)){
+    delete dec.start; delete dec.end; // 旧形式の1本線
+  }else{
+    delete dec[seg];
+  }
+  const hasShift=!!(dec.off||dec.all||dec.am||dec.pm||dec.start||dec.end);
+  if(!hasShift) delete decided[k];
+  return true;
+}
+$("#oneDelete").onclick=async()=>{
+  if(closedMonthEditBlocked()||!oneT) return;
+  const target={...oneT};
+  if(!await appConfirm(`${target.nm}さんの選んだ時間帯だけを削除します。\n同じ日の別の時間帯と、ほかの人のシフトは残ります。`,{title:"この時間帯だけ削除しますか？",confirmText:"この線だけ削除",kind:"danger",icon:"🗑️"})) return;
+  if(deleteDecisionSegment(target.nm,target.d,target.seg)){ touchUpdated(); save(); }
   $("#oneMask").style.display="none";
   const dd=dayViewDay; oneT=null; if(dd!=null) openDayView(dd);
 };
@@ -1870,7 +1893,12 @@ $("#mSave").onclick=()=>{
   if(!av&&!am&&!pm){ appAlert("一日・AM・PMのどれかに時間を入れてください（休みは✕）"); return; }
   setDecided({all:av,am,pm,color:pickColor});
 };
-$("#mDelete").onclick=()=>setDecided(null);
+$("#mDelete").onclick=async()=>{
+  if(closedMonthEditBlocked()||!editing) return;
+  const target={...editing};
+  if(!await appConfirm(`${target.nm}さんの${M}月${target.d}日の決定シフトをすべて削除します。`,{title:"この人のこの日を全部消しますか？",confirmText:"全部消す",kind:"danger",icon:"🗑️"})) return;
+  if(editing&&editing.nm===target.nm&&editing.d===target.d) setDecided(null);
+};
 $("#mReq").onclick=()=>{
   if(closedMonthEditBlocked()||!editing) return;
   const nm=editing.nm, dd=editing.d;
