@@ -70,12 +70,12 @@
 
 ## 4. 現在の主要アプリ最新版
 
-- 私の管理: `v1.5`
-- 毎日在庫: `v10.64`
+- 私の管理: `v1.6`
+- 毎日在庫: `v10.65`
 - 在庫管理: `v4.8.0`
-- 売上入力: `v2.71`
-- シフト・スタッフ: `v1.69`
-- シフト・オーナー: `v1.83`
+- 売上入力: `v2.73`
+- シフト・スタッフ: `v1.70`
+- シフト・オーナー: `v1.84`
 
 ### シフト・スタッフの現在の正式機能
 
@@ -1209,21 +1209,48 @@
 - Firebase管理画面から取得した現在のルール全文をGitHubの `database.rules.json` と照合し、完全一致を確認済み。`salesOwnerTokens`、`salesOwnerSlots`、`salesOwnerSessions` があり、既存6保存先の公開規則も維持されている。
 - **未完了:** Google管理者画面から共有者1の専用URLを実際に発行し、InPrivate相当で履歴確認・4店舗の起動・設定非表示・旧URL停止を確認する。
 
-## 51. 2026-08-15対応中: オーナー2アプリのアイコン配色統一
+## 51. 2026-08-15対応済み: 承認済みオーナーアイコンの公開
 
 対象: `icons/sales-owner.*`、`icons/shift-owner.*`、`my-management.html`、`sales-owner.html`、`shift/owner.html`、`shift-owner.html`、`sales-owner.webmanifest`、`shift-owner.webmanifest`
 
 ### 対応内容
 
-- 売上オーナーとシフト・オーナーの正式アイコンを、シャンパンゴールド・アイボリー・濃いブラウンの明るくかわいい配色へ統一する。
-- 売上オーナーはグラフ、シフト・オーナーはカレンダーの図柄を維持し、同じ配色でも見分けられるようにする。
-- 両アイコンへ小さな星の装飾を追加し、重い金属調や黒背景は使用しない。
-- SVGを基準に16px、32px、180px、192px、512pxの正式PNGを同時生成する。
-- 「私の管理」、favicon、apple-touch-icon、OGP、webmanifestの参照番号を `v=5` へ更新し、アプリ更新後に新しいアイコンを再取得できるようにする。
-- シフト・オーナー通常版と携帯互換版は完全一致を維持する。
-- Firebase設定、Realtime Databaseルール、既存データ、発行済みURL、GAS設定、アプリ機能、正式ドメインは変更しない。
+- 「私の管理」は承認済みINB候補A、売上オーナーは立体的な3本の棒グラフと王冠、シフト・オーナーは立体的な白いカレンダーと緑のチェックを正式採用した。
+- 3種類とも明るい金色の背景を使用する。
+- 「私の管理」は `v1.6`、オーナー2種の画像参照は `v=6`。
+- 誤った平面的画像が入っていた `Zaikon-approved-icons-A-publish.zip` は再利用しない。
+- 正しい承認済み画像はGitHub `main` コミット `4f7a0f610906d03fedad0d14df42931c34ebc88d` に公開済み。
+- シフト・オーナー通常版と携帯互換版は完全一致を維持した。
+- Firebase設定、Realtime Databaseルール、既存データ、発行済みURL、GAS設定、アプリ機能、正式ドメインは変更していない。
 
-### 現在の状況
+### 公開確認
 
-- ローカルでアイコン2種と全サイズPNGの生成、manifest JSON、画像サイズ、通常版／互換版同期、参照番号の静的確認まで完了。
-- GitHub `main` とVercel本番には未反映。ほかの確認事項とまとめ、ユーザーの公開指示後に2プロジェクトへ各1回だけ公開する。
+- GitHub Actions成功、変更は指定24ファイルのみ。
+- 2つのVercel本番は `READY`。
+- `zaiko-app-qhy7`: `dpl_Fa2RQmNM8Co8pZwxGBY1gjMSHfQW`
+- `zaiko-app`: `dpl_HTb4KgJsbTKDrQWfwDfR6E7VwkEn`
+
+## 52. 2026-08-15対応: Windows Edgeの古いデスクトップアイコン再利用防止
+
+対象: `sales-owner.html`、`shift/owner.html`、`shift-owner.html`、`sales-owner.webmanifest`、`shift-owner.webmanifest`、オーナー2種の新規固有名PNG
+
+### 原因
+
+- Edgeのアプリ設定画面では承認済みの金色アイコンへ更新されていたが、Windowsのデスクトップショートカット作成時に、以前インストールした黒背景アイコンを再利用していた。
+- URL末尾の `?v=6` だけでは、既存PWAとWindows側のアイコン記憶を確実に分離できなかった。
+
+### 対応内容
+
+- 承認済み画像を変更せず、16px、32px、180px、192px、512pxへキャッシュと重複しない固有ファイル名を追加した。
+- manifestのアイコン参照を固有ファイル名へ変更した。
+- Edgeが古いPWAと同一アプリとして扱わないよう、売上オーナーとシフト・オーナーのmanifest `id` を承認済みv6用の固有IDへ変更した。
+- manifestの背景色・テーマ色を承認済みの明るい金色 `#f6cd58` へ統一した。
+- 正式URL、画面の機能、表示バージョン、Firebase設定、Realtime Databaseルール、既存データ、発行済みURL、GAS設定は変更していない。
+- `shift/owner.html` と `shift-owner.html` は完全一致を維持する。
+
+### 確認項目
+
+- 新規固有名PNGが元の承認済みv6画像とバイト単位で一致すること。
+- manifest JSONが正常で、固有ID・固有アイコン・金色背景を参照すること。
+- オーナー通常版・携帯互換版が完全一致すること。
+- GitHub Actionsと2つのVercel本番公開が成功すること。
