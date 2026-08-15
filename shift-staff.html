@@ -138,7 +138,13 @@
   .seg2 .tg.note{background:#9aa0a8;}
   .seg2 .line.lam{background:#eefaf0; border-radius:8px; padding:2px 3px;}
   .seg2 .line.lpm{background:#fdeef4; border-radius:8px; padding:2px 3px;}
+  .seg2 .lastbtn{flex:0 0 auto;border:none;border-radius:7px;background:#2f9ad0;color:#fff;padding:6px 7px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;}
   .seg2 .line.lall{background:#fdf6da; border-radius:8px; padding:2px 3px;}
+  @keyframes incompleteBlink{0%,100%{background-color:#fff;border-color:#ef5a72;box-shadow:0 0 0 2px rgba(239,90,114,.12)}50%{background-color:#ffe3e8;border-color:#ff2349;box-shadow:0 0 0 4px rgba(239,90,114,.28)}}
+  .mcell.incomplete .wsmall{color:#c92845;font-weight:900;animation:incompleteBlink 1s ease-in-out infinite;border:1.5px solid #ef5a72;border-radius:6px;padding:2px 3px;}
+  .seg2 .line.incomplete-line{outline:2px solid #ef5a72;animation:incompleteBlink 1s ease-in-out infinite;}
+  .seg2 input.incomplete-input{border-color:#ef5a72!important;background:#ffe3e8!important;animation:incompleteBlink 1s ease-in-out infinite;}
+  @media (prefers-reduced-motion:reduce){.mcell.incomplete .wsmall,.seg2 .line.incomplete-line,.seg2 input.incomplete-input{animation:none;background:#ffe3e8!important;}}
   .seg2 .noteline{margin-top:2px;}
   .noteinp{flex:1; width:100%; padding:7px 9px; border:1.5px solid var(--line); border-radius:7px; font-size:13px;}
   .day input.tinp{padding:6px; border:1.5px solid var(--line); border-radius:7px; font-size:14px; flex:1 1 0; min-width:0; max-width:118px;}
@@ -190,6 +196,8 @@
   .mstore{font-size:8.5px; font-weight:800; color:#fff; border-radius:5px; padding:0 5px; line-height:1.5; white-space:nowrap; align-self:flex-start; margin-left:2px;}
   .mcell.cclick{cursor:pointer;}
   .mcell.cclick:hover{background:#fbf7fa;}
+  .daylock-pop{position:fixed;z-index:180;max-width:280px;background:#fff8d9;color:#735f17;border:2px solid #efc53f;border-radius:14px;padding:11px 15px;box-shadow:0 5px 18px rgba(90,70,10,.22);font-size:14px;font-weight:900;line-height:1.45;text-align:center;pointer-events:none;}
+  .daylock-pop::before{content:"";position:absolute;top:-8px;left:24px;border-width:0 8px 8px;border-style:solid;border-color:transparent transparent #efc53f;}
   .mcell.todaym{border:3px solid #f0b400;background:#fff8cf;box-shadow:0 0 0 2px rgba(240,180,0,.18);}
   .todaybadge{display:inline-block;background:#f0b400;color:#fff;font-size:8px;font-weight:900;border-radius:8px;padding:1px 4px;line-height:1.25;white-space:nowrap;}
   .today-shift{width:calc(100% - 16px);max-width:604px;margin:-45px auto 70px;background:#fff;border:2px solid #efc53f;border-radius:14px;padding:12px 14px;box-shadow:0 4px 14px rgba(100,80,20,.12);}
@@ -212,8 +220,12 @@
   .caltools{display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; max-width:620px; margin:8px auto 0; padding:0 8px;}
   .caltools .allbtn{flex:0 0 auto; padding:6px 12px; font-size:12px;}
   .caltools .allbtn.locked{background:#eee; color:#888; border-color:#ddd; cursor:not-allowed; box-shadow:none;}
+  .month-submit-wrap{max-width:604px;margin:8px auto 0;padding:0 8px;}
+  .month-submit-btn{width:100%;border:none;border-radius:11px;background:#e8607f;color:#fff;padding:11px 14px;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 3px 8px rgba(232,96,127,.22);}
+  .month-submit-btn.submitted{background:#2fa04a;}
+  .month-submit-btn:disabled{background:#c9c9c9;box-shadow:none;cursor:not-allowed;}
   .monthclosednotice{max-width:604px;margin:8px auto 0;padding:8px 12px;border:1.5px solid #e6c96a;border-radius:10px;background:#fff8d9;color:#735f17;font-size:12px;font-weight:800;text-align:center;}
-  .mcell.monthclosed{cursor:default;opacity:.82;}
+  .mcell.monthclosed{cursor:pointer;opacity:.82;}
   .mcell.monthclosed .reqlink{cursor:default;}
   .caltools .monthlbl{justify-self:center; font-size:18px; color:#333; font-weight:900; padding:4px 9px; border-radius:8px; white-space:nowrap;}
   .caltools .monthlbl.changed{animation:monthChanged .55s ease-out;}
@@ -609,7 +621,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.66</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.67</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -789,7 +801,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.66"; window.APP_UPDATED="2026-08-03";
+window.APP_VERSION="v1.67"; window.APP_UPDATED="2026-08-15";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1515,6 +1527,29 @@ function wishMini(w){
   if(w.pm) p.push(`<span class="amp">PM</span>${w.pm.start||''}-${w.pm.end||''}`);
   return p.join('<br>');
 }
+function staffSubmissionDeadline(y=Y,m=M){ return m===1?{year:y-1,month:12,day:20}:{year:y,month:m-1,day:20}; }
+function staffMonthDeadlineLocked(y=Y,m=M){
+  const t=japanToday(), dl=staffSubmissionDeadline(y,m);
+  return t.year>dl.year||(t.year===dl.year&&(t.month>dl.month||(t.month===dl.month&&t.day>dl.day)));
+}
+function staffMonthInputLocked(){ return staffMonthIsClosed()||staffMonthDeadlineLocked(); }
+let staffDayLockTimer=null;
+function showStaffCalendarPop(message,cell){
+  const old=document.querySelector('.daylock-pop'); if(old) old.remove();
+  const pop=document.createElement('div'); pop.className='daylock-pop'; pop.textContent=message; document.body.appendChild(pop);
+  const r=cell&&cell.getBoundingClientRect?cell.getBoundingClientRect():null;
+  const w=pop.offsetWidth||260, h=pop.offsetHeight||52;
+  const left=Math.max(8,Math.min(window.innerWidth-w-8,r?(r.left+r.width/2-w/2):(window.innerWidth-w)/2));
+  const top=Math.max(8,Math.min(window.innerHeight-h-8,r?(r.bottom+9):(window.innerHeight-h)/2));
+  pop.style.left=left+'px'; pop.style.top=top+'px';
+  clearTimeout(staffDayLockTimer); staffDayLockTimer=setTimeout(()=>{ if(pop.isConnected) pop.remove(); },3200);
+}
+function showDecidedDayLock(cell){ showStaffCalendarPop('変更は責任者に連絡してください',cell); }
+function wishHasIncompleteTime(w){
+  if(!w) return false;
+  for(const seg of ['all','am','pm']){ const o=w[seg]; if(o&&!!o.start!==!!o.end) return true; }
+  return (!!w.start!==!!w.end);
+}
 function renderMine(me){
   const dec=S.staff[me].decided||{}, wsh=S.staff[me].wish||{}, tet=S.staff[me].tetsu||{};
   const home=S.staff[me].store||"大須";
@@ -1522,19 +1557,23 @@ function renderMine(me){
   const first=new Date(Y,M-1,1).getDay();
   const _now=japanToday(), _todayKey=`${_now.year}-${pad(_now.month)}-${pad(_now.day)}`;
   const _todayLabel=`${_now.month}月${_now.day}日（${DOW[_now.dow]}）`;
-  const _locked=staffMonthIsClosed();
+  const _deadlineLocked=staffMonthDeadlineLocked(), _locked=staffMonthInputLocked();
+  const _submitKey=`${Y}-${pad(M)}`;
+  const _submitted=!!(((wsh._submittedMonths)||{})[_submitKey]);
   const _monthPrefix=`${Y}-${pad(M)}-`;
   const _monthWishKeys=Object.keys(wsh).filter(k=>k.indexOf(_monthPrefix)===0);
   const _allDayCount=_monthWishKeys.filter(k=>wsh[k]&&wsh[k].allday).length;
   const _hasBulkAllDay=_monthWishKeys.some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
   let html=`<div class="caltools"><button type="button" class="allbtn${_locked?' locked':''}${_hasBulkAllDay?' clr':''}" id="allMaru" ${_locked?'disabled':''}>${_locked?'受付終了':(_hasBulkAllDay?'全部一日OKを解除':'全部 ◎ 一日OK')}</button><span class="monthlbl${Date.now()<staffMonthChangedUntil?' changed':''}" id="monthLbl">${Y}年${M}月</span><span class="updatedlbl" id="updatedLbl"></span></div>`;
-  if(_locked) html+=`<div class="monthclosednotice">🔒 ${Y}年${M}月は受付終了です。内容は見られますが、変更はできません。</div>`;
+  html+=`<div class="month-submit-wrap"><button type="button" class="month-submit-btn${_submitted?' submitted':''}" id="monthSubmit" ${_locked?'disabled':''}>${_deadlineLocked?'締め切り済み（毎月20日まで）':(_submitted?'✓ この月は提出済み（20日まで修正できます）':'この月の希望を提出')}</button></div>`;
+  if(_locked) html+=`<div class="monthclosednotice">🔒 この月の希望提出は締め切りました。変更は責任者に連絡してください。</div>`;
   html+='<div class="mcal"><div class="mcalgrid">';
   DOW.forEach((dw,i)=>html+=`<div class="mch ${i===0?'sun':i===6?'sat':''}">${dw}</div>`);
   for(let i=0;i<first;i++) html+='<div class="mcell empty"></div>';
   for(let d=1;d<=DAYS;d++){
     const dow=new Date(Y,M-1,d).getDay(), hol=isHol(d), isToday=key(d)===_todayKey;
     const wv=wsh[key(d)], wt=wishMini(wv);
+    const _incomplete=wishHasIncompleteTime(wv);
     const wsmall=wt?`<span class="wsmall${wv&&wv.allday?' alldaytime':''}">${wt}</span>`:"";
     let body="";
     const v=(S.published&&S.decidedDays&&S.decidedDays[key(d)])?dec[key(d)]:null;
@@ -1564,7 +1603,7 @@ function renderMine(me){
       else if(rq.approved) reqInner=`<span class="reqokl">OK ${rq.start||''}-${rq.end||''}</span>`;
       else reqInner=`<span class="reqlink" data-req="${d}">要請</span>`;
     }
-    html+=`<div class="mcell${_locked?' monthclosed':' cclick'} ${(dow===0||hol)?'sun':dow===6?'sat':''}${isToday?' todaym':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${isToday?'<span class="todaybadge">今日</span>':''}${nb}${wsmall}</div>${body}${reqInner}</div>`;
+    html+=`<div class="mcell${_locked?' monthclosed':' cclick'}${_incomplete?' incomplete':''} ${(dow===0||hol)?'sun':dow===6?'sat':''}${isToday?' todaym':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${isToday?'<span class="todaybadge">今日</span>':''}${nb}${wsmall}</div>${body}${reqInner}</div>`;
   }
   html+='</div></div>';
   const _todayDecided=!!(S.published&&S.decidedDays&&S.decidedDays[_todayKey]);
@@ -1583,6 +1622,13 @@ function renderMine(me){
   html+=`<div class="today-shift"><div class="today-shift-title">本日のシフト<span class="today-shift-date">${_todayLabel}</span></div>${_todayMain}</div>`;
   $("#staffMine").innerHTML=html;
   const _u=$("#updatedLbl"); if(_u) _u.textContent = S.updatedAt ? `最終更新 ${String(S.updatedAt).replace(/^\d{4}\//,'')}` : "";
+  const _ms=$("#monthSubmit"); if(_ms) _ms.onclick=()=>{
+    if(_locked){ showDecidedDayLock(null); return; }
+    const incomplete=[]; for(let d=1;d<=DAYS;d++){ if(wishHasIncompleteTime(wsh[key(d)])) incomplete.push(d); }
+    if(incomplete.length){ showStaffCalendarPop(`開始または終了時間が未入力の日があります（${incomplete.join('・')}日）。点滅している日を修正してください。`,null); return; }
+    if(!S.staff[me].wish._submittedMonths) S.staff[me].wish._submittedMonths={};
+    S.staff[me].wish._submittedMonths[_submitKey]=true; save(); renderMine(me);
+  };
   $("#allMaru").onclick=()=>{
     if(_locked) return;
     if(_hasBulkAllDay){
@@ -1604,17 +1650,18 @@ function renderMine(me){
     }
     save(); renderMine(me);
   };
-  document.querySelectorAll('#staffMine .mcell.cclick').forEach(c=>c.onclick=()=>{ if(_locked||Date.now()<staffSwipeBlockUntil) return; openDayInput(me, +c.dataset.d); });
-  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); if(_locked||Date.now()<staffSwipeBlockUntil) return; openReqApprove(me, +el.dataset.req); });
+  document.querySelectorAll('#staffMine .mcell[data-d]').forEach(c=>c.onclick=()=>{ if(Date.now()<staffSwipeBlockUntil) return; if(_locked){ showDecidedDayLock(c); return; } openDayInput(me,+c.dataset.d); });
+  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); if(Date.now()<staffSwipeBlockUntil) return; if(_locked){ showDecidedDayLock(el.closest('.mcell')); return; } openReqApprove(me,+el.dataset.req); });
   attachStaffMonthSwipe();
 }
 let diMe=null, diDay=null; let diEditing=false; let diHasInitial=false;
-function stopClosedMonthEdit(){
-  if(!staffMonthIsClosed()) return false;
+function stopClosedMonthEdit(d=diDay){
+  if(!staffMonthInputLocked()) return false;
   const dm=$("#diMask"), rm=$("#raMask"); if(dm) dm.style.display="none"; if(rm) rm.style.display="none";
-  renderStaff(); return true;
+  renderStaff(); showDecidedDayLock(document.querySelector(`#staffMine .mcell[data-d="${d}"]`)); return true;
 }
-function openDayInput(me,d){ if(staffMonthIsClosed()) return; diMe=me; diDay=d; const _w0=S.staff[me].wish[key(d)]; diEditing=true; diHasInitial=!!(_w0&&Object.keys(_w0).length);
+function stopStaffEdit(d=diDay){ return stopClosedMonthEdit(d); }
+function openDayInput(me,d){ if(staffMonthInputLocked()){ showDecidedDayLock(document.querySelector(`#staffMine .mcell[data-d="${d}"]`)); return; } diMe=me; diDay=d; const _w0=S.staff[me].wish[key(d)]; diEditing=true; diHasInitial=!!(_w0&&Object.keys(_w0).length);
   const dow=new Date(Y,M-1,d).getDay();
   $("#diTitle").textContent=`${M}/${d}（${DOW[dow]}）の希望を入れる`;
   drawDayInput(); $("#diMask").style.display="flex";
@@ -1635,13 +1682,25 @@ function drawDayInput(){
   const hasIn=!!(w.off||w.allday||w.all||w.am||w.pm||w.start||w.end);
   $("#diBody").innerHTML=`<div class="seg2 ${w.off?"offmode":""}">
     <div class="line lam"><span class="tg am">AM</span><input type="text" class="tinp" placeholder="：" value="${dv('am','start')}" data-seg="am" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('am','end')}" data-seg="am" data-f="end"></div>
-    <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','start')}" data-seg="pm" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','end')}" data-seg="pm" data-f="end"></div>
+    <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','start')}" data-seg="pm" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','end')}" data-seg="pm" data-f="end"><button type="button" class="lastbtn" id="diLast">ラスト 23:30</button></div>
     <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
     <div class="line qnote"><button class="qbtn ${w.allday?'on-maru':''}" data-q="maru">◎</button><button class="qbtn ${w.off?'on-batu':''}" data-q="batu">✕</button><button type="button" class="qsubmit" id="diSubmit">${(diHasInitial&&hasIn)?"変更":"決定"}</button><button type="button" class="qsubmit" id="diEdit" style="display:none;background:#5a6b7a;">変更</button></div>
     ${hasIn?'<button type="button" class="qclear" id="diClear">この日の希望を解除</button>':''}
     <div class="line noteln"><span class="tg note">備考</span><input type="text" class="noteinp" value="${note}" placeholder=""></div>
   </div>`;
-  $("#diBody").querySelectorAll('input.tinp').forEach(inp=>inp.onchange=()=>{ if(stopClosedMonthEdit()) return;
+  const markDayInputIncomplete=()=>{
+    for(const seg of ['am','pm','all']){
+      const line=$("#diBody").querySelector(`.line[data-incomplete-seg="${seg}"]`)||$("#diBody").querySelector(`.line.l${seg}`);
+      if(!line) continue;
+      const start=line.querySelector('input[data-f="start"]'), end=line.querySelector('input[data-f="end"]');
+      const bad=!!normTime(start.value)!==!!normTime(end.value);
+      line.classList.toggle('incomplete-line',bad);
+      start.classList.toggle('incomplete-input',bad&&!normTime(start.value));
+      end.classList.toggle('incomplete-input',bad&&!normTime(end.value));
+    }
+  };
+  markDayInputIncomplete();
+  $("#diBody").querySelectorAll('input.tinp').forEach(inp=>inp.onchange=()=>{ if(stopStaffEdit(d)) return;
     const seg=inp.dataset.seg, f=inp.dataset.f;
     let w=S.staff[me].wish[key(d)]||{};
     delete w.off; delete w.allday; delete w.bulkAllDay; delete w.start; delete w.end;
@@ -1651,37 +1710,45 @@ function drawDayInput(){
     if(!w[seg].start && !w[seg].end) delete w[seg];
     S.staff[me].wish[key(d)]=w; save();
     inp.value=normTime(inp.value);
+    markDayInputIncomplete();
     const _mb=$("#diBody").querySelector('.qbtn[data-q="maru"]'); if(_mb) _mb.classList.remove('on-maru');
     const _xb=$("#diBody").querySelector('.qbtn[data-q="batu"]'); if(_xb) _xb.classList.remove('on-batu');
   });
-  $("#diBody").querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{ if(stopClosedMonthEdit()) return;
+  $("#diLast").onclick=()=>{
+    if(stopStaffEdit(d)) return;
+    const start=$("#diBody").querySelector('input.tinp[data-seg="pm"][data-f="start"]');
+    const end=$("#diBody").querySelector('input.tinp[data-seg="pm"][data-f="end"]');
+    if(!normTime(start.value)){ showStaffCalendarPop('先にPMの開始時間を入力してください。',null); start.focus(); return; }
+    end.value='23:30'; end.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  $("#diBody").querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{ if(stopStaffEdit(d)) return;
     const cur=S.staff[me].wish[key(d)]||{};
     if(b.dataset.q==="batu"){ S.staff[me].wish[key(d)]=cur.off?{}:{off:true}; }
     else{ S.staff[me].wish[key(d)]=cur.allday?{}:{allday:true}; }
     save(); drawDayInput();
   });
   const clearBtn=$("#diClear");
-  if(clearBtn) clearBtn.onclick=()=>{ if(stopClosedMonthEdit()) return;
+  if(clearBtn) clearBtn.onclick=()=>{ if(stopStaffEdit(d)) return;
     delete S.staff[me].wish[key(d)];
     save();
     $("#diMask").style.display="none";
     renderStaff();
   };
-  $("#diBody").querySelector('.noteinp').onchange=function(){ if(stopClosedMonthEdit()) return;
+  $("#diBody").querySelector('.noteinp').onchange=function(){ if(stopStaffEdit(d)) return;
     if(!S.staff[me].notes) S.staff[me].notes={};
     const t=this.value.trim(); if(t) S.staff[me].notes[key(d)]=t; else delete S.staff[me].notes[key(d)];
     save();
   };
-  $("#diSubmit").onclick=()=>{ if(stopClosedMonthEdit()) return; const cw=S.staff[me].wish[key(d)]||{}; if(diHasInitial && cw.off){ delete cw.off; S.staff[me].wish[key(d)]=cw; save(); drawDayInput(); return; } $("#diMask").style.display="none"; renderStaff(); };
-  $("#diEdit").onclick=()=>{ if(stopClosedMonthEdit()) return; diEditing=true; _diLock(false); };
+  $("#diSubmit").onclick=()=>{ if(stopStaffEdit(d)) return; const cw=S.staff[me].wish[key(d)]||{}; if(wishHasIncompleteTime(cw)){ showStaffCalendarPop('開始時間と終了時間を両方入力してください。',null); return; } if(diHasInitial && cw.off){ delete cw.off; S.staff[me].wish[key(d)]=cw; save(); drawDayInput(); return; } $("#diMask").style.display="none"; renderStaff(); };
+  $("#diEdit").onclick=()=>{ if(stopStaffEdit(d)) return; diEditing=true; _diLock(false); };
   _diLock(!diEditing);
 }
-function closeDayInput(){ $("#diMask").style.display="none"; renderStaff(); }
+function closeDayInput(){ const w=diMe&&diDay!=null?((S.staff[diMe].wish||{})[key(diDay)]):null; if(wishHasIncompleteTime(w)){ showStaffCalendarPop('開始時間と終了時間を両方入力してください。',null); return; } $("#diMask").style.display="none"; renderStaff(); }
 $("#diClose").onclick=closeDayInput;
 $("#diMask").onclick=e=>{ if(e.target.id==="diMask") closeDayInput(); };
 let raMe=null, raDay=null;
 function openReqApprove(me,d){
-  if(staffMonthIsClosed()) return;
+  if(staffMonthInputLocked()){ showDecidedDayLock(document.querySelector(`#staffMine .mcell[data-d="${d}"]`)); return; }
   raMe=me; raDay=d;
   const r=(S.staff[me].req||{})[key(d)]||{};
   const dow=new Date(Y,M-1,d).getDay();
@@ -1694,7 +1761,7 @@ function openReqApprove(me,d){
   $("#raMask").style.display="flex";
 }
 $("#raApprove").onclick=()=>{
-  if(stopClosedMonthEdit()||raMe==null) return;
+  if(stopStaffEdit(raDay)||raMe==null) return;
   const s=normTime($("#raAllS").value||$("#raAmS").value||$("#raPmS").value);
   const e=normTime($("#raAllE").value||$("#raAmE").value||$("#raPmE").value);
   if(!s&&!e){ alert("承認する時間を入れてください"); return; }
@@ -1703,7 +1770,7 @@ $("#raApprove").onclick=()=>{
   save(); $("#raMask").style.display="none"; renderStaff();
 };
 $("#raReject").onclick=()=>{
-  if(stopClosedMonthEdit()||raMe==null) return;
+  if(stopStaffEdit(raDay)||raMe==null) return;
   if(S.staff[raMe].req&&S.staff[raMe].req[key(raDay)]){ const o=S.staff[raMe].req[key(raDay)]; o.approved=false; o.rejected=true; }
   save(); $("#raMask").style.display="none"; renderStaff();
 };

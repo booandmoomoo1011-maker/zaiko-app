@@ -25,6 +25,7 @@
     --sun:#f26d6d; --sat:#4a90e2; --today:#eef4fb; --wish:#9aa0a8; }
   *{box-sizing:border-box;}
   body{margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;}
+  input::placeholder,textarea::placeholder{color:#c9c9c9; opacity:1; font-weight:400;}
   /* スタッフは携帯利用：細い画面向け調整 */
   @media (max-width:480px){
     header h1{font-size:15px;}
@@ -272,7 +273,8 @@
   .quick .maru{color:#2fa04a;} .quick .batu{color:#c0392b;}
   .mfoot{display:flex; justify-content:space-between; margin-top:10px;}
   .mfoot .del{background:#fff; border:1.5px solid #e0b4b4; color:#c0392b; border-radius:8px; padding:8px 12px; cursor:pointer;}
-  .mfoot .mreq{background:#5a6b7a; color:#fff; border:none; border-radius:8px; padding:9px 14px; font-weight:700; cursor:pointer;}
+  .mfoot .mreq{background:#2f9ad0; color:#fff; border:none; border-radius:8px; padding:9px 14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;}
+  .planeicon,.dname .dreq::before{display:inline-block; width:12px; height:12px; content:""; background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
   .mfoot .save{background:var(--pink); color:#fff; border:none; border-radius:8px; padding:9px 18px; font-weight:700; cursor:pointer;}
 
   /* day timeline */
@@ -313,8 +315,9 @@
   .dname{position:sticky; left:0; background:#fff; min-width:104px; max-width:104px; padding:2px 6px;
     font-size:11.5px; display:flex; flex-direction:column; justify-content:center; z-index:2; border-right:1px solid var(--line);}
   .dname .dnm{font-weight:700;}
-  .dname .dreq{margin-left:5px; font-size:9px; font-weight:700; color:#fff; background:#5a6b7a; border:none; border-radius:5px; padding:1px 5px; cursor:pointer; vertical-align:middle; white-space:nowrap;}
-  .dname .dreq:hover{background:#43515e;}
+  .dname .dreq{margin-left:5px; width:19px; height:19px; color:#fff; background:#2f9ad0; border:1px solid #fff; border-radius:50%; padding:0; cursor:pointer; vertical-align:middle; box-shadow:0 1px 2px rgba(47,154,208,.35); display:inline-flex; align-items:center; justify-content:center;}
+  .dname .dreq::before{width:11px; height:11px;}
+  .dname .dreq:hover{background:#167eae;}
   .drow.tedit{cursor:pointer;} .drow.tedit:hover{background:#eef8fd;}
   .drow.tadd{cursor:pointer; background:#f5fbfe;} .drow.tadd:hover{background:#e7f4fb;}
   .taddtxt{color:#1e6f95; font-weight:800; font-size:11px;}
@@ -334,23 +337,25 @@
   .dname .dwish.ng{background:#dcf0fa; color:#2b7fa3;}
   .dname .dwish.gray{background:#f0f0f0; color:#8a8a8a; border:1px solid #e2e2e2;}
   .dname .dwish.maru{background:#fff2c0; color:#8a6d00; border:1px solid #e6d36a; font-weight:800;}
+  .submittedmark{display:inline-block;margin-left:3px;padding:0 3px;border-radius:4px;background:#e3f5e7;color:#2f7a3f;font-size:8px;font-weight:900;vertical-align:middle;white-space:nowrap;}
   .dbar.wishbar{background:#eeeeee; color:#666; border:1px dashed #aaa; pointer-events:none; z-index:1; justify-content:center; overflow:hidden; box-shadow:none;}
   .drow.haswishdec{min-height:45px;}
   .drow.haswishdec .dbar.wishbar{top:2px; height:17px;}
   .drow.haswishdec .dbar.decisionbar{top:23px; height:17px; z-index:2;}
+  .drow.haswishdec .dbar.holdbar{top:23px; height:17px;}
   .drow.ruler .dname{background:#fbe6ec; color:var(--pink-d); flex-direction:row; align-items:center; font-weight:700;}
   .dtime{position:relative; background-image:repeating-linear-gradient(to right, transparent 0, transparent 39px, #ececec 39px, #ececec 40px);}
   .tick{position:absolute; top:0; font-size:10px; color:#111; font-weight:600; padding-left:2px;}
   .dbar{position:absolute; top:4px; height:19px; border-radius:5px; color:#fff; font-size:10px; font-weight:700; justify-content:space-between;
     padding:0 5px; display:flex; align-items:center; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.18);}
   .dbar.off{background:#7ec8f0;}
-  .dbar.holdbar{background:#9fd8f2; color:#0f5a82; z-index:3; overflow:visible; padding:0;}
+  .dbar.holdbar{background:#9fd8f2; color:#0f5a82; z-index:3; overflow:hidden; padding:0;}
   .dbar .btime{pointer-events:auto; cursor:pointer;}
   .dbar .btime:hover{text-decoration:underline;}
   .dbar .dresize{position:absolute; top:0; width:12px; height:100%; cursor:ew-resize; touch-action:none; z-index:4;}
   .dbar .dresize-l{left:-3px;}
   .dbar .dresize-r{right:-3px;}
-  .holddel{position:absolute; top:-5px; right:-5px; width:13px; height:13px; line-height:11px; text-align:center; font-size:9px; background:#fff; color:#d33; border:1px solid #d33; border-radius:50%; cursor:pointer; z-index:5;}
+  .holddel{position:absolute; top:2px; right:1px; width:12px; height:12px; line-height:10px; text-align:center; font-size:9px; background:#fff; color:#d33; border:1px solid #d33; border-radius:50%; cursor:pointer; z-index:5;}
   .dname .warn{display:inline-block; margin-left:4px; font-size:15px; line-height:1; color:#e53935; font-weight:900; vertical-align:middle;}
   .dbar.reqpend{background:#dedede; color:#555; border:1px dashed #b3b3b3;}
   .dbar.reqok{background:#8bc98f; color:#123f10;}
@@ -685,7 +690,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.80</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.81</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -771,7 +776,7 @@
     </div>
     <div class="mfoot">
       <button class="del" id="mDelete" type="button">🗑 1日分を全部消す</button>
-      <button class="mreq" id="mReq" type="button">✈ 要請</button>
+      <button class="mreq" id="mReq" type="button"><span class="planeicon" aria-hidden="true"></span>要請</button>
       <button class="save" id="mSave" type="button">決定</button>
     </div>
   </div>
@@ -894,7 +899,7 @@
     <div id="oneNote" class="onenote" style="display:none;"></div>
     <input type="text" class="tinp" placeholder="9:00" id="oneInput" style="width:100%; font-size:18px; padding:9px; border:1.5px solid var(--line); border-radius:8px; box-sizing:border-box;">
     <button id="oneOk" type="button">変更する</button>
-    <button id="oneDelete" type="button" style="background:#c0596b; margin-top:8px;">この時間帯だけ削除</button>
+    <button id="oneDelete" type="button" style="background:#111; color:#fff; margin-top:8px;">この時間帯だけ削除</button>
   </div>
 </div>
 
@@ -920,7 +925,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.80"; window.APP_UPDATED="2026-08-15";
+window.APP_VERSION="v1.81"; window.APP_UPDATED="2026-08-15";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1070,7 +1075,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.80</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.81</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1132,8 +1137,10 @@ function buildPalette(){
 }
 function renderOwner(){
   const _monthClosed=ownerMonthIsClosed();
+  const _submitKey=`${Y}-${pad(M)}`;
+  const _submittedCount=names().filter(nm=>!!(((((S.staff[nm]||{}).wish||{})._submittedMonths)||{})[_submitKey])).length;
   $("#ownerView").classList.toggle("closedmonth",_monthClosed);
-  $("#oStatus").innerHTML=(_monthClosed?'<span class="ownerclosedstatus">🔒 受付終了・閲覧のみ　</span>':'')+(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${names().length}名　`+
+  $("#oStatus").innerHTML=(_monthClosed?'<span class="ownerclosedstatus">🔒 受付終了・閲覧のみ　</span>':'')+(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${_submittedCount}/${names().length}名　`+
     (S.published?`<span class="pub">✅ 公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
   $("#decideBtn").textContent=_monthClosed?"受付終了":(S.published?"公開を取り消す":"この月をスタッフに公開");
   $("#decideBtn").disabled=_monthClosed;
@@ -1156,7 +1163,8 @@ function renderOwner(){
     rows+=`</tr>`;
     list.forEach(nm=>{
       const stf=S.staff[nm]||{};
-      rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="nmtxt" title="長押しして並べ替え">${esc(nm)}</span>${canManageStaff()?`<button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button>`:''}</td>`;
+      const submitted=!!((((stf.wish||{})._submittedMonths)||{})[_submitKey]);
+      rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="nmtxt" title="長押しして並べ替え">${esc(nm)}</span>${submitted?'<span class="submittedmark">提出済</span>':''}${canManageStaff()?`<button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button>`:''}</td>`;
       const wish=stf.wish||{}, dec=stf.decided||{};
       for(let d=1;d<=DAYS;d++){
         const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
@@ -1424,7 +1432,7 @@ function dvStaffRow(nm,d,W){
   const note=(stf.notes||{})[key(d)];
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}" data-n="${esc(nm)}" data-d="${d}" title="タップして時間を編集"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請">✈</button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}" data-n="${esc(nm)}" data-d="${d}" title="タップして時間を編集"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
@@ -1443,7 +1451,7 @@ function dvStoreSection(st,d,W,ticks){
     if(t.pm) bars+=dbarC('bpm',pHM(t.pm.start),pHM(t.pm.end),`${t.pm.start||''}〜${t.pm.end||''}`);
     const home=(S.staff[nm].store||"大須");
     const cf=staffDayConflict(nm,d);
-    h+=`<div class="drow sedit" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="タップして応援時間を編集"><div class="dname"><span class="dnm">${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請">✈</button></span><span class="dwish thome">${home}の人</span></div><div class="dtime" style="width:${W}px">${bars}${holdbars(nm,d)}</div></div>`;
+    h+=`<div class="drow sedit" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="タップして応援時間を編集"><div class="dname"><span class="dnm">${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span><span class="dwish thome">${home}の人</span></div><div class="dtime" style="width:${W}px">${bars}${holdbars(nm,d)}</div></div>`;
   });
   h+=`<div class="drow tadd" data-d="${d}" data-st="${st}"><div class="dname"><span class="taddtxt">＋ 名前を追加</span></div><div class="dtime" style="width:${W}px"><span class="taddhint">タップして提出者から選ぶ</span></div></div>`;
   return h;
