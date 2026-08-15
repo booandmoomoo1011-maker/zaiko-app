@@ -136,6 +136,10 @@
   #tbody td.todayc{background:var(--today);}
   #tbody td.ooff{background:#bfe3f5;}
   #tbody .cbubble{transform:scale(.34); transform-origin:top right;}
+  #tbody td.hasrequest .wish{padding-right:18px;}
+  .ownerreqmark{position:absolute;right:2px;bottom:2px;width:15px;height:15px;border-radius:50%;border:1px solid #fff;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.2);z-index:3;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .ownerreqmark::before{content:"";display:block;width:9px;height:9px;background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
+  .ownerreqmark.pending{background:#2f9ad0;}.ownerreqmark.approved{background:#2fa04a;}.ownerreqmark.rejected{background:#e34b5f;}
   .cbubble{position:absolute; top:2px; right:3px; width:16px; height:13px; background:#1e5aa8; border-radius:3px; cursor:pointer; z-index:3; box-shadow:0 1px 2px rgba(0,0,0,.25);}
   .cbubble::after{content:""; position:absolute; left:3px; bottom:-3px; border-width:4px 4px 0 0; border-style:solid; border-color:#1e5aa8 transparent transparent transparent;}
   .cbubble::before{content:"…"; position:absolute; top:-3px; left:0; right:0; text-align:center; color:#fff; font-size:11px; font-weight:700; line-height:13px;}
@@ -359,18 +363,21 @@
   .dname .warn{display:inline-block; margin-left:4px; font-size:15px; line-height:1; color:#e53935; font-weight:900; vertical-align:middle;}
   .dbar.reqpend{background:#dedede; color:#555; border:1px dashed #b3b3b3;}
   .dbar.reqok{background:#8bc98f; color:#123f10;}
+  .dbar[data-req-n]{cursor:pointer;}
   .dbar .okmark{font-size:8px; margin-left:3px; background:rgba(255,255,255,.65); border-radius:3px; padding:0 2px; font-weight:800;}
   .dbar.reqrej{background:#ffe9ed; color:#8a1c1c; border:1px dashed #d06060; justify-content:center;}
   .wgray{font-size:9px; color:#9a9a9a; font-weight:700; white-space:nowrap; line-height:1.3;}
   .amp{font-size:6px; font-weight:700; opacity:.8; margin-right:1px; letter-spacing:-0.3px;}
   .reqlink{display:inline-flex;width:19px;height:19px;border-radius:50%;background:#2f9ad0;border:1px solid #fff;box-shadow:0 1px 2px rgba(47,154,208,.35);cursor:pointer;align-items:center;justify-content:center;font-size:0;}
   .reqlink::before{content:"";display:block;width:11px;height:11px;background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
-  .reqokl{font-size:9px; color:#2f7a3f; font-weight:800; white-space:nowrap;}
+  .reqokl,.reqapproveplane{display:inline-flex;width:19px;height:19px;flex:0 0 19px;border-radius:50%;background:#2fa04a;border:1px solid #fff;box-shadow:0 1px 2px rgba(32,130,62,.3);align-items:center;justify-content:center;}
+  .reqokl::before,.reqapproveplane::before{content:"";display:block;width:11px;height:11px;background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
   .reqrejl,.reqrejectplane{display:inline-flex;width:19px;height:19px;flex:0 0 19px;border-radius:50%;background:#e34b5f;border:1px solid #fff;box-shadow:0 1px 2px rgba(180,35,55,.3);align-items:center;justify-content:center;}
   .reqrejl::before,.reqrejectplane::before{content:"";display:block;width:11px;height:11px;background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
   .raBtns{display:flex; gap:8px; margin-top:10px;}
-  .raBtns #raApprove{flex:1; background:#2f9a52; color:#fff; border:none; border-radius:8px; padding:9px; font-weight:800; cursor:pointer; font-size:14px;}
-  .raBtns #raReject{background:#eee; color:#b33; border:1px solid #e2b6b6; border-radius:8px; padding:9px 16px; font-weight:800; cursor:pointer; font-size:14px;}
+  .raBtns button{flex:1;min-width:0;white-space:nowrap;border:none;border-radius:8px;padding:10px 6px;font-weight:800;cursor:pointer;font-size:14px;}
+  .raBtns #raApprove{background:#2f9a52;color:#fff;}
+  .raBtns #raReject{background:#d94757;color:#fff;}
   .reqbanner{display:flex; align-items:center; gap:8px; justify-content:space-between; background:#fff6e5; border:1px solid #f0d9a8; border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:13px; color:#8a6d00; font-weight:700;}
   .reqbanner.ok{background:#eaf7ea; border-color:#bfe3bf; color:#2f7a3f;}
   .onenote{background:#fff8fb; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12px; color:#555; margin:2px 0 10px; white-space:pre-wrap; line-height:1.5; text-align:left;}
@@ -692,7 +699,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.82</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.83</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -860,6 +867,7 @@
       <input type="text" class="tinp" placeholder="9:00" id="reqEnd" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
     </div>
     <button id="reqSend" type="button">この時間で要請</button>
+    <button id="reqDelete" type="button" style="display:none;background:#111;color:#fff;margin-top:8px;">この要請だけ削除</button>
     <button id="reqClose" type="button" style="background:#c9c9c9; margin-top:8px;">閉じる</button>
   </div>
 </div>
@@ -905,13 +913,13 @@
   </div>
 </div>
 
-<!-- 要請の承認/拒否 -->
+<!-- 要請への回答 -->
 <div class="cmtmask" id="raMask">
   <div class="cmtbox dibox">
     <div class="ttl" id="raTitle"></div>
-    <div style="font-size:12px; color:#5b7a8c; margin:2px 0 8px;">オーナーからの要請です。時間を確認して承認、または拒否してください。</div>
+    <div style="font-size:12px; color:#5b7a8c; margin:2px 0 8px;">時間を入力して承認するか、「✕ 否認」を選んでください。</div>
     <div id="raBody"></div>
-    <div class="raBtns"><button type="button" id="raApprove">承認（決定）</button><button type="button" id="raReject">拒否</button></div>
+    <div class="raBtns"><button type="button" id="raApprove">この時間で承認</button><button type="button" id="raReject">✕ 否認</button></div>
   </div>
 </div>
 
@@ -927,7 +935,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.82"; window.APP_UPDATED="2026-08-15";
+window.APP_VERSION="v1.83"; window.APP_UPDATED="2026-08-15";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1077,7 +1085,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.82</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.83</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1099,7 +1107,7 @@ function canManageStaff(){ return !window.shiftEditorMode; }
 function wishText(w){
   if(!w) return "";
   if(w.off) return "✕";
-  if(w.allday) return "9:00-23:00";
+  if(w.allday) return "9:00-23:30";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`AM${w.am.start||''}-${w.am.end||''}`);
@@ -1109,7 +1117,7 @@ function wishText(w){
 }
 function wishChip(w,isWeekend){
   if(w.off) return `<span class="wchip off">✕</span>`;
-  if(w.allday) return `<span class="wchip time">9:00-23:00</span>`;
+  if(w.allday) return `<span class="wchip time">9:00-23:30</span>`;
   if(w.all) return `<span class="wchip time">${w.all.start||''}-${w.all.end||''}</span>`;
   const wd=isWeekend?'':'wd'; let h="";
   if(w.am) h+=`<div class="wrow"><span class="wchip time ${wd}"><span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}</span></div>`;
@@ -1177,9 +1185,13 @@ function renderOwner(){
         else { wt=w?`<div class="wish">${wishChip(w,(dow===0||dow===6||hol))}</div>`:""; }
         const hasNote=!!((stf.notes||{})[key(d)]);
         const bubble=hasNote?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
+        const rq=(stf.req||{})[key(d)];
+        const rqState=rq&&(rq.start||rq.end)?(rq.rejected?'rejected':rq.approved?'approved':'pending'):'';
+        const rqLabel=rqState==='rejected'?'否認済み要請':rqState==='approved'?'承認済み要請':'回答待ち要請';
+        const rqMark=rqState?`<button type="button" class="ownerreqmark ${rqState}" data-n="${esc(nm)}" data-d="${d}" aria-label="${rqLabel}" title="${rqLabel}（タップして変更・削除）"></button>`:'';
         const oo=(stf.ooff||{})[key(d)];
         const so=isOff(d)?' stoff':'';
-        rows+=`<td class="${cc}${hasNote?' hasnote':''}${oo?' ooff':''}${so}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}</td>`;
+        rows+=`<td class="${cc}${hasNote?' hasnote':''}${rqState?' hasrequest':''}${oo?' ooff':''}${so}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}${rqMark}</td>`;
       }
       rows+="</tr>";
     });
@@ -1208,6 +1220,7 @@ function renderOwner(){
   });
   document.querySelectorAll("#tbody .cbubble").forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
     showComment(el.dataset.n, +el.dataset.d, ((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)]); });
+  document.querySelectorAll("#tbody .ownerreqmark").forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); openReq(el.dataset.n,+el.dataset.d); });
   document.querySelectorAll("#tbody .delstaff").forEach(b=>b.onclick=async(e)=>{ e.stopPropagation();
     const nm=b.dataset.n, st=b.dataset.st;
     if(await appConfirm(`${nm} さんを削除しますか？\n希望・シフトも一緒に消えます。`,{title:"スタッフを削除しますか？",confirmText:"削除する",kind:"danger",icon:"🗑️"})){
@@ -1281,7 +1294,7 @@ $("#cmtClose").onclick=()=>$("#cmtMask").style.display="none";
 $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.display="none"; };
 
 /* ---- 日別タイムライン ---- */
-const AX0=8, AX1=23, HW=40;
+const AX0=8, AX1=23.5, HW=40;
 let dayViewDay=null, holdMode=false;
 function _fw2hw(s){ return String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[：]/g,':'); }
 function pHM(s){ if(!s) return null; s=_fw2hw(s); const a=s.split(':'); const h=parseInt(a[0],10); if(isNaN(h)) return null; return h+((parseInt(a[1],10)||0)/60); }
@@ -1321,13 +1334,14 @@ function reqBars(nm,d){
   const r=(stf.req||{})[key(d)]; if(!r||(!r.start&&!r.end)) return "";
   const s=pHM(r.start), e=pHM(r.end); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
-  if(r.rejected) return `<div class="dbar reqrej" style="left:${l}px;width:${w}px" aria-label="要請を否認"><span class="reqrejectplane" aria-hidden="true"></span></div>`;
-  const ok=r.approved?'<span class="okmark">OK</span>':'';
-  return `<div class="dbar ${r.approved?'reqok':'reqpend'}" style="left:${l}px;width:${w}px">${r.start||''}〜${r.end||''}${ok}</div>`;
+  const attrs=`data-req-n="${esc(nm)}" data-req-d="${d}" title="タップして要請を変更・削除"`;
+  if(r.rejected) return `<div class="dbar reqrej" ${attrs} style="left:${l}px;width:${w}px" aria-label="要請を否認"><span class="reqrejectplane" aria-hidden="true"></span></div>`;
+  if(r.approved) return `<div class="dbar reqok" ${attrs} style="left:${l}px;width:${w}px;justify-content:center" aria-label="要請を承認"><span class="reqapproveplane" aria-hidden="true"></span></div>`;
+  return `<div class="dbar reqpend" ${attrs} style="left:${l}px;width:${w}px">${r.start||''}〜${r.end||''}</div>`;
 }
 function wishBars(w){
   if(!w||w.off) return "";
-  if(w.allday) return dbarC('wishbar wall',9,23,'希望 9:00〜23:00');
+  if(w.allday) return dbarC('wishbar wall',9,23.5,'希望 9:00〜23:30');
   let bars="";
   if(w.all) bars+=dbarC('wishbar wall',pHM(w.all.start),pHM(w.all.end),`希望 ${w.all.start||''}〜${w.all.end||''}`);
   if(w.am) bars+=dbarC('wishbar wam',pHM(w.am.start),pHM(w.am.end),`希望 AM ${w.am.start||''}〜${w.am.end||''}`);
@@ -1360,6 +1374,7 @@ function openDayView(d){
     showComment(el.dataset.n, +el.dataset.d, (S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)]); });
   g.querySelectorAll('.drow.dedit').forEach(row=>row.onclick=(e)=>dayRowClick(e,row,'edit'));
   g.querySelectorAll('.dreq').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.n, +b.dataset.d); });
+  g.querySelectorAll('.dbar[data-req-n]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.reqN,+b.dataset.reqD); });
   g.querySelectorAll('.drow.sedit').forEach(row=>row.onclick=()=>openSupport(row.dataset.n,+row.dataset.d,row.dataset.st));
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openSupportPicker(+row.dataset.d,row.dataset.st));
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
@@ -1396,10 +1411,13 @@ function openReq(nm,d){
   if(closedMonthEditBlocked()) return;
   reqTarget={nm,d};
   $("#reqTtl").textContent=`${nm}さんへ要請　${M}/${d}`;
+  const current=((S.staff[nm].req||{})[key(d)])||null;
   const w=(S.staff[nm].wish||{})[key(d)]||{};
-  const g=w.all||w.am||w.pm||{};
+  const g=current||w.all||w.am||w.pm||{};
   $("#reqStart").value=g.start||"";
   $("#reqEnd").value=g.end||"";
+  $("#reqSend").textContent=current?'この時間で要請を変更':'この時間で要請';
+  $("#reqDelete").style.display=current?'block':'none';
   $("#reqMask").style.display="flex";
 }
 $("#reqClose").onclick=()=>$("#reqMask").style.display="none";
@@ -1407,11 +1425,21 @@ $("#reqMask").onclick=e=>{ if(e.target.id==="reqMask") $("#reqMask").style.displ
 $("#reqSend").onclick=()=>{
   if(closedMonthEditBlocked()||!reqTarget) return;
   const s=normTime($("#reqStart").value), e=normTime($("#reqEnd").value);
-  if(!s&&!e){ appAlert("要請する時間を入れてください"); return; }
+  if(!s||!e||pHM(s)==null||pHM(e)==null||pHM(e)<=pHM(s)){ appAlert("開始時間と終了時間を正しく入れてください"); return; }
   if(!S.staff[reqTarget.nm].req) S.staff[reqTarget.nm].req={};
-  S.staff[reqTarget.nm].req[key(reqTarget.d)]={start:s,end:e,approved:false};
+  S.staff[reqTarget.nm].req[key(reqTarget.d)]={start:s,end:e,approved:false,rejected:false};
   save();
   $("#reqMask").style.display="none";
+  renderOwner();
+  if(dayViewDay!=null && $("#dayMask").style.display==="flex") openDayView(dayViewDay);
+};
+$("#reqDelete").onclick=async()=>{
+  if(closedMonthEditBlocked()||!reqTarget) return;
+  const reqs=(S.staff[reqTarget.nm]||{}).req||{};
+  const k=key(reqTarget.d); if(!reqs[k]) return;
+  if(!await appConfirm(`${reqTarget.nm}さんへの${M}/${reqTarget.d}の要請だけを削除しますか？`,{title:"要請を削除しますか？",confirmText:"要請だけ削除",kind:"danger",icon:"✈️"})) return;
+  delete reqs[k];
+  save(); $("#reqMask").style.display="none"; renderOwner();
   if(dayViewDay!=null && $("#dayMask").style.display==="flex") openDayView(dayViewDay);
 };
 
@@ -1739,7 +1767,7 @@ function wishPrintText(w){
   if(!w) return "";
   if(w.off) return "✕";
   const sh=t=>String(t||"").replace(/:00\b/,"").replace(/^0/,"");
-  if(w.allday) return "9-23";
+  if(w.allday) return "9-23:30";
   let p=[];
   if(w.all) p.push(`${sh(w.all.start)}-${sh(w.all.end)}`);
   if(w.am) p.push(`AM${sh(w.am.start)}-${sh(w.am.end)}`);
@@ -1986,7 +2014,7 @@ function renderStaff(){
 function wishMini(w){
   if(!w) return "";
   if(w.off) return "✕";
-  if(w.allday) return "9:00-23:00";
+  if(w.allday) return "9:00-23:30";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`<span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}`);
@@ -2034,7 +2062,7 @@ function renderMine(me){
     let reqInner="";
     if(rq&&(rq.start||rq.end)){
       if(rq.rejected) reqInner='<span class="reqrejl" aria-label="要請を否認"></span>';
-      else if(rq.approved) reqInner=`<span class="reqokl">OK ${rq.start||''}-${rq.end||''}</span>`;
+      else if(rq.approved) reqInner='<span class="reqokl" aria-label="要請を承認"></span>';
       else reqInner=`<span class="reqlink" data-req="${d}">要請</span>`;
     }
     html+=`<div class="mcell cclick ${(dow===0||hol)?'sun':dow===6?'sat':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${nb}${wsmall}</div>${body}${reqInner}</div>`;
@@ -2108,17 +2136,14 @@ function openReqApprove(me,d){
   const dow=new Date(Y,M-1,d).getDay();
   $("#raTitle").textContent=`${M}/${d}（${DOW[dow]}）オーナーからの要請`;
   $("#raBody").innerHTML=`<div class="seg2">
-    <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="9:00" id="raAllS" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="raAllE" value="${r.end||''}"></div>
-    <div class="line lam"><span class="tg am">AM</span><input type="text" class="tinp" placeholder="9:00" id="raAmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="raAmE"></div>
-    <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="9:00" id="raPmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="raPmE"></div>
+    <div class="line lall"><span class="tg all">時間</span><input type="text" class="tinp" placeholder="9:00" id="raStart" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="18:00" id="raEnd" value="${r.end||''}"></div>
   </div>`;
   $("#raMask").style.display="flex";
 }
 $("#raApprove").onclick=()=>{
   if(raMe==null) return;
-  const s=normTime($("#raAllS").value||$("#raAmS").value||$("#raPmS").value);
-  const e=normTime($("#raAllE").value||$("#raAmE").value||$("#raPmE").value);
-  if(!s&&!e){ appAlert("承認する時間を入れてください"); return; }
+  const s=normTime($("#raStart").value), e=normTime($("#raEnd").value);
+  if(!s||!e||pHM(s)==null||pHM(e)==null||pHM(e)<=pHM(s)){ appAlert("開始時間と終了時間を正しく入れてください"); return; }
   if(!S.staff[raMe].req) S.staff[raMe].req={};
   S.staff[raMe].req[key(raDay)]={start:s,end:e,approved:true,rejected:false};
   save(); $("#raMask").style.display="none"; renderStaff();

@@ -222,12 +222,12 @@
   .caltools .allbtn{flex:0 0 auto; padding:6px 12px; font-size:12px;}
   .caltools .allbtn.locked{background:#eee; color:#888; border-color:#ddd; cursor:not-allowed; box-shadow:none;}
   .month-submit-wrap{max-width:604px;margin:8px auto 0;padding:0 8px;}
-  .month-submit-btn{width:100%;border:none;border-radius:11px;background:#e8607f;color:#fff;padding:11px 14px;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 3px 8px rgba(232,96,127,.22);}
+  .month-submit-btn{width:100%;border:none;border-radius:11px;background:#111;color:#fff;padding:11px 14px;font-size:15px;font-weight:900;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.18);}
   .month-submit-btn.submitted{background:#2fa04a;}
   .month-submit-btn:disabled{background:#c9c9c9;box-shadow:none;cursor:not-allowed;}
   .monthclosednotice{max-width:604px;margin:8px auto 0;padding:8px 12px;border:1.5px solid #e6c96a;border-radius:10px;background:#fff8d9;color:#735f17;font-size:12px;font-weight:800;text-align:center;}
   .mcell.monthclosed{cursor:pointer;opacity:.82;}
-  .mcell.monthclosed .reqlink{cursor:default;}
+  .mcell.monthclosed .reqlink{cursor:pointer;}
   .caltools .monthlbl{justify-self:center; font-size:18px; color:#333; font-weight:900; padding:4px 9px; border-radius:8px; white-space:nowrap;}
   .caltools .monthlbl.changed{animation:monthChanged .55s ease-out;}
   .caltools .updatedlbl{justify-self:end; font-size:10px; color:#777; font-weight:600; white-space:nowrap;}
@@ -354,12 +354,14 @@
   .amp{font-size:6px; font-weight:700; opacity:.8; margin-right:1px; letter-spacing:-0.3px;}
   .reqlink{display:inline-flex;width:19px;height:19px;border-radius:50%;background:#2f9ad0;border:1px solid #fff;box-shadow:0 1px 2px rgba(47,154,208,.35);cursor:pointer;align-items:center;justify-content:center;font-size:0;}
   .reqlink::before{content:"";display:block;width:11px;height:11px;background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
-  .reqokl{font-size:9px; color:#2f7a3f; font-weight:800; white-space:nowrap;}
+  .reqokl,.reqapproveplane{display:inline-flex;width:19px;height:19px;flex:0 0 19px;border-radius:50%;background:#2fa04a;border:1px solid #fff;box-shadow:0 1px 2px rgba(32,130,62,.3);align-items:center;justify-content:center;}
+  .reqokl::before,.reqapproveplane::before{content:"";display:block;width:11px;height:11px;background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
   .reqrejl,.reqrejectplane{display:inline-flex;width:19px;height:19px;flex:0 0 19px;border-radius:50%;background:#e34b5f;border:1px solid #fff;box-shadow:0 1px 2px rgba(180,35,55,.3);align-items:center;justify-content:center;}
   .reqrejl::before,.reqrejectplane::before{content:"";display:block;width:11px;height:11px;background:center/contain no-repeat url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M2.8 10.8 21.5 2.5 15 21.4l-4.1-6.7-8.1-3.9Zm9.1 1.8 2.4 3.9 3.3-9.5-5.7 5.6Z'/></svg>");}
   .raBtns{display:flex; gap:8px; margin-top:10px;}
-  .raBtns #raApprove{flex:1; background:#2f9a52; color:#fff; border:none; border-radius:8px; padding:9px; font-weight:800; cursor:pointer; font-size:14px;}
-  .raBtns #raReject{background:#eee; color:#b33; border:1px solid #e2b6b6; border-radius:8px; padding:9px 16px; font-weight:800; cursor:pointer; font-size:14px;}
+  .raBtns button{flex:1;min-width:0;white-space:nowrap;border:none;border-radius:8px;padding:10px 6px;font-weight:800;cursor:pointer;font-size:14px;}
+  .raBtns #raApprove{background:#2f9a52;color:#fff;}
+  .raBtns #raReject{background:#d94757;color:#fff;}
   .reqbanner{display:flex; align-items:center; gap:8px; justify-content:space-between; background:#fff6e5; border:1px solid #f0d9a8; border-radius:8px; padding:8px 10px; margin-bottom:8px; font-size:13px; color:#8a6d00; font-weight:700;}
   .reqbanner.ok{background:#eaf7ea; border-color:#bfe3bf; color:#2f7a3f;}
   .onenote{background:#fff8fb; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12px; color:#555; margin:2px 0 10px; white-space:pre-wrap; line-height:1.5; text-align:left;}
@@ -624,7 +626,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.68</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.69</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -785,13 +787,13 @@
   </div>
 </div>
 
-<!-- 要請の承認/拒否 -->
+<!-- 要請への回答 -->
 <div class="cmtmask" id="raMask">
   <div class="cmtbox dibox">
     <div class="ttl" id="raTitle"></div>
-    <div style="font-size:12px; color:#5b7a8c; margin:2px 0 8px;">オーナーからの要請です。時間を確認して承認、または拒否してください。</div>
+    <div style="font-size:12px; color:#5b7a8c; margin:2px 0 8px;">時間を入力して承認するか、「✕ 否認」を選んでください。</div>
     <div id="raBody"></div>
-    <div class="raBtns"><button type="button" id="raApprove">承認（決定）</button><button type="button" id="raReject">拒否</button></div>
+    <div class="raBtns"><button type="button" id="raApprove">この時間で承認</button><button type="button" id="raReject">✕ 否認</button></div>
   </div>
 </div>
 
@@ -804,7 +806,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.68"; window.APP_UPDATED="2026-08-15";
+window.APP_VERSION="v1.69"; window.APP_UPDATED="2026-08-15";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1047,7 +1049,7 @@ $("#cmtClose").onclick=()=>$("#cmtMask").style.display="none";
 $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.display="none"; };
 
 /* ---- 日別タイムライン ---- */
-const AX0=8, AX1=23, HW=40;
+const AX0=8, AX1=23.5, HW=40;
 let dayViewDay=null, holdMode=false;
 function _fw2hw(s){ return String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[：]/g,':'); }
 function pHM(s){ if(!s) return null; s=_fw2hw(s); const a=s.split(':'); const h=parseInt(a[0],10); if(isNaN(h)) return null; return h+((parseInt(a[1],10)||0)/60); }
@@ -1069,8 +1071,8 @@ function reqBars(nm,d){
   const s=pHM(r.start), e=pHM(r.end); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
   if(r.rejected) return `<div class="dbar reqrej" style="left:${l}px;width:${w}px" aria-label="要請を否認"><span class="reqrejectplane" aria-hidden="true"></span></div>`;
-  const ok=r.approved?'<span class="okmark">OK</span>':'';
-  return `<div class="dbar ${r.approved?'reqok':'reqpend'}" style="left:${l}px;width:${w}px">${r.start||''}〜${r.end||''}${ok}</div>`;
+  if(r.approved) return `<div class="dbar reqok" style="left:${l}px;width:${w}px;justify-content:center" aria-label="要請を承認"><span class="reqapproveplane" aria-hidden="true"></span></div>`;
+  return `<div class="dbar reqpend" style="left:${l}px;width:${w}px">${r.start||''}〜${r.end||''}</div>`;
 }
 function openDayView(d){
   dayViewDay=d;
@@ -1146,7 +1148,7 @@ function dvStaffRow(nm,d,W){
   const v=(S.staff[nm].decided||{})[key(d)]; let bars="";
   const w=(S.staff[nm].wish||{})[key(d)];
   if(w&&w.allday){
-    bars+=`<div class="dbar availbar" style="left:${(9-AX0)*HW}px;width:${(23-9)*HW}px">9:00〜23:00</div>`;
+    bars+=`<div class="dbar availbar" style="left:${(9-AX0)*HW}px;width:${(23.5-9)*HW}px">9:00〜23:30</div>`;
   } else if(v&&!v.off){
     if(v.all) bars+=dEditBar(nm,d,'all','ball',v.all.start,v.all.end);
     if(v.am) bars+=dEditBar(nm,d,'am','bam',v.am.start,v.am.end);
@@ -1523,7 +1525,7 @@ function renderStaff(){
 function wishMini(w){
   if(!w) return "";
   if(w.off) return '<span style="color:#4aa8dd;font-weight:800;">✕</span>';
-  if(w.allday) return "9:00<br>〜23:00";
+  if(w.allday) return "9:00<br>〜23:30";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`<span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}`);
@@ -1603,7 +1605,7 @@ function renderMine(me){
     let reqInner="";
     if(rq&&(rq.start||rq.end)){
       if(rq.rejected) reqInner='<span class="reqrejl" aria-label="要請を否認"></span>';
-      else if(rq.approved) reqInner=`<span class="reqokl">OK ${rq.start||''}-${rq.end||''}</span>`;
+      else if(rq.approved) reqInner='<span class="reqokl" aria-label="要請を承認"></span>';
       else reqInner=`<span class="reqlink" data-req="${d}">要請</span>`;
     }
     html+=`<div class="mcell${_locked?' monthclosed':' cclick'}${_incomplete?' incomplete':''} ${(dow===0||hol)?'sun':dow===6?'sat':''}${isToday?' todaym':''}" data-d="${d}"><div class="mtop"><span class="mnum">${d}</span>${isToday?'<span class="todaybadge">今日</span>':''}${nb}${wsmall}</div>${body}${reqInner}</div>`;
@@ -1627,6 +1629,7 @@ function renderMine(me){
   const _u=$("#updatedLbl"); if(_u) _u.textContent = S.updatedAt ? `最終更新 ${String(S.updatedAt).replace(/^\d{4}\//,'')}` : "";
   const _ms=$("#monthSubmit"); if(_ms) _ms.onclick=()=>{
     if(_locked){ showDecidedDayLock(null); return; }
+    if(_submitted) return;
     const incomplete=[]; for(let d=1;d<=DAYS;d++){ if(wishHasIncompleteTime(wsh[key(d)])) incomplete.push(d); }
     if(incomplete.length){ showStaffCalendarPop(`開始または終了時間が未入力の日があります（${incomplete.join('・')}日）。点滅している日を修正してください。`,null); return; }
     if(!S.staff[me].wish._submittedMonths) S.staff[me].wish._submittedMonths={};
@@ -1653,8 +1656,14 @@ function renderMine(me){
     }
     save(); renderMine(me);
   };
-  document.querySelectorAll('#staffMine .mcell[data-d]').forEach(c=>c.onclick=()=>{ if(Date.now()<staffSwipeBlockUntil) return; if(_locked){ showDecidedDayLock(c); return; } openDayInput(me,+c.dataset.d); });
-  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); if(Date.now()<staffSwipeBlockUntil) return; if(_locked){ showDecidedDayLock(el.closest('.mcell')); return; } openReqApprove(me,+el.dataset.req); });
+  document.querySelectorAll('#staffMine .mcell[data-d]').forEach(c=>c.onclick=()=>{
+    if(Date.now()<staffSwipeBlockUntil) return;
+    const rq=(S.staff[me].req||{})[key(+c.dataset.d)];
+    if(rq&&(rq.approved||rq.rejected)){ showStaffCalendarPop(rq.approved?'オーナーからの要請は承認済みです。':'オーナーからの要請は否認済みです。',c); return; }
+    if(_locked){ showDecidedDayLock(c); return; }
+    openDayInput(me,+c.dataset.d);
+  });
+  document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); if(Date.now()<staffSwipeBlockUntil) return; openReqApprove(me,+el.dataset.req); });
   attachStaffMonthSwipe();
 }
 let diMe=null, diDay=null; let diEditing=false; let diHasInitial=false;
@@ -1679,7 +1688,7 @@ function _diLock(lock){
 function drawDayInput(){
   const me=diMe, d=diDay;
   const w=S.staff[me].wish[key(d)]||{};
-  const am=w.am||{}, pm=w.pm||{}, al=w.allday?{start:"9:00",end:"23:00"}:(w.all||{});
+  const am=w.am||{}, pm=w.pm||{}, al=w.allday?{start:"9:00",end:"23:30"}:(w.all||{});
   const dv=(seg,f)=>{ const o={all:al,am,pm}[seg]; return (o&&o[f])?o[f]:''; };
   const note=((S.staff[me].notes||{})[key(d)]||'').replace(/"/g,'&quot;');
   const hasIn=!!(w.off||w.allday||w.all||w.am||w.pm||w.start||w.end);
@@ -1752,30 +1761,34 @@ $("#diClose").onclick=closeDayInput;
 $("#diMask").onclick=e=>{ if(e.target.id==="diMask") closeDayInput(); };
 let raMe=null, raDay=null;
 function openReqApprove(me,d){
-  if(staffMonthInputLocked()){ showDecidedDayLock(document.querySelector(`#staffMine .mcell[data-d="${d}"]`)); return; }
+  if(staffMonthIsClosed()){ showDecidedDayLock(document.querySelector(`#staffMine .mcell[data-d="${d}"]`)); return; }
   raMe=me; raDay=d;
   const r=(S.staff[me].req||{})[key(d)]||{};
   const dow=new Date(Y,M-1,d).getDay();
   $("#raTitle").textContent=`${M}/${d}（${DOW[dow]}）オーナーからの要請`;
   $("#raBody").innerHTML=`<div class="seg2">
-    <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="9:00" id="raAllS" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="raAllE" value="${r.end||''}"></div>
-    <div class="line lam"><span class="tg am">AM</span><input type="text" class="tinp" placeholder="9:00" id="raAmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="raAmE"></div>
-    <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="9:00" id="raPmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="raPmE"></div>
+    <div class="line lall"><span class="tg all">時間</span><input type="text" class="tinp" placeholder="9:00" id="raStart" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="18:00" id="raEnd" value="${r.end||''}"></div>
   </div>`;
   $("#raMask").style.display="flex";
 }
+function markRequestMonthSubmitted(me){
+  const wish=S.staff[me].wish||(S.staff[me].wish={});
+  if(!wish._submittedMonths) wish._submittedMonths={};
+  wish._submittedMonths[`${Y}-${pad(M)}`]=true;
+}
 $("#raApprove").onclick=()=>{
-  if(stopStaffEdit(raDay)||raMe==null) return;
-  const s=normTime($("#raAllS").value||$("#raAmS").value||$("#raPmS").value);
-  const e=normTime($("#raAllE").value||$("#raAmE").value||$("#raPmE").value);
-  if(!s&&!e){ alert("承認する時間を入れてください"); return; }
+  if(raMe==null||staffMonthIsClosed()) return;
+  const s=normTime($("#raStart").value), e=normTime($("#raEnd").value);
+  if(!s||!e||pHM(s)==null||pHM(e)==null||pHM(e)<=pHM(s)){ alert("開始時間と終了時間を正しく入れてください"); return; }
   if(!S.staff[raMe].req) S.staff[raMe].req={};
   S.staff[raMe].req[key(raDay)]={start:s,end:e,approved:true,rejected:false};
+  markRequestMonthSubmitted(raMe);
   save(); $("#raMask").style.display="none"; renderStaff();
 };
 $("#raReject").onclick=()=>{
-  if(stopStaffEdit(raDay)||raMe==null) return;
+  if(raMe==null||staffMonthIsClosed()) return;
   if(S.staff[raMe].req&&S.staff[raMe].req[key(raDay)]){ const o=S.staff[raMe].req[key(raDay)]; o.approved=false; o.rejected=true; }
+  markRequestMonthSubmitted(raMe);
   save(); $("#raMask").style.display="none"; renderStaff();
 };
 $("#raMask").onclick=e=>{ if(e.target.id==="raMask") $("#raMask").style.display="none"; };
