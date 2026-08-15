@@ -30,7 +30,7 @@
       "app_access": {
         "tokens": {
           "$token": {
-            ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || root.child('zaiko/app_access/sessions').child(auth.uid).val() === $token)",
+            ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || root.child('zaiko/app_access/sessions').child(auth.uid).val() === $token || (data.child('app').val() === 'sales-input' && root.child('zaiko/app_access/salesOwnerSessions').child(auth.uid).isString() && root.child('zaiko/app_access/salesOwnerTokens/' + root.child('zaiko/app_access/salesOwnerSessions/' + auth.uid).val()).child('active').val() === true))",
             ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
             ".validate": "newData.val() === null || (newData.hasChildren(['active','app','storeKey','storeName']) && newData.child('active').isBoolean() && newData.child('app').isString() && newData.child('storeKey').isString() && newData.child('storeName').isString())"
           }
@@ -38,7 +38,7 @@
         "byAppStore": {
           "$app": {
             "$storeKey": {
-              ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || ($app === 'sales-input' && root.child('zaiko/app_access/salesOwnerSessions').child(auth.uid).isString() && root.child('zaiko/app_access/salesOwnerTokens/' + root.child('zaiko/app_access/salesOwnerSessions/' + auth.uid).val()).child('active').val() === true))",
               ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
               ".validate": "newData.val() === null || newData.isString()"
             }
@@ -48,6 +48,26 @@
           "$uid": {
             ".read": "auth != null && (auth.uid === $uid || root.child('zaiko/shift/access/admins').child(auth.uid).val() === true)",
             ".write": "auth != null && auth.uid === $uid && newData.isString() && root.child('zaiko/app_access/tokens').child(newData.val()).child('active').val() === true"
+          }
+        },
+        "salesOwnerTokens": {
+          "$token": {
+            ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || root.child('zaiko/app_access/salesOwnerSessions').child(auth.uid).val() === $token)",
+            ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            ".validate": "newData.val() === null || (newData.hasChildren(['active','slot']) && newData.child('active').isBoolean() && newData.child('slot').isString())"
+          }
+        },
+        "salesOwnerSlots": {
+          "$slot": {
+            ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            ".validate": "newData.val() === null || newData.isString()"
+          }
+        },
+        "salesOwnerSessions": {
+          "$uid": {
+            ".read": "auth != null && (auth.uid === $uid || root.child('zaiko/shift/access/admins').child(auth.uid).val() === true)",
+            ".write": "auth != null && auth.uid === $uid && newData.isString() && root.child('zaiko/app_access/salesOwnerTokens').child(newData.val()).child('active').val() === true"
           }
         }
       },

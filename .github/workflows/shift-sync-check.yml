@@ -301,6 +301,22 @@ jobs:
             echo "::error file=sales-owner.html::Shared owner administrator check is missing."
             exit 1
           }
+          grep -Fq 'signInAnonymously' sales-owner.html || {
+            echo "::error file=sales-owner.html::Dedicated sales-owner share authentication is missing."
+            exit 1
+          }
+          grep -Fq 'salesOwnerSessions' sales-owner.html || {
+            echo "::error file=sales-owner.html::Dedicated sales-owner share session is missing."
+            exit 1
+          }
+          grep -Fq '"salesOwnerTokens"' database.rules.json || {
+            echo "::error file=database.rules.json::Sales-owner share token rules are missing."
+            exit 1
+          }
+          grep -Fq '"salesOwnerSessions"' database.rules.json || {
+            echo "::error file=database.rules.json::Sales-owner share session rules are missing."
+            exit 1
+          }
           grep -Fq "new URL('/sales-owner.html', location.origin)" owner.html || {
             echo "::error file=owner.html::Legacy sales-owner redirect is missing."
             exit 1

@@ -36,6 +36,10 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
   color: white; font-size: 20px; width: 38px; height: 38px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
+#owner-role {
+  display: none; margin-top: 5px; font-size: 11px; font-weight: 700;
+  color: rgba(255,255,255,.82);
+}
 .section { padding: 16px; }
 .section-title { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 10px; letter-spacing: 1px; }
 
@@ -185,6 +189,7 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
 
 <div class="header">
   <h1>👑 オーナー管理画面</h1>
+  <div id="owner-role"></div>
   <div id="fb-status">Firebase読み込み中...</div>
   <button class="settings-btn" onclick="openSettings()">⚙️</button>
 </div>
@@ -243,6 +248,14 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
     <button class="url-copy-btn" style="background:#1a237e;" onclick="copyOwnerUrl()">📋 URLをコピー</button>
   </div>
 
+  <!-- 売上オーナー共有者（1人） -->
+  <p style="font-size:11px;color:#999;margin-bottom:10px;">売上オーナー共有者（1人）</p>
+  <div class="url-row" style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #eee;">
+    <span class="url-store-name">🔗 共有者1</span>
+    <button class="url-copy-btn" style="background:#2f9ad0;" onclick="copySalesOwnerShareUrl()">📋 専用URL</button>
+    <button class="url-copy-btn" style="background:#c0596b;padding-left:12px;padding-right:12px;" onclick="regenerateSalesOwnerShareUrl()">再発行</button>
+  </div>
+
   <!-- 各店舗URL -->
   <p style="font-size:11px;color:#999;margin-bottom:10px;">各店舗スタッフ用（店舗専用URL）</p>
   <div id="url-copy-btns"></div>
@@ -257,7 +270,7 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
 <script type="module">
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, onValue, get, update } from 'firebase/database';
-import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signInWithRedirect } from 'firebase/auth';
 
 const STORE_KEY  = {'那古野':'nagoya','大須':'osu','鉄板':'teppan','鎌倉':'kamakura'};
 const STORE_COLOR = {
@@ -290,7 +303,11 @@ document.getElementById('url-copy-btns').innerHTML = STORES_ORDER.map(s => {
 let db = null;
 let auth = null;
 let ownerAuthorized = false;
+let ownerAccessMode = 'none';
 let ownerDataStarted = false;
+const SALES_OWNER_SHARE_PARAM = 'ownerAccess';
+const SALES_OWNER_SHARE_STORAGE = 'zaiko_sales_owner_access_token';
+const SALES_OWNER_SHARE_SLOT = 'shared1';
 
 function randomToken() {
   const bytes = new Uint8Array(48);
@@ -310,6 +327,11 @@ async function ensureStoreToken(appName, store, forceNew) {
     const oldSnap = await get(ref(db, `zaiko/app_access/tokens/${token}`));
     const old = oldSnap.val();
     if (!old || old.active !== true || old.app !== appName || old.storeKey !== storeKey) token = null;
+  }
+  if (ownerAccessMode !== 'admin') {
+    if (forceNew) throw new Error('共有者は専用URLを再発行できません');
+    if (!token) throw new Error('この店舗の専用URLは、オーナーが先に発行してください');
+    return token;
   }
   const changes = {};
   if (token && forceNew) changes[`tokens/${token}/active`] = false;
@@ -332,6 +354,54 @@ window.copyOwnerUrl = function() {
   navigator.clipboard.writeText(url).then(() => {
     alert('オーナー用URLをコピーしました。\nLINEに貼り付けて送ってください。');
   });
+};
+
+async function ensureSalesOwnerShareToken(forceNew) {
+  if (ownerAccessMode !== 'admin' || !db) throw new Error('管理者ログインが必要です');
+  const slotPath = `zaiko/app_access/salesOwnerSlots/${SALES_OWNER_SHARE_SLOT}`;
+  const slotSnap = await get(ref(db, slotPath));
+  let token = slotSnap.val();
+  if (token && !forceNew) {
+    const oldSnap = await get(ref(db, `zaiko/app_access/salesOwnerTokens/${token}`));
+    const old = oldSnap.val();
+    if (!old || old.active !== true || old.slot !== SALES_OWNER_SHARE_SLOT) token = null;
+  }
+  const changes = {};
+  if (token && forceNew) changes[`salesOwnerTokens/${token}/active`] = false;
+  if (!token || forceNew) {
+    token = randomToken();
+    changes[`salesOwnerTokens/${token}`] = {
+      active: true,
+      slot: SALES_OWNER_SHARE_SLOT,
+      issuedAt: Date.now()
+    };
+    changes[`salesOwnerSlots/${SALES_OWNER_SHARE_SLOT}`] = token;
+    await update(ref(db, 'zaiko/app_access'), changes);
+  }
+  return token;
+}
+
+function salesOwnerShareUrl(token) {
+  const url = new URL('/sales-owner.html', location.origin);
+  url.searchParams.set(SALES_OWNER_SHARE_PARAM, token);
+  return url.toString();
+}
+
+window.copySalesOwnerShareUrl = async function() {
+  try {
+    for (const store of STORES_ORDER) await ensureStoreToken('sales-input', store, false);
+    const token = await ensureSalesOwnerShareToken(false);
+    await copyText(salesOwnerShareUrl(token), '共有者1の専用URLをコピーしました。\nLINEに貼り付けて本人へ送ってください。');
+  } catch(e) { alert('共有URLを作成できませんでした：' + e.message); }
+};
+
+window.regenerateSalesOwnerShareUrl = async function() {
+  if (!confirm('共有者1の古いURLを停止して、新しいURLを発行しますか？')) return;
+  try {
+    for (const store of STORES_ORDER) await ensureStoreToken('sales-input', store, false);
+    const token = await ensureSalesOwnerShareToken(true);
+    await copyText(salesOwnerShareUrl(token), '共有者1の新しい専用URLをコピーしました。');
+  } catch(e) { alert('共有URLを再発行できませんでした：' + e.message); }
 };
 
 window.copyUrl = async function(store) {
@@ -408,6 +478,13 @@ try {
   db = getDatabase(app);
   auth = getAuth(app);
 
+  const tokenFromUrl = (new URLSearchParams(location.search).get(SALES_OWNER_SHARE_PARAM) || '').trim();
+  const savedShareToken = localStorage.getItem(SALES_OWNER_SHARE_STORAGE) || '';
+  const isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  // 通常URLではGoogle管理者を優先し、共有URLを試した管理者端末が共有者表示へ固定されないようにする。
+  // ホーム画面アプリはmanifestのstart_urlでクエリが消えるため、共有者端末だけ保存済みトークンを使う。
+  const salesOwnerShareToken = tokenFromUrl || (isStandalone ? savedShareToken : '');
+
   onValue(ref(db, '.info/connected'), snap => {
     const el = document.getElementById('fb-status');
     if (el) el.textContent = snap.val() ? '🟢 接続中' : '🔴 未接続';
@@ -418,23 +495,61 @@ try {
     const text = document.getElementById('owner-access-text');
     const button = document.getElementById('owner-login-btn');
     if (!user) {
+      if (salesOwnerShareToken) {
+        try { await signInAnonymously(auth); }
+        catch(e) {
+          text.textContent = '共有URLの確認に失敗しました：' + (e.message || e);
+          button.style.display = 'none';
+        }
+        return;
+      }
       ownerAuthorized = false;
+      ownerAccessMode = 'none';
       gate.style.display = 'flex';
       text.textContent = 'シフト・オーナーと同じGoogle管理者アカウントでログインしてください。';
       button.style.display = '';
       return;
     }
     try {
+      if (salesOwnerShareToken) {
+        if (!/^[A-Za-z0-9_-]{43,128}$/.test(salesOwnerShareToken)) throw new Error('共有専用URLが正しくありません。');
+        try {
+          await update(ref(db), {
+            [`zaiko/app_access/salesOwnerSessions/${user.uid}`]: salesOwnerShareToken
+          });
+        } catch(e) {
+          localStorage.removeItem(SALES_OWNER_SHARE_STORAGE);
+          throw new Error('この共有専用URLは利用停止されています。');
+        }
+        const accessSnap = await get(ref(db, `zaiko/app_access/salesOwnerTokens/${salesOwnerShareToken}`));
+        const access = accessSnap.val();
+        if (!access || access.active !== true || access.slot !== SALES_OWNER_SHARE_SLOT) {
+          localStorage.removeItem(SALES_OWNER_SHARE_STORAGE);
+          throw new Error('この共有専用URLは利用停止されています。');
+        }
+        localStorage.setItem(SALES_OWNER_SHARE_STORAGE, salesOwnerShareToken);
+        ownerAuthorized = true;
+        ownerAccessMode = 'shared';
+        gate.style.display = 'none';
+        document.querySelector('.settings-btn').style.display = 'none';
+        const role = document.getElementById('owner-role');
+        role.textContent = '共有者1（売上確認・入力・修正）';
+        role.style.display = 'block';
+        startOwnerData();
+        return;
+      }
       const admin = await get(ref(db, 'zaiko/shift/access/admins/' + user.uid));
       if (admin.val() !== true) throw new Error('このGoogleアカウントは管理者に登録されていません。');
       ownerAuthorized = true;
+      ownerAccessMode = 'admin';
       gate.style.display = 'none';
       startOwnerData();
     } catch(e) {
       ownerAuthorized = false;
+      ownerAccessMode = 'none';
       gate.style.display = 'flex';
       text.textContent = e.message || '管理者確認に失敗しました。';
-      button.style.display = '';
+      button.style.display = salesOwnerShareToken ? 'none' : '';
     }
   });
 
