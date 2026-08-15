@@ -145,6 +145,7 @@
   .cbubble::before{content:"…"; position:absolute; top:-3px; left:0; right:0; text-align:center; color:#fff; font-size:11px; font-weight:700; line-height:13px;}
   /* 本文セルの色はなし（色は日付ヘッダーだけ） */
   .wish{padding:1px 2px 0; text-align:center;}
+  #tbody .wish{cursor:pointer;}
   .wrow{margin-bottom:1px;}
   .wchip{display:inline-block; padding:0 4px; border-radius:5px; font-size:9px; line-height:1.4; font-weight:700;}
   .wchip.time{border:1px dashed #b0b0b0; color:#555;}
@@ -699,7 +700,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.83</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.84</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -935,7 +936,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.83"; window.APP_UPDATED="2026-08-15";
+window.APP_VERSION="v1.84"; window.APP_UPDATED="2026-08-15";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1085,7 +1086,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.83</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.84</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1220,6 +1221,12 @@ function renderOwner(){
   });
   document.querySelectorAll("#tbody .cbubble").forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
     showComment(el.dataset.n, +el.dataset.d, ((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)]); });
+  document.querySelectorAll("#tbody .wish").forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    if(ownerMode!=='wish') return;
+    const td=el.closest('td[data-n][data-d]');
+    if(td) openDayInput(td.dataset.n,+td.dataset.d,true);
+  });
   document.querySelectorAll("#tbody .ownerreqmark").forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); openReq(el.dataset.n,+el.dataset.d); });
   document.querySelectorAll("#tbody .delstaff").forEach(b=>b.onclick=async(e)=>{ e.stopPropagation();
     const nm=b.dataset.n, st=b.dataset.st;
@@ -2074,10 +2081,10 @@ function renderMine(me){
   document.querySelectorAll('#staffMine .mcell.cclick').forEach(c=>c.onclick=()=>openDayInput(me, +c.dataset.d));
   document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); openReqApprove(me, +el.dataset.req); });
 }
-let diMe=null, diDay=null; let diEditing=false;
-function openDayInput(me,d){ diMe=me; diDay=d; const _w0=S.staff[me].wish[key(d)]; diEditing=!(_w0&&Object.keys(_w0).length);
+let diMe=null, diDay=null; let diEditing=false, diOwnerEdit=false;
+function openDayInput(me,d,fromOwner=false){ diMe=me; diDay=d; diOwnerEdit=!!fromOwner; const _w0=S.staff[me].wish[key(d)]; diEditing=!(_w0&&Object.keys(_w0).length);
   const dow=new Date(Y,M-1,d).getDay();
-  $("#diTitle").textContent=`${M}/${d}（${DOW[dow]}）の希望を入れる`;
+  $("#diTitle").textContent=diOwnerEdit?`${me}　${M}/${d}（${DOW[dow]}）の希望を変更`:`${M}/${d}（${DOW[dow]}）の希望を入れる`;
   drawDayInput(); $("#diMask").style.display="flex";
 }
 function _diLock(lock){
@@ -2124,11 +2131,11 @@ function drawDayInput(){
     const t=this.value.trim(); if(t) S.staff[me].notes[key(d)]=t; else delete S.staff[me].notes[key(d)];
     save();
   };
-  $("#diSubmit").onclick=()=>{ $("#diMask").style.display="none"; renderStaff(); };
+  $("#diSubmit").onclick=()=>{ $("#diMask").style.display="none"; if(diOwnerEdit) renderOwner(); else renderStaff(); };
   $("#diEdit").onclick=()=>{ diEditing=true; _diLock(false); };
   _diLock(!diEditing);
 }
-$("#diMask").onclick=e=>{ if(e.target.id==="diMask"){ $("#diMask").style.display="none"; renderStaff(); } };
+$("#diMask").onclick=e=>{ if(e.target.id==="diMask"){ $("#diMask").style.display="none"; if(diOwnerEdit) renderOwner(); else renderStaff(); } };
 let raMe=null, raDay=null;
 function openReqApprove(me,d){
   raMe=me; raDay=d;
