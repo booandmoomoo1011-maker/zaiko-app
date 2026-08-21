@@ -413,6 +413,12 @@
   /* 希望／決定シフト A4横1枚（月間まるごと・下までフィット） */
   table.wovgrid{border-collapse:collapse; width:100%; table-layout:fixed; font-size:var(--wcfs,7px);}
   table.wovgrid td{border:0.7px solid #7a7a7a; text-align:center; padding:0; overflow:hidden; height:var(--wrh,15px); color:#333; line-height:1.1;}
+  table.wovgrid tr:not(.wsthead) td:not(.wpn){color:#111; font-family:"Arial Narrow",Arial,"Yu Gothic UI",Meiryo,sans-serif; font-weight:700; line-height:1.02; letter-spacing:-.18px;}
+  .wtime{position:relative; width:100%; height:var(--wrh,15px); overflow:hidden;}
+  .wtime .wt{position:absolute; left:-10%; right:-10%; white-space:nowrap; transform:scaleX(.82); transform-origin:center;}
+  .wtime .wtam{top:1px;}
+  .wtime .wtmid{top:50%; transform:translateY(-50%) scaleX(.82);}
+  .wtime .wtpm{bottom:1px;}
   table.wovgrid td.wpn{width:88px; text-align:center; vertical-align:middle; padding:0 2px; white-space:nowrap; font-size:var(--wnfs,18px); font-weight:900; line-height:.9; letter-spacing:0;}
   table.wovgrid td.wpn.wpn-3,table.wovgrid td.wpn.wpn-4{font-size:var(--wnfs,18px);}
   table.wovgrid td.wpn.wpn-5{font-size:calc(var(--wnfs,18px) * .82); letter-spacing:-.15px;}
@@ -700,7 +706,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.85</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.86</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -936,7 +942,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.85"; window.APP_UPDATED="2026-08-21";
+window.APP_VERSION="v1.86"; window.APP_UPDATED="2026-08-21";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1086,7 +1092,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.85</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.86</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1772,17 +1778,17 @@ function buildPrint(blank){
   buildPrintDays(days, blank, `・${M}月ぜんぶ / 1枚に3日`);
 }
 /* ---- 希望シフト：A4横1枚（月まるごと・時間表示）---- */
-function wishPrintText(w){
+function wishPrintCellHTML(w){
   if(!w) return "";
-  if(w.off) return "✕";
+  if(w.off) return '<div class="wtime"><span class="wt wtmid">✕</span></div>';
   const sh=t=>String(t||"").replace(/:00\b/,"").replace(/^0/,"");
-  if(w.allday) return "9-23:30";
-  let p=[];
-  if(w.all) p.push(`${sh(w.all.start)}-${sh(w.all.end)}`);
-  if(w.am) p.push(`AM${sh(w.am.start)}-${sh(w.am.end)}`);
-  if(w.pm) p.push(`PM${sh(w.pm.start)}-${sh(w.pm.end)}`);
-  if(!p.length && (w.start||w.end)) p.push(`${sh(w.start)}-${sh(w.end)}`);
-  return p.join(" ");
+  if(w.allday) return '<div class="wtime"><span class="wt wtmid">9-23:30</span></div>';
+  if(w.all) return `<div class="wtime"><span class="wt wtmid">${esc(`${sh(w.all.start)}-${sh(w.all.end)}`)}</span></div>`;
+  const am=w.am?`AM${sh(w.am.start)}-${sh(w.am.end)}`:"";
+  const pm=w.pm?`PM${sh(w.pm.start)}-${sh(w.pm.end)}`:"";
+  if(am||pm) return `<div class="wtime">${am?`<span class="wt wtam">${esc(am)}</span>`:""}${pm?`<span class="wt wtpm">${esc(pm)}</span>`:""}</div>`;
+  if(w.start||w.end) return `<div class="wtime"><span class="wt wtmid">${esc(`${sh(w.start)}-${sh(w.end)}`)}</span></div>`;
+  return "";
 }
 function printNameFitClass(nm){
   const len=Array.from(String(nm||"")).length;
@@ -1809,7 +1815,7 @@ function pOverviewSheet(mode){  /* mode: 'wish'=希望 / 'decided'=決定 */
       h+=`<tr><td class="${printNameFitClass(nm)}">${esc(nm)}</td>`;
       for(let d=1;d<=DAYS;d++){
         const v=(mode==='decided'&&!printDayIsDecided(d))?null:src[key(d)];
-        h+=`<td${_off(st,d)?' class="woff"':''}>${v?esc(wishPrintText(v)):""}</td>`;
+        h+=`<td${_off(st,d)?' class="woff"':''}>${v?wishPrintCellHTML(v):""}</td>`;
       }
       h+=`</tr>`;
     });
@@ -1828,7 +1834,7 @@ function buildOverviewPrint(mode){
   STORES.forEach(st=>{ const n=storeStaff(st).length; const blanks=Math.max((BLANK_SLOTS[st]||0)-n, SPARE_ROWS); rowsTotal += 1.8/*見出し行ぶん*/ + n + blanks; });
   const availMM=183;
   let rowMM=availMM/rowsTotal; if(rowMM>11) rowMM=11; if(rowMM<3.6) rowMM=3.6;
-  const cfs =Math.max(5.5, rowMM*0.92);   // マスの時間文字
+  const cfs =Math.max(8, Math.min(9, rowMM*1.25)); // マスの時間文字（A4横1枚のまま読みやすく）
   const nfs =Math.max(18,  rowMM*2.5);    // 名前（シファト相当へ統一し、長い名前だけ自動縮小）
   const dhfs=Math.max(9,   rowMM*1.45);   // 日にち・曜日（大きめ）
   const shfs=Math.max(9,   rowMM*1.45);   // 店舗名
