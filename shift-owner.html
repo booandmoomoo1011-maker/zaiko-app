@@ -332,8 +332,10 @@
   .picklist .pickbtn{text-align:left; background:#eaf6fc; color:#1e6f95; border:1px solid #bfe0f2; border-radius:8px; padding:9px 11px; font-weight:700; cursor:pointer; font-size:13px;}
   .picklist .pickbtn small{color:#5b7a8c; font-weight:500;}
   .picklist .pickbtn:hover{background:#d8eef9;}
-  .terow{display:flex; gap:6px; align-items:center; margin:5px 0;}
-  .terow .telbl{width:34px; color:#2b7fa3; font-weight:800;}
+  .terow{display:flex; gap:6px; align-items:center; margin:7px 0;}
+  .terow .telbl{width:48px; flex:0 0 48px; margin:0; color:#777; font-weight:800; border:1.5px solid #c8c8c8; border-radius:8px; background:#eee; padding:7px 0; cursor:pointer; font-family:inherit; font-size:15px;}
+  .terow .telbl.on{color:#fff; background:#2f9ad0; border-color:#2f9ad0; box-shadow:0 0 0 2px #cdeaf7;}
+  .terow.period-off input{background:#f3f3f3; color:#aaa;}
   .cmtbox input.tinp{font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;}
   input.tinp{flex:1 1 0; min-width:0; max-width:120px; box-sizing:border-box; text-align:center;}
   .dname .cbubble{position:relative; top:auto; right:auto; display:inline-block; margin-right:2px; vertical-align:middle; transform:scale(.42);}
@@ -706,7 +708,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.87</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.88</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -893,8 +895,8 @@
   <div class="cmtbox">
     <div class="ttl" id="teTtl"></div>
     <div id="teHelp" style="font-size:12px; color:#5b7a8c; margin-bottom:6px;"></div>
-    <div class="terow"><span class="telbl">AM</span><input type="text" class="tinp" placeholder="9:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="teAmE"></div>
-    <div class="terow"><span class="telbl">PM</span><input type="text" class="tinp" placeholder="9:00" id="tePmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="tePmE"></div>
+    <div class="terow" id="teAmRow"><button type="button" class="telbl" id="teAmToggle" aria-pressed="false">AM</button><input type="text" class="tinp" placeholder="9:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="teAmE"></div>
+    <div class="terow" id="tePmRow"><button type="button" class="telbl" id="tePmToggle" aria-pressed="false">PM</button><input type="text" class="tinp" placeholder="9:00" id="tePmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="tePmE"></div>
     <button id="teSave" type="button" style="background:#2f9ad0;"></button>
     <button id="teDel" type="button" style="background:#c0596b; margin-top:8px;"></button>
     <button id="teClose" type="button" style="background:#c9c9c9; margin-top:8px;">閉じる</button>
@@ -942,7 +944,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.87"; window.APP_UPDATED="2026-08-21";
+window.APP_VERSION="v1.88"; window.APP_UPDATED="2026-08-21";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1092,7 +1094,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.87</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.88</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1520,6 +1522,16 @@ $("#pickClose").onclick=()=>$("#pickMask").style.display="none";
 $("#pickMask").onclick=e=>{ if(e.target.id==="pickMask") $("#pickMask").style.display="none"; };
 
 let teTarget=null;
+function tePeriodSelected(period){
+  return $(period==="am"?"#teAmToggle":"#tePmToggle").getAttribute("aria-pressed")==="true";
+}
+function setTePeriod(period,on){
+  const cap=period==="am"?"Am":"Pm";
+  const btn=$(`#te${cap}Toggle`), row=$(`#te${cap}Row`);
+  btn.classList.toggle("on",!!on); btn.setAttribute("aria-pressed",on?"true":"false");
+  row.classList.toggle("period-off",!on);
+  [$(`#te${cap}S`),$(`#te${cap}E`)].forEach(el=>{ el.disabled=!on; });
+}
 function openSupport(nm,d,st){
   if(closedMonthEditBlocked()) return;
   ensureStaffOwner(nm);
@@ -1530,9 +1542,12 @@ function openSupport(nm,d,st){
   $("#teDel").textContent=`この${st}配置を消す`;
   const t=supportOf(nm,d,st)||{};
   const w=(S.staff[nm].wish||{})[key(d)]||{};
-  const am=t.am||{}, pm=t.pm||{}, wam=w.am||w.all||{}, wpm=w.pm||w.all||{};
+  const am=t.am||t.all||{}, pm=t.pm||t.all||{}, wam=w.am||w.all||{}, wpm=w.pm||w.all||{};
   $("#teAmS").value=am.start||wam.start||""; $("#teAmE").value=am.end||wam.end||"";
   $("#tePmS").value=pm.start||wpm.start||""; $("#tePmE").value=pm.end||wpm.end||"";
+  const assigned=!!(t.all||t.am||t.pm);
+  setTePeriod("am",assigned?!!(t.am||t.all):!!(w.am||w.all||w.allday));
+  setTePeriod("pm",assigned?!!(t.pm||t.all):!!(w.pm||w.all||w.allday));
   $("#teDel").style.display=(t.all||t.am||t.pm)?"":"none";
   $("#teMask").style.display="flex";
 }
@@ -1543,11 +1558,13 @@ function supportRefresh(){
 }
 $("#teClose").onclick=()=>$("#teMask").style.display="none";
 $("#teMask").onclick=e=>{ if(e.target.id==="teMask") $("#teMask").style.display="none"; };
+$("#teAmToggle").onclick=()=>setTePeriod("am",!tePeriodSelected("am"));
+$("#tePmToggle").onclick=()=>setTePeriod("pm",!tePeriodSelected("pm"));
 $("#teSave").onclick=()=>{
   if(closedMonthEditBlocked()||!teTarget) return;
-  const am=($("#teAmS").value||$("#teAmE").value)?{start:normTime($("#teAmS").value),end:normTime($("#teAmE").value)}:null;
-  const pm=($("#tePmS").value||$("#tePmE").value)?{start:normTime($("#tePmS").value),end:normTime($("#tePmE").value)}:null;
-  if(!am&&!pm){ appAlert("AMかPMの時間を入れてください（消す場合は『消す』）"); return; }
+  const am=tePeriodSelected("am")?{start:normTime($("#teAmS").value),end:normTime($("#teAmE").value)}:null;
+  const pm=tePeriodSelected("pm")?{start:normTime($("#tePmS").value),end:normTime($("#tePmE").value)}:null;
+  if(!am&&!pm){ appAlert("AMかPMを選んでください（消す場合は『消す』）"); return; }
   setSupport(teTarget.nm,teTarget.d,teTarget.st,{am,pm}); touchUpdated();
   $("#teMask").style.display="none"; supportRefresh();
 };
