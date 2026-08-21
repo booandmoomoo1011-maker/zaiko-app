@@ -346,8 +346,7 @@
   .dname .dwish.maru{background:#fff2c0; color:#8a6d00; border:1px solid #e6d36a; font-weight:800;}
   .submittedmark{display:inline-block;margin-left:3px;padding:0 3px;border-radius:4px;background:#e3f5e7;color:#2f7a3f;font-size:8px;font-weight:900;vertical-align:middle;white-space:nowrap;}
   .dbar.wishbar{background:#eeeeee; color:#666; border:1px dashed #aaa; pointer-events:none; z-index:1; justify-content:center; overflow:hidden; box-shadow:none;}
-  .drow.supportmoved .dbar.wishbar{background:#fafafa; color:#c5c5c5; border-color:#dedede; opacity:.42;}
-  .drow.supportmoved .dname .dwish{opacity:.42;}
+  .dbar.wishbar.wishmoved,.dbar.wishbar.wishfadecover{background:#f7f7f7; color:#aaa; border:1.5px dashed #999; opacity:1; z-index:2;}
   .drow.haswishdec{min-height:45px;}
   .drow.haswishdec .dbar.wishbar{top:2px; height:17px;}
   .drow.haswishdec .dbar.decisionbar{top:23px; height:17px; z-index:2;}
@@ -710,7 +709,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.89</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.90</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -946,7 +945,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.89"; window.APP_UPDATED="2026-08-21";
+window.APP_VERSION="v1.90"; window.APP_UPDATED="2026-08-21";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1096,7 +1095,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.89</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.90</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1344,9 +1343,14 @@ function setSupport(nm,d,st,rec){
   if(rec) sf.support[k][st]=rec; else delete sf.support[k][st];
   if(!Object.keys(sf.support[k]).length) delete sf.support[k];
 }
-function staffHasExternalSupport(nm,d){
+function externalSupportInfo(nm,d){
   const home=(S.staff[nm]||{}).store||"大須";
-  return STORES.some(st=>{ const t=st===home?null:supportOf(nm,d,st); return !!(t&&(t.all||t.am||t.pm)); });
+  const out={any:false,am:false,pm:false,all:false,segs:[]};
+  STORES.forEach(st=>{
+    const t=st===home?null:supportOf(nm,d,st); if(!t) return;
+    ['all','am','pm'].forEach(part=>{ const v=t[part]; if(!v) return; const s=pHM(v.start),e=pHM(v.end); out.any=true; out[part]=true; if(s!=null&&e!=null&&e>s) out.segs.push([s,e]); });
+  });
+  return out;
 }
 function staffDayConflict(nm,d){ const segs=[], stf=S.staff[nm]||{}; _segsOf((stf.decided||{})[key(d)],segs); STORES.forEach(st=>_segsOf(supportOf(nm,d,st),segs));
   for(let i=0;i<segs.length;i++) for(let j=i+1;j<segs.length;j++){ if(segs[i][0]<segs[j][1] && segs[j][0]<segs[i][1]) return true; } return false; }
@@ -1360,14 +1364,19 @@ function reqBars(nm,d){
   if(r.approved) return `<div class="dbar reqok" ${attrs} style="left:${l}px;width:${w}px;justify-content:center" aria-label="要請を承認"><span class="reqapproveplane" aria-hidden="true"></span></div>`;
   return `<div class="dbar reqpend" ${attrs} style="left:${l}px;width:${w}px">${r.start||''}〜${r.end||''}</div>`;
 }
-function wishBars(w){
+function wishFadeCovers(moved,start,end){
+  if(!moved||!moved.any) return ""; const bs=typeof start==="number"?start:pHM(start), be=typeof end==="number"?end:pHM(end); if(bs==null||be==null) return "";
+  return moved.segs.map(seg=>{ const s=Math.max(bs,seg[0]),e=Math.min(be,seg[1]); return e>s?dbarC('wishbar wishfadecover',s,e,''):""; }).join("");
+}
+function wishBars(w,moved){
   if(!w||w.off) return "";
-  if(w.allday) return dbarC('wishbar wall',9,23.5,'希望 9:00〜23:30');
+  moved=moved||{any:false,am:false,pm:false,all:false,segs:[]};
+  if(w.allday) return dbarC('wishbar wall',9,23.5,'希望 9:00〜23:30')+wishFadeCovers(moved,9,23.5);
   let bars="";
-  if(w.all) bars+=dbarC('wishbar wall',pHM(w.all.start),pHM(w.all.end),`希望 ${w.all.start||''}〜${w.all.end||''}`);
-  if(w.am) bars+=dbarC('wishbar wam',pHM(w.am.start),pHM(w.am.end),`希望 AM ${w.am.start||''}〜${w.am.end||''}`);
-  if(w.pm) bars+=dbarC('wishbar wpm',pHM(w.pm.start),pHM(w.pm.end),`希望 PM ${w.pm.start||''}〜${w.pm.end||''}`);
-  if(!w.all&&!w.am&&!w.pm&&(w.start||w.end)) bars+=dbarC('wishbar wall',pHM(w.start),pHM(w.end),`希望 ${w.start||''}〜${w.end||''}`);
+  if(w.all){ bars+=dbarC('wishbar wall',pHM(w.all.start),pHM(w.all.end),`希望 ${w.all.start||''}〜${w.all.end||''}`); bars+=wishFadeCovers(moved,w.all.start,w.all.end); }
+  if(w.am) bars+=dbarC(`wishbar wam${moved.am||moved.all?' wishmoved':''}`,pHM(w.am.start),pHM(w.am.end),`希望 AM ${w.am.start||''}〜${w.am.end||''}`);
+  if(w.pm) bars+=dbarC(`wishbar wpm${moved.pm||moved.all?' wishmoved':''}`,pHM(w.pm.start),pHM(w.pm.end),`希望 PM ${w.pm.start||''}〜${w.pm.end||''}`);
+  if(!w.all&&!w.am&&!w.pm&&(w.start||w.end)){ bars+=dbarC('wishbar wall',pHM(w.start),pHM(w.end),`希望 ${w.start||''}〜${w.end||''}`); bars+=wishFadeCovers(moved,w.start,w.end); }
   return bars;
 }
 function openDayView(d){
@@ -1469,7 +1478,8 @@ function dvStaffRow(nm,d,W){
   const stf=S.staff[nm]||{};
   const v=(stf.decided||{})[key(d)]; let bars="";
   const w=(stf.wish||{})[key(d)];
-  const wishBarHtml=wishBars(w); bars+=wishBarHtml;
+  const moved=externalSupportInfo(nm,d);
+  const wishBarHtml=wishBars(w,moved); bars+=wishBarHtml;
   const hasDecisionTime=!!(v&&!v.off&&(v.all||v.am||v.pm||v.start||v.end));
   if(hasDecisionTime){
     if(v.all) bars+=dEditBar(nm,d,'all','ball',v.all.start,v.all.end);
@@ -1483,8 +1493,7 @@ function dvStaffRow(nm,d,W){
   const note=(stf.notes||{})[key(d)];
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
-  const moved=staffHasExternalSupport(nm,d);
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved?' supportmoved':''}" data-n="${esc(nm)}" data-d="${d}" title="${moved?'別店舗へ配置済み・元の希望は薄く表示':'タップして時間を編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}" data-n="${esc(nm)}" data-d="${d}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'タップして時間を編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
