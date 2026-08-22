@@ -58,7 +58,7 @@
     .dayhead button{padding:7px 10px; font-size:13px;}
     .dbar .dresize{width:16px;}
     .dbar .btime{padding:2px 3px;}
-    .storeoff-btn{padding:2px 8px; font-size:11px;}
+    .storeoff-btn{font-size:12px;}
     /* ポップアップ入力：指で押しやすいサイズ */
     .cmtbox{padding:16px 14px;}
     .cmtbox input.tinp{font-size:16px; padding:9px;}
@@ -121,7 +121,7 @@
   #tbody tr.blankrow td.blankname{background:#fcfcfc; color:#ccc;}
   #tbody td.blankcell{background:#fff; cursor:default;}
   #tbody td.stoff{background:#eaf6fd !important;}
-  .storeoff-btn{margin-left:6px; border:1px solid #9cc9e6; background:#eaf6fd; color:#2b7fa3; font-size:10px; font-weight:800; border-radius:6px; padding:1px 7px; cursor:pointer; white-space:nowrap;}
+  .storeoff-btn{width:100%; height:100%; margin:0; border:1px solid currentColor; background:rgba(255,255,255,.42); color:inherit; font:inherit; font-weight:900; border-radius:7px; padding:5px 4px; cursor:pointer; white-space:nowrap;}
   .ownerclosedstatus{display:inline-block;color:#735f17;background:#fff3bd;border:1px solid #e5c85c;border-radius:8px;padding:3px 8px;font-weight:900;}
   #ownerView.closedmonth #decideBtn{background:#ddd;color:#777;cursor:not-allowed;}
   #ownerView.closedmonth #tbody td[data-d]{cursor:default;}
@@ -129,6 +129,7 @@
   #dayGrid.closedmonth .storememo{background:#f3f3f3;color:#666;resize:none;}
   #dayGrid.closedmonth .storeoff-btn{opacity:.65;cursor:not-allowed;}
   .storeoff-btn.on{background:#57b7e3; color:#fff; border-color:#3a9bd0;}
+  .storeoff-state{display:block; margin-top:2px; font-size:10px; line-height:1.1;}
   tr.secrow td.secname{background:#f3d9e1; color:var(--pink-d); font-weight:800; font-size:11px; white-space:nowrap; padding:1px 6px;}
   tr.secrow td.sechead{background:#f9e7ee; height:13px;}
   td.hasnote .wish{padding-top:2px;}
@@ -296,15 +297,10 @@
   .dayhead h3{margin:0; font-size:14px; color:var(--pink-d); white-space:nowrap; flex:0 0 auto;}
   .dayhead button{border:none; background:#eee; color:#555; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:700; white-space:nowrap; flex:0 0 auto; font-size:13px;}
   #mPalette{display:none;}
-  .daylegend{display:flex; gap:3px; flex-wrap:nowrap; align-items:center; margin:0 4px; flex:1 1 auto; justify-content:center; overflow:hidden;}
-  .daylegend .lg{font-size:8.5px; font-weight:700; padding:1px 4px; border-radius:5px; white-space:nowrap;}
-  .daylegend .lam{background:#bfe6c4; color:#1c6b2e;}
-  .daylegend .lpm{background:#f6c6da; color:#9c3160;}
-  .daylegend .lall{background:linear-gradient(90deg,#bfe6c4 0 50%,#f6c6da 50%); color:#5a4630;}
-  .daylegend .lhold{background:#9fd8f2; color:#0f5a82;}
-  .daylegend .lgbtn{cursor:pointer; font-family:inherit; border:1px solid rgba(0,0,0,.18); line-height:1.2;}
+  .daylegend{display:flex; gap:6px; flex-wrap:nowrap; align-items:center; margin:0 6px; flex:1 1 auto; justify-content:center; overflow:hidden;}
+  .daylegend .lhold{min-width:96px; background:#9fd8f2; color:#0f5a82; font-family:inherit; font-size:15px; font-weight:900; padding:8px 22px; border:2px solid #62b8df; border-radius:9px; line-height:1.2; cursor:pointer;}
   .daylegend .lhold.on{background:#2f9ad0; color:#fff; box-shadow:0 0 0 2px #bfe6f5;}
-  .daylegend .holdhint{display:none; font-size:9px; font-weight:800; color:#2f9ad0; white-space:nowrap; margin-left:2px;}
+  .daylegend .holdhint{display:none; font-size:10px; font-weight:800; color:#2f9ad0; white-space:nowrap;}
   #dayGrid.holdmode .drow.dedit, #dayGrid.holdmode .drow.tedit, #dayGrid.holdmode .dtime{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'><path d='M5 3 L5 19 L9.5 14.8 L12.4 20.6 L15 19.4 L12.1 13.7 L18 13.5 Z' fill='%232f9ad0' stroke='white' stroke-width='1.2' stroke-linejoin='round'/></svg>") 5 3, auto;}
   .dayscroll{overflow:auto; flex:1 1 auto; padding:4px;}
   .storememo{position:absolute; left:728px; top:2px; z-index:6; width:4cm; height:3cm; resize:both; min-width:2.5cm; min-height:2cm; box-sizing:border-box; font-family:inherit; font-size:12px; line-height:1.4; padding:5px 7px; border:1.5px solid #e2c98a; border-radius:8px; background:#fffdf3; color:#5a4a2a;}
@@ -709,7 +705,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.94</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.95</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -936,7 +932,7 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><span class="lg lam">AM</span><span class="lg lpm">PM</span><span class="lg lall">一日</span><button type="button" class="lg lhold lgbtn" id="holdToggle" title="水色モード：線をクリックで水色／もう一度押して解除">(休)</button><span class="holdhint" id="holdHint">線をタップで水色ブロック</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;">この日を決定</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="lhold" id="holdToggle" title="休憩を入れる／もう一度押して解除">休憩</button><span class="holdhint" id="holdHint">時間の線をタップ</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;">この日を決定</button></div>
     <div class="dayscroll"><div id="dayGrid"></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
@@ -945,7 +941,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.94"; window.APP_UPDATED="2026-08-22";
+window.APP_VERSION="v1.95"; window.APP_UPDATED="2026-08-22";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1095,7 +1091,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.94</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.95</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1437,13 +1433,7 @@ function openDayView(d){
   g.querySelectorAll('.holdbar').forEach(bindHoldBlock);
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.onclick=(e)=>e.stopPropagation(); inp.onchange=()=>{ if(closedMonthEditBlocked()) return; if(!S.storeMemo) S.storeMemo={}; const k=key(dayViewDay); if(!S.storeMemo[k]) S.storeMemo[k]={}; const st=inp.dataset.st, t=inp.value.trim(); if(t) S.storeMemo[k][st]=t; else delete S.storeMemo[k][st]; save(); }; });
-  g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); if(closedMonthEditBlocked()) return;
-    const st=b.dataset.st, k=key(dayViewDay);
-    if(!S.storeOff) S.storeOff={}; if(!S.storeOff[k]) S.storeOff[k]={};
-    if(S.storeOff[k][st]){ delete S.storeOff[k][st]; if(!Object.keys(S.storeOff[k]).length) delete S.storeOff[k]; }
-    else { S.storeOff[k][st]=true; }
-    save(); openDayView(dayViewDay); renderOwner();
-  });
+  g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toggleStoreOff(b.dataset.st); });
   g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f); });
   $("#dayMask").style.display="flex"; _syncDayDecideBtn();
   // 横幅に合わせて縮小（縦は仕様どおりスクロールで下まで見る）
@@ -1459,6 +1449,17 @@ function openDayView(d){
 })();
 function fitDayGrid(){ const g=$("#dayGrid"); const sc=document.querySelector('.dayscroll'); if(!g||!sc) return; g.style.transform="none"; const gw=g.scrollWidth; const availW=sc.clientWidth; const scale=Math.min(availW/gw,2); g.style.transformOrigin="top left"; g.style.transform="scale("+scale+")"; }
 (function(){ const sc=document.querySelector('.dayscroll'); if(sc && window.ResizeObserver){ new ResizeObserver(()=>{ const m=$("#dayMask"); if(m && m.style.display==="flex") fitDayGrid(); }).observe(sc); } })();
+function toggleStoreOff(st){
+  if(closedMonthEditBlocked()||dayViewDay==null) return;
+  const k=key(dayViewDay);
+  if(!S.storeOff) S.storeOff={};
+  if(!S.storeOff[k]) S.storeOff[k]={};
+  if(S.storeOff[k][st]){
+    delete S.storeOff[k][st];
+    if(!Object.keys(S.storeOff[k]).length) delete S.storeOff[k];
+  }else S.storeOff[k][st]=true;
+  save(); openDayView(dayViewDay); renderOwner();
+}
 function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"この日を決定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#2fa04a"); b.style.color="#fff"; }
 $("#dayDecide").onclick=()=>{ if(closedMonthEditBlocked()||dayViewDay==null) return; if(!S.decidedDays) S.decidedDays={}; const k=key(dayViewDay); const willDecide=!S.decidedDays[k]; if(S.decidedDays[k]) delete S.decidedDays[k]; else S.decidedDays[k]=true; touchUpdated(); save(); _syncDayDecideBtn(); renderOwner(); if(document.querySelector("#staffView").style.display!=="none") renderStaff(); if(willDecide) $("#dayMask").style.display="none"; };
 $("#holdToggle").onclick=()=>{ if(closedMonthEditBlocked()) return; holdMode=!holdMode; const g=$("#dayGrid"); g.classList.toggle('holdmode',holdMode); $("#holdToggle").classList.toggle('on',holdMode); const hh=$("#holdHint"); if(hh) hh.style.display=holdMode?'inline-block':'none'; };
@@ -1534,7 +1535,7 @@ function dvStoreSection(st,d,W,ticks){
   const _sm=((S.storeMemo||{})[key(d)]||{})[st]||"";
   const _soff=!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
   const _hbg=_soff?STOFF_COLOR:col.head;
-  let h=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}">${st}（${homeList.length+assigned.length}）<button type="button" class="storeoff-btn${_soff?' on':''}" data-st="${st}">休み</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${ticks}</div><textarea class="storememo" data-st="${st}" placeholder="${st}のメモ">${esc(_sm)}</textarea></div>`;
+  let h=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}"><button type="button" class="storeoff-btn${_soff?' on':''}" data-st="${st}" aria-pressed="${_soff?'true':'false'}">${st}（${homeList.length+assigned.length}）${_soff?'<span class="storeoff-state">休み</span>':''}</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${ticks}</div><textarea class="storememo" data-st="${st}" placeholder="${st}のメモ">${esc(_sm)}</textarea></div>`;
   homeList.forEach(nm=>{ h+=dvStaffRow(nm,d,W,st); });
   assigned.forEach(nm=>{
     const t=supportOf(nm,d,st)||{}; let bars="";
