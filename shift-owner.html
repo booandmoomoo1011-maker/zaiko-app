@@ -341,9 +341,11 @@
   .dname .dwish.gray{background:#f0f0f0; color:#8a8a8a; border:1px solid #e2e2e2;}
   .dname .dwish.maru{background:#fff2c0; color:#8a6d00; border:1px solid #e6d36a; font-weight:800;}
   .submittedmark{display:inline-block;margin-left:3px;padding:0 3px;border-radius:4px;background:#e3f5e7;color:#2f7a3f;font-size:8px;font-weight:900;vertical-align:middle;white-space:nowrap;}
-  .dbar.wishbar{background:#eeeeee; color:#666; border:1px dashed #aaa; pointer-events:none; z-index:1; justify-content:center; overflow:hidden; box-shadow:none;}
+  .dbar.wishbar{background:#eeeeee; color:#666; border:1px dashed #aaa; pointer-events:auto; cursor:pointer; z-index:1; justify-content:center; overflow:hidden; box-shadow:none;}
   .dbar.wishbar .wishlabel{position:absolute; top:0; bottom:0; display:flex; align-items:center; justify-content:center; padding:0 4px; overflow:hidden; white-space:nowrap;}
   .dbar.wishbar.wishmoved,.dbar.wishbar.wishfadecover{background:#f7f7f7; color:#aaa; border:1.5px dashed #999; opacity:1; z-index:2;}
+  .dbar.wishbar.wishfadecover{pointer-events:none;}
+  #dayGrid.closedmonth .dbar.wishbar{cursor:default;}
   .drow.haswishdec{min-height:45px;}
   .drow.haswishdec .dbar.wishbar{top:2px; height:17px;}
   .drow.haswishdec .dbar.decisionbar{top:23px; height:17px; z-index:2;}
@@ -705,7 +707,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.95</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.96</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -941,7 +943,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.95"; window.APP_UPDATED="2026-08-22";
+window.APP_VERSION="v1.96"; window.APP_UPDATED="2026-08-22";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1091,7 +1093,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.95</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.96</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1659,6 +1661,26 @@ function _xToHour(e, dt, snapFloor){
   let hr=AX0+(snapFloor?Math.floor(ux/(HW/2)):Math.round(ux/(HW/2)))*0.5;
   return Math.max(AX0, Math.min(AX1, hr));
 }
+function applyWishDecision(nm,d,seg,st){
+  if(closedMonthEditBlocked()||(st&&!isStaffHomeStore(nm,st))) return false;
+  const staff=S.staff[nm];
+  if(!staff) return false;
+  const w=(staff.wish||{})[key(d)];
+  if(!w||w.off) return false;
+  let source=seg==='all'?(w.all||(w.allday?{start:'9:00',end:'23:30'}:((w.start||w.end)?w:null))):w[seg];
+  if(!source||!source.start||!source.end) return false;
+  const start=pHM(source.start), end=pHM(source.end);
+  if(start==null||end==null||end<=start) return false;
+  if(!staff.decided) staff.decided={};
+  const k=key(d), decision=staff.decided[k]||{};
+  decision[seg]={start:source.start,end:source.end};
+  delete decision.off;
+  if(!decision.color) decision.color='#8bc98f';
+  staff.decided[k]=decision;
+  touchUpdated(); save(); renderOwner();
+  if(dayViewDay!=null) openDayView(dayViewDay);
+  return true;
+}
 function dayRowClick(e,row,mode){
   if(closedMonthEditBlocked()) return;
   const nm=row.dataset.n, d=+row.dataset.d, t=e.target;
@@ -1670,6 +1692,11 @@ function dayRowClick(e,row,mode){
     const dt=t.closest('.dtime'); if(!dt) return;
     let hour=Math.min(_xToHour(e,dt,true), AX1-0.5);
     toggleHold(nm,d,hour); return;
+  }
+  const wish=t.closest&&t.closest('.wishbar');
+  if(wish&&!wish.classList.contains('wishfadecover')){
+    const seg=wish.classList.contains('wam')?'am':wish.classList.contains('wpm')?'pm':'all';
+    applyWishDecision(nm,d,seg,row.dataset.st); return;
   }
   // 決定シフトの棒・名前をタップ → 全体編集（既存の「消す」を利用）
   if(t.closest('.decisionbar') || t.closest('.dname')){ openEditor(nm,d); return; }
