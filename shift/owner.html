@@ -358,13 +358,12 @@
   .dbar{position:absolute; top:4px; height:19px; border-radius:5px; color:#fff; font-size:10px; font-weight:700; justify-content:space-between;
     padding:0 5px; display:flex; align-items:center; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.18);}
   .dbar.off{background:#7ec8f0;}
-  .dbar.holdbar{background:#9fd8f2; color:#0f5a82; z-index:3; overflow:hidden; padding:0;}
+  .dbar.holdbar{background:#9fd8f2; color:#0f5a82; z-index:3; overflow:hidden; padding:0; border-radius:0; touch-action:manipulation;}
   .dbar .btime{pointer-events:auto; cursor:pointer;}
   .dbar .btime:hover{text-decoration:underline;}
   .dbar .dresize{position:absolute; top:0; width:12px; height:100%; cursor:ew-resize; touch-action:none; z-index:4;}
   .dbar .dresize-l{left:-3px;}
   .dbar .dresize-r{right:-3px;}
-  .holddel{position:absolute; top:2px; right:1px; width:12px; height:12px; line-height:10px; text-align:center; font-size:9px; background:#fff; color:#d33; border:1px solid #d33; border-radius:50%; cursor:pointer; z-index:5;}
   .dname .warn{display:inline-block; margin-left:4px; font-size:15px; line-height:1; color:#e53935; font-weight:900; vertical-align:middle;}
   .dbar.reqpend{background:#dedede; color:#555; border:1px dashed #b3b3b3;}
   .dbar.reqok{background:#8bc98f; color:#123f10;}
@@ -710,7 +709,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.93</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.94</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -946,7 +945,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.93"; window.APP_UPDATED="2026-08-22";
+window.APP_VERSION="v1.94"; window.APP_UPDATED="2026-08-22";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1096,7 +1095,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.93</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.94</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1435,6 +1434,7 @@ function openDayView(d){
   g.querySelectorAll('.dbar[data-req-n]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.reqN,+b.dataset.reqD); });
   g.querySelectorAll('.drow.sedit').forEach(row=>row.onclick=()=>openSupport(row.dataset.n,+row.dataset.d,row.dataset.st));
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openSupportPicker(+row.dataset.d,row.dataset.st));
+  g.querySelectorAll('.holdbar').forEach(bindHoldBlock);
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.onclick=(e)=>e.stopPropagation(); inp.onchange=()=>{ if(closedMonthEditBlocked()) return; if(!S.storeMemo) S.storeMemo={}; const k=key(dayViewDay); if(!S.storeMemo[k]) S.storeMemo[k]={}; const st=inp.dataset.st, t=inp.value.trim(); if(t) S.storeMemo[k][st]=t; else delete S.storeMemo[k][st]; save(); }; });
   g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); if(closedMonthEditBlocked()) return;
@@ -1625,7 +1625,23 @@ $("#teDel").onclick=()=>{
 function holdbars(nm,d){
   const stf=S.staff[nm]||{};
   const hs=(stf.hold||{})[key(d)]||[];
-  return hs.map(h=>`<div class="dbar holdbar" data-h="${h}" style="left:${(h-AX0)*HW}px;width:${HW/2}px" title="タップで消す"><span class="holddel" data-h="${h}" aria-label="この水色ブロックを消す">×</span></div>`).join("");
+  return hs.map(h=>`<div class="dbar holdbar" data-h="${h}" style="left:${(h-AX0)*HW}px;width:${HW/2}px" title="ダブルタップで消す"></div>`).join("");
+}
+function bindHoldBlock(block){
+  let lastTouch=0;
+  const remove=e=>{
+    e.preventDefault(); e.stopPropagation();
+    const row=block.closest('.drow');
+    if(row) toggleHold(row.dataset.n,+row.dataset.d,+block.dataset.h);
+  };
+  block.onclick=e=>e.stopPropagation();
+  block.ondblclick=remove;
+  block.onpointerup=e=>{
+    if(e.pointerType!=='touch') return;
+    const now=Date.now();
+    if(now-lastTouch<350){ lastTouch=0; remove(e); }
+    else lastTouch=now;
+  };
 }
 function toggleHold(nm,d,h){
   if(closedMonthEditBlocked()) return;
@@ -1647,7 +1663,7 @@ function dayRowClick(e,row,mode){
   const nm=row.dataset.n, d=+row.dataset.d, t=e.target;
   if(row.dataset.st&&!isStaffHomeStore(nm,row.dataset.st)){ openSupport(nm,d,row.dataset.st); return; }
   if(t.closest && t.closest('.dresize')) return; // 端の伸縮はドラッグで処理
-  if(t.classList && (t.classList.contains('holddel')||t.classList.contains('holdbar'))){ toggleHold(nm,d,+t.dataset.h); return; }
+  if(t.closest && t.closest('.holdbar')) return;
   if(mode==='tetsu'){ openSupport(nm,d,'鉄板'); return; }
   if(holdMode){
     const dt=t.closest('.dtime'); if(!dt) return;
