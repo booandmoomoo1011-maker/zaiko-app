@@ -361,8 +361,10 @@
     padding:0 5px; display:flex; align-items:center; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.18);}
   .dbar.off{background:#7ec8f0;}
   .dbar.holdbar{background:#9fd8f2; color:#0f5a82; z-index:3; overflow:hidden; padding:0; border-radius:0; touch-action:manipulation;}
-  .dbar .btime{pointer-events:auto; cursor:pointer;}
+  .dbar .btime{position:relative; z-index:2; pointer-events:auto; cursor:pointer;}
   .dbar .btime:hover{text-decoration:underline;}
+  .dbar .shiftconflict{position:absolute; top:0; bottom:0; z-index:1; background:#e53935; pointer-events:none; animation:shiftConflictBlink .85s ease-in-out infinite;}
+  @keyframes shiftConflictBlink{0%,100%{opacity:.86;}50%{opacity:.16;}}
   .dbar .dresize{position:absolute; top:0; width:12px; height:100%; cursor:ew-resize; touch-action:none; z-index:4;}
   .dbar .dresize-l{left:-3px;}
   .dbar .dresize-r{right:-3px;}
@@ -719,7 +721,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.102</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.103</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -955,7 +957,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.102"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.103"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1105,7 +1107,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.102</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.103</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1382,11 +1384,13 @@ function dbar(color,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*
 function dayShiftBackground(cls,s,e){ if(cls!=='ball'||e<=s) return ''; if(s>=14) return 'background:#f6c6da;'; if(e<=17) return 'background:#bfe6c4;'; const p=Math.max(0,Math.min(100,(17-s)/(e-s)*100)); return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`; }
 function dbarC(cls,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar ${cls}" style="left:${l}px;width:${w}px;${dayShiftBackground(cls,s,e)}">${label}</div>`; }
 function hourToStr(h){ h=Math.max(0,Math.min(24,h)); const hh=Math.floor(h+1e-6); let mm=Math.round((h-hh)*60); return pad(hh)+":"+pad(mm===60?0:mm); }
-function dEditBar(nm,d,seg,cls,ss,ee){
+function dEditBar(nm,d,seg,cls,ss,ee,st){
   const s=pHM(ss), e=pHM(ee); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
   const _bg=dayShiftBackground(cls,s,e);
-  return `<div class="dbar decisionbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" style="left:${l}px;width:${w}px;${_bg}"><span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-edge="start"></span><span class="btime bstart" data-f="start">${ss||''}</span><span class="btime bend" data-f="end">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-edge="end"></span></div>`;
+  const store=st||((S.staff[nm]||{}).store||"大須");
+  const overlap=shiftConflictOverlays(nm,d,store,s,e);
+  return `<div class="dbar decisionbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" style="left:${l}px;width:${w}px;${_bg}">${overlap}<span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="start"></span><span class="btime bstart" data-f="start">${ss||''}</span><span class="btime bend" data-f="end">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="end"></span></div>`;
 }
 function _segsOf(o,out){ if(!o||o.off) return; ['all','am','pm'].forEach(k=>{ if(o[k]){ const s=pHM(o[k].start),e=pHM(o[k].end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }); if(!o.all&&!o.am&&!o.pm&&(o.start||o.end)){ const s=pHM(o.start),e=pHM(o.end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }
 function supportOf(nm,d,st){
@@ -1419,6 +1423,17 @@ function externalSupportInfo(nm,d){
 }
 function staffDayConflict(nm,d){ const segs=[], stf=S.staff[nm]||{}; _segsOf((stf.decided||{})[key(d)],segs); STORES.forEach(st=>_segsOf(supportOf(nm,d,st),segs));
   for(let i=0;i<segs.length;i++) for(let j=i+1;j<segs.length;j++){ if(segs[i][0]<segs[j][1] && segs[j][0]<segs[i][1]) return true; } return false; }
+function shiftConflictRanges(nm,d,st,start,end){
+  if(start==null||end==null||end<=start) return [];
+  const staff=S.staff[nm]||{}, home=staff.store||"大須", others=[];
+  if(st!==home) _segsOf((staff.decided||{})[key(d)],others);
+  STORES.forEach(other=>{ if(other!==st&&other!==home) _segsOf(supportOf(nm,d,other),others); });
+  const ranges=others.map(part=>[Math.max(start,part[0]),Math.min(end,part[1])]).filter(part=>part[1]>part[0]).sort((a,b)=>a[0]-b[0]);
+  return ranges.reduce((merged,part)=>{ const prev=merged[merged.length-1]; if(prev&&part[0]<=prev[1]) prev[1]=Math.max(prev[1],part[1]); else merged.push(part.slice()); return merged; },[]);
+}
+function shiftConflictOverlays(nm,d,st,start,end){
+  return shiftConflictRanges(nm,d,st,start,end).map(part=>`<span class="shiftconflict" style="left:${(part[0]-start)/(end-start)*100}%;width:${(part[1]-part[0])/(end-start)*100}%" title="別店舗の勤務時間と重複"></span>`).join("");
+}
 function reqBars(nm,d){
   const stf=S.staff[nm]||{};
   const r=(stf.req||{})[key(d)]; if(!r||(!r.start&&!r.end)) return "";
@@ -1494,13 +1509,13 @@ function openDayView(d){
   g.querySelectorAll('.drow.dedit').forEach(row=>row.onclick=(e)=>dayRowClick(e,row,'edit'));
   g.querySelectorAll('.dreq').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.n, +b.dataset.d); });
   g.querySelectorAll('.dbar[data-req-n]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.reqN,+b.dataset.reqD); });
-  g.querySelectorAll('.drow.sedit').forEach(row=>row.onclick=()=>openSupport(row.dataset.n,+row.dataset.d,row.dataset.st));
+  g.querySelectorAll('.drow.sedit').forEach(row=>row.onclick=(e)=>{ if(e.target.closest&&e.target.closest('.dresize,.btime')) return; openSupport(row.dataset.n,+row.dataset.d,row.dataset.st); });
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openSupportPicker(+row.dataset.d,row.dataset.st));
   g.querySelectorAll('.holdbar').forEach(bindHoldBlock);
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.onclick=(e)=>e.stopPropagation(); inp.onchange=()=>{ if(closedMonthEditBlocked()) return; rememberDayUndo(dayViewDay); if(!S.storeMemo) S.storeMemo={}; const k=key(dayViewDay); if(!S.storeMemo[k]) S.storeMemo[k]={}; const st=inp.dataset.st, t=inp.value.trim(); if(t) S.storeMemo[k][st]=t; else delete S.storeMemo[k][st]; save(); }; });
   g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toggleStoreOff(b.dataset.st); });
-  g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f); });
+  g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f, bar.dataset.st); });
   $("#dayMask").style.display="flex"; _syncDayDecideBtn();
   // 横幅に合わせて縮小（縦は仕様どおりスクロールで下まで見る）
   requestAnimationFrame(fitDayGrid);
@@ -1582,10 +1597,10 @@ function dvStaffRow(nm,d,W,st){
   const wishBarHtml=wishBars(w,moved); bars+=wishBarHtml;
   const hasDecisionTime=!!(v&&!v.off&&(v.all||v.am||v.pm||v.start||v.end));
   if(hasDecisionTime){
-    if(v.all) bars+=dEditBar(nm,d,'all','ball',v.all.start,v.all.end);
-    if(v.am) bars+=dEditBar(nm,d,'am','bam',v.am.start,v.am.end);
-    if(v.pm) bars+=dEditBar(nm,d,'pm','bpm',v.pm.start,v.pm.end);
-    if(!v.all&&!v.am&&!v.pm&&(v.start||v.end)) bars+=dEditBar(nm,d,'all','ball',v.start,v.end);
+    if(v.all) bars+=dEditBar(nm,d,'all','ball',v.all.start,v.all.end,st);
+    if(v.am) bars+=dEditBar(nm,d,'am','bam',v.am.start,v.am.end,st);
+    if(v.pm) bars+=dEditBar(nm,d,'pm','bpm',v.pm.start,v.pm.end,st);
+    if(!v.all&&!v.am&&!v.pm&&(v.start||v.end)) bars+=dEditBar(nm,d,'all','ball',v.start,v.end,st);
   }
   const wtxt=w?wishMini(w):"";
   let wcls="gray"; if(w&&w.off) wcls="ng"; else if(w&&w.allday) wcls="maru";
@@ -1610,9 +1625,9 @@ function dvStoreSection(st,d,W,ticks){
   homeList.forEach(nm=>{ h+=dvStaffRow(nm,d,W,st); });
   assigned.forEach(nm=>{
     const t=supportOf(nm,d,st)||{}; let bars="";
-    if(t.all) bars+=dbarC('ball',pHM(t.all.start),pHM(t.all.end),`${t.all.start||''}〜${t.all.end||''}`);
-    if(t.am) bars+=dbarC('bam',pHM(t.am.start),pHM(t.am.end),`${t.am.start||''}〜${t.am.end||''}`);
-    if(t.pm) bars+=dbarC('bpm',pHM(t.pm.start),pHM(t.pm.end),`${t.pm.start||''}〜${t.pm.end||''}`);
+    if(t.all) bars+=dEditBar(nm,d,'all','ball',t.all.start,t.all.end,st);
+    if(t.am) bars+=dEditBar(nm,d,'am','bam',t.am.start,t.am.end,st);
+    if(t.pm) bars+=dEditBar(nm,d,'pm','bpm',t.pm.start,t.pm.end,st);
     const home=(S.staff[nm].store||"大須");
     const cf=staffDayConflict(nm,d);
     h+=`<div class="drow sedit" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="タップして応援時間を編集"><div class="dname"><span class="dnm">${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span><span class="dwish thome">${home}の人</span></div><div class="dtime" style="width:${W}px">${bars}${holdbars(nm,d)}</div></div>`;
@@ -1834,10 +1849,11 @@ function onResizeDown(e){
   const h=e.target.closest && e.target.closest('.dresize'); if(!h) return;
   if(e.preventDefault) e.preventDefault(); if(e.stopPropagation) e.stopPropagation();
   const dt=h.closest('.dtime'); if(!dt) return;
-  const dec=(S.staff[h.dataset.n].decided||{})[key(+h.dataset.d)];
+  const store=h.dataset.st||((S.staff[h.dataset.n]||{}).store||"大須");
+  const dec=storeDecision(h.dataset.n,+h.dataset.d,store);
   const seg=h.dataset.seg, o=dec&&dec[seg]; if(!o) return;
   const startH=pHM(o.start), endH=pHM(o.end); if(startH==null||endH==null) return;
-  rz={nm:h.dataset.n, d:+h.dataset.d, seg, edge:(h.dataset.edge||'end'), bar:h.closest('.dbar'), rect:dt.getBoundingClientRect(), uw:dt.offsetWidth||((AX1-AX0)*HW), startH, endH};
+  rz={nm:h.dataset.n, d:+h.dataset.d, st:store, seg, edge:(h.dataset.edge||'end'), bar:h.closest('.dbar'), rect:dt.getBoundingClientRect(), uw:dt.offsetWidth||((AX1-AX0)*HW), startH, endH};
   window.addEventListener('pointermove', onResizeMove);
   window.addEventListener('pointerup', onResizeUp);
 }
@@ -1858,7 +1874,7 @@ function onResizeMove(e){
 function onResizeUp(e){
   if(closedMonthEditBlocked()){ window.removeEventListener('pointermove',onResizeMove); window.removeEventListener('pointerup',onResizeUp); rz=null; return; }
   if(!rz) return; let hr=_rawHour(e.clientX);
-  const dec=S.staff[rz.nm].decided[key(rz.d)];
+  const dec=storeDecision(rz.nm,rz.d,rz.st);
   if(dec&&dec[rz.seg]){
     rememberDayUndo(rz.d);
     if(rz.edge==='start'){ hr=Math.max(AX0, Math.min(rz.endH-0.5, hr)); dec[rz.seg].start=hourToStr(hr); }
@@ -1870,10 +1886,11 @@ function onResizeUp(e){
 }
 /* 時間の数字をタップ → その時間だけ変更する吹き出し */
 let oneT=null;
-function openOneTime(nm,d,seg,f){
+function openOneTime(nm,d,seg,f,st){
   if(closedMonthEditBlocked()) return;
-  oneT={nm,d,seg,f};
-  const dec=(S.staff[nm].decided||{})[key(d)]||{};
+  const store=st||((S.staff[nm]||{}).store||"大須");
+  oneT={nm,d,seg,f,st:store};
+  const dec=storeDecision(nm,d,store)||{};
   const cur=(dec[seg]&&dec[seg][f])||'';
   $("#oneTtl").textContent=`${nm}　${M}/${d}　${f==='start'?'開始':'終了'}の時間`;
   const _note=(S.staff[nm].notes||{})[key(d)];
@@ -1885,7 +1902,7 @@ function openOneTime(nm,d,seg,f){
 $("#oneOk").onclick=()=>{
   if(closedMonthEditBlocked()||!oneT) return;
   const v=normTime($("#oneInput").value); if(!v){ appAlert("時間を入れてください（例 9:00）"); return; }
-  const dec=S.staff[oneT.nm].decided[key(oneT.d)];
+  const dec=storeDecision(oneT.nm,oneT.d,oneT.st);
   if(dec&&dec[oneT.seg]){ rememberDayUndo(oneT.d); dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
   $("#oneMask").style.display="none";
   const dd=dayViewDay; oneT=null; if(dd!=null) openDayView(dd);
