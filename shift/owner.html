@@ -733,7 +733,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.106</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.107</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -976,7 +976,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.106"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.107"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1102,6 +1102,10 @@ function ownerMonthIsClosed(y=Y,m=M){
   const today=japanToday();
   return y<today.year||(y===today.year&&m<today.month);
 }
+function ownerSubmissionDeadlinePassed(y=Y,m=M){
+  const today=japanToday(), deadline=m===1?{year:y-1,month:12,day:20}:{year:y,month:m-1,day:20};
+  return today.year>deadline.year||(today.year===deadline.year&&(today.month>deadline.month||(today.month===deadline.month&&today.day>deadline.day)));
+}
 function normalizeShiftMonth(){
   if(shiftMonthBeforeStart(Y,M)){ Y=SHIFT_START_YEAR; M=SHIFT_START_MONTH; }
   if(Y>SHIFT_END_YEAR){ Y=SHIFT_END_YEAR; M=12; }
@@ -1177,7 +1181,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.106</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.107</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1255,7 +1259,8 @@ function buildPalette(){
 function renderOwner(){
   const _monthClosed=ownerMonthIsClosed();
   const _submitKey=`${Y}-${pad(M)}`;
-  const _submittedCount=names().filter(nm=>!!(((((S.staff[nm]||{}).wish||{})._submittedMonths)||{})[_submitKey])).length;
+  const _deadlinePassed=ownerSubmissionDeadlinePassed();
+  const _submittedCount=names().filter(nm=>_deadlinePassed||!!(((((S.staff[nm]||{}).wish||{})._submittedMonths)||{})[_submitKey])).length;
   $("#ownerView").classList.toggle("closedmonth",_monthClosed);
   $("#oStatus").innerHTML=(_monthClosed?'<span class="ownerclosedstatus">🔒 受付終了・閲覧のみ　</span>':'')+(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${_submittedCount}/${names().length}名　`+
     (S.published?`<span class="pub">✅ 公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
@@ -1281,7 +1286,7 @@ function renderOwner(){
     rows+=`</tr>`;
     list.forEach(nm=>{
       const stf=S.staff[nm]||{};
-      const submitted=!!((((stf.wish||{})._submittedMonths)||{})[_submitKey]);
+      const submitted=_deadlinePassed||!!((((stf.wish||{})._submittedMonths)||{})[_submitKey]);
       const nameGuide=canManageStaff()?'名前を長押しすると同じ店舗内で順番を変更できます':'スタッフ名と希望の提出状況を確認できます';
       rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="namecontent"><span class="nmtxt" role="button" tabindex="0" data-guide-key="${canManageStaff()?'staff-order':'staff-status'}" data-guide="${nameGuide}">${esc(nm)}</span>${submitted?'<span class="submittedmark">提出済</span>':''}${canManageStaff()?`<button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button>`:''}</span></td>`;
       const wish=stf.wish||{};
