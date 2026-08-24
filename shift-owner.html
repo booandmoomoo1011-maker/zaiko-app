@@ -137,6 +137,7 @@
   #tbody td.todayc{background:var(--today);}
   #tbody td.ooff{background:#bfe3f5;}
   #tbody td.daystaffoff{background:#9fd8f2 !important;}
+  #tbody .monthoff-count{display:block; color:#0f5a82; font-size:13px; font-weight:800; line-height:1.15; text-align:center;}
   #tbody .cbubble{transform:scale(.34); transform-origin:top right;}
   #tbody td.hasrequest .wish{padding-right:18px;}
   .ownerreqmark{position:absolute;right:2px;bottom:2px;width:15px;height:15px;border-radius:50%;border:1px solid #fff;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.2);z-index:3;cursor:pointer;display:flex;align-items:center;justify-content:center;}
@@ -320,6 +321,7 @@
     font-size:11.5px; display:flex; flex-direction:column; justify-content:center; z-index:2; border-right:1px solid var(--line);}
   .drow.staffoff .dname{background:#9fd8f2; color:#0f5a82;}
   .dname .dnm{font-weight:700;display:flex;align-items:center;width:100%;min-width:0;}
+  .dname .staffoff-count{margin-left:3px; color:#0f5a82; font-size:13px; font-weight:800; flex:0 0 auto;}
   .dname .dreq{margin-left:auto; width:19px; height:19px; flex:0 0 19px; color:#fff; background:#2f9ad0; border:1px solid #fff; border-radius:50%; padding:0; cursor:pointer; vertical-align:middle; box-shadow:0 1px 2px rgba(47,154,208,.35); display:inline-flex; align-items:center; justify-content:center;}
   .dname .dreq::before{width:11px; height:11px;}
   .dname .dreq:hover{background:#167eae;}
@@ -721,7 +723,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.104</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.105</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -957,7 +959,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.104"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.105"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1107,7 +1109,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.104</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.105</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1169,6 +1171,13 @@ function monthlyStaffOff(nm,st,d){
   const staff=S.staff[nm]||{};
   return isStaffHomeStore(nm,st)&&!!(((staff.decided||{})[key(d)]||{}).off);
 }
+function staffDayOffCount(nm,d){
+  const decided=((S.staff[nm]||{}).decided)||{};
+  if(!((decided[key(d)]||{}).off)) return "";
+  let count=0;
+  for(let day=1;day<=d;day++) if((decided[key(day)]||{}).off) count++;
+  return Array.from("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛")[count-1]||`(${count})`;
+}
 function buildPalette(){
   const p=$("#mPalette"); p.innerHTML="";
   COLORS.forEach(c=>{ const d=document.createElement("div");
@@ -1222,7 +1231,8 @@ function renderOwner(){
         const oo=(stf.ooff||{})[key(d)];
         const so=isOff(d)?' stoff':'';
         const staffOff=monthlyStaffOff(nm,st,d);
-        rows+=`<td class="${cc}${hasNote?' hasnote':''}${rqState?' hasrequest':''}${oo?' ooff':''}${so}${staffOff?' daystaffoff':''}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}${rqMark}</td>`;
+        const offCount=staffOff?`<span class="monthoff-count">${staffDayOffCount(nm,d)}</span>`:"";
+        rows+=`<td class="${cc}${hasNote?' hasnote':''}${rqState?' hasrequest':''}${oo?' ooff':''}${so}${staffOff?' daystaffoff':''}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}${offCount}${rqMark}</td>`;
       }
       rows+="</tr>";
     });
@@ -1617,7 +1627,8 @@ function dvStaffRow(nm,d,W,st){
   const note=(stf.notes||{})[key(d)];
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
+  const offCount=v&&v.off?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${offCount}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
