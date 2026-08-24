@@ -125,7 +125,7 @@
   #tbody td.stoff{background:#eaf6fd !important;}
   .storeoff-btn{width:100%; height:100%; margin:0; border:1px solid currentColor; background:rgba(255,255,255,.42); color:inherit; font:inherit; font-weight:900; border-radius:7px; padding:5px 4px; cursor:pointer; white-space:nowrap;}
   .ownerclosedstatus{display:inline-block;color:#735f17;background:#fff3bd;border:1px solid #e5c85c;border-radius:8px;padding:3px 8px;font-weight:900;}
-  #ownerView.closedmonth #decideBtn{background:#ddd;color:#777;cursor:not-allowed;}
+  #ownerView.closedmonth #decideBtn,#ownerView.closedmonth #unpublishBtn{background:#ddd;color:#777;cursor:not-allowed;}
   #ownerView.closedmonth #tbody td[data-d]{cursor:default;}
   #dayGrid.closedmonth .drow.dedit,#dayGrid.closedmonth .drow.sedit,#dayGrid.closedmonth .drow.tadd,#dayGrid.closedmonth .dresize,#dayGrid.closedmonth .btime{cursor:default;}
   #dayGrid.closedmonth .storememo{background:#f3f3f3;color:#666;resize:none;}
@@ -293,6 +293,9 @@
   thead th.daycol:hover{background:#f7d0dc;}
   thead th.daycol .daybutton{display:block; padding:2px 4px; border:1px solid rgba(118,126,135,.3); border-radius:6px; background:rgba(255,255,255,.72); box-shadow:0 1px 2px rgba(0,0,0,.08);}
   thead th.daycol:hover .daybutton,thead th.daycol:focus-visible .daybutton{border-color:#d68a9e; background:#fff5f8; box-shadow:0 0 0 2px rgba(232,96,127,.13);}
+  thead th.daycol .daypublish{pointer-events:auto;display:block;width:100%;margin:3px 0 0;padding:2px 3px;border:1px solid #bac5ce;border-radius:5px;background:#fff;color:#6a7881;font-size:9px;font-weight:900;line-height:1.15;white-space:nowrap;cursor:pointer;}
+  thead th.daycol .daypublish.on{border-color:#2fa04a;background:#e8f7ec;color:#247c36;}
+  thead th.daycol .daypublish:disabled{border-color:#e1e5e8;background:#f5f6f7;color:#b5bcc2;cursor:not-allowed;}
   .daymask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:60; padding:12px;}
   .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1120px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
   .dmz{position:absolute; z-index:12; touch-action:none;}
@@ -740,7 +743,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.108</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.109</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -766,7 +769,8 @@
     <button class="btn gray" id="printBtn" type="button" data-guide-key="print-decided" data-guide="作成したシフトを印刷します">🖨 決定シフト</button>
     <button class="btn gray" id="printPickBtn" type="button" data-guide-key="print-day" data-guide="日付を選んで日別シフトを印刷します">🖨 日別(選ぶ)</button>
     <button class="btn gray" id="printBlankBtn" type="button" data-guide-key="print-blank" data-guide="記入用の白紙シフトを印刷します">🖨 白紙</button>
-    <button class="btn decide" id="decideBtn" type="button" data-guide-key="publish-month" data-guide="完成した１か月分のシフトをスタッフへ公開・取消します">この月をスタッフに公開</button>
+    <button class="btn decide" id="decideBtn" type="button" data-guide-key="publish-month" data-guide="決定済みの日をまとめてスタッフへ公開します">決定済みをまとめて公開</button>
+    <button class="btn gray" id="unpublishBtn" type="button" data-guide-key="unpublish-month" data-guide="この月の公開済みシフトをまとめて非公開にします">公開済みをまとめて非公開</button>
     <button class="btn gray" id="rosterBtn" type="button" data-guide-key="manage-staff" data-guide="スタッフ名の登録と専用URLの発行ができます">👥 名前</button>
     <button class="btn gray" id="editorUrlBtn" type="button" data-guide-key="editor-urls" data-guide="シフト編集者３人分の専用URLを発行できます">🔗 編集者</button>
     <button class="btn gray" id="setBtn" type="button" data-guide-key="settings" data-guide="アプリの設定を確認できます">⚙ 設定</button>
@@ -995,7 +999,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.108"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.109"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1200,7 +1204,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.108</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.109</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1217,6 +1221,42 @@ function touchUpdated(){ const t=new Date(); S.updatedAt=`${t.getFullYear()}/${t
 function names(){ return Object.keys(S.staff); }
 function storeStaff(st){ return names().filter(n=>(S.staff[n].store||"大須")===st); }
 function isStaffHomeStore(nm,st){ const staff=S.staff[nm]; return !staff||(staff.store||"大須")===st; }
+function isShiftDayPublished(date){
+  if(!S.published||!S.decidedDays||!S.decidedDays[date]) return false;
+  const marked=S.decidedDays._published;
+  return !marked||typeof marked!=="object"?true:marked[date]===true;
+}
+function ensurePublishedDayMap(){
+  if(!S.decidedDays||typeof S.decidedDays!=="object") S.decidedDays={};
+  let marked=S.decidedDays._published;
+  if(!marked||typeof marked!=="object"||Array.isArray(marked)){
+    marked={};
+    if(S.published) Object.keys(S.decidedDays).forEach(date=>{ if(/^\d{4}-\d{2}-\d{2}$/.test(date)&&S.decidedDays[date]) marked[date]=true; });
+    S.decidedDays._published=marked;
+  }
+  return marked;
+}
+function syncShiftPublicationFlag(){
+  const marked=S.decidedDays&&S.decidedDays._published;
+  if(marked&&typeof marked==="object") S.published=Object.keys(marked).some(date=>marked[date]===true&&!!S.decidedDays[date]);
+  return !!S.published;
+}
+function monthPublicationCounts(){
+  let decided=0,published=0;
+  for(let d=1;d<=DAYS;d++){ const date=key(d); if(S.decidedDays&&S.decidedDays[date]){ decided++; if(isShiftDayPublished(date)) published++; } }
+  return {decided,published};
+}
+function togglePublishedDay(d){
+  if(closedMonthEditBlocked()) return false;
+  const date=key(d);
+  if(!S.decidedDays||!S.decidedDays[date]){ appAlert("先にこの日を決定してください"); return false; }
+  const marked=ensurePublishedDayMap();
+  if(marked[date]) delete marked[date]; else marked[date]=true;
+  syncShiftPublicationFlag();
+  touchUpdated(); save(); renderOwner();
+  const staffView=document.querySelector("#staffView"); if(staffView&&staffView.style.display!=="none") renderStaff();
+  return true;
+}
 function storeDecision(nm,d,st){
   return isStaffHomeStore(nm,st)?(((S.staff[nm]||{}).decided||{})[key(d)]||null):supportOf(nm,d,st);
 }
@@ -1280,19 +1320,24 @@ function renderOwner(){
   const _submitKey=`${Y}-${pad(M)}`;
   const _deadlinePassed=ownerSubmissionDeadlinePassed();
   const _submittedCount=names().filter(nm=>_deadlinePassed||!!(((((S.staff[nm]||{}).wish||{})._submittedMonths)||{})[_submitKey])).length;
+  const _publication=monthPublicationCounts();
   $("#ownerView").classList.toggle("closedmonth",_monthClosed);
   $("#oStatus").innerHTML=(_monthClosed?'<span class="ownerclosedstatus">🔒 受付終了・閲覧のみ　</span>':'')+(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${_submittedCount}/${names().length}名　`+
-    (S.published?`<span class="pub">✅ 公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
-  $("#decideBtn").textContent=_monthClosed?"受付終了":(S.published?"公開を取り消す":"この月をスタッフに公開");
-  $("#decideBtn").disabled=_monthClosed;
+    (_publication.published?`<span class="pub">✅ ${_publication.published}/${_publication.decided}日公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
+  $("#decideBtn").textContent=_monthClosed?"受付終了":"決定済みをまとめて公開";
+  $("#decideBtn").disabled=_monthClosed||!_publication.decided;
+  $("#unpublishBtn").disabled=_monthClosed||!_publication.published;
   const today=new Date(), todayStr=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
   let th=`<tr><th class="corner name">スタッフ</th>`;
   for(let d=1;d<=DAYS;d++){ const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
     const cls=((dow===0||hol)?"sun ":dow===6?"sat ":"")+(key(d)===todayStr?"today":"");
-    th+=`<th class="daycol ${cls}" data-day="${d}" data-guide-key="edit-date" data-guide="日付を押すとシフト編集できます" role="button" tabindex="0"${HOL[key(d)]?` aria-label="${esc(HOL[key(d)])} ${M}/${d}"`:""}><span class="daybutton">${DOW[dow]}<br>${M}/${d}</span></th>`; }
+    const dayDecided=!!(S.decidedDays&&S.decidedDays[key(d)]), dayPublished=isShiftDayPublished(key(d));
+    const publishLabel=dayPublished?"✓ 公開":"□ 公開";
+    const publishHint=dayDecided?(dayPublished?"公開を取り消します":"この日の決定シフトを公開します"):"先にこの日を決定してください";
+    th+=`<th class="daycol ${cls}" data-day="${d}" data-guide-key="edit-date" data-guide="日付を押すとシフト編集できます" role="button" tabindex="0"${HOL[key(d)]?` aria-label="${esc(HOL[key(d)])} ${M}/${d}"`:""}><span class="daybutton">${DOW[dow]}<br>${M}/${d}</span><button type="button" class="daypublish${dayPublished?' on':''}" data-day="${d}" data-guide-key="publish-day" data-guide="決定済みの日だけスタッフへ公開・非公開できます" title="${publishHint}" aria-label="${publishHint}"${_monthClosed||!dayDecided?' disabled':''}>${publishLabel}</button></th>`; }
   $("#thead").innerHTML=th+"</tr>";
-  $("#thead").onclick=(e)=>{ const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day) openDayView(+th.dataset.day); };
-  $("#thead").onkeydown=(e)=>{ if(e.key!=="Enter"&&e.key!==" ") return; const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day){ e.preventDefault(); openDayView(+th.dataset.day); } };
+  $("#thead").onclick=(e)=>{ const button=e.target.closest&&e.target.closest('.daypublish'); if(button){ e.stopPropagation(); togglePublishedDay(+button.dataset.day); return; } const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day) openDayView(+th.dataset.day); };
+  $("#thead").onkeydown=(e)=>{ if(e.target.closest&&e.target.closest('.daypublish')) return; if(e.key!=="Enter"&&e.key!==" ") return; const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day){ e.preventDefault(); openDayView(+th.dataset.day); } };
   let rows="";
   STORES.forEach(st=>{
     const R=getRoster();
@@ -1443,6 +1488,8 @@ const DAY_UNDO_META=['storeOff','storeMemo','decidedDays'];
 function dayUndoClone(value){ return value===undefined?undefined:JSON.parse(JSON.stringify(value)); }
 function dayUndoSnapshot(d){
   const date=key(d), snapshot={date,staff:{},meta:{}};
+  const marked=S.decidedDays&&S.decidedDays._published;
+  snapshot.publication={global:!!S.published,explicit:!!(marked&&typeof marked==="object"),present:!!(marked&&Object.prototype.hasOwnProperty.call(marked,date)),value:marked&&Object.prototype.hasOwnProperty.call(marked,date)?dayUndoClone(marked[date]):undefined};
   Object.keys(S.staff||{}).forEach(nm=>{
     const staff=S.staff[nm]||{}, record={};
     DAY_UNDO_FIELDS.forEach(field=>{ if(staff[field]&&Object.prototype.hasOwnProperty.call(staff[field],date)) record[field]=dayUndoClone(staff[field][date]); });
@@ -1476,6 +1523,15 @@ function undoDayChange(){
     if(Object.prototype.hasOwnProperty.call(snapshot.meta,field)){ if(!S[field]) S[field]={}; S[field][date]=dayUndoClone(snapshot.meta[field]); }
     else if(S[field]) delete S[field][date];
   });
+  if(snapshot.publication){
+    if(snapshot.publication.explicit){
+      if(!S.decidedDays||typeof S.decidedDays!=="object") S.decidedDays={};
+      if(!S.decidedDays._published||typeof S.decidedDays._published!=="object") S.decidedDays._published={};
+      if(snapshot.publication.present) S.decidedDays._published[date]=dayUndoClone(snapshot.publication.value);
+      else delete S.decidedDays._published[date];
+    }else if(S.decidedDays) delete S.decidedDays._published;
+    S.published=!!snapshot.publication.global;
+  }
   touchUpdated(); save(); renderOwner();
   const staffView=document.querySelector('#staffView'); if(staffView&&staffView.style.display!=='none') renderStaff();
   openDayView(d); syncDayUndoButton();
@@ -1484,7 +1540,10 @@ function undoDayChange(){
 function clearDayDecisionOnShiftChange(d){
   const date=key(d);
   if(!S.decidedDays||!S.decidedDays[date]) return false;
+  const wasPublished=isShiftDayPublished(date), marked=wasPublished?ensurePublishedDayMap():S.decidedDays._published;
+  if(marked&&typeof marked==="object") delete marked[date];
   delete S.decidedDays[date];
+  syncShiftPublicationFlag();
   if(dayViewDay===d) _syncDayDecideBtn();
   return true;
 }
@@ -1659,7 +1718,24 @@ function toggleStoreOff(st){
   save(); openDayView(dayViewDay); renderOwner();
 }
 function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"この日を決定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#2fa04a"); b.style.color="#fff"; }
-$("#dayDecide").onclick=()=>{ if(closedMonthEditBlocked()||dayViewDay==null) return; rememberDayUndo(dayViewDay); if(!S.decidedDays) S.decidedDays={}; const k=key(dayViewDay); const willDecide=!S.decidedDays[k]; if(S.decidedDays[k]) delete S.decidedDays[k]; else S.decidedDays[k]=true; touchUpdated(); save(); _syncDayDecideBtn(); renderOwner(); if(document.querySelector("#staffView").style.display!=="none") renderStaff(); if(willDecide) $("#dayMask").style.display="none"; };
+$("#dayDecide").onclick=()=>{
+  if(closedMonthEditBlocked()||dayViewDay==null) return;
+  rememberDayUndo(dayViewDay);
+  if(!S.decidedDays) S.decidedDays={};
+  const k=key(dayViewDay), willDecide=!S.decidedDays[k];
+  if(willDecide){
+    if(S.published&&(!S.decidedDays._published||typeof S.decidedDays._published!=="object")) ensurePublishedDayMap();
+    S.decidedDays[k]=true;
+  }else{
+    const marked=isShiftDayPublished(k)?ensurePublishedDayMap():S.decidedDays._published;
+    if(marked&&typeof marked==="object") delete marked[k];
+    delete S.decidedDays[k];
+    syncShiftPublicationFlag();
+  }
+  touchUpdated(); save(); _syncDayDecideBtn(); renderOwner();
+  if(document.querySelector("#staffView").style.display!=="none") renderStaff();
+  if(willDecide) $("#dayMask").style.display="none";
+};
 $("#dayUndo").onclick=()=>undoDayChange();
 function syncHoldToggle(){ const button=$("#holdToggle"); if(button){ button.classList.toggle('on',holdMode); button.setAttribute('aria-pressed',holdMode?'true':'false'); button.textContent=holdMode?'休憩 ON':'休憩 OFF'; } const hint=$("#holdHint"); if(hint) hint.style.display=holdMode?'inline-block':'none'; }
 $("#holdToggle").onclick=()=>{ if(closedMonthEditBlocked()) return; holdMode=!holdMode; $("#dayGrid").classList.toggle('holdmode',holdMode); syncHoldToggle(); };
@@ -2433,11 +2509,23 @@ document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{
 $("#mask").onclick=e=>{ if(e.target.id==="mask") closeEditor(); };
 $("#decideBtn").onclick=async()=>{
   if(closedMonthEditBlocked()) return;
-  const next=!S.published;
-  if(!await appConfirm(next?"確定した日をスタッフに公開します。\nスタッフが自分の出勤時間を見られるようになります。":"公開を取り消します。\nスタッフからシフトが見えなくなります。",{title:next?"シフトを公開しますか？":"公開を取り消しますか？",confirmText:next?"公開する ✓":"取り消す",kind:next?"":"danger",icon:next?"📅":"⚠️"})) return;
-  S.published=next;
-  if(next) touchUpdated();
+  const dates=[]; for(let d=1;d<=DAYS;d++){ const date=key(d); if(S.decidedDays&&S.decidedDays[date]) dates.push(date); }
+  if(!dates.length){ appAlert("先に公開する日を決定してください"); return; }
+  if(!await appConfirm(`決定済みの${dates.length}日分をスタッフに公開します。\n未決定の日は公開されません。`,{title:"決定済みをまとめて公開しますか？",confirmText:"まとめて公開 ✓",icon:"📅"})) return;
+  const marked=ensurePublishedDayMap(); dates.forEach(date=>{ marked[date]=true; });
+  syncShiftPublicationFlag();
+  touchUpdated();
   save(); renderOwner();
+  if(document.querySelector("#staffView").style.display!=="none") renderStaff();
+};
+$("#unpublishBtn").onclick=async()=>{
+  if(closedMonthEditBlocked()) return;
+  const dates=[]; for(let d=1;d<=DAYS;d++){ const date=key(d); if(isShiftDayPublished(date)) dates.push(date); }
+  if(!dates.length){ appAlert("この月に公開中の日はありません"); return; }
+  if(!await appConfirm(`公開中の${dates.length}日分をまとめて非公開にします。\nスタッフには勤務時間が表示されなくなります。`,{title:"公開済みをまとめて非公開にしますか？",confirmText:"まとめて非公開",kind:"danger",icon:"⚠️"})) return;
+  const marked=ensurePublishedDayMap(); dates.forEach(date=>{ delete marked[date]; });
+  syncShiftPublicationFlag();
+  touchUpdated(); save(); renderOwner();
   if(document.querySelector("#staffView").style.display!=="none") renderStaff();
 };
 
@@ -2514,7 +2602,7 @@ function renderMine(me){
     const wt=wishMini(wsh[key(d)]);
     const wsmall=wt?`<span class="wsmall">${wt}</span>`:"";
     let body="";
-    const v=(S.published&&S.decidedDays&&S.decidedDays[key(d)])?dec[key(d)]:null;
+    const v=isShiftDayPublished(key(d))?dec[key(d)]:null;
     if(v){
       if(v.off) body='<span class="moff">休</span>';
       else{
@@ -2525,7 +2613,7 @@ function renderMine(me){
         if(!v.all&&!v.am&&!v.pm&&(v.start||v.end)) body+=`<span class="mtime mall">${v.start||''}-${v.end||''}</span>`;
       }
     }
-    if(S.published&&S.decidedDays&&S.decidedDays[key(d)]) STORES.forEach(st=>{
+    if(isShiftDayPublished(key(d))) STORES.forEach(st=>{
       if(st===home) return;
       const tv=supportOf(me,d,st); if(!tv||(!tv.all&&!tv.am&&!tv.pm)) return;
       const sc=(STORE_COLOR[st]||STORE_COLOR["大須"]).hd;
