@@ -136,6 +136,7 @@
   #tbody .cbubble{top:1px; right:1px;}
   #tbody td.todayc{background:var(--today);}
   #tbody td.ooff{background:#bfe3f5;}
+  #tbody td.daystaffoff{background:#9fd8f2 !important;}
   #tbody .cbubble{transform:scale(.34); transform-origin:top right;}
   #tbody td.hasrequest .wish{padding-right:18px;}
   .ownerreqmark{position:absolute;right:2px;bottom:2px;width:15px;height:15px;border-radius:50%;border:1px solid #fff;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.2);z-index:3;cursor:pointer;display:flex;align-items:center;justify-content:center;}
@@ -718,7 +719,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.101</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.102</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -954,7 +955,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.101"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.102"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1104,7 +1105,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.101</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.102</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1162,6 +1163,10 @@ function decChips(dv){
   if(!dv.all&&!dv.am&&!dv.pm&&(dv.start||dv.end)) h+=`<div class="chip call">${dv.start||""}〜${dv.end||""}</div>`;
   return h;
 }
+function monthlyStaffOff(nm,st,d){
+  const staff=S.staff[nm]||{};
+  return isStaffHomeStore(nm,st)&&!!(((staff.decided||{})[key(d)]||{}).off);
+}
 function buildPalette(){
   const p=$("#mPalette"); p.innerHTML="";
   COLORS.forEach(c=>{ const d=document.createElement("div");
@@ -1214,7 +1219,8 @@ function renderOwner(){
         const rqMark=rqState?`<button type="button" class="ownerreqmark ${rqState}" data-n="${esc(nm)}" data-d="${d}" aria-label="${rqLabel}" title="${rqLabel}（タップして変更・削除）"></button>`:'';
         const oo=(stf.ooff||{})[key(d)];
         const so=isOff(d)?' stoff':'';
-        rows+=`<td class="${cc}${hasNote?' hasnote':''}${rqState?' hasrequest':''}${oo?' ooff':''}${so}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}${rqMark}</td>`;
+        const staffOff=monthlyStaffOff(nm,st,d);
+        rows+=`<td class="${cc}${hasNote?' hasnote':''}${rqState?' hasrequest':''}${oo?' ooff':''}${so}${staffOff?' daystaffoff':''}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}${rqMark}</td>`;
       }
       rows+="</tr>";
     });
