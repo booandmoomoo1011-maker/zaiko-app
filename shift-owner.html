@@ -715,7 +715,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.97</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.98</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -951,7 +951,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.97"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.98"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1101,7 +1101,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.97</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.98</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1326,12 +1326,13 @@ function _fw2hw(s){ return String(s).replace(/[０-９]/g,c=>String.fromCharCode
 function pHM(s){ if(!s) return null; s=_fw2hw(s); const a=s.split(':'); const h=parseInt(a[0],10); if(isNaN(h)) return null; return h+((parseInt(a[1],10)||0)/60); }
 function normTime(v){ if(!v) return ''; v=_fw2hw(v).trim(); if(!v) return ''; const a=v.split(':'); let h=parseInt(a[0],10); if(isNaN(h)) return ''; let m=a.length>1?parseInt(a[1],10):0; if(isNaN(m)) m=0; if(h>23)h=23; if(h<0)h=0; if(m>59)m=59; if(m<0)m=0; return pad(h)+':'+pad(m); }
 function dbar(color,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar" style="left:${l}px;width:${w}px;background:${color}">${label}</div>`; }
-function dbarC(cls,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar ${cls}" style="left:${l}px;width:${w}px">${label}</div>`; }
+function dayShiftBackground(cls,s,e){ if(cls!=='ball'||e<=s) return ''; const p=Math.max(0,Math.min(100,(17-s)/(e-s)*100)); return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`; }
+function dbarC(cls,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar ${cls}" style="left:${l}px;width:${w}px;${dayShiftBackground(cls,s,e)}">${label}</div>`; }
 function hourToStr(h){ h=Math.max(0,Math.min(24,h)); const hh=Math.floor(h+1e-6); let mm=Math.round((h-hh)*60); return pad(hh)+":"+pad(mm===60?0:mm); }
 function dEditBar(nm,d,seg,cls,ss,ee){
   const s=pHM(ss), e=pHM(ee); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
-  let _bg=""; if(cls==='ball' && e>s){ const _p=Math.max(0,Math.min(100,(14-s)/(e-s)*100)); _bg=`background:linear-gradient(90deg,#bfe6c4 0 ${_p}%,#f6c6da ${_p}%);`; }
+  const _bg=dayShiftBackground(cls,s,e);
   return `<div class="dbar decisionbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" style="left:${l}px;width:${w}px;${_bg}"><span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-edge="start"></span><span class="btime bstart" data-f="start">${ss||''}</span><span class="btime bend" data-f="end">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-edge="end"></span></div>`;
 }
 function _segsOf(o,out){ if(!o||o.off) return; ['all','am','pm'].forEach(k=>{ if(o[k]){ const s=pHM(o[k].start),e=pHM(o[k].end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }); if(!o.all&&!o.am&&!o.pm&&(o.start||o.end)){ const s=pHM(o.start),e=pHM(o.end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }
@@ -1669,7 +1670,22 @@ function _xToHour(e, dt, snapFloor){
   let hr=AX0+(snapFloor?Math.floor(ux/(HW/2)):Math.round(ux/(HW/2)))*0.5;
   return Math.max(AX0, Math.min(AX1, hr));
 }
-function applyWishDecision(nm,d,seg,st){
+function availableWishSegments(start,end,occupied){
+  let gaps=[[start,end]];
+  (occupied||[]).forEach(part=>{
+    const from=Math.max(start,part[0]), to=Math.min(end,part[1]);
+    if(to<=from) return;
+    gaps=gaps.flatMap(gap=>{
+      if(to<=gap[0]||from>=gap[1]) return [gap];
+      const remaining=[];
+      if(from>gap[0]) remaining.push([gap[0],from]);
+      if(to<gap[1]) remaining.push([to,gap[1]]);
+      return remaining;
+    });
+  });
+  return gaps.filter(gap=>gap[1]>gap[0]);
+}
+function applyWishDecision(nm,d,seg,st,selectedHour){
   if(closedMonthEditBlocked()||(st&&!isStaffHomeStore(nm,st))) return false;
   const staff=S.staff[nm];
   if(!staff) return false;
@@ -1679,9 +1695,23 @@ function applyWishDecision(nm,d,seg,st){
   if(!source||!source.start||!source.end) return false;
   const start=pHM(source.start), end=pHM(source.end);
   if(start==null||end==null||end<=start) return false;
+  const moved=externalSupportInfo(nm,d);
+  const available=availableWishSegments(start,end,moved.segs);
+  if(!available.length) return false;
   if(!staff.decided) staff.decided={};
   const k=key(d), decision=staff.decided[k]||{};
-  decision[seg]={start:source.start,end:source.end};
+  const asTime=(value,original,edge)=>value===edge?original:hourToStr(value);
+  if(seg==='all'&&available.length>1){
+    delete decision.all;
+    available.forEach((gap,index)=>{
+      const preferred=gap[1]<=17?'am':gap[0]>=14?'pm':index===0?'am':'pm';
+      const part=!decision[preferred]?preferred:!decision.all?'all':!decision.am?'am':!decision.pm?'pm':null;
+      if(part) decision[part]={start:asTime(gap[0],source.start,start),end:asTime(gap[1],source.end,end)};
+    });
+  }else{
+    const gap=available.find(part=>selectedHour>=part[0]&&selectedHour<part[1])||available.reduce((widest,part)=>(part[1]-part[0])>(widest[1]-widest[0])?part:widest);
+    decision[seg]={start:asTime(gap[0],source.start,start),end:asTime(gap[1],source.end,end)};
+  }
   delete decision.off;
   if(!decision.color) decision.color='#8bc98f';
   staff.decided[k]=decision;
@@ -1704,7 +1734,8 @@ function dayRowClick(e,row,mode){
   const wish=t.closest&&t.closest('.wishbar');
   if(wish&&!wish.classList.contains('wishfadecover')){
     const seg=wish.classList.contains('wam')?'am':wish.classList.contains('wpm')?'pm':'all';
-    applyWishDecision(nm,d,seg,row.dataset.st); return;
+    const dt=wish.closest('.dtime'), selectedHour=dt&&Number.isFinite(e.clientX)?_xToHour(e,dt,false):null;
+    applyWishDecision(nm,d,seg,row.dataset.st,selectedHour); return;
   }
   // 決定シフトの棒・名前をタップ → 全体編集（既存の「消す」を利用）
   if(t.closest('.decisionbar') || t.closest('.dname')){ openEditor(nm,d); return; }
@@ -1848,10 +1879,10 @@ function printDecisionMarks(rec,hr){
   let html='';
   ['all','am','pm'].forEach(seg=>{
     const part=rec[seg]; if(!part) return;
-    const color=seg==='am'?'pam':seg==='pm'?'ppm':hr<14?'pam':'ppm';
+    const color=seg==='am'?'pam':seg==='pm'?'ppm':hr<17?'pam':'ppm';
     html+=printSegmentMark(part.start,part.end,hr,`pshift ${color}`);
   });
-  if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)) html+=printSegmentMark(rec.start,rec.end,hr,`pshift ${hr<14?'pam':'ppm'}`);
+  if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)) html+=printSegmentMark(rec.start,rec.end,hr,`pshift ${hr<17?'pam':'ppm'}`);
   return html;
 }
 function printTimeCell(nm,d,st,hr){
