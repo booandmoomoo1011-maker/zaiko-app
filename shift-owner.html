@@ -743,7 +743,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.109</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.110</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -999,7 +999,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.109"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.110"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1204,7 +1204,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.109</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.110</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1592,8 +1592,16 @@ function externalSupportInfo(nm,d){
   });
   return out;
 }
-function staffDayConflict(nm,d){ const segs=[], stf=S.staff[nm]||{}; _segsOf((stf.decided||{})[key(d)],segs); STORES.forEach(st=>_segsOf(supportOf(nm,d,st),segs));
-  for(let i=0;i<segs.length;i++) for(let j=i+1;j<segs.length;j++){ if(segs[i][0]<segs[j][1] && segs[j][0]<segs[i][1]) return true; } return false; }
+function staffDayConflict(nm,d){
+  const stf=S.staff[nm]||{}, home=stf.store||"大須", entries=[];
+  const addStore=(store,record)=>{ const segs=[]; _segsOf(record,segs); segs.forEach(seg=>entries.push({store:store,start:seg[0],end:seg[1]})); };
+  addStore(home,(stf.decided||{})[key(d)]);
+  STORES.forEach(store=>{ if(store!==home) addStore(store,supportOf(nm,d,store)); });
+  for(let i=0;i<entries.length;i++) for(let j=i+1;j<entries.length;j++){
+    if(entries[i].store!==entries[j].store&&entries[i].start<entries[j].end&&entries[j].start<entries[i].end) return true;
+  }
+  return false;
+}
 function shiftConflictRanges(nm,d,st,start,end){
   if(start==null||end==null||end<=start) return [];
   const staff=S.staff[nm]||{}, home=staff.store||"大須", others=[];
