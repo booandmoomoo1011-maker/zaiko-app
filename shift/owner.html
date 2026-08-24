@@ -716,7 +716,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.99</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.100</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -952,7 +952,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.99"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.100"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1102,7 +1102,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.99</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.100</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1534,7 +1534,7 @@ function dvStaffRow(nm,d,W,st){
   const note=(stf.notes||{})[key(d)];
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
@@ -1903,8 +1903,9 @@ function printDecisionMarks(rec,hr){
 function printTimeCell(nm,d,st,hr){
   const staff=S.staff[nm]||{}, k=key(d);
   const wish=isStaffHomeStore(nm,st)?printWishMarks((staff.wish||{})[k],hr):'';
-  const shift=printDecisionMarks(storeDecision(nm,d,st),hr);
-  const hold=((staff.hold||{})[k]||[]).map(start=>printSegmentMark(start,start+.5,hr,'phold')).join('');
+  const decision=storeDecision(nm,d,st);
+  const shift=printDecisionMarks(decision,hr);
+  const hold=decision&&decision.off?'':((staff.hold||{})[k]||[]).map(start=>printSegmentMark(start,start+.5,hr,'phold')).join('');
   if(!wish&&!shift&&!hold) return '<td></td>';
   return `<td class="ptime${wish?' haswish':''}">${wish}${shift}${hold}</td>`;
 }
