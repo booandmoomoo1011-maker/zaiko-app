@@ -325,12 +325,19 @@
     font-size:11.5px; display:flex; flex-direction:column; justify-content:center; z-index:2; border-right:1px solid var(--line);}
   .drow.staffoff .dname{background:#9fd8f2; color:#0f5a82;}
   .dname .dnm{font-weight:700;display:flex;align-items:center;width:100%;min-width:0;}
-  .dname .day-namebutton{display:inline-flex; min-width:0; align-items:center; padding:2px 4px; border:1px solid #d3dce3; border-radius:5px; background:rgba(255,255,255,.8); box-shadow:0 1px 2px rgba(0,0,0,.07); cursor:pointer;}
+  .dname .day-namebutton{display:inline-flex; min-width:0; align-items:center; padding:2px 4px; border:1px solid #d3dce3; border-radius:5px; background:rgba(255,255,255,.8); box-shadow:0 1px 2px rgba(0,0,0,.07); cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .drow.staffoff .dname .day-namebutton{border-color:#77bedf; background:rgba(255,255,255,.48);}
   .dname .staffoff-count{margin-left:3px; color:#0f5a82; font-size:13px; font-weight:800; flex:0 0 auto;}
-  .dname .dreq{margin-left:auto; width:19px; height:19px; flex:0 0 19px; color:#fff; background:#2f9ad0; border:1px solid #fff; border-radius:50%; padding:0; cursor:pointer; vertical-align:middle; box-shadow:0 1px 2px rgba(47,154,208,.35); display:inline-flex; align-items:center; justify-content:center;}
+  .dname .dactions{margin-left:auto;display:flex;flex:0 0 21px;flex-direction:column;align-items:center;gap:2px;}
+  .dname .dreq{margin-left:0; width:19px; height:19px; flex:0 0 19px; color:#fff; background:#2f9ad0; border:1px solid #fff; border-radius:50%; padding:0; cursor:pointer; vertical-align:middle; box-shadow:0 1px 2px rgba(47,154,208,.35); display:inline-flex; align-items:center; justify-content:center;}
   .dname .dreq::before{width:11px; height:11px;}
   .dname .dreq:hover{background:#167eae;}
+  .dname .dnotice{width:19px;height:19px;flex:0 0 19px;border:1px solid #d9a900;border-radius:50%;padding:0;background:#fff8cf;color:#f1c40f;font-size:16px;line-height:1;cursor:pointer;box-shadow:0 1px 3px rgba(180,135,0,.3);display:inline-flex;align-items:center;justify-content:center;}
+  .dname .dnotice.hasnotice{background:#fff1a8;color:#e8b800;box-shadow:0 0 0 2px rgba(241,196,15,.22),0 1px 3px rgba(180,135,0,.35);}
+  .dname .dnotice.confirmed{background:#fff0df;border-color:#ef8b24;color:#ef8b24;box-shadow:0 0 0 2px rgba(239,139,36,.18),0 1px 3px rgba(180,90,0,.3);}
+  .dname .dnotice:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+  .owner-notice-text{width:100%;min-height:110px;resize:vertical;box-sizing:border-box;border:1.5px solid var(--line);border-radius:10px;padding:10px;font:inherit;line-height:1.5;}
+  .owner-notice-state{font-size:12px;font-weight:800;color:#8a6d00;margin:6px 0 8px;text-align:left;}
   .drow.tedit{cursor:pointer;} .drow.tedit:hover{background:#eef8fd;}
   .drow.tadd{cursor:pointer; background:#f5fbfe;} .drow.tadd:hover{background:#e7f4fb;}
   .taddtxt{color:#1e6f95; font-weight:800; font-size:11px;}
@@ -733,7 +740,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.107</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.108</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -908,6 +915,18 @@
   </div>
 </div>
 
+<!-- 案内（スタッフのカレンダーへ文章を送り、確認状態を受け取る） -->
+<div class="cmtmask" id="noticeMask">
+  <div class="cmtbox">
+    <div class="ttl" id="noticeTtl"></div>
+    <textarea id="noticeText" class="owner-notice-text" maxlength="500" placeholder="スタッフへ伝える案内を入力してください"></textarea>
+    <div class="owner-notice-state" id="noticeState"></div>
+    <button id="noticeSend" type="button" style="background:#e2b400;color:#fff;">この案内を送る</button>
+    <button id="noticeDelete" type="button" style="display:none;background:#c0596b;color:#fff;margin-top:8px;">この案内を削除</button>
+    <button id="noticeClose" type="button" style="background:#c9c9c9;margin-top:8px;">閉じる</button>
+  </div>
+</div>
+
 <!-- 全店舗：提出者から選ぶ -->
 <div class="cmtmask" id="pickMask">
   <div class="cmtbox">
@@ -976,7 +995,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.107"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.108"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1112,7 +1131,7 @@ function normalizeShiftMonth(){
 }
 function closedMonthEditBlocked(){
   if(!ownerMonthIsClosed()) return false;
-  ["mask","reqMask","pickMask","teMask","oneMask"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display="none"; });
+  ["mask","reqMask","noticeMask","pickMask","teMask","oneMask"].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display="none"; });
   return true;
 }
 const key=d=>`${Y}-${pad(M)}-${pad(d)}`;
@@ -1181,7 +1200,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.107</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.108</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1595,7 +1614,7 @@ function openDayView(d){
   g.classList.toggle('holdmode', holdMode&&!_closed);
   g.classList.toggle('closedmonth',_closed);
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.disabled=_closed; });
-  g.querySelectorAll('.storeoff-btn,.dreq').forEach(b=>{ b.disabled=_closed; });
+  g.querySelectorAll('.storeoff-btn,.dreq,.dnotice').forEach(b=>{ b.disabled=_closed; });
   { const hb=$("#holdToggle"); if(hb) hb.disabled=_closed; }
   syncHoldToggle();
   syncDayUndoButton();
@@ -1603,6 +1622,7 @@ function openDayView(d){
     showComment(el.dataset.n, +el.dataset.d, (S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)]); });
   g.querySelectorAll('.drow.dedit').forEach(row=>row.onclick=(e)=>dayRowClick(e,row,'edit'));
   g.querySelectorAll('.dreq').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.n, +b.dataset.d); });
+  g.querySelectorAll('.dnotice').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openOwnerNotice(b.dataset.n,+b.dataset.d); });
   g.querySelectorAll('.dbar[data-req-n]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.reqN,+b.dataset.reqD); });
   g.querySelectorAll('.drow.sedit').forEach(row=>row.onclick=(e)=>{ if(e.target.closest&&e.target.closest('.dresize,.btime')) return; openSupport(row.dataset.n,+row.dataset.d,row.dataset.st); });
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openSupportPicker(+row.dataset.d,row.dataset.st));
@@ -1684,6 +1704,54 @@ $("#reqDelete").onclick=async()=>{
   if(dayViewDay!=null && $("#dayMask").style.display==="flex") openDayView(dayViewDay);
 };
 
+/* ---- 案内（要請とは別。スタッフが確認すると星をオレンジへ）---- */
+let noticeTarget=null;
+function ownerNoticeOf(nm,d){
+  const wish=(S.staff[nm]||{}).wish||{}, notices=wish._ownerNotices||{};
+  return notices[key(d)]||null;
+}
+function ownerNoticeButton(nm,d){
+  const notice=ownerNoticeOf(nm,d), confirmed=!!(notice&&notice.acknowledgedAt);
+  const cls=confirmed?' confirmed':notice?' hasnotice':'';
+  const label=confirmed?'確認済みの案内':notice?'未確認の案内':'案内を送る';
+  return `<button class="dnotice${cls}" data-n="${esc(nm)}" data-d="${d}" type="button" title="${label}" aria-label="${label}" data-guide-key="staff-notice" data-guide="スタッフへ案内を送り、確認状況を星の色で確認できます">★</button>`;
+}
+function openOwnerNotice(nm,d){
+  if(closedMonthEditBlocked()) return;
+  noticeTarget={nm,d};
+  const current=ownerNoticeOf(nm,d);
+  $("#noticeTtl").textContent=`${nm}さんへ案内　${M}/${d}`;
+  $("#noticeText").value=current&&current.text?current.text:"";
+  $("#noticeState").textContent=current?(current.acknowledgedAt?"★ スタッフ確認済み":"★ スタッフの確認待ち"):"案内はまだありません";
+  $("#noticeDelete").style.display=current?"block":"none";
+  $("#noticeSend").textContent=current?"案内を変更して再送":"この案内を送る";
+  $("#noticeMask").style.display="flex";
+  setTimeout(()=>$("#noticeText").focus(),40);
+}
+$("#noticeClose").onclick=()=>$("#noticeMask").style.display="none";
+$("#noticeMask").onclick=e=>{ if(e.target.id==="noticeMask") $("#noticeMask").style.display="none"; };
+$("#noticeSend").onclick=()=>{
+  if(closedMonthEditBlocked()||!noticeTarget) return;
+  const text=$("#noticeText").value.trim();
+  if(!text){ appAlert("案内文を入力してください"); return; }
+  const staff=S.staff[noticeTarget.nm]; if(!staff) return;
+  const wish=staff.wish||(staff.wish={});
+  const notices=wish._ownerNotices||(wish._ownerNotices={});
+  notices[key(noticeTarget.d)]={text:text,sentAt:new Date().toISOString(),acknowledgedAt:""};
+  save(); $("#noticeMask").style.display="none"; renderOwner();
+  if(dayViewDay!=null&&$("#dayMask").style.display==="flex") openDayView(dayViewDay);
+};
+$("#noticeDelete").onclick=async()=>{
+  if(closedMonthEditBlocked()||!noticeTarget) return;
+  const staff=S.staff[noticeTarget.nm], wish=(staff||{}).wish||{}, notices=wish._ownerNotices||{}, k=key(noticeTarget.d);
+  if(!notices[k]) return;
+  if(!await appConfirm(`${noticeTarget.nm}さんへの${M}/${noticeTarget.d}の案内を削除しますか？`,{title:"案内を削除しますか？",confirmText:"案内を削除",kind:"danger",icon:"★"})) return;
+  delete notices[k];
+  if(!Object.keys(notices).length) delete wish._ownerNotices;
+  save(); $("#noticeMask").style.display="none"; renderOwner();
+  if(dayViewDay!=null&&$("#dayMask").style.display==="flex") openDayView(dayViewDay);
+};
+
 /* ---- 鉄板：オーナーが配置（提出者から選ぶ→AM/PM時間→本人のカレンダーに反映）---- */
 function dvStaffRow(nm,d,W,st){
   const stf=S.staff[nm]||{};
@@ -1705,7 +1773,7 @@ function dvStaffRow(nm,d,W,st){
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
   const offCount=v&&v.off?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}<span class="day-namebutton" role="button" data-guide-key="day-staff-off" data-guide="名前を押すと、そのスタッフの休みを切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請" data-guide-key="staff-request" data-guide="スタッフへ勤務時間の要請を送れます"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}<span class="day-namebutton" role="button" data-guide-key="day-staff-off" data-guide="名前を押すと、そのスタッフの休みを切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions"><button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請" data-guide-key="staff-request" data-guide="スタッフへ勤務時間の要請を送れます"></button>${ownerNoticeButton(nm,d)}</span></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
@@ -1727,7 +1795,7 @@ function dvStoreSection(st,d,W,ticks){
     if(t.pm) bars+=dEditBar(nm,d,'pm','bpm',t.pm.start,t.pm.end,st);
     const home=(S.staff[nm].store||"大須");
     const cf=staffDayConflict(nm,d);
-    h+=`<div class="drow sedit" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="タップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと別店舗の勤務時間を編集できます">${esc(nm)}</span>${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請" data-guide-key="staff-request" data-guide="スタッフへ勤務時間の要請を送れます"></button></span><span class="dwish thome">${home}の人</span></div><div class="dtime" style="width:${W}px">${bars}${holdbars(nm,d)}</div></div>`;
+    h+=`<div class="drow sedit" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="タップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと別店舗の勤務時間を編集できます">${esc(nm)}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions"><button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請" data-guide-key="staff-request" data-guide="スタッフへ勤務時間の要請を送れます"></button>${ownerNoticeButton(nm,d)}</span></span><span class="dwish thome">${home}の人</span></div><div class="dtime" style="width:${W}px">${bars}${holdbars(nm,d)}</div></div>`;
   });
   h+=`<div class="drow tadd" data-d="${d}" data-st="${st}"><div class="dname"><span class="taddtxt">＋ 名前を追加</span></div><div class="dtime" style="width:${W}px"><span class="taddhint">タップして提出者から選ぶ</span></div></div>`;
   return h;
