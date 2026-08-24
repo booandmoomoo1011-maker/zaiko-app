@@ -721,7 +721,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.103</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.104</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -957,7 +957,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.103"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.104"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1107,7 +1107,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.103</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.104</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1377,6 +1377,13 @@ function undoDayChange(){
   openDayView(d); syncDayUndoButton();
   return true;
 }
+function clearDayDecisionOnShiftChange(d){
+  const date=key(d);
+  if(!S.decidedDays||!S.decidedDays[date]) return false;
+  delete S.decidedDays[date];
+  if(dayViewDay===d) _syncDayDecideBtn();
+  return true;
+}
 function _fw2hw(s){ return String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[：]/g,':'); }
 function pHM(s){ if(!s) return null; s=_fw2hw(s); const a=s.split(':'); const h=parseInt(a[0],10); if(isNaN(h)) return null; return h+((parseInt(a[1],10)||0)/60); }
 function normTime(v){ if(!v) return ''; v=_fw2hw(v).trim(); if(!v) return ''; const a=v.split(':'); let h=parseInt(a[0],10); if(isNaN(h)) return ''; let m=a.length>1?parseInt(a[1],10):0; if(isNaN(m)) m=0; if(h>23)h=23; if(h<0)h=0; if(m>59)m=59; if(m<0)m=0; return pad(h)+':'+pad(m); }
@@ -1402,6 +1409,7 @@ function supportOf(nm,d,st){
 }
 function setSupport(nm,d,st,rec){
   rememberDayUndo(d);
+  clearDayDecisionOnShiftChange(d);
   ensureStaffOwner(nm); const sf=S.staff[nm], k=key(d);
   if(st==='鉄板'){
     if(!sf.tetsu) sf.tetsu={};
@@ -1533,6 +1541,7 @@ function fitDayGrid(){ const g=$("#dayGrid"); const sc=document.querySelector('.
 function toggleStoreOff(st){
   if(closedMonthEditBlocked()||dayViewDay==null) return;
   rememberDayUndo(dayViewDay);
+  clearDayDecisionOnShiftChange(dayViewDay);
   const k=key(dayViewDay);
   if(!S.storeOff) S.storeOff={};
   if(!S.storeOff[k]) S.storeOff[k]={};
@@ -1733,6 +1742,7 @@ function bindHoldBlock(block){
 function toggleHold(nm,d,h){
   if(closedMonthEditBlocked()) return;
   rememberDayUndo(d);
+  clearDayDecisionOnShiftChange(d);
   if(!S.staff[nm].hold) S.staff[nm].hold={};
   const k=key(d); let arr=(S.staff[nm].hold[k]||[]).slice();
   if(arr.includes(h)) arr=arr.filter(x=>x!==h); else { arr.push(h); arr.sort((a,b)=>a-b); }
@@ -1775,6 +1785,7 @@ function applyWishDecision(nm,d,seg,st,selectedHour){
   const available=availableWishSegments(start,end,moved.segs);
   if(!available.length) return false;
   rememberDayUndo(d);
+  clearDayDecisionOnShiftChange(d);
   if(!staff.decided) staff.decided={};
   const k=key(d), decision=staff.decided[k]||{};
   const asTime=(value,original,edge)=>value===edge?original:hourToStr(value);
@@ -1799,6 +1810,7 @@ function applyWishDecision(nm,d,seg,st,selectedHour){
 function toggleStaffDayOff(nm,d){
   if(closedMonthEditBlocked()||!S.staff[nm]) return false;
   rememberDayUndo(d);
+  clearDayDecisionOnShiftChange(d);
   const staff=S.staff[nm]; if(!staff.decided) staff.decided={};
   const k=key(d), current=staff.decided[k]||{};
   if(current.off){
@@ -1837,6 +1849,7 @@ function dayRowClick(e,row,mode){
   ensureStaffOwner(nm);   // まだ提出のない登録名でも編集できるように
   if((S.staff[nm].decided||{})[key(d)]){ return; }
   rememberDayUndo(d);
+  clearDayDecisionOnShiftChange(d);
   let hour=Math.min(_xToHour(e,dt,false), AX1-1);
   if(!S.staff[nm].decided) S.staff[nm].decided={};
   S.staff[nm].decided[key(d)]={all:{start:hourToStr(hour),end:hourToStr(Math.min(hour+1,AX1))}, color:'#8bc98f'};
@@ -1877,6 +1890,7 @@ function onResizeUp(e){
   const dec=storeDecision(rz.nm,rz.d,rz.st);
   if(dec&&dec[rz.seg]){
     rememberDayUndo(rz.d);
+    clearDayDecisionOnShiftChange(rz.d);
     if(rz.edge==='start'){ hr=Math.max(AX0, Math.min(rz.endH-0.5, hr)); dec[rz.seg].start=hourToStr(hr); }
     else{ hr=Math.max(rz.startH+0.5, Math.min(AX1, hr)); dec[rz.seg].end=hourToStr(hr); }
     touchUpdated(); save();
@@ -1903,7 +1917,7 @@ $("#oneOk").onclick=()=>{
   if(closedMonthEditBlocked()||!oneT) return;
   const v=normTime($("#oneInput").value); if(!v){ appAlert("時間を入れてください（例 9:00）"); return; }
   const dec=storeDecision(oneT.nm,oneT.d,oneT.st);
-  if(dec&&dec[oneT.seg]){ rememberDayUndo(oneT.d); dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
+  if(dec&&dec[oneT.seg]){ rememberDayUndo(oneT.d); clearDayDecisionOnShiftChange(oneT.d); dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
   $("#oneMask").style.display="none";
   const dd=dayViewDay; oneT=null; if(dd!=null) openDayView(dd);
 };
@@ -1913,6 +1927,7 @@ function deleteDecisionSegment(nm,d,seg){
   const k=key(d), dec=decided[k];
   if(!dec) return false;
   rememberDayUndo(d);
+  clearDayDecisionOnShiftChange(d);
   if(seg==='all' && !dec.all && (dec.start||dec.end)){
     delete dec.start; delete dec.end; // 旧形式の1本線
   }else{
@@ -2223,6 +2238,7 @@ function closeEditor(){ $("#mask").style.display="none"; editing=null; }
 function setDecided(rec){
   if(closedMonthEditBlocked()||!editing) return;
   rememberDayUndo(editing.d);
+  clearDayDecisionOnShiftChange(editing.d);
   if(rec) S.staff[editing.nm].decided[key(editing.d)]=rec;
   else delete S.staff[editing.nm].decided[key(editing.d)];
   save(); closeEditor(); renderOwner();
