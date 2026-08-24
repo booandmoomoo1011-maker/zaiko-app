@@ -50,7 +50,7 @@
     .statusInline{font-size:11px;}
     /* 月の表：日列を少し詰めて多く見えるように＋文字を読みやすく */
     #tbl thead th{min-width:54px; font-size:11px;}
-    #tbl td.name, #tbl th.name{min-width:66px; max-width:66px; font-size:12px;}
+    #tbl td.name, #tbl th.name{min-width:126px; max-width:126px; width:126px; font-size:12px;}
     .gridwrap{max-height:calc(100vh - 132px); -webkit-overflow-scrolling:touch;}
     /* 日別タイムライン：指でも押しやすく */
     .daymodal{width:99vw; max-width:99vw; height:96vh;}
@@ -107,15 +107,17 @@
   table{border-collapse:separate; border-spacing:0; font-size:12px; background:#fff;}
   th,td{border-right:1px solid var(--line); border-bottom:1px solid var(--line);}
   thead th{position:sticky; top:0; background:#fff; color:#222; z-index:5; padding:3px 3px; min-width:80px; font-size:11px;}
-  th.corner{left:0; z-index:7; min-width:74px;}
+  th.corner{left:0; z-index:7; min-width:142px;}
   thead th.sun{color:var(--sun); background:#fbe6ec;} thead th.sat{color:var(--sat); background:#fbe6ec;} thead th.today{background:var(--today);}
-  td.name, th.name{position:sticky; left:0; background:#fff; z-index:4; min-width:74px; max-width:74px; width:74px;
+  td.name, th.name{position:sticky; left:0; background:#fff; z-index:4; min-width:142px; max-width:142px; width:142px;
     padding:2px 4px 2px 6px; font-weight:700; font-size:12px; text-align:left; white-space:nowrap; overflow:hidden;}
-  td.name .nmtxt{display:inline-block; max-width:54px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none;}
+  td.name .namecontent{display:flex; width:100%; min-width:0; align-items:center; gap:3px;}
+  td.name .nmtxt{display:inline-flex; min-width:0; max-width:none; flex:1 1 auto; align-items:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; padding:2px 5px; border:1px solid #d7dce1; border-radius:5px; background:linear-gradient(180deg,#fff 0%,#f5f7f8 100%); box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  td.name .nmtxt:hover{border-color:#b8c5cf; background:#eef5fa;}
   tr.staffrow.dragging{opacity:.72; box-shadow:0 2px 8px rgba(0,0,0,.22);}
   tr.staffrow.dragging td.name{background:#fff4b8;}
   .addinp{width:56px !important; max-width:56px; min-width:0; box-sizing:border-box;}
-  .delstaff{float:right; border:none; background:transparent; color:#cfcfcf; font-weight:700; font-size:12px; line-height:1; cursor:pointer; padding:0 1px;}
+  .delstaff{flex:0 0 12px; border:none; background:transparent; color:#cfcfcf; font-weight:700; font-size:12px; line-height:1; cursor:pointer; padding:0 1px;}
   .delstaff:hover{color:#c0392b;}
   tbody td{height:26px; vertical-align:top; cursor:pointer; padding:0; position:relative;}
   #tbody tr.blankrow td.blankname{background:#fcfcfc; color:#ccc;}
@@ -286,9 +288,11 @@
   .mfoot .save{background:var(--pink); color:#fff; border:none; border-radius:8px; padding:9px 18px; font-weight:700; cursor:pointer;}
 
   /* day timeline */
-  thead th.daycol{cursor:pointer; touch-action:manipulation;}
+  thead th.daycol{cursor:pointer; touch-action:manipulation; padding:2px 3px;}
   thead th.daycol *{pointer-events:none;}
   thead th.daycol:hover{background:#f7d0dc;}
+  thead th.daycol .daybutton{display:block; padding:2px 4px; border:1px solid rgba(118,126,135,.3); border-radius:6px; background:rgba(255,255,255,.72); box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  thead th.daycol:hover .daybutton,thead th.daycol:focus-visible .daybutton{border-color:#d68a9e; background:#fff5f8; box-shadow:0 0 0 2px rgba(232,96,127,.13);}
   .daymask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:60; padding:12px;}
   .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1120px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
   .dmz{position:absolute; z-index:12; touch-action:none;}
@@ -321,6 +325,8 @@
     font-size:11.5px; display:flex; flex-direction:column; justify-content:center; z-index:2; border-right:1px solid var(--line);}
   .drow.staffoff .dname{background:#9fd8f2; color:#0f5a82;}
   .dname .dnm{font-weight:700;display:flex;align-items:center;width:100%;min-width:0;}
+  .dname .day-namebutton{display:inline-flex; min-width:0; align-items:center; padding:2px 4px; border:1px solid #d3dce3; border-radius:5px; background:rgba(255,255,255,.8); box-shadow:0 1px 2px rgba(0,0,0,.07); cursor:pointer;}
+  .drow.staffoff .dname .day-namebutton{border-color:#77bedf; background:rgba(255,255,255,.48);}
   .dname .staffoff-count{margin-left:3px; color:#0f5a82; font-size:13px; font-weight:800; flex:0 0 auto;}
   .dname .dreq{margin-left:auto; width:19px; height:19px; flex:0 0 19px; color:#fff; background:#2f9ad0; border:1px solid #fff; border-radius:50%; padding:0; cursor:pointer; vertical-align:middle; box-shadow:0 1px 2px rgba(47,154,208,.35); display:inline-flex; align-items:center; justify-content:center;}
   .dname .dreq::before{width:11px; height:11px;}
@@ -346,7 +352,7 @@
   .dname .dwish.ng{background:#dcf0fa; color:#2b7fa3;}
   .dname .dwish.gray{background:#f0f0f0; color:#8a8a8a; border:1px solid #e2e2e2;}
   .dname .dwish.maru{background:#fff2c0; color:#8a6d00; border:1px solid #e6d36a; font-weight:800;}
-  .submittedmark{display:inline-block;margin-left:3px;padding:0 3px;border-radius:4px;background:#e3f5e7;color:#2f7a3f;font-size:8px;font-weight:900;vertical-align:middle;white-space:nowrap;}
+  .submittedmark{display:inline-flex; flex:0 0 39px; justify-content:center; margin-left:auto; padding:2px 2px; border-radius:4px; background:#e3f5e7; color:#2f7a3f; font-size:8px; font-weight:900; vertical-align:middle; white-space:nowrap;}
   .dbar.wishbar{background:#eeeeee; color:#666; border:1px dashed #aaa; pointer-events:auto; cursor:pointer; z-index:1; justify-content:center; overflow:hidden; box-shadow:none;}
   .dbar.wishbar .wishlabel{position:absolute; top:0; bottom:0; display:flex; align-items:center; justify-content:center; padding:0 4px; overflow:hidden; white-space:nowrap;}
   .dbar.wishbar.wishmoved,.dbar.wishbar.wishfadecover{background:#f7f7f7; color:#aaa; border:1.5px dashed #999; opacity:1; z-index:2;}
@@ -490,6 +496,10 @@
   .appdialog.danger .appdialog-ok{background:linear-gradient(180deg,#ef8ca4 0%,#db6682 100%);color:#fff;}
   .appdialog.info{border-color:#f1c7d3;}
   .appdialog.info .appdialog-icon{background:#fff0f5;box-shadow:inset 0 0 0 1px #f1c7d3;}
+  .ownerguide{position:fixed; z-index:2147483500; width:max-content; max-width:min(290px,calc(100vw - 20px)); padding:10px 12px; border:1px solid #e8d4da; border-radius:10px; background:#fffdfc; color:#37434c; box-shadow:0 5px 18px rgba(48,41,43,.18); font-size:12px; line-height:1.5;}
+  .ownerguide[hidden]{display:none !important;}
+  .ownerguide-text{font-weight:700;}
+  .ownerguide-dismiss{display:block; margin-top:7px; padding:4px 0; border:0; background:none; color:#557895; font:inherit; font-size:11px; cursor:pointer; text-decoration:underline;}
   @media(max-width:600px){
     .appdialog{border-radius:22px;padding:24px 18px 18px;}
     .appdialog-icon{width:64px;height:64px;font-size:32px;}
@@ -595,7 +605,7 @@
 
     window.fbIssueEditorUrl=async function(slot,force){
       if(!window.fbOwnerReady || window.shiftEditorMode) throw new Error('管理者ログインが必要です');
-      slot=(slot==='editor2')?'editor2':'editor1';
+      if(!['editor1','editor2','editor3'].includes(slot)) throw new Error('編集者の番号が正しくありません');
       const slotRef=ref(db,BASE+'/access/editorSlots/'+slot);
       const oldSnap=await get(slotRef); let token=oldSnap.val();
       if(token && !force){
@@ -723,7 +733,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.105</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.106</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -738,21 +748,21 @@
     <strong id="oMonthLabel" style="color:var(--pink-d);white-space:nowrap;"><span style="color:#c74a68">大須</span>・<span style="color:#8a6d00">那古野</span>・<span style="color:#1e6f95">鉄板</span></strong>
     <select id="oYearSel" class="ymsel"></select><select id="oMonthSel" class="ymsel"></select>
     <div class="stoggle" id="oViewToggle">
-      <button id="ovWish" class="on" type="button">希望</button>
-      <button id="ovDec" type="button">決定</button>
+      <button id="ovWish" class="on" type="button" data-guide-key="view-wish" data-guide="スタッフが提出した希望シフトを表示します">希望</button>
+      <button id="ovDec" type="button" data-guide-key="view-decided" data-guide="作成した決定シフトを表示します">決定</button>
     </div>
     <span id="oStatus" class="statusInline"></span>
     <div class="spacer"></div>
     <input id="printStart" type="number" min="1" max="31" value="1" title="開始日" style="display:none;">
     <span style="font-size:11px;color:#888;display:none;">〜3日</span>
-    <button class="btn gray" id="wishPrintBtn" type="button">🖨 希望シフト</button>
-    <button class="btn gray" id="printBtn" type="button">🖨 決定シフト</button>
-    <button class="btn gray" id="printPickBtn" type="button">🖨 日別(選ぶ)</button>
-    <button class="btn gray" id="printBlankBtn" type="button">🖨 白紙</button>
-    <button class="btn decide" id="decideBtn" type="button">この月をスタッフに公開</button>
-    <button class="btn gray" id="rosterBtn" type="button" title="名前を登録">👥 名前</button>
-    <button class="btn gray" id="editorUrlBtn" type="button" title="編集者専用URL">🔗 編集者</button>
-    <button class="btn gray" id="setBtn" type="button" title="設定">⚙ 設定</button>
+    <button class="btn gray" id="wishPrintBtn" type="button" data-guide-key="print-wish" data-guide="スタッフの希望シフトを印刷します">🖨 希望シフト</button>
+    <button class="btn gray" id="printBtn" type="button" data-guide-key="print-decided" data-guide="作成したシフトを印刷します">🖨 決定シフト</button>
+    <button class="btn gray" id="printPickBtn" type="button" data-guide-key="print-day" data-guide="日付を選んで日別シフトを印刷します">🖨 日別(選ぶ)</button>
+    <button class="btn gray" id="printBlankBtn" type="button" data-guide-key="print-blank" data-guide="記入用の白紙シフトを印刷します">🖨 白紙</button>
+    <button class="btn decide" id="decideBtn" type="button" data-guide-key="publish-month" data-guide="完成した１か月分のシフトをスタッフへ公開・取消します">この月をスタッフに公開</button>
+    <button class="btn gray" id="rosterBtn" type="button" data-guide-key="manage-staff" data-guide="スタッフ名の登録と専用URLの発行ができます">👥 名前</button>
+    <button class="btn gray" id="editorUrlBtn" type="button" data-guide-key="editor-urls" data-guide="シフト編集者３人分の専用URLを発行できます">🔗 編集者</button>
+    <button class="btn gray" id="setBtn" type="button" data-guide-key="settings" data-guide="アプリの設定を確認できます">⚙ 設定</button>
   </div>
   <div class="gridwrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </div>
@@ -767,6 +777,8 @@
       <button id="editor1Reissue" type="button" style="background:#c0596b;">再発行</button>
       <button id="editor2Copy" type="button" style="background:#2f9ad0;">編集者2 URLをコピー</button>
       <button id="editor2Reissue" type="button" style="background:#c0596b;">再発行</button>
+      <button id="editor3Copy" type="button" style="background:#2f9ad0;">編集者3 URLをコピー</button>
+      <button id="editor3Reissue" type="button" style="background:#c0596b;">再発行</button>
     </div>
     <div style="font-size:12px;color:#a33;line-height:1.6;">「再発行」を押すと、その人の古いURLは使えなくなります。</div>
     <button id="editorUrlClose" type="button" style="background:#c9c9c9;margin-top:12px;">閉じる</button>
@@ -950,7 +962,7 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="dayundo" id="dayUndo" disabled title="この日の直前の操作を戻す">↶ 戻る</button><button type="button" class="lhold" id="holdToggle" aria-pressed="false" title="休憩のON／OFFを切り替える">休憩 OFF</button><span class="holdhint" id="holdHint">時間の線をタップ</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;">この日を決定</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" class="lhold" id="holdToggle" aria-pressed="false" data-guide-key="day-break" data-guide="休憩をONにして勤務の線を押すと休憩を追加できます">休憩 OFF</button><span class="holdhint" id="holdHint">時間の線をタップ</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">この日を決定</button></div>
     <div class="dayscroll"><div id="dayGrid"></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
@@ -958,12 +970,68 @@
   </div>
 </div>
 
+<div class="ownerguide" id="ownerGuideTip" role="tooltip" hidden>
+  <div class="ownerguide-text" id="ownerGuideText"></div>
+  <button class="ownerguide-dismiss" id="ownerGuideDismiss" type="button">今後この案内を表示しない</button>
+</div>
+
 <script>
-window.APP_VERSION="v1.105"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.106"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
+
+/* ボタンごとの操作案内。非表示設定だけを端末に保存し、シフトデータには触れない */
+const OWNER_GUIDE_STORAGE_KEY="zaikonOwnerHiddenGuides_v1";
+let hiddenOwnerGuides={};
+try{ hiddenOwnerGuides=JSON.parse(localStorage.getItem(OWNER_GUIDE_STORAGE_KEY)||"{}")||{}; }catch(e){ hiddenOwnerGuides={}; }
+let ownerGuideTarget=null, ownerGuideHideTimer=null;
+function findOwnerGuideTarget(node){ return node&&node.closest?node.closest("[data-guide-key][data-guide]"):null; }
+function hideOwnerGuide(){
+  clearTimeout(ownerGuideHideTimer);
+  const tip=$("#ownerGuideTip");
+  if(tip) tip.hidden=true;
+  ownerGuideTarget=null;
+}
+function showOwnerGuide(target){
+  if(!target||hiddenOwnerGuides[target.dataset.guideKey]||target.disabled) return;
+  const tip=$("#ownerGuideTip"), label=$("#ownerGuideText");
+  if(!tip||!label) return;
+  clearTimeout(ownerGuideHideTimer);
+  ownerGuideTarget=target;
+  label.textContent=target.dataset.guide;
+  tip.dataset.guideKey=target.dataset.guideKey;
+  tip.hidden=false;
+  const anchor=target.getBoundingClientRect(), box=tip.getBoundingClientRect();
+  const left=Math.max(10,Math.min(anchor.left+(anchor.width-box.width)/2,window.innerWidth-box.width-10));
+  const below=anchor.bottom+8;
+  const top=below+box.height<=window.innerHeight-10?below:Math.max(10,anchor.top-box.height-8);
+  tip.style.left=left+"px";
+  tip.style.top=top+"px";
+}
+function dismissOwnerGuide(key){
+  if(!key) return;
+  hiddenOwnerGuides[key]=true;
+  try{ localStorage.setItem(OWNER_GUIDE_STORAGE_KEY,JSON.stringify(hiddenOwnerGuides)); }catch(e){}
+  hideOwnerGuide();
+}
+document.addEventListener("pointerover",e=>{
+  if(e.pointerType&&e.pointerType!=="mouse") return;
+  const target=findOwnerGuideTarget(e.target);
+  if(target&&target!==ownerGuideTarget) showOwnerGuide(target);
+});
+document.addEventListener("pointerout",e=>{
+  if(!ownerGuideTarget) return;
+  const next=e.relatedTarget, tip=$("#ownerGuideTip");
+  if(next&&(ownerGuideTarget.contains(next)||(tip&&tip.contains(next)))) return;
+  if(e.target===ownerGuideTarget||ownerGuideTarget.contains(e.target)) ownerGuideHideTimer=setTimeout(hideOwnerGuide,220);
+});
+document.addEventListener("focusin",e=>{ const target=findOwnerGuideTarget(e.target); if(target) showOwnerGuide(target); });
+$("#ownerGuideTip").addEventListener("pointerenter",()=>clearTimeout(ownerGuideHideTimer));
+$("#ownerGuideTip").addEventListener("pointerleave",()=>{ ownerGuideHideTimer=setTimeout(hideOwnerGuide,160); });
+$("#ownerGuideDismiss").onclick=e=>{ e.stopPropagation(); dismissOwnerGuide($("#ownerGuideTip").dataset.guideKey); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&ownerGuideTarget) hideOwnerGuide(); });
 
 /* ブラウザ標準ではなく、アプリの色に合わせた確認・案内画面 */
 let appDialogResolve=null;
@@ -1109,7 +1177,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.105</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.106</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1197,9 +1265,10 @@ function renderOwner(){
   let th=`<tr><th class="corner name">スタッフ</th>`;
   for(let d=1;d<=DAYS;d++){ const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
     const cls=((dow===0||hol)?"sun ":dow===6?"sat ":"")+(key(d)===todayStr?"today":"");
-    th+=`<th class="daycol ${cls}" data-day="${d}" title="${HOL[key(d)]||''}">${DOW[dow]}<br>${M}/${d}</th>`; }
+    th+=`<th class="daycol ${cls}" data-day="${d}" data-guide-key="edit-date" data-guide="日付を押すとシフト編集できます" role="button" tabindex="0"${HOL[key(d)]?` aria-label="${esc(HOL[key(d)])} ${M}/${d}"`:""}><span class="daybutton">${DOW[dow]}<br>${M}/${d}</span></th>`; }
   $("#thead").innerHTML=th+"</tr>";
   $("#thead").onclick=(e)=>{ const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day) openDayView(+th.dataset.day); };
+  $("#thead").onkeydown=(e)=>{ if(e.key!=="Enter"&&e.key!==" ") return; const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day){ e.preventDefault(); openDayView(+th.dataset.day); } };
   let rows="";
   STORES.forEach(st=>{
     const R=getRoster();
@@ -1213,7 +1282,8 @@ function renderOwner(){
     list.forEach(nm=>{
       const stf=S.staff[nm]||{};
       const submitted=!!((((stf.wish||{})._submittedMonths)||{})[_submitKey]);
-      rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="nmtxt" title="長押しして並べ替え">${esc(nm)}</span>${submitted?'<span class="submittedmark">提出済</span>':''}${canManageStaff()?`<button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button>`:''}</td>`;
+      const nameGuide=canManageStaff()?'名前を長押しすると同じ店舗内で順番を変更できます':'スタッフ名と希望の提出状況を確認できます';
+      rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="namecontent"><span class="nmtxt" role="button" tabindex="0" data-guide-key="${canManageStaff()?'staff-order':'staff-status'}" data-guide="${nameGuide}">${esc(nm)}</span>${submitted?'<span class="submittedmark">提出済</span>':''}${canManageStaff()?`<button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button>`:''}</span></td>`;
       const wish=stf.wish||{};
       for(let d=1;d<=DAYS;d++){
         const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
@@ -1515,6 +1585,8 @@ function openDayView(d){
   const g=$("#dayGrid");
   g.style.transform="none";
   g.innerHTML=html;
+  g.querySelectorAll('.dbar.wishbar:not(.wishfadecover)').forEach(bar=>{ bar.dataset.guideKey='wish-line'; bar.dataset.guide='希望の線を押すと、その時間をシフトへ入れられます'; });
+  g.querySelectorAll('.dbar.decisionbar').forEach(bar=>{ bar.dataset.guideKey='shift-line'; bar.dataset.guide='時間を押すと編集、線の端を引くと勤務時間を調整できます'; });
   g.classList.toggle('holdmode', holdMode&&!_closed);
   g.classList.toggle('closedmonth',_closed);
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.disabled=_closed; });
@@ -1628,7 +1700,7 @@ function dvStaffRow(nm,d,W,st){
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
   const offCount=v&&v.off?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${offCount}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}<span class="day-namebutton" role="button" data-guide-key="day-staff-off" data-guide="名前を押すと、そのスタッフの休みを切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請" data-guide-key="staff-request" data-guide="スタッフへ勤務時間の要請を送れます"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
@@ -1641,7 +1713,7 @@ function dvStoreSection(st,d,W,ticks){
   const _sm=((S.storeMemo||{})[key(d)]||{})[st]||"";
   const _soff=!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
   const _hbg=_soff?STOFF_COLOR:col.head;
-  let h=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}"><button type="button" class="storeoff-btn${_soff?' on':''}" data-st="${st}" aria-pressed="${_soff?'true':'false'}">${st}（${homeList.length+assigned.length}）${_soff?'<span class="storeoff-state">休み</span>':''}</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${ticks}</div><textarea class="storememo" data-st="${st}" placeholder="${st}のメモ">${esc(_sm)}</textarea></div>`;
+  let h=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}"><button type="button" class="storeoff-btn${_soff?' on':''}" data-st="${st}" aria-pressed="${_soff?'true':'false'}" data-guide-key="store-off" data-guide="店舗名を押すと、その店舗の休みを切り替えできます">${st}（${homeList.length+assigned.length}）${_soff?'<span class="storeoff-state">休み</span>':''}</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${ticks}</div><textarea class="storememo" data-st="${st}" placeholder="${st}のメモ">${esc(_sm)}</textarea></div>`;
   homeList.forEach(nm=>{ h+=dvStaffRow(nm,d,W,st); });
   assigned.forEach(nm=>{
     const t=supportOf(nm,d,st)||{}; let bars="";
@@ -1650,7 +1722,7 @@ function dvStoreSection(st,d,W,ticks){
     if(t.pm) bars+=dEditBar(nm,d,'pm','bpm',t.pm.start,t.pm.end,st);
     const home=(S.staff[nm].store||"大須");
     const cf=staffDayConflict(nm,d);
-    h+=`<div class="drow sedit" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="タップして応援時間を編集"><div class="dname"><span class="dnm">${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span><span class="dwish thome">${home}の人</span></div><div class="dtime" style="width:${W}px">${bars}${holdbars(nm,d)}</div></div>`;
+    h+=`<div class="drow sedit" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="タップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと別店舗の勤務時間を編集できます">${esc(nm)}</span>${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請" data-guide-key="staff-request" data-guide="スタッフへ勤務時間の要請を送れます"></button></span><span class="dwish thome">${home}の人</span></div><div class="dtime" style="width:${W}px">${bars}${holdbars(nm,d)}</div></div>`;
   });
   h+=`<div class="drow tadd" data-d="${d}" data-st="${st}"><div class="dname"><span class="taddtxt">＋ 名前を追加</span></div><div class="dtime" style="width:${W}px"><span class="taddhint">タップして提出者から選ぶ</span></div></div>`;
   return h;
@@ -2645,7 +2717,7 @@ $("#rosterStore").onchange=renderRosterList;
 $("#rosterAdd").onclick=rosterAddName;
 $("#rosterName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); rosterAddName(); } });
 
-/* ================= シフト編集者専用URL（2人分） ================= */
+/* ================= シフト編集者専用URL（3人分） ================= */
 async function copyEditorUrl(slot,force){
   if(force && !await appConfirm('この編集者の古いURLを利用停止にして、新しいURLを発行します。',{title:'URLを再発行しますか？',confirmText:'再発行する',kind:'danger',icon:'🔗'})) return;
   const id=slot+(force?'Reissue':'Copy'), b=document.getElementById(id);
@@ -2662,8 +2734,10 @@ $("#editorUrlClose").onclick=()=>$("#editorUrlMask").style.display='none';
 $("#editorUrlMask").onclick=e=>{ if(e.target.id==='editorUrlMask') $("#editorUrlMask").style.display='none'; };
 $("#editor1Copy").onclick=()=>copyEditorUrl('editor1',false);
 $("#editor2Copy").onclick=()=>copyEditorUrl('editor2',false);
+$("#editor3Copy").onclick=()=>copyEditorUrl('editor3',false);
 $("#editor1Reissue").onclick=()=>copyEditorUrl('editor1',true);
 $("#editor2Reissue").onclick=()=>copyEditorUrl('editor2',true);
+$("#editor3Reissue").onclick=()=>copyEditorUrl('editor3',true);
 
 initWho(); buildPalette(); showOwner();
 </script>
