@@ -298,7 +298,7 @@
   .dayhead button{border:none; background:#eee; color:#555; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:700; white-space:nowrap; flex:0 0 auto; font-size:13px;}
   #mPalette{display:none;}
   .daylegend{display:flex; gap:6px; flex-wrap:nowrap; align-items:center; margin:0 6px; flex:1 1 auto; justify-content:center; overflow:hidden;}
-  .daylegend .lhold{min-width:96px; background:#9fd8f2; color:#0f5a82; font-family:inherit; font-size:15px; font-weight:900; padding:8px 22px; border:2px solid #62b8df; border-radius:9px; line-height:1.2; cursor:pointer;}
+  .daylegend .lhold{min-width:116px; background:#fff; color:#66717a; font-family:inherit; font-size:15px; font-weight:900; padding:8px 16px; border:2px solid #c8d2d9; border-radius:9px; line-height:1.2; cursor:pointer;}
   .daylegend .lhold.on{background:#2f9ad0; color:#fff; box-shadow:0 0 0 2px #bfe6f5;}
   .daylegend .holdhint{display:none; font-size:10px; font-weight:800; color:#2f9ad0; white-space:nowrap;}
   #dayGrid.holdmode .drow.dedit, #dayGrid.holdmode .drow.tedit, #dayGrid.holdmode .dtime{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'><path d='M5 3 L5 19 L9.5 14.8 L12.4 20.6 L15 19.4 L12.1 13.7 L18 13.5 Z' fill='%232f9ad0' stroke='white' stroke-width='1.2' stroke-linejoin='round'/></svg>") 5 3, auto;}
@@ -315,6 +315,7 @@
   .drow.sec .dtime{background:#f9e7ee;}
   .dname{position:sticky; left:0; background:#fff; min-width:104px; max-width:104px; padding:2px 6px;
     font-size:11.5px; display:flex; flex-direction:column; justify-content:center; z-index:2; border-right:1px solid var(--line);}
+  .drow.staffoff .dname{background:#9fd8f2; color:#0f5a82;}
   .dname .dnm{font-weight:700;display:flex;align-items:center;width:100%;min-width:0;}
   .dname .dreq{margin-left:auto; width:19px; height:19px; flex:0 0 19px; color:#fff; background:#2f9ad0; border:1px solid #fff; border-radius:50%; padding:0; cursor:pointer; vertical-align:middle; box-shadow:0 1px 2px rgba(47,154,208,.35); display:inline-flex; align-items:center; justify-content:center;}
   .dname .dreq::before{width:11px; height:11px;}
@@ -715,7 +716,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.98</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.99</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -902,8 +903,8 @@
   <div class="cmtbox">
     <div class="ttl" id="teTtl"></div>
     <div id="teHelp" style="font-size:12px; color:#5b7a8c; margin-bottom:6px;"></div>
-    <div class="terow" id="teAmRow"><button type="button" class="telbl" id="teAmToggle" aria-pressed="false">AM</button><input type="text" class="tinp" placeholder="9:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="teAmE"></div>
-    <div class="terow" id="tePmRow"><button type="button" class="telbl" id="tePmToggle" aria-pressed="false">PM</button><input type="text" class="tinp" placeholder="9:00" id="tePmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="tePmE"></div>
+    <div class="terow" id="teAmRow"><button type="button" class="telbl" id="teAmToggle" aria-pressed="false">AM</button><input type="text" class="tinp" placeholder="9:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="17:00" id="teAmE"></div>
+    <div class="terow" id="tePmRow"><button type="button" class="telbl" id="tePmToggle" aria-pressed="false">PM</button><input type="text" class="tinp" placeholder="14:00" id="tePmS"><span>〜</span><input type="text" class="tinp" placeholder="23:30" id="tePmE"></div>
     <button id="teSave" type="button" style="background:#2f9ad0;"></button>
     <button id="teDel" type="button" style="background:#c0596b; margin-top:8px;"></button>
     <button id="teClose" type="button" style="background:#c9c9c9; margin-top:8px;">閉じる</button>
@@ -942,7 +943,7 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="lhold" id="holdToggle" title="休憩を入れる／もう一度押して解除">休憩</button><span class="holdhint" id="holdHint">時間の線をタップ</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;">この日を決定</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="lhold" id="holdToggle" aria-pressed="false" title="休憩のON／OFFを切り替える">休憩 OFF</button><span class="holdhint" id="holdHint">時間の線をタップ</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;">この日を決定</button></div>
     <div class="dayscroll"><div id="dayGrid"></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
@@ -951,7 +952,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.98"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.99"; window.APP_UPDATED="2026-08-24";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1101,7 +1102,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.98</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.99</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1326,7 +1327,7 @@ function _fw2hw(s){ return String(s).replace(/[０-９]/g,c=>String.fromCharCode
 function pHM(s){ if(!s) return null; s=_fw2hw(s); const a=s.split(':'); const h=parseInt(a[0],10); if(isNaN(h)) return null; return h+((parseInt(a[1],10)||0)/60); }
 function normTime(v){ if(!v) return ''; v=_fw2hw(v).trim(); if(!v) return ''; const a=v.split(':'); let h=parseInt(a[0],10); if(isNaN(h)) return ''; let m=a.length>1?parseInt(a[1],10):0; if(isNaN(m)) m=0; if(h>23)h=23; if(h<0)h=0; if(m>59)m=59; if(m<0)m=0; return pad(h)+':'+pad(m); }
 function dbar(color,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar" style="left:${l}px;width:${w}px;background:${color}">${label}</div>`; }
-function dayShiftBackground(cls,s,e){ if(cls!=='ball'||e<=s) return ''; const p=Math.max(0,Math.min(100,(17-s)/(e-s)*100)); return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`; }
+function dayShiftBackground(cls,s,e){ if(cls!=='ball'||e<=s) return ''; if(s>=14) return 'background:#f6c6da;'; if(e<=17) return 'background:#bfe6c4;'; const p=Math.max(0,Math.min(100,(17-s)/(e-s)*100)); return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`; }
 function dbarC(cls,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar ${cls}" style="left:${l}px;width:${w}px;${dayShiftBackground(cls,s,e)}">${label}</div>`; }
 function hourToStr(h){ h=Math.max(0,Math.min(24,h)); const hh=Math.floor(h+1e-6); let mm=Math.round((h-hh)*60); return pad(hh)+":"+pad(mm===60?0:mm); }
 function dEditBar(nm,d,seg,cls,ss,ee){
@@ -1432,8 +1433,7 @@ function openDayView(d){
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.disabled=_closed; });
   g.querySelectorAll('.storeoff-btn,.dreq').forEach(b=>{ b.disabled=_closed; });
   { const hb=$("#holdToggle"); if(hb) hb.disabled=_closed; }
-  { const ht=$("#holdToggle"); if(ht) ht.classList.toggle('on', holdMode); }
-  { const hh=$("#holdHint"); if(hh) hh.style.display=holdMode?'inline-block':'none'; }
+  syncHoldToggle();
   g.querySelectorAll('.cbubble').forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
     showComment(el.dataset.n, +el.dataset.d, (S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)]); });
   g.querySelectorAll('.drow.dedit').forEach(row=>row.onclick=(e)=>dayRowClick(e,row,'edit'));
@@ -1473,7 +1473,8 @@ function toggleStoreOff(st){
 }
 function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"この日を決定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#2fa04a"); b.style.color="#fff"; }
 $("#dayDecide").onclick=()=>{ if(closedMonthEditBlocked()||dayViewDay==null) return; if(!S.decidedDays) S.decidedDays={}; const k=key(dayViewDay); const willDecide=!S.decidedDays[k]; if(S.decidedDays[k]) delete S.decidedDays[k]; else S.decidedDays[k]=true; touchUpdated(); save(); _syncDayDecideBtn(); renderOwner(); if(document.querySelector("#staffView").style.display!=="none") renderStaff(); if(willDecide) $("#dayMask").style.display="none"; };
-$("#holdToggle").onclick=()=>{ if(closedMonthEditBlocked()) return; holdMode=!holdMode; const g=$("#dayGrid"); g.classList.toggle('holdmode',holdMode); $("#holdToggle").classList.toggle('on',holdMode); const hh=$("#holdHint"); if(hh) hh.style.display=holdMode?'inline-block':'none'; };
+function syncHoldToggle(){ const button=$("#holdToggle"); if(button){ button.classList.toggle('on',holdMode); button.setAttribute('aria-pressed',holdMode?'true':'false'); button.textContent=holdMode?'休憩 ON':'休憩 OFF'; } const hint=$("#holdHint"); if(hint) hint.style.display=holdMode?'inline-block':'none'; }
+$("#holdToggle").onclick=()=>{ if(closedMonthEditBlocked()) return; holdMode=!holdMode; $("#dayGrid").classList.toggle('holdmode',holdMode); syncHoldToggle(); };
 $("#dayMask").onclick=e=>{ if(e.target.id==="dayMask") $("#dayMask").style.display="none"; };
 /* ---- 要請（名前の横の✈要請ボタン）---- */
 let reqTarget=null;
@@ -1533,7 +1534,7 @@ function dvStaffRow(nm,d,W,st){
   const note=(stf.notes||{})[key(d)];
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'タップして時間を編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}${esc(nm)}${cf?'<span class="warn">⚠</span>':''}<button class="dreq" data-n="${esc(nm)}" data-d="${d}" title="要請" aria-label="要請"></button></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${holdbars(nm,d)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
@@ -1601,12 +1602,12 @@ function openSupport(nm,d,st){
   $("#teDel").textContent=`この${st}配置を消す`;
   const t=supportOf(nm,d,st)||{};
   const w=(S.staff[nm].wish||{})[key(d)]||{};
-  const am=t.am||t.all||{}, pm=t.pm||t.all||{}, wam=w.am||w.all||{}, wpm=w.pm||w.all||{};
-  $("#teAmS").value=am.start||wam.start||""; $("#teAmE").value=am.end||wam.end||"";
-  $("#tePmS").value=pm.start||wpm.start||""; $("#tePmE").value=pm.end||wpm.end||"";
+  const am=t.am||t.all||{}, pm=t.pm||t.all||{}, wam=w.am||{}, wpm=w.pm||{};
+  $("#teAmS").value=am.start||wam.start||"9:00"; $("#teAmE").value=am.end||wam.end||"17:00";
+  $("#tePmS").value=pm.start||wpm.start||"14:00"; $("#tePmE").value=pm.end||wpm.end||"23:30";
   const assigned=!!(t.all||t.am||t.pm);
-  setTePeriod("am",assigned?!!(t.am||t.all):!!(w.am||w.all||w.allday));
-  setTePeriod("pm",assigned?!!(t.pm||t.all):!!(w.pm||w.all||w.allday));
+  setTePeriod("am",assigned&&!!(t.am||t.all));
+  setTePeriod("pm",assigned&&!!(t.pm||t.all));
   $("#teDel").style.display=(t.all||t.am||t.pm)?"":"none";
   $("#teMask").style.display="flex";
 }
@@ -1719,6 +1720,19 @@ function applyWishDecision(nm,d,seg,st,selectedHour){
   if(dayViewDay!=null) openDayView(dayViewDay);
   return true;
 }
+function toggleStaffDayOff(nm,d){
+  if(closedMonthEditBlocked()||!S.staff[nm]) return false;
+  const staff=S.staff[nm]; if(!staff.decided) staff.decided={};
+  const k=key(d), current=staff.decided[k]||{};
+  if(current.off){
+    delete current.off;
+    if(current.all||current.am||current.pm||current.start||current.end) staff.decided[k]=current;
+    else delete staff.decided[k];
+  }else{ current.off=true; staff.decided[k]=current; }
+  touchUpdated(); save(); renderOwner();
+  if(dayViewDay!=null) openDayView(dayViewDay);
+  return true;
+}
 function dayRowClick(e,row,mode){
   if(closedMonthEditBlocked()) return;
   const nm=row.dataset.n, d=+row.dataset.d, t=e.target;
@@ -1726,6 +1740,7 @@ function dayRowClick(e,row,mode){
   if(t.closest && t.closest('.dresize')) return; // 端の伸縮はドラッグで処理
   if(t.closest && t.closest('.holdbar')) return;
   if(mode==='tetsu'){ openSupport(nm,d,'鉄板'); return; }
+  if(t.closest && t.closest('.dname')){ toggleStaffDayOff(nm,d); return; }
   if(holdMode){
     const dt=t.closest('.dtime'); if(!dt) return;
     let hour=Math.min(_xToHour(e,dt,true), AX1-0.5);
@@ -1737,8 +1752,8 @@ function dayRowClick(e,row,mode){
     const dt=wish.closest('.dtime'), selectedHour=dt&&Number.isFinite(e.clientX)?_xToHour(e,dt,false):null;
     applyWishDecision(nm,d,seg,row.dataset.st,selectedHour); return;
   }
-  // 決定シフトの棒・名前をタップ → 全体編集（既存の「消す」を利用）
-  if(t.closest('.decisionbar') || t.closest('.dname')){ openEditor(nm,d); return; }
+  // 決定シフトの棒をタップ → 全体編集（既存の「消す」を利用）
+  if(t.closest('.decisionbar')){ openEditor(nm,d); return; }
   if(t.closest('.dbar')) return; // 要請など、その場の専用操作を優先
   // 空きをタップ → その時間で直接作成（すでにシフトがある人は編集を開く）
   const dt=t.closest('.dtime'); if(!dt) return;
@@ -1879,10 +1894,10 @@ function printDecisionMarks(rec,hr){
   let html='';
   ['all','am','pm'].forEach(seg=>{
     const part=rec[seg]; if(!part) return;
-    const color=seg==='am'?'pam':seg==='pm'?'ppm':hr<17?'pam':'ppm';
+    const color=seg==='am'?'pam':seg==='pm'||pHM(part.start)>=14?'ppm':hr<17?'pam':'ppm';
     html+=printSegmentMark(part.start,part.end,hr,`pshift ${color}`);
   });
-  if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)) html+=printSegmentMark(rec.start,rec.end,hr,`pshift ${hr<17?'pam':'ppm'}`);
+  if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)) html+=printSegmentMark(rec.start,rec.end,hr,`pshift ${pHM(rec.start)>=14||hr>=17?'ppm':'pam'}`);
   return html;
 }
 function printTimeCell(nm,d,st,hr){
@@ -1908,7 +1923,8 @@ function pDayTable(d, blank){
     const rowN=printStoreRows(st,d);
     for(let i=0;i<rowN;i++){
       const nm=list[i]||"";
-      h+=`<tr><td class="pn">${nm?esc(nm):""}</td>`;
+      const off=!!(nm&&isStaffHomeStore(nm,st)&&(((S.staff[nm]||{}).decided||{})[key(d)]||{}).off);
+      h+=`<tr><td class="pn"${!blank&&off?' style="background:#9fd8f2;color:#0f5a82"':''}>${nm?esc(nm):""}</td>`;
       if(blank || !nm){
         h+=EMPTY;
       }else{
