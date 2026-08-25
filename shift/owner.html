@@ -754,7 +754,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.125</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.126</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1010,7 +1010,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.125"; window.APP_UPDATED="2026-08-26";
+window.APP_VERSION="v1.126"; window.APP_UPDATED="2026-08-26";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1215,7 +1215,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.125</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.126</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1605,12 +1605,18 @@ function pHM(s){ if(!s) return null; s=_fw2hw(s); const a=s.split(':'); const h=
 function normTime(v){ if(!v) return ''; v=_fw2hw(v).trim(); if(!v) return ''; const a=v.split(':'); let h=parseInt(a[0],10); if(isNaN(h)) return ''; let m=a.length>1?parseInt(a[1],10):0; if(isNaN(m)) m=0; if(h>23)h=23; if(h<0)h=0; if(m>59)m=59; if(m<0)m=0; return pad(h)+':'+pad(m); }
 function dbar(color,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar" style="left:${l}px;width:${w}px;background:${color}">${label}</div>`; }
 function dayShiftBackground(cls,s,e){ if(!['ball','bam','bpm'].includes(cls)||e<=s) return ''; if(s>=14) return 'background:#f6c6da;'; if(e<=17) return 'background:#bfe6c4;'; const p=Math.max(0,Math.min(100,(17-s)/(e-s)*100)); return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`; }
+function dayBreakBackground(nm,d,s,e){
+  const breaks=(((S.staff[nm]||{}).hold||{})[key(d)]||[]).filter(h=>Number.isFinite(h)&&h>=s&&h<e);
+  if(!breaks.length) return '';
+  const end=Math.min(e,Math.min(...breaks)+0.5), p=Math.max(0,Math.min(100,(end-s)/(e-s)*100));
+  return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`;
+}
 function dbarC(cls,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar ${cls}" style="left:${l}px;width:${w}px;${dayShiftBackground(cls,s,e)}">${label}</div>`; }
 function hourToStr(h){ h=Math.max(0,Math.min(24,h)); const hh=Math.floor(h+1e-6); let mm=Math.round((h-hh)*60); return pad(hh)+":"+pad(mm===60?0:mm); }
 function dEditBar(nm,d,seg,cls,ss,ee,st){
   const s=pHM(ss), e=pHM(ee); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
-  const _bg=dayShiftBackground(cls,s,e);
+  const _bg=dayBreakBackground(nm,d,s,e)||dayShiftBackground(cls,s,e);
   const store=st||((S.staff[nm]||{}).store||"大須");
   const overlap=shiftConflictOverlays(nm,d,store,s,e);
   return `<div class="dbar decisionbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" style="left:${l}px;width:${w}px;${_bg}">${overlap}<span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="start"></span><span class="btime bstart" data-f="start">${ss||''}</span><span class="btime bend" data-f="end">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="end"></span></div>`;
