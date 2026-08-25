@@ -236,10 +236,12 @@
   .mcell .wsmall{font-size:8px; color:#c2c2c2; font-weight:700; white-space:normal; word-break:break-all; overflow:hidden; min-width:0; line-height:1.35;}
   .staffnotice-star{margin-left:auto;flex:0 0 20px;width:20px;height:20px;border:1px solid #d9a900;border-radius:50%;padding:0;background:#fff3ad;color:#e7b700;font-size:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(180,135,0,.3);}
   .staffnotice-star.confirmed{background:#fff0df;border-color:#ef8b24;color:#ef8b24;box-shadow:0 1px 3px rgba(180,90,0,.28);}
-  .staffnotice-banner{max-width:604px;margin:8px auto 0;padding:9px 11px;border:2px solid #efc53f;border-radius:11px;background:#fff8d9;color:#735f17;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:0 2px 8px rgba(160,120,0,.12);}
-  .staffnotice-banner button{border:none;border-radius:8px;background:#e2b400;color:#fff;padding:7px 11px;font-weight:900;white-space:nowrap;cursor:pointer;}
-  .staffnotice-message{white-space:pre-wrap;text-align:left;background:#fffaf0;border:1.5px solid #efc53f;border-radius:10px;padding:12px;margin:8px 0;color:#4d420f;font-size:15px;font-weight:700;line-height:1.65;overflow-wrap:anywhere;}
-  .staffnotice-status{font-size:12px;color:#8a6d00;font-weight:800;margin:4px 0 8px;}
+  #staffNoticeMask .cmtbox,#staffNoticeMask .ttl,#staffNoticeMask button,.staffnotice-banner,.staffnotice-banner button{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;}
+  #staffNoticeMask .ttl,#staffNoticeMask button{font-weight:500;}
+  .staffnotice-banner{max-width:604px;margin:8px auto 0;padding:9px 11px;border:2px solid #efc53f;border-radius:11px;background:#fff8d9;color:#735f17;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:0 2px 8px rgba(160,120,0,.12);}
+  .staffnotice-banner button{border:none;border-radius:8px;background:#e2b400;color:#fff;padding:7px 11px;font-weight:500;white-space:nowrap;cursor:pointer;}
+  .staffnotice-message{white-space:pre-wrap;text-align:left;background:#fffaf0;border:1.5px solid #efc53f;border-radius:10px;padding:12px;margin:8px 0;color:#4d420f;font-size:15px;font-weight:400;line-height:1.65;overflow-wrap:anywhere;}
+  .staffnotice-status{font-size:12px;color:#8a6d00;font-weight:500;margin:4px 0 8px;}
   .ymsel{padding:9px 6px; font-size:16px; border:1.5px solid var(--line); border-radius:8px; flex:0 0 auto;}
   .dibox{max-width:430px;}
   .moff{font-size:13px; font-weight:700; color:#9aa0a8;}
@@ -633,7 +635,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.74</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.75</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -824,7 +826,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.74"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.75"; window.APP_UPDATED="2026-08-25";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1580,6 +1582,7 @@ function wishHasIncompleteTime(w){
 }
 let staffNoticeTarget=null;
 function staffNoticeOf(me,d){
+  if(!isShiftDayPublished(key(d))) return null;
   const wish=(S.staff[me]||{}).wish||{}, notices=wish._ownerNotices||{};
   return notices[key(d)]||null;
 }
@@ -1617,7 +1620,7 @@ function renderMine(me){
   const _hasBulkAllDay=_monthWishKeys.some(k=>wsh[k]&&wsh[k].allday&&wsh[k].bulkAllDay===true)||_allDayCount>=Math.ceil(DAYS/2);
   let html=`<div class="caltools"><button type="button" class="allbtn${_locked?' locked':''}${_hasBulkAllDay?' clr':''}" id="allMaru" ${_locked?'disabled':''}>${_locked?'受付終了':(_hasBulkAllDay?'全部一日OKを解除':'全部 ◎ 一日OK')}</button><span class="monthlbl${Date.now()<staffMonthChangedUntil?' changed':''}" id="monthLbl">${Y}年${M}月</span><span class="updatedlbl" id="updatedLbl"></span></div>`;
   html+=`<div class="month-submit-wrap"><button type="button" class="month-submit-btn${_submitted?' submitted':''}" id="monthSubmit" ${_locked?'disabled':''}>${_deadlineLocked?'締め切り済み（毎月20日まで）':(_submitted?'✓ この月は提出済み（20日まで修正できます）':'この月の希望を提出')}</button></div>`;
-  const _unreadNoticeDays=[]; for(let d=1;d<=DAYS;d++){ const n=ownerNotices[key(d)]; if(n&&n.text&&!n.acknowledgedAt) _unreadNoticeDays.push(d); }
+  const _unreadNoticeDays=[]; for(let d=1;d<=DAYS;d++){ const n=isShiftDayPublished(key(d))?ownerNotices[key(d)]:null; if(n&&n.text&&!n.acknowledgedAt) _unreadNoticeDays.push(d); }
   if(_unreadNoticeDays.length) html+=`<div class="staffnotice-banner"><span>★ オーナーからの案内が${_unreadNoticeDays.length}件あります</span><button type="button" data-notice-day="${_unreadNoticeDays[0]}">案内を確認</button></div>`;
   if(_locked) html+=`<div class="monthclosednotice">🔒 この月の希望提出は締め切りました。変更は責任者に連絡してください。</div>`;
   html+='<div class="mcal"><div class="mcalgrid">';
@@ -1650,7 +1653,7 @@ function renderMine(me){
     const note=(S.staff[me].notes||{})[key(d)];
     const nb=note?`<span class="mbubble" style="color:${hc}"></span>`:'';
     const rq=(S.staff[me].req||{})[key(d)];
-    const ownerNotice=ownerNotices[key(d)];
+    const ownerNotice=isShiftDayPublished(key(d))?ownerNotices[key(d)]:null;
     const noticeStar=ownerNotice&&ownerNotice.text?`<button type="button" class="staffnotice-star${ownerNotice.acknowledgedAt?' confirmed':''}" data-notice-day="${d}" aria-label="${ownerNotice.acknowledgedAt?'確認済みの案内':'未確認の案内'}" title="${ownerNotice.acknowledgedAt?'確認済みの案内':'オーナーからの案内'}">★</button>`:'';
     let reqInner="";
     if(rq&&(rq.start||rq.end)){
