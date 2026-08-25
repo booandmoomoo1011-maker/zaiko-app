@@ -207,6 +207,7 @@
   .cmtbox .qbtn.on-maru{background:#fef7cf; color:#7a5b00; border:2.5px solid #d4a017;}
   .cmtbox .qbtn.on-batu{background:#dcf0fa; color:#1f6f95; border:2.5px solid #2b7fa3;}
   .cmtbox .qsubmit{margin-left:auto; background:#c99a00; color:#fff; border:none; border-radius:8px; padding:6px 14px; font-weight:800; cursor:pointer; font-size:13px;}
+  .cmtbox .qclear{width:100%; margin-top:8px; background:#111; color:#fff; border:none; border-radius:8px; padding:9px 12px; font-weight:800; cursor:pointer; font-size:13px;}
   .cmtbox .line.noteln{margin-top:4px;}
   .cmtbox .qbtn:disabled,.cmtbox input:disabled,.cmtbox .noteinp:disabled{opacity:.55;}
 
@@ -746,7 +747,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.113</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.114</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1002,7 +1003,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.113"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.114"; window.APP_UPDATED="2026-08-25";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1207,7 +1208,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.113</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.114</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2671,7 +2672,7 @@ function openDayInput(me,d,fromOwner=false){ diMe=me; diDay=d; diOwnerEdit=!!fro
 }
 function _diLock(lock){
   const b=$("#diBody"); if(!b) return;
-  b.querySelectorAll('input.tinp,.noteinp,.qbtn').forEach(el=>{ el.disabled=lock; });
+  b.querySelectorAll('input.tinp,.noteinp,.qbtn,.qclear').forEach(el=>{ el.disabled=lock; });
   const sb=$("#diSubmit"), eb=$("#diEdit");
   if(sb) sb.style.display=lock?'none':'';
   if(eb) eb.style.display=lock?'':'none';
@@ -2682,11 +2683,13 @@ function drawDayInput(){
   const am=w.am||{}, pm=w.pm||{}, al=w.all||(w.allday?{start:'9:00',end:'23:30'}:{});
   const dv=(seg,f)=>{ const o={all:al,am,pm}[seg]; return (o&&o[f])?o[f]:''; };
   const note=((S.staff[me].notes||{})[key(d)]||'').replace(/"/g,'&quot;');
+  const hasIn=!!(w.off||w.allday||w.all||w.am||w.pm||w.start||w.end);
   $("#diBody").innerHTML=`<div class="seg2">
     <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
     <div class="line lam"><span class="tg am">AM</span><input type="text" class="tinp" placeholder="：" value="${dv('am','start')}" data-seg="am" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('am','end')}" data-seg="am" data-f="end"></div>
     <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','start')}" data-seg="pm" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','end')}" data-seg="pm" data-f="end"></div>
     <div class="line qnote"><button type="button" class="qbtn ${w.allday?'on-maru':''}" data-q="maru" aria-pressed="${!!w.allday}">◎</button><button type="button" class="qbtn ${w.off?'on-batu':''}" data-q="batu" aria-pressed="${!!w.off}">✕</button><button type="button" class="qsubmit" id="diSubmit">${diOwnerEdit?'希望を保存':'決定'}</button><button type="button" class="qsubmit" id="diEdit" style="display:none;background:#5a6b7a;">変更</button></div>
+    ${hasIn?'<button type="button" class="qclear" id="diClear">この日の希望を削除</button>':''}
     <div class="line noteln"><span class="tg note">備考</span><input type="text" class="noteinp" value="${note}" placeholder=""></div>
   </div>`;
   $("#diBody").querySelectorAll('input.tinp').forEach(inp=>inp.onchange=()=>{
@@ -2709,6 +2712,13 @@ function drawDayInput(){
     else{ S.staff[me].wish[key(d)]=cur.allday?{}:{allday:true,...(diOwnerAdded?{_ownerAdded:true}:{})}; }
     save(); drawDayInput();
   });
+  const clearBtn=$("#diClear");
+  if(clearBtn) clearBtn.onclick=()=>{
+    delete S.staff[me].wish[key(d)];
+    save();
+    $("#diMask").style.display="none";
+    if(diOwnerEdit) renderOwner(); else renderStaff();
+  };
   $("#diBody").querySelector('.noteinp').onchange=function(){
     if(!S.staff[me].notes) S.staff[me].notes={};
     const t=this.value.trim(); if(t) S.staff[me].notes[key(d)]=t; else delete S.staff[me].notes[key(d)];

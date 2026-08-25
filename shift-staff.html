@@ -166,7 +166,7 @@
   .cmtbox .qbtn.on-maru{background:#fef7cf; color:#7a5b00; border:2.5px solid #d4a017;}
   .cmtbox .qbtn.on-batu{background:#dcf0fa; color:#1f6f95; border:2.5px solid #2b7fa3;}
   .cmtbox .qsubmit{margin-left:auto; background:#c99a00; color:#fff; border:none; border-radius:8px; padding:6px 14px; font-weight:800; cursor:pointer; font-size:13px;}
-  .cmtbox .qclear{width:100%; margin-top:8px; background:#fff; color:#c0596b; border:1.5px solid #d9a5ae; border-radius:8px; padding:8px 12px; font-weight:800; cursor:pointer; font-size:13px;}
+  .cmtbox .qclear{width:100%; margin-top:8px; background:#111; color:#fff; border:none; border-radius:8px; padding:9px 12px; font-weight:800; cursor:pointer; font-size:13px;}
   .cmtbox .line.noteln{margin-top:4px;}
   .bulk-confirm-text{font-size:14px;line-height:1.65;color:#555;margin:4px 0 12px;}
   .bulk-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -633,7 +633,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.72</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.73</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -824,7 +824,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.72"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.73"; window.APP_UPDATED="2026-08-25";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1754,7 +1754,7 @@ function drawDayInput(){
     <div class="line lastline"><button type="button" class="lastbtn" id="diLast">ラスト 23:30</button></div>
     <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
     <div class="line qnote"><button class="qbtn ${w.allday?'on-maru':''}" data-q="maru">◎</button><button class="qbtn ${w.off?'on-batu':''}" data-q="batu">✕</button><button type="button" class="qsubmit" id="diSubmit">${(diHasInitial&&hasIn)?"変更":"決定"}</button><button type="button" class="qsubmit" id="diEdit" style="display:none;background:#5a6b7a;">変更</button></div>
-    ${hasIn?'<button type="button" class="qclear" id="diClear">この日の希望を解除</button>':''}
+    ${hasIn?'<button type="button" class="qclear" id="diClear">この日の希望を削除</button>':''}
     <div class="line noteln"><span class="tg note">備考</span><input type="text" class="noteinp" value="${note}" placeholder=""></div>
   </div>`;
   const markDayInputIncomplete=()=>{
