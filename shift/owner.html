@@ -157,7 +157,7 @@
   .wchip{display:inline-block; padding:0 4px; border-radius:5px; font-size:9px; line-height:1.4; font-weight:700;}
   .wchip.time{border:1px dashed #b0b0b0; color:#555;}
   .wchip.time.wd{background:#fff; color:#222; border-color:#8a8a8a;}
-  .wchip.time.owneradded,.wchip.time.wd.owneradded{border-color:#e6b800;}
+  .wchip.time.owneradded,.wchip.time.wd.owneradded{border-width:1.5px; border-color:#d4a000;}
   .wchip.allday{border:1px dashed #d9c76a; background:#fef7cf; color:#7a5b00;}
   .wchip.off{background:#dcf0fa; color:#2b7fa3;}
   .wchip.maru{background:#fef7cf; color:#8a6d00;}
@@ -747,7 +747,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.114</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.115</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1003,7 +1003,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.114"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.115"; window.APP_UPDATED="2026-08-25";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1208,7 +1208,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.114</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.115</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1224,6 +1224,11 @@ document.getElementById('ownerLoginBtn').onclick=function(){
 function touchUpdated(){ const t=new Date(); S.updatedAt=`${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`; if(!S.decidedMonths) S.decidedMonths={}; S.decidedMonths[Y+'-'+M]=true; }
 function names(){ return Object.keys(S.staff); }
 function storeStaff(st){ return names().filter(n=>(S.staff[n].store||"大須")===st); }
+function orderedStoreStaff(st){
+  const list=((getRoster()||{})[st]||[]).slice();
+  storeStaff(st).forEach(nm=>{ if(list.indexOf(nm)<0) list.push(nm); });
+  return list;
+}
 function isStaffHomeStore(nm,st){ const staff=S.staff[nm]; return !staff||(staff.store||"大須")===st; }
 function isShiftDayPublished(date){
   if(!S.published||!S.decidedDays||!S.decidedDays[date]) return false;
@@ -1345,9 +1350,7 @@ function renderOwner(){
   $("#thead").onkeydown=(e)=>{ if(e.target.closest&&e.target.closest('.daypublish')) return; if(e.key!=="Enter"&&e.key!==" ") return; const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day){ e.preventDefault(); openDayView(+th.dataset.day); } };
   let rows="";
   STORES.forEach(st=>{
-    const R=getRoster();
-    const list=(R[st]||[]).slice();            /* 登録した名前（roster）を先に */
-    storeStaff(st).forEach(nm=>{ if(list.indexOf(nm)<0) list.push(nm); });  /* 提出だけの人も足す */
+    const list=orderedStoreStaff(st);         /* 画面と印刷で同じ登録順・人数を使う */
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     const isOff=d=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);  /* この店舗のこの日が休みか */
     rows+=`<tr class="secrow"><td class="name secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）</td>`;
@@ -2360,7 +2363,7 @@ function pOverviewSheet(mode){  /* mode: 'wish'=希望 / 'decided'=決定 */
   const _off=(st,d)=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
   let h=`<table class="wovgrid"><tbody>`;
   STORES.forEach(st=>{
-    const list=storeStaff(st); const col=STORE_COLOR[st]||STORE_COLOR["大須"];
+    const list=orderedStoreStaff(st); const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     /* 店舗ごとに「店舗名＋日にち曜日」の見出し行をくり返す */
     h+=`<tr class="wsthead"><td class="wpn" style="color:${col.ink};background:${col.bg};">${st}（${list.length}）</td>`;
     for(let d=1;d<=DAYS;d++){ const dow=DOW[new Date(Y,M-1,d).getDay()]; const hol=isHol(d);
@@ -2368,7 +2371,8 @@ function pOverviewSheet(mode){  /* mode: 'wish'=希望 / 'decided'=決定 */
       h+=`<td class="wdh${wk}" style="background:${col.head}">${M}/${d}<br>${dow}</td>`; }
     h+=`</tr>`;
     list.forEach(nm=>{
-      const src=(mode==='decided')?(S.staff[nm].decided||{}):(S.staff[nm].wish||{});
+      const stf=S.staff[nm]||{};
+      const src=(mode==='decided')?(stf.decided||{}):(stf.wish||{});
       h+=`<tr><td class="${printNameFitClass(nm)}">${esc(nm)}</td>`;
       for(let d=1;d<=DAYS;d++){
         const v=src[key(d)];
@@ -2388,7 +2392,7 @@ function buildOverviewPrint(mode){
   ['--rowH','--fs','--fsN','--fsS','--fsT','--nameW'].forEach(v=>{ const a=$("#printArea"),b=$("#ppBody"); if(a)a.style.removeProperty(v); if(b)b.style.removeProperty(v); });
   /* 下までフィット：総行数からA4横の縦幅を割って行の高さを決める */
   let rowsTotal=0;
-  STORES.forEach(st=>{ const n=storeStaff(st).length; const blanks=Math.max((BLANK_SLOTS[st]||0)-n, SPARE_ROWS); rowsTotal += 1.8/*見出し行ぶん*/ + n + blanks; });
+  STORES.forEach(st=>{ const n=orderedStoreStaff(st).length; const blanks=Math.max((BLANK_SLOTS[st]||0)-n, SPARE_ROWS); rowsTotal += 1.8/*見出し行ぶん*/ + n + blanks; });
   const availMM=183;
   let rowMM=availMM/rowsTotal; if(rowMM>11) rowMM=11; if(rowMM<3.6) rowMM=3.6;
   const cfs =Math.max(5.5, rowMM*0.92);   // マスの時間文字（v1.85と同じ大きさ）
