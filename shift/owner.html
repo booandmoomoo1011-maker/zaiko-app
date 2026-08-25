@@ -311,12 +311,8 @@
   .dayhead button{border:none; background:#eee; color:#555; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:700; white-space:nowrap; flex:0 0 auto; font-size:13px;}
   #mPalette{display:none;}
   .daylegend{display:flex; gap:6px; flex-wrap:nowrap; align-items:center; margin:0 6px; flex:1 1 auto; justify-content:center; overflow:hidden;}
-  .daylegend .lhold{min-width:116px; background:#fff; color:#66717a; font-family:inherit; font-size:15px; font-weight:900; padding:8px 16px; border:2px solid #c8d2d9; border-radius:9px; line-height:1.2; cursor:pointer;}
-  .daylegend .lhold.on{background:#2f9ad0; color:#fff; box-shadow:0 0 0 2px #bfe6f5;}
   .daylegend .dayundo{min-width:82px; background:#fff; color:#44515a; border:1.5px solid #c8d2d9; padding:8px 12px; font-size:14px; font-weight:900;}
   .daylegend .dayundo:disabled{color:#aab2b8; background:#f4f5f6; border-color:#e1e4e7; cursor:default;}
-  .daylegend .holdhint{display:none; font-size:10px; font-weight:800; color:#2f9ad0; white-space:nowrap;}
-  #dayGrid.holdmode .drow.dedit, #dayGrid.holdmode .drow.tedit, #dayGrid.holdmode .dtime{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'><path d='M5 3 L5 19 L9.5 14.8 L12.4 20.6 L15 19.4 L12.1 13.7 L18 13.5 Z' fill='%232f9ad0' stroke='white' stroke-width='1.2' stroke-linejoin='round'/></svg>") 5 3, auto;}
   .dayscroll{overflow:auto; flex:1 1 auto; padding:4px; touch-action:pan-x pan-y; overscroll-behavior:contain;}
   .dayruler{position:sticky; top:0; z-index:9; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:hidden;}
   .dayruler-track{transform-origin:top left; will-change:transform;}
@@ -758,7 +754,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.124</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.125</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1000,7 +996,7 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" class="lhold" id="holdToggle" aria-pressed="false" data-guide-key="day-break" data-guide="休憩をONにして勤務の線を押すと休憩を追加できます">休憩 OFF</button><span class="holdhint" id="holdHint">時間の線をタップ</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">この日を決定</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">この日を決定</button></div>
     <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
@@ -1014,7 +1010,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.124"; window.APP_UPDATED="2026-08-26";
+window.APP_VERSION="v1.125"; window.APP_UPDATED="2026-08-26";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1219,7 +1215,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.124</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.125</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1538,7 +1534,7 @@ $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.displ
 
 /* ---- 日別タイムライン ---- */
 const AX0=9, AX1=23.5, HW=40;
-let dayViewDay=null, holdMode=false, dayUserZoom=1;
+let dayViewDay=null, dayUserZoom=1;
 let dayUndoDate=null, dayUndoHistory=[];
 const DAY_UNDO_FIELDS=['decided','support','tetsu','hold','req','ooff'];
 const DAY_UNDO_META=['storeOff','storeMemo','decidedDays'];
@@ -1737,13 +1733,10 @@ function openDayView(d){
   g.style.transform="none";
   g.innerHTML=html;
   g.querySelectorAll('.dbar.wishbar:not(.wishfadecover)').forEach(bar=>{ bar.dataset.guideKey='wish-line'; bar.dataset.guide='希望の線を押すと、その時間をシフトへ入れられます'; });
-  g.querySelectorAll('.dbar.decisionbar').forEach(bar=>{ bar.dataset.guideKey='shift-line'; bar.dataset.guide='時間を押すと編集、線の端を引くと勤務時間を調整できます'; });
-  g.classList.toggle('holdmode', holdMode&&!_closed);
+  g.querySelectorAll('.dbar.decisionbar').forEach(bar=>{ bar.dataset.guideKey='shift-line'; bar.dataset.guide='勤務の線を押すと30分の休憩を追加、時間を押すと編集できます'; bar.onclick=e=>addShiftBreak(e,bar); });
   g.classList.toggle('closedmonth',_closed);
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.disabled=_closed; });
   g.querySelectorAll('.storeoff-btn,.dreq,.dnotice').forEach(b=>{ b.disabled=_closed; });
-  { const hb=$("#holdToggle"); if(hb) hb.disabled=_closed; }
-  syncHoldToggle();
   syncDayUndoButton();
   g.querySelectorAll('.cbubble').forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
     showComment(el.dataset.n, +el.dataset.d, (S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)]); });
@@ -1853,8 +1846,6 @@ $("#dayDecide").onclick=()=>{
   if(willDecide) $("#dayMask").style.display="none";
 };
 $("#dayUndo").onclick=()=>undoDayChange();
-function syncHoldToggle(){ const button=$("#holdToggle"); if(button){ button.classList.toggle('on',holdMode); button.setAttribute('aria-pressed',holdMode?'true':'false'); button.textContent=holdMode?'休憩 ON':'休憩 OFF'; } const hint=$("#holdHint"); if(hint) hint.style.display=holdMode?'inline-block':'none'; }
-$("#holdToggle").onclick=()=>{ if(closedMonthEditBlocked()) return; holdMode=!holdMode; $("#dayGrid").classList.toggle('holdmode',holdMode); syncHoldToggle(); };
 $("#dayMask").onclick=e=>{ if(e.target.id==="dayMask") $("#dayMask").style.display="none"; };
 /* ---- 要請（名前の横の✈要請ボタン）---- */
 let reqTarget=null;
@@ -2087,6 +2078,17 @@ function bindHoldBlock(block){
     else lastTouch=now;
   };
 }
+function addShiftBreak(e,bar){
+  if(closedMonthEditBlocked()||(e.target.closest&&e.target.closest('.btime,.dresize,.holdbar'))) return;
+  const dt=bar.closest('.dtime'); if(!dt) return;
+  const nm=bar.dataset.n, d=+bar.dataset.d, rec=storeDecision(nm,d,bar.dataset.st), part=rec&&(rec[bar.dataset.seg]||(bar.dataset.seg==='all'&&(rec.start||rec.end)?rec:null));
+  if(!part) return;
+  const start=pHM(part.start), end=pHM(part.end);
+  if(start==null||end==null||end<=start) return;
+  const hour=Math.min(_xToHour(e,dt,true),AX1-0.5);
+  if(hour<start||hour+0.5>end) return;
+  e.preventDefault(); e.stopPropagation(); toggleHold(nm,d,hour);
+}
 function toggleHold(nm,d,h){
   if(closedMonthEditBlocked()) return;
   rememberDayUndo(d);
@@ -2175,11 +2177,6 @@ function dayRowClick(e,row,mode){
   if(t.closest && t.closest('.holdbar')) return;
   if(mode==='tetsu'){ openSupport(nm,d,'鉄板'); return; }
   if(t.closest && t.closest('.dname')){ toggleStaffDayOff(nm,d); return; }
-  if(holdMode){
-    const dt=t.closest('.dtime'); if(!dt) return;
-    let hour=Math.min(_xToHour(e,dt,true), AX1-0.5);
-    toggleHold(nm,d,hour); return;
-  }
   const wish=t.closest&&t.closest('.wishbar');
   if(wish&&!wish.classList.contains('wishfadecover')){
     const seg=wish.classList.contains('wam')?'am':wish.classList.contains('wpm')?'pm':'all';
