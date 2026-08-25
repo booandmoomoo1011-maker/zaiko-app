@@ -317,7 +317,14 @@
   .daylegend .dayundo:disabled{color:#aab2b8; background:#f4f5f6; border-color:#e1e4e7; cursor:default;}
   .daylegend .holdhint{display:none; font-size:10px; font-weight:800; color:#2f9ad0; white-space:nowrap;}
   #dayGrid.holdmode .drow.dedit, #dayGrid.holdmode .drow.tedit, #dayGrid.holdmode .dtime{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24'><path d='M5 3 L5 19 L9.5 14.8 L12.4 20.6 L15 19.4 L12.1 13.7 L18 13.5 Z' fill='%232f9ad0' stroke='white' stroke-width='1.2' stroke-linejoin='round'/></svg>") 5 3, auto;}
-  .dayscroll{overflow:auto; flex:1 1 auto; padding:4px;}
+  .dayscroll{overflow:auto; flex:1 1 auto; padding:4px; touch-action:pan-x pan-y; overscroll-behavior:contain;}
+  .dayruler{position:sticky; top:0; z-index:9; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:hidden;}
+  .dayruler-track{transform-origin:top left; will-change:transform;}
+  .dayruler .drow.ruler{min-height:29px; background:#fff;}
+  .dayruler .drow.ruler .dname{z-index:10; background:#fff; color:#44515a; font-weight:800;}
+  .dayruler .dtime{min-height:29px; background-color:#fff;}
+  .dayruler .tick{top:4px;}
+  .daygridframe{position:relative;}
   .storememo{position:absolute; left:728px; top:2px; z-index:6; width:4cm; height:3cm; resize:both; min-width:2.5cm; min-height:2cm; box-sizing:border-box; font-family:inherit; font-size:12px; line-height:1.4; padding:5px 7px; border:1.5px solid #e2c98a; border-radius:8px; background:#fffdf3; color:#5a4a2a;}
   #dayGrid{will-change:transform;}
   .drow{display:flex; align-items:stretch; border-bottom:1px solid #f2e6ea; min-height:27px;}
@@ -378,7 +385,7 @@
   .drow.haswishdec .dbar.holdbar{top:23px; height:17px;}
   .drow.ruler .dname{background:#fbe6ec; color:var(--pink-d); flex-direction:row; align-items:center; font-weight:700;}
   .dtime{position:relative; background-image:repeating-linear-gradient(to right, transparent 0, transparent 39px, #ececec 39px, #ececec 40px);}
-  .tick{position:absolute; top:0; font-size:10px; color:#111; font-weight:600; padding-left:2px;}
+  .tick{position:absolute; top:0; font-size:13px; color:#111; font-weight:800; padding-left:2px;}
   .dbar{position:absolute; top:4px; height:19px; border-radius:5px; color:#fff; font-size:10px; font-weight:700; justify-content:space-between;
     padding:0 5px; display:flex; align-items:center; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.18);}
   .dbar.off{background:#7ec8f0;}
@@ -747,7 +754,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.115</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.116</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -822,14 +829,14 @@
     <div class="wishline" id="mWish"></div>
     <div class="notemsg" id="mNote"></div>
     <div class="segTitle all" style="color:#8a6d00">一日（通し）</div>
-    <div class="row"><input id="mAllStart" type="text" class="tinp" placeholder="9:00"><span class="tag">から</span></div>
-    <div class="row"><input id="mAllEnd" type="text" class="tinp" placeholder="9:00"><span class="tag">まで</span></div>
+    <div class="row"><input id="mAllStart" type="text" class="tinp" placeholder="10:00"><span class="tag">から</span></div>
+    <div class="row"><input id="mAllEnd" type="text" class="tinp" placeholder="10:00"><span class="tag">まで</span></div>
     <div class="segTitle am">AM（午前）</div>
-    <div class="row"><input id="mAmStart" type="text" class="tinp" placeholder="9:00"><span class="tag">から</span></div>
-    <div class="row"><input id="mAmEnd" type="text" class="tinp" placeholder="9:00"><span class="tag">まで</span></div>
+    <div class="row"><input id="mAmStart" type="text" class="tinp" placeholder="10:00"><span class="tag">から</span></div>
+    <div class="row"><input id="mAmEnd" type="text" class="tinp" placeholder="10:00"><span class="tag">まで</span></div>
     <div class="segTitle pm">PM（午後）</div>
-    <div class="row"><input id="mPmStart" type="text" class="tinp" placeholder="9:00"><span class="tag">から</span></div>
-    <div class="row"><input id="mPmEnd" type="text" class="tinp" placeholder="9:00"><span class="tag">まで</span></div>
+    <div class="row"><input id="mPmStart" type="text" class="tinp" placeholder="10:00"><span class="tag">から</span></div>
+    <div class="row"><input id="mPmEnd" type="text" class="tinp" placeholder="10:00"><span class="tag">まで</span></div>
     <div class="palette" id="mPalette"></div>
     <div class="quick">
       <button type="button" class="batu" data-q="batu">✕</button>
@@ -913,9 +920,9 @@
   <div class="cmtbox">
     <div class="ttl" id="reqTtl"></div>
     <div style="display:flex; gap:8px; align-items:center; justify-content:center; font-size:16px; margin:6px 0 2px;">
-      <input type="text" class="tinp" placeholder="9:00" id="reqStart" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
+      <input type="text" class="tinp" placeholder="10:00" id="reqStart" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
       <span>〜</span>
-      <input type="text" class="tinp" placeholder="9:00" id="reqEnd" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
+      <input type="text" class="tinp" placeholder="10:00" id="reqEnd" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
     </div>
     <button id="reqSend" type="button">この時間で要請</button>
     <button id="reqDelete" type="button" style="display:none;background:#111;color:#fff;margin-top:8px;">この要請だけ削除</button>
@@ -949,7 +956,7 @@
   <div class="cmtbox">
     <div class="ttl" id="teTtl"></div>
     <div id="teHelp" style="font-size:12px; color:#5b7a8c; margin-bottom:6px;"></div>
-    <div class="terow" id="teAmRow"><button type="button" class="telbl" id="teAmToggle" aria-pressed="false">AM</button><input type="text" class="tinp" placeholder="9:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="17:00" id="teAmE"></div>
+    <div class="terow" id="teAmRow"><button type="button" class="telbl" id="teAmToggle" aria-pressed="false">AM</button><input type="text" class="tinp" placeholder="10:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="17:00" id="teAmE"></div>
     <div class="terow" id="tePmRow"><button type="button" class="telbl" id="tePmToggle" aria-pressed="false">PM</button><input type="text" class="tinp" placeholder="14:00" id="tePmS"><span>〜</span><input type="text" class="tinp" placeholder="23:30" id="tePmE"></div>
     <button id="teSave" type="button" style="background:#2f9ad0;"></button>
     <button id="teDel" type="button" style="background:#c0596b; margin-top:8px;"></button>
@@ -970,7 +977,7 @@
   <div class="cmtbox" style="max-width:250px;">
     <div class="ttl" id="oneTtl"></div>
     <div id="oneNote" class="onenote" style="display:none;"></div>
-    <input type="text" class="tinp" placeholder="9:00" id="oneInput" style="width:100%; font-size:18px; padding:9px; border:1.5px solid var(--line); border-radius:8px; box-sizing:border-box;">
+    <input type="text" class="tinp" placeholder="10:00" id="oneInput" style="width:100%; font-size:18px; padding:9px; border:1.5px solid var(--line); border-radius:8px; box-sizing:border-box;">
     <button id="oneOk" type="button">変更する</button>
     <button id="oneDelete" type="button" style="background:#111; color:#fff; margin-top:8px;">この時間帯だけ削除</button>
   </div>
@@ -990,7 +997,7 @@
 <div class="daymask" id="dayMask">
   <div class="daymodal">
     <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" class="lhold" id="holdToggle" aria-pressed="false" data-guide-key="day-break" data-guide="休憩をONにして勤務の線を押すと休憩を追加できます">休憩 OFF</button><span class="holdhint" id="holdHint">時間の線をタップ</span></div><button id="dayDecide" type="button" style="background:#2fa04a;color:#fff;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">この日を決定</button></div>
-    <div class="dayscroll"><div id="dayGrid"></div></div>
+    <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
     <div class="dmz dmz-c" data-mz="c" title="幅と縦を変える"></div>
@@ -1003,7 +1010,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.115"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.116"; window.APP_UPDATED="2026-08-25";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1208,7 +1215,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.115</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.116</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1275,7 +1282,7 @@ function canManageStaff(){ return !window.shiftEditorMode; }
 function wishText(w){
   if(!w) return "";
   if(w.off) return "✕";
-  if(w.allday) return "9:00-23:30";
+  if(w.allday) return "10:00-23:30";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`AM${w.am.start||''}-${w.am.end||''}`);
@@ -1286,7 +1293,7 @@ function wishText(w){
 function wishChip(w,isWeekend){
   if(w.off) return `<span class="wchip off">✕</span>`;
   const ownerAdded=w._ownerAdded?' owneradded':'';
-  if(w.allday) return `<span class="wchip time${ownerAdded}">9:00-23:30</span>`;
+  if(w.allday) return `<span class="wchip time${ownerAdded}">10:00-23:30</span>`;
   if(w.all) return `<span class="wchip time${ownerAdded}">${w.all.start||''}-${w.all.end||''}</span>`;
   const wd=isWeekend?'':'wd'; let h="";
   if(w.am) h+=`<div class="wrow"><span class="wchip time ${wd}${ownerAdded}"><span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}</span></div>`;
@@ -1318,6 +1325,22 @@ function staffDayOffCount(nm,d){
   let count=0;
   for(let day=1;day<=d;day++) if((decided[key(day)]||{}).off) count++;
   return Array.from("①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛")[count-1]||`(${count})`;
+}
+function previousMonthLastStaffOff(nm){
+  const lastDay=new Date(Y,M-1,0), year=lastDay.getFullYear(), month=lastDay.getMonth()+1;
+  const prefix=`${year}-${pad(month)}-`, decided=((S.staff[nm]||{}).decided)||{};
+  const hasPreviousData=Object.keys(decided).some(date=>date.indexOf(prefix)===0);
+  for(let day=lastDay.getDate();day>=1;day--){
+    const date=prefix+pad(day);
+    if((decided[date]||{}).off) return {year,month,day,weekday:DOW[new Date(year,month-1,day).getDay()],hasPreviousData:true};
+  }
+  return {year,month,day:null,weekday:"",hasPreviousData};
+}
+function showPreviousMonthLastStaffOff(nm){
+  const last=previousMonthLastStaffOff(nm);
+  const message=last.day?`前月の最終休み：${last.month}月${last.day}日（${last.weekday}）`:
+    last.hasPreviousData?"前月に確定した休みはありません":"前月のデータなし";
+  return appAlert(message,{title:`${nm}さん`,icon:"📅"});
 }
 function buildPalette(){
   const p=$("#mPalette"); p.innerHTML="";
@@ -1359,7 +1382,7 @@ function renderOwner(){
     list.forEach(nm=>{
       const stf=S.staff[nm]||{};
       const submitted=_deadlinePassed||!!((((stf.wish||{})._submittedMonths)||{})[_submitKey]);
-      const nameGuide=canManageStaff()?'名前を長押しすると同じ店舗内で順番を変更できます':'スタッフ名と希望の提出状況を確認できます';
+      const nameGuide=canManageStaff()?'名前を押すと前月の最終休みを確認、長押しで順番を変更できます':'名前を押すと前月の最終休みを確認できます';
       rows+=`<tr class="staffrow" data-n="${esc(nm)}" data-st="${esc(st)}"><td class="name"><span class="namecontent"><span class="nmtxt" role="button" tabindex="0" data-guide-key="${canManageStaff()?'staff-order':'staff-status'}" data-guide="${nameGuide}">${esc(nm)}</span>${submitted?'<span class="submittedmark">提出済</span>':''}${canManageStaff()?`<button class="delstaff" data-n="${esc(nm)}" data-st="${esc(st)}" title="削除">×</button>`:''}</span></td>`;
       const wish=stf.wish||{};
       for(let d=1;d<=DAYS;d++){
@@ -1426,6 +1449,16 @@ function renderOwner(){
     if(td) openDayInput(td.dataset.n,+td.dataset.d,true);
   });
   document.querySelectorAll("#tbody .ownerreqmark").forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); openReq(el.dataset.n,+el.dataset.d); });
+  document.querySelectorAll("#tbody tr.staffrow .nmtxt").forEach(handle=>{
+    const show=(e)=>{
+      e.stopPropagation();
+      if(handle._suppressStaffNameClick) return;
+      const row=handle.closest('tr.staffrow');
+      if(row) showPreviousMonthLastStaffOff(row.dataset.n);
+    };
+    handle.onclick=show;
+    handle.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); show(e); } };
+  });
   document.querySelectorAll("#tbody .delstaff").forEach(b=>b.onclick=async(e)=>{ e.stopPropagation();
     const nm=b.dataset.n, st=b.dataset.st;
     if(await appConfirm(`${nm} さんを削除しますか？\n希望・シフトも一緒に消えます。`,{title:"スタッフを削除しますか？",confirmText:"削除する",kind:"danger",icon:"🗑️"})){
@@ -1460,7 +1493,7 @@ function attachRosterReorder(){
       const st=row.dataset.st, sx=e.clientX, sy=e.clientY;
       let active=false, moved=false;
       const timer=setTimeout(()=>{
-        active=true; row.classList.add('dragging');
+        active=true; handle._suppressStaffNameClick=true; row.classList.add('dragging');
         try{ if(navigator.vibrate) navigator.vibrate(25); }catch(_e){}
       },450);
       const move=(ev)=>{
@@ -1479,6 +1512,7 @@ function attachRosterReorder(){
         document.removeEventListener('pointercancel',end,true);
         if(!active) return;
         row.classList.remove('dragging');
+        setTimeout(()=>{ handle._suppressStaffNameClick=false; },350);
         if(moved){
           const order=[...document.querySelectorAll('#tbody tr.staffrow[data-st="'+CSS.escape(st)+'"]')].map(r=>r.dataset.n);
           getRoster()[st]=order; save(); renderOwner();
@@ -1499,8 +1533,8 @@ $("#cmtClose").onclick=()=>$("#cmtMask").style.display="none";
 $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.display="none"; };
 
 /* ---- 日別タイムライン ---- */
-const AX0=8, AX1=23.5, HW=40;
-let dayViewDay=null, holdMode=false;
+const AX0=10, AX1=23.5, HW=40;
+let dayViewDay=null, holdMode=false, dayUserZoom=1;
 let dayUndoDate=null, dayUndoHistory=[];
 const DAY_UNDO_FIELDS=['decided','support','tetsu','hold','req','ooff'];
 const DAY_UNDO_META=['storeOff','storeMemo','decidedDays'];
@@ -1672,7 +1706,7 @@ function wishUncoveredBar(cls,start,end,label,moved){
 function wishBars(w,moved){
   if(!w||w.off) return "";
   moved=moved||{any:false,am:false,pm:false,all:false,segs:[]};
-  if(w.allday) return wishUncoveredBar('wishbar wall',9,23.5,'希望 9:00〜23:30',moved)+wishFadeCovers(moved,9,23.5);
+  if(w.allday) return wishUncoveredBar('wishbar wall',10,23.5,'希望 10:00〜23:30',moved)+wishFadeCovers(moved,10,23.5);
   let bars="";
   if(w.all){ bars+=wishUncoveredBar('wishbar wall',pHM(w.all.start),pHM(w.all.end),`希望 ${w.all.start||''}〜${w.all.end||''}`,moved); bars+=wishFadeCovers(moved,w.all.start,w.all.end); }
   if(w.am) bars+=dbarC(`wishbar wam${moved.am||moved.all?' wishmoved':''}`,pHM(w.am.start),pHM(w.am.end),`希望 AM ${w.am.start||''}〜${w.am.end||''}`);
@@ -1682,12 +1716,15 @@ function wishBars(w,moved){
 }
 function openDayView(d){
   if(dayUndoDate!==key(d)){ dayUndoDate=key(d); dayUndoHistory=[]; }
+  if(dayViewDay!==d||$("#dayMask").style.display!=="flex") dayUserZoom=1;
   dayViewDay=d;
   const _closed=ownerMonthIsClosed();
   const dow=DOW[new Date(Y,M-1,d).getDay()];
   $("#dayTitle").textContent=`${Y}年${M}月${d}日(${dow})`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   const W=(AX1-AX0)*HW;
   let ticks=""; for(let h=AX0; h<=AX1; h++){ ticks+=`<div class="tick" style="left:${(h-AX0)*HW}px">${h}</div>`; }
+  const rulerTrack=$("#dayRulerTrack");
+  if(rulerTrack) rulerTrack.innerHTML=`<div class="drow ruler"><div class="dname">時間</div><div class="dtime" style="width:${W}px;min-width:${W}px">${ticks}</div></div>`;
   let html="";
   STORES.forEach(st=>{
     html+=dvStoreSection(st,d,W,ticks);
@@ -1718,7 +1755,7 @@ function openDayView(d){
   g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toggleStoreOff(b.dataset.st); });
   g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f, bar.dataset.st); });
   $("#dayMask").style.display="flex"; _syncDayDecideBtn();
-  // 横幅に合わせて縮小（縦は仕様どおりスクロールで下まで見る）
+  // 初期表示は従来どおり横幅に合わせ、2本指操作で全店舗を縮小できる。
   requestAnimationFrame(fitDayGrid);
 }
 (function(){
@@ -1729,8 +1766,56 @@ function openDayView(d){
   function up(){ mz=null; }
   modal.querySelectorAll('.dmz').forEach(h=>{ h.addEventListener('pointerdown',down); h.addEventListener('pointermove',move); h.addEventListener('pointerup',up); h.addEventListener('pointercancel',up); });
 })();
-function fitDayGrid(){ const g=$("#dayGrid"); const sc=document.querySelector('.dayscroll'); if(!g||!sc) return; g.style.transform="none"; const gw=g.scrollWidth; const availW=sc.clientWidth; const scale=Math.min(availW/gw,2); g.style.transformOrigin="top left"; g.style.transform="scale("+scale+")"; }
-(function(){ const sc=document.querySelector('.dayscroll'); if(sc && window.ResizeObserver){ new ResizeObserver(()=>{ const m=$("#dayMask"); if(m && m.style.display==="flex") fitDayGrid(); }).observe(sc); } })();
+function fitDayGrid(){
+  const g=$("#dayGrid"), sc=document.querySelector('.dayscroll');
+  if(!g||!sc) return;
+  const gw=Math.max(g.scrollWidth,1), gh=Math.max(g.scrollHeight,1);
+  const scale=Math.max(.3,Math.min(3,Math.min(sc.clientWidth/gw,2)*dayUserZoom));
+  g.style.transformOrigin="top left";
+  g.style.transform="scale("+scale+")";
+  const frame=$("#dayGridFrame");
+  if(frame){ frame.style.width=Math.ceil(gw*scale)+"px"; frame.style.height=Math.ceil(gh*scale)+"px"; }
+  const ruler=$("#dayRuler"), track=$("#dayRulerTrack");
+  if(track){ track.style.width=gw+"px"; track.style.transform="scale("+scale+")"; }
+  if(ruler){ ruler.style.width=Math.max(sc.clientWidth,Math.ceil(gw*scale))+"px"; ruler.style.height=Math.max(26,Math.ceil(29*scale))+"px"; }
+}
+function setDayZoom(next,clientX,clientY){
+  const sc=document.querySelector('.dayscroll');
+  if(!sc) return;
+  const previous=dayUserZoom;
+  dayUserZoom=Math.max(.38,Math.min(2,next));
+  if(dayUserZoom===previous) return;
+  const rect=sc.getBoundingClientRect(), x=clientX-rect.left, y=clientY-rect.top;
+  const oldLeft=sc.scrollLeft+x, oldTop=sc.scrollTop+y;
+  fitDayGrid();
+  const ratio=dayUserZoom/previous;
+  sc.scrollLeft=Math.max(0,oldLeft*ratio-x);
+  sc.scrollTop=Math.max(0,oldTop*ratio-y);
+}
+(function(){
+  const sc=document.querySelector('.dayscroll');
+  if(!sc) return;
+  if(window.ResizeObserver) new ResizeObserver(()=>{ const m=$("#dayMask"); if(m&&m.style.display==="flex") fitDayGrid(); }).observe(sc);
+  let startDistance=0, startZoom=1, blockClickUntil=0;
+  function distance(touches){ return Math.hypot(touches[0].clientX-touches[1].clientX,touches[0].clientY-touches[1].clientY); }
+  sc.addEventListener('touchstart',e=>{
+    if(e.touches.length!==2) return;
+    startDistance=distance(e.touches); startZoom=dayUserZoom; blockClickUntil=Date.now()+350; e.preventDefault();
+  },{passive:false});
+  sc.addEventListener('touchmove',e=>{
+    if(e.touches.length!==2||!startDistance) return;
+    const x=(e.touches[0].clientX+e.touches[1].clientX)/2, y=(e.touches[0].clientY+e.touches[1].clientY)/2;
+    setDayZoom(startZoom*distance(e.touches)/startDistance,x,y);
+    blockClickUntil=Date.now()+350; e.preventDefault();
+  },{passive:false});
+  sc.addEventListener('touchend',e=>{ if(e.touches.length<2) startDistance=0; });
+  sc.addEventListener('touchcancel',()=>{ startDistance=0; });
+  sc.addEventListener('wheel',e=>{
+    if(!e.ctrlKey) return;
+    setDayZoom(dayUserZoom*Math.exp(-e.deltaY*.01),e.clientX,e.clientY); e.preventDefault();
+  },{passive:false});
+  sc.addEventListener('click',e=>{ if(Date.now()<blockClickUntil){ e.preventDefault(); e.stopPropagation(); } },true);
+})();
 function toggleStoreOff(st){
   if(closedMonthEditBlocked()||dayViewDay==null) return;
   rememberDayUndo(dayViewDay);
@@ -1945,7 +2030,7 @@ function openSupport(nm,d,st){
   const t=supportOf(nm,d,st)||{};
   const w=(S.staff[nm].wish||{})[key(d)]||{};
   const am=t.am||t.all||{}, pm=t.pm||t.all||{}, wam=w.am||{}, wpm=w.pm||{};
-  $("#teAmS").value=am.start||wam.start||"9:00"; $("#teAmE").value=am.end||wam.end||"17:00";
+  $("#teAmS").value=am.start||wam.start||"10:00"; $("#teAmE").value=am.end||wam.end||"17:00";
   $("#tePmS").value=pm.start||wpm.start||"14:00"; $("#tePmE").value=pm.end||wpm.end||"23:30";
   const assigned=!!(t.all||t.am||t.pm);
   setTePeriod("am",assigned&&!!(t.am||t.all));
@@ -2036,7 +2121,7 @@ function applyWishDecision(nm,d,seg,st,selectedHour){
   if(!staff) return false;
   const w=(staff.wish||{})[key(d)];
   if(!w||w.off) return false;
-  let source=seg==='all'?(w.all||(w.allday?{start:'9:00',end:'23:30'}:((w.start||w.end)?w:null))):w[seg];
+  let source=seg==='all'?(w.all||(w.allday?{start:'10:00',end:'23:30'}:((w.start||w.end)?w:null))):w[seg];
   if(!source||!source.start||!source.end) return false;
   const start=pHM(source.start), end=pHM(source.end);
   if(start==null||end==null||end<=start) return false;
@@ -2174,7 +2259,7 @@ function openOneTime(nm,d,seg,f,st){
 }
 $("#oneOk").onclick=()=>{
   if(closedMonthEditBlocked()||!oneT) return;
-  const v=normTime($("#oneInput").value); if(!v){ appAlert("時間を入れてください（例 9:00）"); return; }
+  const v=normTime($("#oneInput").value); if(!v){ appAlert("時間を入れてください（例 10:00）"); return; }
   const dec=storeDecision(oneT.nm,oneT.d,oneT.st);
   if(dec&&dec[oneT.seg]){ rememberDayUndo(oneT.d); clearDayDecisionOnShiftChange(oneT.d); dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
   $("#oneMask").style.display="none";
@@ -2206,7 +2291,7 @@ $("#oneDelete").onclick=async()=>{
 };
 $("#oneMask").onclick=e=>{ if(e.target.id==="oneMask") $("#oneMask").style.display="none"; };
 /* ---- A4印刷（横3日 × 縦 大須/那古野/鉄板）---- */
-const PX0=9, PX1=24; // 9時〜23時（各列=1時間）
+const PX0=10, PX1=24; // 10時〜23時（各列=1時間）
 function shiftSegs(v){
   if(!v||v.off) return [];
   let segs=[];
@@ -2239,7 +2324,7 @@ function printSegmentMark(start,end,hr,cls){
 }
 function printWishMarks(w,hr){
   if(!w||w.off) return '';
-  if(w.allday) return printSegmentMark(9,23.5,hr,'pwish');
+  if(w.allday) return printSegmentMark(10,23.5,hr,'pwish');
   let html='';
   ['all','am','pm'].forEach(seg=>{ const part=w[seg]; if(part) html+=printSegmentMark(part.start,part.end,hr,'pwish'); });
   if(!w.all&&!w.am&&!w.pm&&(w.start||w.end)) html+=printSegmentMark(w.start,w.end,hr,'pwish');
@@ -2342,7 +2427,7 @@ function wishPrintCellHTML(w){
   if(!w) return "";
   if(w.off) return '<div class="wtime"><span class="wt wtmid">✕</span></div>';
   const sh=t=>String(t||"").replace(/:00\b/,"").replace(/^0/,"");
-  if(w.allday) return '<div class="wtime"><span class="wt wtmid">9-23:30</span></div>';
+  if(w.allday) return '<div class="wtime"><span class="wt wtmid">10-23:30</span></div>';
   if(w.all) return `<div class="wtime"><span class="wt wtmid">${esc(`${sh(w.all.start)}-${sh(w.all.end)}`)}</span></div>`;
   const am=w.am?`${sh(w.am.start)}-${sh(w.am.end)}`:"";
   const pm=w.pm?`${sh(w.pm.start)}-${sh(w.pm.end)}`:"";
@@ -2608,7 +2693,7 @@ function renderStaff(){
 function wishMini(w){
   if(!w) return "";
   if(w.off) return "✕";
-  if(w.allday) return "9:00-23:30";
+  if(w.allday) return "10:00-23:30";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`<span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}`);
@@ -2684,7 +2769,7 @@ function _diLock(lock){
 function drawDayInput(){
   const me=diMe, d=diDay;
   const w=S.staff[me].wish[key(d)]||{};
-  const am=w.am||{}, pm=w.pm||{}, al=w.all||(w.allday?{start:'9:00',end:'23:30'}:{});
+  const am=w.am||{}, pm=w.pm||{}, al=w.all||(w.allday?{start:'10:00',end:'23:30'}:{});
   const dv=(seg,f)=>{ const o={all:al,am,pm}[seg]; return (o&&o[f])?o[f]:''; };
   const note=((S.staff[me].notes||{})[key(d)]||'').replace(/"/g,'&quot;');
   const hasIn=!!(w.off||w.allday||w.all||w.am||w.pm||w.start||w.end);
@@ -2740,7 +2825,7 @@ function openReqApprove(me,d){
   const dow=new Date(Y,M-1,d).getDay();
   $("#raTitle").textContent=`${M}/${d}（${DOW[dow]}）オーナーからの要請`;
   $("#raBody").innerHTML=`<div class="seg2">
-    <div class="line lall"><span class="tg all">時間</span><input type="text" class="tinp" placeholder="9:00" id="raStart" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="18:00" id="raEnd" value="${r.end||''}"></div>
+    <div class="line lall"><span class="tg all">時間</span><input type="text" class="tinp" placeholder="10:00" id="raStart" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="18:00" id="raEnd" value="${r.end||''}"></div>
   </div>`;
   $("#raMask").style.display="flex";
 }

@@ -633,7 +633,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.73</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.74</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -688,14 +688,14 @@
     <div class="wishline" id="mWish"></div>
     <div class="notemsg" id="mNote"></div>
     <div class="segTitle all" style="color:#8a6d00">一日（通し）</div>
-    <div class="row"><input id="mAllStart" type="text" class="tinp" placeholder="9:00"><span class="tag">から</span></div>
-    <div class="row"><input id="mAllEnd" type="text" class="tinp" placeholder="9:00"><span class="tag">まで</span></div>
+    <div class="row"><input id="mAllStart" type="text" class="tinp" placeholder="10:00"><span class="tag">から</span></div>
+    <div class="row"><input id="mAllEnd" type="text" class="tinp" placeholder="10:00"><span class="tag">まで</span></div>
     <div class="segTitle am">AM（午前）</div>
-    <div class="row"><input id="mAmStart" type="text" class="tinp" placeholder="9:00"><span class="tag">から</span></div>
-    <div class="row"><input id="mAmEnd" type="text" class="tinp" placeholder="9:00"><span class="tag">まで</span></div>
+    <div class="row"><input id="mAmStart" type="text" class="tinp" placeholder="10:00"><span class="tag">から</span></div>
+    <div class="row"><input id="mAmEnd" type="text" class="tinp" placeholder="10:00"><span class="tag">まで</span></div>
     <div class="segTitle pm">PM（午後）</div>
-    <div class="row"><input id="mPmStart" type="text" class="tinp" placeholder="9:00"><span class="tag">から</span></div>
-    <div class="row"><input id="mPmEnd" type="text" class="tinp" placeholder="9:00"><span class="tag">まで</span></div>
+    <div class="row"><input id="mPmStart" type="text" class="tinp" placeholder="10:00"><span class="tag">から</span></div>
+    <div class="row"><input id="mPmEnd" type="text" class="tinp" placeholder="10:00"><span class="tag">まで</span></div>
     <div class="palette" id="mPalette"></div>
     <div class="quick">
       <button type="button" class="batu" data-q="batu">✕</button>
@@ -736,9 +736,9 @@
   <div class="cmtbox">
     <div class="ttl" id="reqTtl"></div>
     <div style="display:flex; gap:8px; align-items:center; justify-content:center; font-size:16px; margin:6px 0 2px;">
-      <input type="text" class="tinp" placeholder="9:00" id="reqStart" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
+      <input type="text" class="tinp" placeholder="10:00" id="reqStart" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
       <span>〜</span>
-      <input type="text" class="tinp" placeholder="9:00" id="reqEnd" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
+      <input type="text" class="tinp" placeholder="10:00" id="reqEnd" style="font-size:15px; padding:6px; border:1px solid var(--line); border-radius:8px;">
     </div>
     <button id="reqSend" type="button">この時間で要請</button>
     <button id="reqClose" type="button" style="background:#c9c9c9; margin-top:8px;">閉じる</button>
@@ -770,8 +770,8 @@
   <div class="cmtbox">
     <div class="ttl" id="teTtl"></div>
     <div style="font-size:12px; color:#5b7a8c; margin-bottom:6px;">鉄板での時間を入れてください（AMだけ・PMだけでもOK）</div>
-    <div class="terow"><span class="telbl">AM</span><input type="text" class="tinp" placeholder="9:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="teAmE"></div>
-    <div class="terow"><span class="telbl">PM</span><input type="text" class="tinp" placeholder="9:00" id="tePmS"><span>〜</span><input type="text" class="tinp" placeholder="9:00" id="tePmE"></div>
+    <div class="terow"><span class="telbl">AM</span><input type="text" class="tinp" placeholder="10:00" id="teAmS"><span>〜</span><input type="text" class="tinp" placeholder="10:00" id="teAmE"></div>
+    <div class="terow"><span class="telbl">PM</span><input type="text" class="tinp" placeholder="10:00" id="tePmS"><span>〜</span><input type="text" class="tinp" placeholder="10:00" id="tePmE"></div>
     <button id="teSave" type="button" style="background:#2f9ad0;">鉄板に決定</button>
     <button id="teDel" type="button" style="background:#c0596b; margin-top:8px;">この鉄板配置を消す</button>
     <button id="teClose" type="button" style="background:#c9c9c9; margin-top:8px;">閉じる</button>
@@ -800,7 +800,7 @@
   <div class="cmtbox" style="max-width:250px;">
     <div class="ttl" id="oneTtl"></div>
     <div id="oneNote" class="onenote" style="display:none;"></div>
-    <input type="text" class="tinp" placeholder="9:00" id="oneInput" style="width:100%; font-size:18px; padding:9px; border:1.5px solid var(--line); border-radius:8px; box-sizing:border-box;">
+    <input type="text" class="tinp" placeholder="10:00" id="oneInput" style="width:100%; font-size:18px; padding:9px; border:1.5px solid var(--line); border-radius:8px; box-sizing:border-box;">
     <button id="oneOk" type="button">変更する</button>
   </div>
 </div>
@@ -824,7 +824,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.73"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.74"; window.APP_UPDATED="2026-08-25";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1072,7 +1072,7 @@ $("#cmtClose").onclick=()=>$("#cmtMask").style.display="none";
 $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.display="none"; };
 
 /* ---- 日別タイムライン ---- */
-const AX0=8, AX1=23.5, HW=40;
+const AX0=10, AX1=23.5, HW=40;
 let dayViewDay=null, holdMode=false;
 function _fw2hw(s){ return String(s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[：]/g,':'); }
 function pHM(s){ if(!s) return null; s=_fw2hw(s); const a=s.split(':'); const h=parseInt(a[0],10); if(isNaN(h)) return null; return h+((parseInt(a[1],10)||0)/60); }
@@ -1171,7 +1171,7 @@ function dvStaffRow(nm,d,W){
   const v=(S.staff[nm].decided||{})[key(d)]; let bars="";
   const w=(S.staff[nm].wish||{})[key(d)];
   if(w&&w.allday){
-    bars+=`<div class="dbar availbar" style="left:${(9-AX0)*HW}px;width:${(23.5-9)*HW}px">9:00〜23:30</div>`;
+    bars+=`<div class="dbar availbar" style="left:${(10-AX0)*HW}px;width:${(23.5-10)*HW}px">10:00〜23:30</div>`;
   } else if(v&&!v.off){
     if(v.all) bars+=dEditBar(nm,d,'all','ball',v.all.start,v.all.end);
     if(v.am) bars+=dEditBar(nm,d,'am','bam',v.am.start,v.am.end);
@@ -1352,7 +1352,7 @@ function openOneTime(nm,d,seg,f){
 }
 $("#oneOk").onclick=()=>{
   if(!oneT) return;
-  const v=normTime($("#oneInput").value); if(!v){ alert("時間を入れてください（例 9:00）"); return; }
+  const v=normTime($("#oneInput").value); if(!v){ alert("時間を入れてください（例 10:00）"); return; }
   const dec=S.staff[oneT.nm].decided[key(oneT.d)];
   if(dec&&dec[oneT.seg]){ dec[oneT.seg][oneT.f]=v; touchUpdated(); save(); }
   $("#oneMask").style.display="none";
@@ -1360,7 +1360,7 @@ $("#oneOk").onclick=()=>{
 };
 $("#oneMask").onclick=e=>{ if(e.target.id==="oneMask") $("#oneMask").style.display="none"; };
 /* ---- A4印刷（横3日 × 縦 大須/那古野/鉄板）---- */
-const PX0=8, PX1=23; // 8時〜23時（各列=1時間）
+const PX0=10, PX1=24; // 10時〜24時（各列=1時間）
 function shiftSegs(v){
   if(!v||v.off) return [];
   let segs=[];
@@ -1548,7 +1548,7 @@ function renderStaff(){
 function wishMini(w){
   if(!w) return "";
   if(w.off) return '<span style="color:#4aa8dd;font-weight:800;">✕</span>';
-  if(w.allday) return "9:00<br>〜23:30";
+  if(w.allday) return "10:00<br>〜23:30";
   let p=[];
   if(w.all) p.push(`${w.all.start||''}-${w.all.end||''}`);
   if(w.am) p.push(`<span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}`);
@@ -1744,7 +1744,7 @@ function _diLock(lock){
 function drawDayInput(){
   const me=diMe, d=diDay;
   const w=S.staff[me].wish[key(d)]||{};
-  const am=w.am||{}, pm=w.pm||{}, al=w.allday?{start:"9:00",end:"23:30"}:(w.all||{});
+  const am=w.am||{}, pm=w.pm||{}, al=w.allday?{start:"10:00",end:"23:30"}:(w.all||{});
   const dv=(seg,f)=>{ const o={all:al,am,pm}[seg]; return (o&&o[f])?o[f]:''; };
   const note=((S.staff[me].notes||{})[key(d)]||'').replace(/"/g,'&quot;');
   const hasIn=!!(w.off||w.allday||w.all||w.am||w.pm||w.start||w.end);
@@ -1823,7 +1823,7 @@ function openReqApprove(me,d){
   const dow=new Date(Y,M-1,d).getDay();
   $("#raTitle").textContent=`${M}/${d}（${DOW[dow]}）オーナーからの要請`;
   $("#raBody").innerHTML=`<div class="seg2">
-    <div class="line lall"><span class="tg all">時間</span><input type="text" class="tinp" placeholder="9:00" id="raStart" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="18:00" id="raEnd" value="${r.end||''}"></div>
+    <div class="line lall"><span class="tg all">時間</span><input type="text" class="tinp" placeholder="10:00" id="raStart" value="${r.start||''}"><span>〜</span><input type="text" class="tinp" placeholder="18:00" id="raEnd" value="${r.end||''}"></div>
   </div>`;
   $("#raMask").style.display="flex";
 }
