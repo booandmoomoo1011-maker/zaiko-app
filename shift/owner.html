@@ -157,6 +157,7 @@
   .wchip{display:inline-block; padding:0 4px; border-radius:5px; font-size:9px; line-height:1.4; font-weight:700;}
   .wchip.time{border:1px dashed #b0b0b0; color:#555;}
   .wchip.time.wd{background:#fff; color:#222; border-color:#8a8a8a;}
+  .wchip.time.owneradded,.wchip.time.wd.owneradded{border-color:#e6b800;}
   .wchip.allday{border:1px dashed #d9c76a; background:#fef7cf; color:#7a5b00;}
   .wchip.off{background:#dcf0fa; color:#2b7fa3;}
   .wchip.maru{background:#fef7cf; color:#8a6d00;}
@@ -745,7 +746,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.112</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.113</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1001,7 +1002,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.112"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.113"; window.APP_UPDATED="2026-08-25";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1206,7 +1207,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.112</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.113</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1278,12 +1279,13 @@ function wishText(w){
 }
 function wishChip(w,isWeekend){
   if(w.off) return `<span class="wchip off">✕</span>`;
-  if(w.allday) return `<span class="wchip time">9:00-23:30</span>`;
-  if(w.all) return `<span class="wchip time">${w.all.start||''}-${w.all.end||''}</span>`;
+  const ownerAdded=w._ownerAdded?' owneradded':'';
+  if(w.allday) return `<span class="wchip time${ownerAdded}">9:00-23:30</span>`;
+  if(w.all) return `<span class="wchip time${ownerAdded}">${w.all.start||''}-${w.all.end||''}</span>`;
   const wd=isWeekend?'':'wd'; let h="";
-  if(w.am) h+=`<div class="wrow"><span class="wchip time ${wd}"><span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}</span></div>`;
-  if(w.pm) h+=`<div class="wrow"><span class="wchip time ${wd}"><span class="amp">PM</span>${w.pm.start||''}-${w.pm.end||''}</span></div>`;
-  if(!h && (w.start||w.end)) h=`<div class="wrow"><span class="wchip time ${wd}">${w.start||''}-${w.end||''}</span></div>`;
+  if(w.am) h+=`<div class="wrow"><span class="wchip time ${wd}${ownerAdded}"><span class="amp">AM</span>${w.am.start||''}-${w.am.end||''}</span></div>`;
+  if(w.pm) h+=`<div class="wrow"><span class="wchip time ${wd}${ownerAdded}"><span class="amp">PM</span>${w.pm.start||''}-${w.pm.end||''}</span></div>`;
+  if(!h && (w.start||w.end)) h=`<div class="wrow"><span class="wchip time ${wd}${ownerAdded}">${w.start||''}-${w.end||''}</span></div>`;
   return h;
 }
 
@@ -2661,8 +2663,8 @@ function renderMine(me){
   document.querySelectorAll('#staffMine .mcell.cclick').forEach(c=>c.onclick=()=>openDayInput(me, +c.dataset.d));
   document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); openReqApprove(me, +el.dataset.req); });
 }
-let diMe=null, diDay=null; let diEditing=false, diOwnerEdit=false;
-function openDayInput(me,d,fromOwner=false){ diMe=me; diDay=d; diOwnerEdit=!!fromOwner; const _w0=S.staff[me].wish[key(d)]; const _hasWish=!!(_w0&&Object.keys(_w0).length); diEditing=diOwnerEdit||!_hasWish;
+let diMe=null, diDay=null; let diEditing=false, diOwnerEdit=false, diOwnerAdded=false;
+function openDayInput(me,d,fromOwner=false){ diMe=me; diDay=d; diOwnerEdit=!!fromOwner; const _w0=S.staff[me].wish[key(d)]; const _hasWish=!!(_w0&&Object.keys(_w0).length); diOwnerAdded=diOwnerEdit&&(!_hasWish||!!(_w0&&_w0._ownerAdded)); diEditing=diOwnerEdit||!_hasWish;
   const dow=new Date(Y,M-1,d).getDay();
   $("#diTitle").textContent=diOwnerEdit?`${me}　${M}/${d}（${DOW[dow]}）の希望を${_hasWish?'変更':'入力'}`:`${M}/${d}（${DOW[dow]}）の希望を入れる`;
   drawDayInput(); $("#diMask").style.display="flex";
@@ -2695,6 +2697,7 @@ function drawDayInput(){
     else { delete w.all; $("#diBody").querySelectorAll('input.tinp[data-seg="all"]').forEach(x=>x.value=''); }
     w[seg]=w[seg]||{}; w[seg][f]=normTime(inp.value);
     if(!w[seg].start && !w[seg].end) delete w[seg];
+    if(diOwnerAdded&&(w.all||w.am||w.pm||w.start||w.end)) w._ownerAdded=true;
     S.staff[me].wish[key(d)]=w; save();
     inp.value=normTime(inp.value);
     const _mb=$("#diBody").querySelector('.qbtn[data-q="maru"]'); if(_mb) _mb.classList.remove('on-maru');
@@ -2702,8 +2705,8 @@ function drawDayInput(){
   });
   $("#diBody").querySelectorAll('.qbtn').forEach(b=>b.onclick=()=>{
     const cur=S.staff[me].wish[key(d)]||{};
-    if(b.dataset.q==="batu"){ S.staff[me].wish[key(d)]=cur.off?{}:{off:true}; }
-    else{ S.staff[me].wish[key(d)]=cur.allday?{}:{allday:true}; }
+    if(b.dataset.q==="batu"){ S.staff[me].wish[key(d)]=cur.off?{}:{off:true,...(diOwnerAdded?{_ownerAdded:true}:{})}; }
+    else{ S.staff[me].wish[key(d)]=cur.allday?{}:{allday:true,...(diOwnerAdded?{_ownerAdded:true}:{})}; }
     save(); drawDayInput();
   });
   $("#diBody").querySelector('.noteinp').onchange=function(){
