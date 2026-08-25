@@ -360,9 +360,10 @@
   .taddhint{color:#7bb8d8; font-size:10px; padding-left:6px; line-height:2.2;}
   .dname .thome{font-size:9px; font-weight:700; margin-top:1px; padding:0 3px; border-radius:4px; align-self:flex-start; background:#eef4f8; color:#5b7a8c; border:1px solid #dbe6ec;}
   .picklist{max-height:52vh; overflow:auto; display:flex; flex-direction:column; gap:6px;}
-  .picklist .pickbtn{text-align:left; background:#eaf6fc; color:#1e6f95; border:1px solid #bfe0f2; border-radius:8px; padding:9px 11px; font-weight:700; cursor:pointer; font-size:13px;}
-  .picklist .pickbtn small{color:#5b7a8c; font-weight:500;}
-  .picklist .pickbtn:hover{background:#d8eef9;}
+  #pickTtl{display:none;}
+  .picklist .pickbtn{text-align:left; color:#111; border:1px solid #c9c9c9; border-radius:8px; padding:9px 11px; font-weight:700; cursor:pointer; font-size:13px;}
+  .picklist .pickbtn small{color:#111; font-weight:500;}
+  .picklist .pickbtn:hover{filter:brightness(.97);}
   .terow{display:flex; gap:6px; align-items:center; margin:7px 0;}
   .terow .telbl{width:48px; flex:0 0 48px; margin:0; color:#777; font-weight:800; border:1.5px solid #c8c8c8; border-radius:8px; background:#eee; padding:7px 0; cursor:pointer; font-family:inherit; font-size:15px;}
   .terow .telbl.on{color:#fff; background:#2f9ad0; border-color:#2f9ad0; box-shadow:0 0 0 2px #cdeaf7;}
@@ -757,7 +758,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.121</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.122</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1013,7 +1014,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.121"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.122"; window.APP_UPDATED="2026-08-25";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1218,7 +1219,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.121</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.122</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1991,15 +1992,18 @@ function dvStoreSection(st,d,W,ticks){
 function openSupportPicker(d,st){
   if(closedMonthEditBlocked()) return;
   const ass=new Set(names().filter(nm=>{ const t=supportOf(nm,d,st); return t&&(t.all||t.am||t.pm); }));
-  const cand=names().filter(nm=>(S.staff[nm].wish||{})[key(d)] && (S.staff[nm].store||"大須")!==st && !ass.has(nm));
-  $("#pickTtl").textContent=`${st}に入れる人を選ぶ　${M}/${d}`;
+  const monthOrder=[];
+  STORES.forEach(home=>orderedStoreStaff(home).forEach(nm=>{ if(monthOrder.indexOf(nm)<0) monthOrder.push(nm); }));
+  names().forEach(nm=>{ if(monthOrder.indexOf(nm)<0) monthOrder.push(nm); });
+  const cand=monthOrder.filter(nm=>(S.staff[nm].wish||{})[key(d)] && (S.staff[nm].store||"大須")!==st && !ass.has(nm));
   const wrap=$("#pickList");
   if(!cand.length){ wrap.innerHTML='<div style="color:#888;font-size:13px;padding:8px;">この日にシフトを提出した人がいません。</div>'; }
   else{
     wrap.innerHTML=cand.map(nm=>{
       const w=(S.staff[nm].wish||{})[key(d)]; const wt=w?wishText(w):"";
       const home=(S.staff[nm].store||"大須");
-      return `<button type="button" class="pickbtn" data-n="${esc(nm)}">${esc(nm)}　<small>${esc(home)}／希望：${wt||'なし'}</small></button>`;
+      const col=STORE_COLOR[home]||STORE_COLOR["大須"];
+      return `<button type="button" class="pickbtn" data-n="${esc(nm)}" style="background:${col.bg};border-color:${col.hd};">${esc(nm)}　<small>${esc(home)}／希望：${wt||'なし'}</small></button>`;
     }).join("");
   }
   $("#pickMask").style.display="flex";
