@@ -122,6 +122,8 @@
   tbody td{height:26px; vertical-align:top; cursor:pointer; padding:0; position:relative;}
   #tbody tr.blankrow td.blankname{background:#fcfcfc; color:#ccc;}
   #tbody td.blankcell{background:#fff; cursor:default;}
+  #tbody td.wishentry{cursor:pointer;}
+  #tbody td.wishentry:hover{background:#fff9dd; box-shadow:inset 0 0 0 1px #e5c75b;}
   #tbody td.stoff{background:#eaf6fd !important;}
   .storeoff-btn{width:100%; height:100%; margin:0; border:1px solid currentColor; background:rgba(255,255,255,.42); color:inherit; font:inherit; font-weight:900; border-radius:7px; padding:5px 4px; cursor:pointer; white-space:nowrap;}
   .ownerclosedstatus{display:inline-block;color:#735f17;background:#fff3bd;border:1px solid #e5c85c;border-radius:8px;padding:3px 8px;font-weight:900;}
@@ -743,7 +745,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.110</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.111</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -999,7 +1001,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.110"; window.APP_UPDATED="2026-08-24";
+window.APP_VERSION="v1.111"; window.APP_UPDATED="2026-08-25";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1204,7 +1206,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.110</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.111</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1371,7 +1373,8 @@ function renderOwner(){
         const so=isOff(d)?' stoff':'';
         const staffOff=monthlyStaffOff(nm,st,d);
         const offCount=staffOff?`<span class="monthoff-count">${staffDayOffCount(nm,d)}</span>`:"";
-        rows+=`<td class="${cc}${hasNote?' hasnote':''}${rqState?' hasrequest':''}${oo?' ooff':''}${so}${staffOff?' daystaffoff':''}" data-n="${esc(nm)}" data-d="${d}">${bubble}${wt}${offCount}${rqMark}</td>`;
+        const wishEntry=ownerMode==='wish'&&!wt&&!_monthClosed;
+        rows+=`<td class="${cc}${hasNote?' hasnote':''}${rqState?' hasrequest':''}${oo?' ooff':''}${so}${staffOff?' daystaffoff':''}${wishEntry?' wishentry':''}" data-n="${esc(nm)}" data-d="${d}"${wishEntry?' role="button" tabindex="0" data-guide-key="empty-wish" data-guide="空白を押すと口頭で聞いた希望を入力できます" title="希望を入力"':''}>${bubble}${wt}${offCount}${rqMark}</td>`;
       }
       rows+="</tr>";
     });
@@ -1390,13 +1393,23 @@ function renderOwner(){
   });
   $("#tbody").innerHTML=rows;
   document.querySelectorAll("#tbody td[data-d]").forEach(td=>{
-    td.ondblclick=(e)=>{ if(_monthClosed||(e.target.closest && e.target.closest('.cbubble'))) return;
+    td.ondblclick=(e)=>{ clearTimeout(td._wishOpenTimer); if(_monthClosed||(e.target.closest && e.target.closest('.cbubble'))) return;
       const nm=td.dataset.n, k=key(+td.dataset.d);
       if(!S.staff[nm]) return;                 /* まだ提出のない登録名は対象外 */
       if(!S.staff[nm].ooff) S.staff[nm].ooff={};
       if(S.staff[nm].ooff[k]){ delete S.staff[nm].ooff[k]; td.classList.remove('ooff'); }
       else { S.staff[nm].ooff[k]=true; td.classList.add('ooff'); }
       save(); };
+  });
+  document.querySelectorAll("#tbody td.wishentry[data-n][data-d]").forEach(td=>{
+    const open=()=>openDayInput(td.dataset.n,+td.dataset.d,true);
+    td.onclick=(e)=>{
+      if(e.target.closest&&e.target.closest('button,.cbubble,.ownerreqmark')) return;
+      clearTimeout(td._wishOpenTimer);
+      if(e.detail>1) return;
+      td._wishOpenTimer=setTimeout(open,240);
+    };
+    td.onkeydown=(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } };
   });
   document.querySelectorAll("#tbody .cbubble").forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
     showComment(el.dataset.n, +el.dataset.d, ((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)]); });
@@ -2649,9 +2662,9 @@ function renderMine(me){
   document.querySelectorAll('#staffMine .reqlink').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); openReqApprove(me, +el.dataset.req); });
 }
 let diMe=null, diDay=null; let diEditing=false, diOwnerEdit=false;
-function openDayInput(me,d,fromOwner=false){ diMe=me; diDay=d; diOwnerEdit=!!fromOwner; const _w0=S.staff[me].wish[key(d)]; diEditing=!(_w0&&Object.keys(_w0).length);
+function openDayInput(me,d,fromOwner=false){ diMe=me; diDay=d; diOwnerEdit=!!fromOwner; const _w0=S.staff[me].wish[key(d)]; const _hasWish=!!(_w0&&Object.keys(_w0).length); diEditing=!_hasWish;
   const dow=new Date(Y,M-1,d).getDay();
-  $("#diTitle").textContent=diOwnerEdit?`${me}　${M}/${d}（${DOW[dow]}）の希望を変更`:`${M}/${d}（${DOW[dow]}）の希望を入れる`;
+  $("#diTitle").textContent=diOwnerEdit?`${me}　${M}/${d}（${DOW[dow]}）の希望を${_hasWish?'変更':'入力'}`:`${M}/${d}（${DOW[dow]}）の希望を入れる`;
   drawDayInput(); $("#diMask").style.display="flex";
 }
 function _diLock(lock){
@@ -2671,7 +2684,7 @@ function drawDayInput(){
     <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
     <div class="line lam"><span class="tg am">AM</span><input type="text" class="tinp" placeholder="：" value="${dv('am','start')}" data-seg="am" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('am','end')}" data-seg="am" data-f="end"></div>
     <div class="line lpm"><span class="tg pm">PM</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','start')}" data-seg="pm" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('pm','end')}" data-seg="pm" data-f="end"></div>
-    <div class="line qnote"><button class="qbtn ${w.allday?'on-maru':''}" data-q="maru">◎</button><button class="qbtn ${w.off?'on-batu':''}" data-q="batu">✕</button><button type="button" class="qsubmit" id="diSubmit">決定</button><button type="button" class="qsubmit" id="diEdit" style="display:none;background:#5a6b7a;">変更</button></div>
+    <div class="line qnote"><button class="qbtn ${w.allday?'on-maru':''}" data-q="maru">◎</button><button class="qbtn ${w.off?'on-batu':''}" data-q="batu">✕</button><button type="button" class="qsubmit" id="diSubmit">${diOwnerEdit?'希望を保存':'決定'}</button><button type="button" class="qsubmit" id="diEdit" style="display:none;background:#5a6b7a;">変更</button></div>
     <div class="line noteln"><span class="tg note">備考</span><input type="text" class="noteinp" value="${note}" placeholder=""></div>
   </div>`;
   $("#diBody").querySelectorAll('input.tinp').forEach(inp=>inp.onchange=()=>{
