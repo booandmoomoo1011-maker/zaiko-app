@@ -401,8 +401,11 @@
   .dbar.holdbar{background:#9fd8f2; color:#0f5a82; z-index:3; overflow:hidden; padding:0; border-radius:0; touch-action:manipulation;}
   .dbar .btime{position:relative; z-index:2; pointer-events:auto; cursor:pointer;}
   .dbar.decisionbar .btime{color:#111;}
-  .shifttext{position:absolute;left:8px;right:8px;top:4px;z-index:5;color:#050505;font-size:12px;font-weight:900;line-height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;}
-  .dtextbtn{position:absolute;right:25px;bottom:2px;width:19px;height:19px;border:1px solid #555;border-radius:5px;padding:0;background:#fff;color:#111;font-size:10px;font-weight:900;cursor:pointer;z-index:5;}
+  .shifttext{position:absolute;top:3px;height:22px;z-index:7;box-sizing:border-box;border:1.5px dashed #555;border-radius:6px;background:rgba(255,255,255,.94);color:#050505;font-family:inherit;font-size:12px;font-weight:800;line-height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;padding:0 8px;cursor:grab;touch-action:none;user-select:none;}
+  .shifttext:active{cursor:grabbing;}
+  .shifttext .sthandle{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;}
+  .shifttext .sthandle.left{left:0}.shifttext .sthandle.right{right:0}
+  #dayTextPlace.active{background:#111!important;color:#fff!important;box-shadow:0 0 0 2px #f4d65c;}
   .dbar .btime:hover{text-decoration:underline;}
   .dbar .shiftconflict{position:absolute; top:0; bottom:0; z-index:1; background:#e53935; pointer-events:none; animation:shiftConflictBlink .85s ease-in-out infinite;}
   @keyframes shiftConflictBlink{0%,100%{opacity:.86;}50%{opacity:.16;}}
@@ -462,7 +465,7 @@
   .pmark .pendpoint{position:absolute;top:50%;transform:translateY(-50%);color:#000;font-size:5.5px;font-weight:900;line-height:1;z-index:4;}
   .pmark .pendpoint.start{left:1px}.pmark .pendpoint.end{right:1px}
   .pmark .breakmins{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#000;font-size:5.5px;font-weight:900;white-space:nowrap;z-index:5;}
-  .pimportant{position:absolute;left:2px;top:0;color:#000;font-size:6px;font-weight:900;white-space:nowrap;z-index:8;}
+  .pimportant{position:absolute;top:0;box-sizing:border-box;border:.7px dashed #555;border-radius:2px;background:rgba(255,255,255,.94);color:#000;font-family:inherit;font-size:6px;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;z-index:8;}
   /* 画面プレビューでの1枚ずつの区切り */
   #ppBody .psheet{margin-bottom:14px; padding-bottom:14px; border-bottom:2px dashed #bbb;}
   #ppBody .psheet:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
@@ -775,7 +778,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.137</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.138</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1029,7 +1032,7 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button></div><button id="dayDecide" type="button" style="background:#f4d65c;color:#111;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">未確定</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button></div><button id="dayDecide" type="button" style="background:#f4d65c;color:#111;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">未確定</button></div>
     <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
@@ -1043,7 +1046,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.137"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.138"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1249,7 +1252,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.137</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.138</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1317,14 +1320,15 @@ function staffHasAnyDecision(nm,d){
 }
 function shiftTextOf(nm,d){ return (((S.staff[nm]||{}).shiftText||{})[key(d)])||null; }
 function shiftTextValue(rec){ const text=rec&&(typeof rec==='string'?rec:rec.text); return text&&String(text).trim().toLowerCase()!=='false'?String(text).trim():''; }
-function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=shiftTextValue(rec), target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); return text&&target===st?`<span class="shifttext">${esc(text)}</span>`:''; }
-function shiftTextButton(nm,d,st){ const has=!!shiftTextValue(shiftTextOf(nm,d)); return `<button type="button" class="dtextbtn${has?' hastext':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="重要テキストを入力・変更">文</button>`; }
+function shiftTextRange(rec){ let start=rec&&typeof rec==='object'&&Number.isFinite(+rec.start)?+rec.start:14, end=rec&&typeof rec==='object'&&Number.isFinite(+rec.end)?+rec.end:17; start=Math.max(AX0,Math.min(AX1-.5,Math.round(start*2)/2)); end=Math.max(start+.5,Math.min(AX1,Math.round(end*2)/2)); return [start,end]; }
+function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=shiftTextValue(rec), target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); if(!text||target!==st) return ''; const [start,end]=shiftTextRange(rec),left=(start-AX0)*HW,width=(end-start)*HW; return `<div class="shifttext" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" data-start="${start}" data-end="${end}" style="left:${left}px;width:${width}px"><span class="sthandle left"></span>${esc(text)}<span class="sthandle right"></span></div>`; }
 let shiftTextTarget=null;
-function editShiftText(nm,d,st){
+function editShiftText(nm,d,st,range){
   if(closedMonthEditBlocked()) return;
   const staff=S.staff[nm]; if(!staff) return;
   const current=shiftTextOf(nm,d), old=shiftTextValue(current);
-  shiftTextTarget={nm,d,st};
+  const currentRange=range||shiftTextRange(current);
+  shiftTextTarget={nm,d,st,start:currentRange[0],end:currentRange[1]};
   $('#shiftTextTitle').textContent=`${nm}さん ${M}/${d} の重要テキスト`;
   $('#shiftTextInput').value=old||'';
   $('#shiftTextDelete').style.display=old?'block':'none';
@@ -1336,8 +1340,8 @@ $('#shiftTextSave').onclick=()=>{
   if(!shiftTextTarget) return;
   const text=$('#shiftTextInput').value.trim();
   if(!text){ appAlert('文字を入力してください。削除する場合は「この文字だけ削除」を押してください。'); return; }
-  const {nm,d,st}=shiftTextTarget, staff=S.staff[nm]; if(!staff) return;
-  rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st};
+  const {nm,d,st,start,end}=shiftTextTarget, staff=S.staff[nm]; if(!staff) return;
+  rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st,start,end};
   touchUpdated(); save(); closeShiftTextEditor(); if(dayViewDay!=null) openDayView(dayViewDay);
 };
 $('#shiftTextDelete').onclick=async()=>{
@@ -1349,6 +1353,16 @@ $('#shiftTextDelete').onclick=async()=>{
 };
 $('#shiftTextClose').onclick=closeShiftTextEditor;
 $('#shiftTextMask').onclick=e=>{ if(e.target.id==='shiftTextMask') closeShiftTextEditor(); };
+let shiftTextPlaceMode=false;
+function setShiftTextPlaceMode(on){ shiftTextPlaceMode=!!on; const b=$('#dayTextPlace'); if(b){ b.classList.toggle('active',shiftTextPlaceMode); b.textContent=shiftTextPlaceMode?'置く場所をタップ':'文字を置く'; } }
+function bindShiftTextBox(box){
+  let drag=null,moved=false;
+  box.addEventListener('pointerdown',e=>{ if(closedMonthEditBlocked()) return; e.preventDefault(); e.stopPropagation(); const edge=e.target.classList.contains('left')?'left':e.target.classList.contains('right')?'right':'move',dt=box.closest('.dtime'),rect=dt&&dt.getBoundingClientRect(),scale=rect&&dt.offsetWidth?rect.width/dt.offsetWidth:1; drag={x:e.clientX,start:+box.dataset.start,end:+box.dataset.end,edge,scale:scale||1}; moved=false; box.setPointerCapture(e.pointerId); });
+  box.addEventListener('pointermove',e=>{ if(!drag) return; const delta=Math.round(((e.clientX-drag.x)/(HW*drag.scale))*2)/2; if(Math.abs(e.clientX-drag.x)>4) moved=true; let start=drag.start,end=drag.end; if(drag.edge==='move'){ const duration=end-start; start=Math.max(AX0,Math.min(AX1-duration,start+delta)); end=start+duration; } else if(drag.edge==='left') start=Math.max(AX0,Math.min(end-.5,start+delta)); else end=Math.max(start+.5,Math.min(AX1,end+delta)); box.dataset.start=start; box.dataset.end=end; box.style.left=((start-AX0)*HW)+'px'; box.style.width=((end-start)*HW)+'px'; });
+  box.addEventListener('pointerup',e=>{ if(!drag) return; e.preventDefault(); e.stopPropagation(); const {start:oldStart,end:oldEnd}=drag, start=+box.dataset.start,end=+box.dataset.end; drag=null; if(moved&&(start!==oldStart||end!==oldEnd)){ const nm=box.dataset.n,d=+box.dataset.d,st=box.dataset.st,staff=S.staff[nm],old=shiftTextOf(nm,d),text=shiftTextValue(old); if(staff&&text){ rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st,start,end}; touchUpdated(); save(); } return; } editShiftText(box.dataset.n,+box.dataset.d,box.dataset.st,[start,end]); });
+  box.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); });
+  box.addEventListener('pointercancel',()=>{ drag=null; });
+}
 function canManageStaff(){ return !window.shiftEditorMode; }
 
 /* ---- 希望テキスト ---- */
@@ -1836,6 +1850,7 @@ function openDayView(d){
   if(dayViewDay!==d||$("#dayMask").style.display!=="flex") dayUserZoom=1;
   dayViewDay=d;
   const _closed=ownerMonthIsClosed();
+  setShiftTextPlaceMode(false);
   const dayDow=new Date(Y,M-1,d).getDay(), dow=DOW[dayDow];
   $("#dayTitle").innerHTML=`${Y}年${M}月${d}日<span class="${dayDow===0||dayDow===6||isHol(d)?'weekend':''}">(${dow})</span>`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   $("#dayPrev").disabled=d<=1; $("#dayNext").disabled=d>=DAYS;
@@ -1853,6 +1868,7 @@ function openDayView(d){
   g.querySelectorAll('.dbar.wishbar:not(.wishfadecover)').forEach(bar=>{ bar.dataset.guideKey='wish-line'; bar.dataset.guide='希望の線を押すと、その時間をシフトへ入れられます'; });
   g.querySelectorAll('.dbar.decisionbar').forEach(bar=>{ bar.dataset.guideKey='shift-line'; bar.dataset.guide='勤務の線を押すと30分の休憩を追加、時間を押すと編集できます'; bar.onclick=e=>addShiftBreak(e,bar); });
   g.classList.toggle('closedmonth',_closed);
+  $('#dayTextPlace').disabled=_closed;
   g.querySelectorAll('.storememo').forEach(inp=>{ inp.disabled=_closed; });
   g.querySelectorAll('.storeoff-btn,.dreq,.dnotice').forEach(b=>{ b.disabled=_closed; });
   syncDayUndoButton();
@@ -1861,7 +1877,7 @@ function openDayView(d){
   g.querySelectorAll('.drow.dedit').forEach(row=>{ row.onclick=(e)=>dayRowClick(e,row,'edit'); row.ondblclick=(e)=>dayRowDoubleClick(e,row); bindManualDoubleTap(row); });
   g.querySelectorAll('.dreq').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.n, +b.dataset.d); });
   g.querySelectorAll('.dnotice').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openOwnerNotice(b.dataset.n,+b.dataset.d); });
-  g.querySelectorAll('.dtextbtn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); editShiftText(b.dataset.n,+b.dataset.d,b.dataset.st); });
+  g.querySelectorAll('.shifttext').forEach(bindShiftTextBox);
   g.querySelectorAll('.dbar[data-req-n]').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.reqN,+b.dataset.reqD); });
   g.querySelectorAll('.drow.sedit').forEach(row=>{ row.onclick=(e)=>dayRowClick(e,row,'support'); row.ondblclick=(e)=>dayRowDoubleClick(e,row); bindManualDoubleTap(row); });
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openSupportPicker(+row.dataset.d,row.dataset.st));
@@ -1885,7 +1901,7 @@ function openDayView(d){
 (function(){
   const modal=document.querySelector('.daymodal'); if(!modal) return;
   let swipe=null;
-  modal.addEventListener('touchstart',e=>{ if(e.touches.length!==1||(e.target.closest&&e.target.closest('button,input,textarea,.dresize,.dbar'))) return; const t=e.touches[0]; swipe={x:t.clientX,y:t.clientY,t:Date.now()}; },{passive:true,capture:true});
+  modal.addEventListener('touchstart',e=>{ if(e.touches.length!==1||(e.target.closest&&e.target.closest('button,input,textarea,.dresize,.dbar,.shifttext'))) return; const t=e.touches[0]; swipe={x:t.clientX,y:t.clientY,t:Date.now()}; },{passive:true,capture:true});
   modal.addEventListener('touchend',e=>{ if(!swipe||!e.changedTouches.length) return; const t=e.changedTouches[0],dx=t.clientX-swipe.x,dy=t.clientY-swipe.y,ms=Date.now()-swipe.t; swipe=null; if(ms>900||Math.abs(dx)<110||Math.abs(dx)<Math.abs(dy)*1.5) return; if(dx<0&&dayViewDay<DAYS) openDayView(dayViewDay+1); else if(dx>0&&dayViewDay>1) openDayView(dayViewDay-1); },{passive:true,capture:true});
   modal.addEventListener('touchcancel',()=>{ swipe=null; },{passive:true,capture:true});
 })();
@@ -1955,6 +1971,7 @@ function toggleStoreOff(st){
 function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"未確定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#f4d65c"); b.style.color=on||locked?"#fff":"#111"; }
 $("#dayPrev").onclick=()=>{ if(dayViewDay>1) openDayView(dayViewDay-1); };
 $("#dayNext").onclick=()=>{ if(dayViewDay<DAYS) openDayView(dayViewDay+1); };
+$("#dayTextPlace").onclick=()=>{ if(!closedMonthEditBlocked()) setShiftTextPlaceMode(!shiftTextPlaceMode); };
 $("#dayDecide").onclick=()=>{
   if(closedMonthEditBlocked()||dayViewDay==null) return;
   rememberDayUndo(dayViewDay);
@@ -2086,7 +2103,7 @@ function dvStaffRow(nm,d,W,st){
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
   const offCount=v&&v.off?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'希望線は1回、希望なしの手入力は2回タップ'}"><div class="dname"><span class="dnm">${nb}<span class="day-namebutton" role="button" data-guide-key="day-staff-off" data-guide="名前を押すと、そのスタッフの休みを切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}${shiftTextButton(nm,d,st)}</span></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d,st)}${v&&v.off?'':holdbars(nm,d,st)}${shiftTextHtml(nm,d,st)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'希望線は1回、希望なしの手入力は2回タップ'}"><div class="dname"><span class="dnm">${nb}<span class="day-namebutton" role="button" data-guide-key="day-staff-off" data-guide="名前を押すと、そのスタッフの休みを切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}</span></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d,st)}${v&&v.off?'':holdbars(nm,d,st)}${shiftTextHtml(nm,d,st)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
@@ -2104,7 +2121,7 @@ function dvStoreSection(st,d,W,ticks){
     if(!staffOff&&t.pm) bars+=dEditBar(nm,d,'pm','bpm',t.pm.start,t.pm.end,st);
     const cf=staffDayConflict(nm,d);
     const offCount=staffOff?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
-    h+=`<div class="drow sedit${staffOff?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="名前をタップして休み・時間をタップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと、そのスタッフの休みを全店舗で切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}${shiftTextButton(nm,d,st)}</span></span></div><div class="dtime" style="width:${W}px">${bars}${staffOff?'':holdbars(nm,d,st)}${shiftTextHtml(nm,d,st)}</div></div>`;
+    h+=`<div class="drow sedit${staffOff?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="名前をタップして休み・時間をタップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと、そのスタッフの休みを全店舗で切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}</span></span></div><div class="dtime" style="width:${W}px">${bars}${staffOff?'':holdbars(nm,d,st)}${shiftTextHtml(nm,d,st)}</div></div>`;
   });
   h+=`<div class="drow tadd" data-d="${d}" data-st="${st}"><div class="dname"><span class="taddtxt">＋ 名前を追加</span></div><div class="dtime" style="width:${W}px"><span class="taddhint">タップして提出者から選ぶ</span></div></div>`;
   return h;
@@ -2330,6 +2347,8 @@ function toggleStaffDayOff(nm,d){
 function dayRowClick(e,row,mode){
   if(closedMonthEditBlocked()) return;
   const nm=row.dataset.n, d=+row.dataset.d, t=e.target;
+  if(t.closest&&t.closest('.shifttext')) return;
+  if(shiftTextPlaceMode){ const dt=t.closest&&t.closest('.dtime'); if(dt&&!t.closest('.dbar')){ const start=Math.max(AX0,Math.min(AX1-.5,_xToHour(e,dt,false))),end=Math.min(AX1,start+3); setShiftTextPlaceMode(false); editShiftText(nm,d,row.dataset.st,[start,end]); } return; }
   if(t.closest && t.closest('.dresize')) return; // 端の伸縮はドラッグで処理
   if(t.closest && t.closest('.holdbar')) return;
   if(t.closest && t.closest('.dname')){ toggleStaffDayOff(nm,d); return; }
@@ -2349,7 +2368,7 @@ function dayRowClick(e,row,mode){
 function dayRowDoubleClick(e,row){
   if(closedMonthEditBlocked()) return;
   const t=e.target,nm=row.dataset.n,d=+row.dataset.d;
-  if(t.closest&&t.closest('.dbar,.dname,.dtextbtn,.dresize')) return;
+  if(t.closest&&t.closest('.dbar,.dname,.shifttext,.dresize')) return;
   const dt=t.closest&&t.closest('.dtime'); if(!dt) return;
   if(row.dataset.st&&!isStaffHomeStore(nm,row.dataset.st)){ openSupport(nm,d,row.dataset.st); return; }
   ensureStaffOwner(nm);   // まだ提出のない登録名でも編集できるように
@@ -2533,8 +2552,8 @@ function printTimeCell(nm,d,st,hr){
   const decision=storeDecision(nm,d,st);
   const shift=printDecisionMarks(decision,hr);
   const hold=decision&&decision.off?'':printHoldMarks(nm,d,st,hr);
-  const textRec=shiftTextOf(nm,d), textValue=textRec?(typeof textRec==='string'?textRec:textRec.text):'', textStore=textRec?(typeof textRec==='string'?(staff.store||'大須'):(textRec.store||staff.store||'大須')):'';
-  const important=hr===PX0&&textValue&&textStore===st?`<span class="pimportant">${esc(textValue)}</span>`:'';
+  const textRec=shiftTextOf(nm,d), textValue=shiftTextValue(textRec), textStore=textRec?(typeof textRec==='string'?(staff.store||'大須'):(textRec.store||staff.store||'大須')):'', textRange=shiftTextRange(textRec), textHour=Math.floor(textRange[0]);
+  const important=hr===textHour&&textValue&&textStore===st?`<span class="pimportant" style="left:${(textRange[0]-textHour)*100}%;width:${(textRange[1]-textRange[0])*100}%">${esc(textValue)}</span>`:'';
   if(!wish&&!shift&&!hold&&!important) return '<td></td>';
   return `<td class="ptime${wish?' haswish':''}">${wish}${shift}${hold}${important}</td>`;
 }
