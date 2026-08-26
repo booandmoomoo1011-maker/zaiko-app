@@ -763,7 +763,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.133</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.134</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1019,7 +1019,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.133"; window.APP_UPDATED="2026-08-26";
+window.APP_VERSION="v1.134"; window.APP_UPDATED="2026-08-26";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1225,7 +1225,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.133</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.134</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1630,8 +1630,22 @@ function mergeTimeSegments(parts){
 function normTime(v){ if(!v) return ''; v=_fw2hw(v).trim(); if(!v) return ''; const a=v.split(':'); let h=parseInt(a[0],10); if(isNaN(h)) return ''; let m=a.length>1?parseInt(a[1],10):0; if(isNaN(m)) m=0; if(h>23)h=23; if(h<0)h=0; if(m>59)m=59; if(m<0)m=0; return pad(h)+':'+pad(m); }
 function dbar(color,s,e,label){ if(s==null||e==null) return ""; const l=(s-AX0)*HW, w=Math.max((e-s)*HW,34); return `<div class="dbar" style="left:${l}px;width:${w}px;background:${color}">${label}</div>`; }
 function dayShiftBackground(cls,s,e){ if(!['ball','bam','bpm'].includes(cls)||e<=s) return ''; if(s>=14) return 'background:#f6c6da;'; if(e<=17) return 'background:#bfe6c4;'; const p=Math.max(0,Math.min(100,(17-s)/(e-s)*100)); return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`; }
-function dayBreakBackground(nm,d,s,e){
-  const breaks=(((S.staff[nm]||{}).hold||{})[key(d)]||[]).filter(h=>Number.isFinite(h)&&h>=s&&h<e);
+function holdSlotKey(h){ return String(Math.round(Number(h)*2)); }
+function inferredHoldStore(nm,d,h){
+  const staff=S.staff[nm]||{}, home=staff.store||"大須";
+  const matches=STORES.filter(st=>{ const parts=[]; _segsOf(storeDecision(nm,d,st),parts); return parts.some(part=>h>=part[0]&&h<part[1]); });
+  return matches.includes(home)?home:(matches[0]||home);
+}
+function holdStoreOf(nm,d,h){
+  const staff=S.staff[nm]||{}, stored=(((staff.holdStore||{})[key(d)]||{})[holdSlotKey(h)]);
+  return STORES.includes(stored)?stored:inferredHoldStore(nm,d,h);
+}
+function holdsForStore(nm,d,st){
+  const hs=(((S.staff[nm]||{}).hold||{})[key(d)]||[]);
+  return hs.filter(h=>Number.isFinite(h)&&holdStoreOf(nm,d,h)===st);
+}
+function dayBreakBackground(nm,d,s,e,st){
+  const breaks=holdsForStore(nm,d,st).filter(h=>h>=s&&h<e);
   if(!breaks.length) return '';
   const end=Math.min(e,Math.min(...breaks)+0.5), p=Math.max(0,Math.min(100,(end-s)/(e-s)*100));
   return `background:linear-gradient(90deg,#bfe6c4 0 ${p}%,#f6c6da ${p}%);`;
@@ -1641,8 +1655,8 @@ function hourToStr(h){ h=Math.max(0,Math.min(24,h)); const hh=Math.floor(h+1e-6)
 function dEditBar(nm,d,seg,cls,ss,ee,st){
   const s=pHM(ss), e=pHM(ee); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
-  const _bg=dayBreakBackground(nm,d,s,e)||dayShiftBackground(cls,s,e);
   const store=st||((S.staff[nm]||{}).store||"大須");
+  const _bg=dayBreakBackground(nm,d,s,e,store)||dayShiftBackground(cls,s,e);
   const overlap=shiftConflictOverlays(nm,d,store,s,e);
   return `<div class="dbar decisionbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" style="left:${l}px;width:${w}px;${_bg}">${overlap}<span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="start"></span><span class="btime bstart" data-f="start">${ss||''}</span><span class="btime bend" data-f="end">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="end"></span></div>`;
 }
@@ -1705,14 +1719,14 @@ function ownerRequestButton(nm,d){
   const state=ownerRequestState(nm,d), label=state==='rejected'?'否認済み要請':state==='approved'?'承認済み要請':state==='pending'?'回答待ち要請':'要請なし';
   return `<button class="dreq${state?' '+state:''}" data-n="${esc(nm)}" data-d="${d}" type="button" title="${label}" aria-label="${label}" data-guide-key="staff-request" data-guide="要請なしはグレー、要請中は水色、承認済みは濃い青、否認済みは赤です"></button>`;
 }
-function reqBars(nm,d){
+function reqBars(nm,d,st){
   const stf=S.staff[nm]||{};
   const r=(stf.req||{})[key(d)]; if(!r||(!r.start&&!r.end)) return "";
   const s=pHM(r.start), e=pHM(r.end); if(s==null||e==null) return "";
   const l=(s-AX0)*HW, w=Math.max((e-s)*HW,40);
   const attrs=`data-req-n="${esc(nm)}" data-req-d="${d}" title="タップして要請を変更・削除"`;
   if(r.rejected) return `<div class="dbar reqrej" ${attrs} style="left:${l}px;width:${w}px" aria-label="要請を否認"><span>${r.start||''}</span><span class="reqrejectmark" aria-hidden="true">✕</span><span>${r.end||''}</span></div>`;
-  if(r.approved){ const background=dayBreakBackground(nm,d,s,e)||dayShiftBackground('ball',s,e); return `<div class="dbar reqok" ${attrs} style="left:${l}px;width:${w}px;${background}" aria-label="要請を承認"><span>${r.start||''}</span><span>${r.end||''}</span></div>`; }
+  if(r.approved){ const background=dayBreakBackground(nm,d,s,e,st)||dayShiftBackground('ball',s,e); return `<div class="dbar reqok" ${attrs} style="left:${l}px;width:${w}px;${background}" aria-label="要請を承認"><span>${r.start||''}</span><span>${r.end||''}</span></div>`; }
   return `<div class="dbar reqpend" ${attrs} style="left:${l}px;width:${w}px">${r.start||''}〜${r.end||''}</div>`;
 }
 function wishFadeCovers(moved,start,end){
@@ -1997,7 +2011,7 @@ function dvStaffRow(nm,d,W,st){
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
   const offCount=v&&v.off?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
-  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}<span class="day-namebutton" role="button" data-guide-key="day-staff-off" data-guide="名前を押すと、そのスタッフの休みを切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}</span></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d)}${v&&v.off?'':holdbars(nm,d)}</div></div>`;
+  return `<div class="drow dedit${wishBarHtml&&hasDecisionTime?' haswishdec':''}${moved.any?' supportmoved':''}${v&&v.off?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="${moved.any?'別店舗へ配置済み・選択した時間帯だけ点線で薄く表示':'名前をタップして休み・時間をタップして編集'}"><div class="dname"><span class="dnm">${nb}<span class="day-namebutton" role="button" data-guide-key="day-staff-off" data-guide="名前を押すと、そのスタッフの休みを切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}</span></span>${wishHtml}</div><div class="dtime" style="width:${W}px">${bars}${reqBars(nm,d,st)}${v&&v.off?'':holdbars(nm,d,st)}</div></div>`;
 }
 function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
@@ -2015,7 +2029,7 @@ function dvStoreSection(st,d,W,ticks){
     if(!staffOff&&t.pm) bars+=dEditBar(nm,d,'pm','bpm',t.pm.start,t.pm.end,st);
     const cf=staffDayConflict(nm,d);
     const offCount=staffOff?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
-    h+=`<div class="drow sedit${staffOff?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="名前をタップして休み・時間をタップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと、そのスタッフの休みを全店舗で切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}</span></span></div><div class="dtime" style="width:${W}px">${bars}${staffOff?'':holdbars(nm,d)}</div></div>`;
+    h+=`<div class="drow sedit${staffOff?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="名前をタップして休み・時間をタップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと、そのスタッフの休みを全店舗で切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}</span></span></div><div class="dtime" style="width:${W}px">${bars}${staffOff?'':holdbars(nm,d,st)}</div></div>`;
   });
   h+=`<div class="drow tadd" data-d="${d}" data-st="${st}"><div class="dname"><span class="taddtxt">＋ 名前を追加</span></div><div class="dtime" style="width:${W}px"><span class="taddhint">タップして提出者から選ぶ</span></div></div>`;
   return h;
@@ -2112,9 +2126,8 @@ $("#teDel").onclick=()=>{
 };
 
 /* ---- 日別タイムライン：棒＝時間編集／空き＝薄水色の仮ブロック ---- */
-function holdbars(nm,d){
-  const stf=S.staff[nm]||{};
-  const hs=(stf.hold||{})[key(d)]||[];
+function holdbars(nm,d,st){
+  const hs=holdsForStore(nm,d,st||((S.staff[nm]||{}).store||"大須"));
   return hs.map(h=>`<div class="dbar holdbar" data-h="${h}" style="left:${(h-AX0)*HW}px;width:${HW/2}px" title="ダブルタップで消す"></div>`).join("");
 }
 function bindHoldBlock(block){
@@ -2122,7 +2135,7 @@ function bindHoldBlock(block){
   const remove=e=>{
     e.preventDefault(); e.stopPropagation();
     const row=block.closest('.drow');
-    if(row) toggleHold(row.dataset.n,+row.dataset.d,+block.dataset.h);
+    if(row) toggleHold(row.dataset.n,+row.dataset.d,+block.dataset.h,row.dataset.st);
   };
   block.onclick=e=>e.stopPropagation();
   block.ondblclick=remove;
@@ -2142,16 +2155,22 @@ function addShiftBreak(e,bar){
   if(start==null||end==null||end<=start) return;
   const hour=Math.min(_xToHour(e,dt,true),AX1-0.5);
   if(hour<start||hour+0.5>end) return;
-  e.preventDefault(); e.stopPropagation(); toggleHold(nm,d,hour);
+  e.preventDefault(); e.stopPropagation(); toggleHold(nm,d,hour,bar.dataset.st);
 }
-function toggleHold(nm,d,h){
+function toggleHold(nm,d,h,st){
   if(closedMonthEditBlocked()) return;
   rememberDayUndo(d);
   clearDayDecisionOnShiftChange(d);
-  if(!S.staff[nm].hold) S.staff[nm].hold={};
-  const k=key(d); let arr=(S.staff[nm].hold[k]||[]).slice();
-  if(arr.includes(h)) arr=arr.filter(x=>x!==h); else { arr.push(h); arr.sort((a,b)=>a-b); }
-  if(arr.length) S.staff[nm].hold[k]=arr; else delete S.staff[nm].hold[k];
+  const staff=S.staff[nm], home=staff.store||"大須"; st=STORES.includes(st)?st:home;
+  if(!staff.hold) staff.hold={};
+  const k=key(d), slot=holdSlotKey(h), previousStore=holdStoreOf(nm,d,h); let arr=(staff.hold[k]||[]).slice();
+  if(!staff.holdStore) staff.holdStore={};
+  const byStore={...(staff.holdStore[k]||{})};
+  if(arr.includes(h)&&previousStore===st){ arr=arr.filter(x=>x!==h); delete byStore[slot]; }
+  else { if(!arr.includes(h)){ arr.push(h); arr.sort((a,b)=>a-b); } byStore[slot]=st; }
+  if(arr.length) staff.hold[k]=arr; else delete staff.hold[k];
+  if(Object.keys(byStore).length) staff.holdStore[k]=byStore; else delete staff.holdStore[k];
+  if(!Object.keys(staff.holdStore).length) delete staff.holdStore;
   save(); if(dayViewDay!=null && $("#dayMask").style.display==="flex") openDayView(dayViewDay);
 }
 function _xToHour(e, dt, snapFloor){
@@ -2422,7 +2441,7 @@ function printTimeCell(nm,d,st,hr){
   const wish=isStaffHomeStore(nm,st)?printWishMarks((staff.wish||{})[k],hr):'';
   const decision=storeDecision(nm,d,st);
   const shift=printDecisionMarks(decision,hr);
-  const hold=decision&&decision.off?'':((staff.hold||{})[k]||[]).map(start=>printSegmentMark(start,start+.5,hr,'phold')).join('');
+  const hold=decision&&decision.off?'':holdsForStore(nm,d,st).map(start=>printSegmentMark(start,start+.5,hr,'phold')).join('');
   if(!wish&&!shift&&!hold) return '<td></td>';
   return `<td class="ptime${wish?' haswish':''}">${wish}${shift}${hold}</td>`;
 }
