@@ -405,6 +405,7 @@
   .shifttext:active{cursor:grabbing;}
   .shifttext .sthandle{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;}
   .shifttext .sthandle.left{left:0}.shifttext .sthandle.right{right:0}
+  .drow:has(.shifttext){min-height:52px;}
   #dayTextPlace{background:#fff!important;color:#111!important;border:1.5px solid #111!important;}
   #dayTextPlace.active{background:#fff!important;color:#111!important;box-shadow:0 0 0 3px #f4d65c;}
   .dbar .btime:hover{text-decoration:underline;}
@@ -779,7 +780,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.139</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.140</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1047,7 +1048,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.139"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.140"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1253,7 +1254,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.139</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.140</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1322,14 +1323,15 @@ function staffHasAnyDecision(nm,d){
 function shiftTextOf(nm,d){ return (((S.staff[nm]||{}).shiftText||{})[key(d)])||null; }
 function shiftTextValue(rec){ const text=rec&&(typeof rec==='string'?rec:rec.text); return text&&String(text).trim().toLowerCase()!=='false'?String(text).trim():''; }
 function shiftTextRange(rec){ let start=rec&&typeof rec==='object'&&Number.isFinite(+rec.start)?+rec.start:14, end=rec&&typeof rec==='object'&&Number.isFinite(+rec.end)?+rec.end:17; start=Math.max(AX0,Math.min(AX1-.5,Math.round(start*2)/2)); end=Math.max(start+.5,Math.min(AX1,Math.round(end*2)/2)); return [start,end]; }
-function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=shiftTextValue(rec), target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); if(!text||target!==st) return ''; const [start,end]=shiftTextRange(rec),left=(start-AX0)*HW,width=(end-start)*HW; return `<div class="shifttext" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" data-start="${start}" data-end="${end}" style="left:${left}px;width:${width}px"><span class="sthandle left"></span>${esc(text)}<span class="sthandle right"></span></div>`; }
+function shiftTextTop(rec){ return rec&&typeof rec==='object'&&Number.isFinite(+rec.top)?Math.max(2,Math.min(28,+rec.top)):27; }
+function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=shiftTextValue(rec), target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); if(!text||target!==st) return ''; const [start,end]=shiftTextRange(rec),top=shiftTextTop(rec),left=(start-AX0)*HW,width=(end-start)*HW; return `<div class="shifttext" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" data-start="${start}" data-end="${end}" data-top="${top}" style="left:${left}px;top:${top}px;width:${width}px"><span class="sthandle left"></span>${esc(text)}<span class="sthandle right"></span></div>`; }
 let shiftTextTarget=null;
-function editShiftText(nm,d,st,range){
+function editShiftText(nm,d,st,range,top){
   if(closedMonthEditBlocked()) return;
   const staff=S.staff[nm]; if(!staff) return;
   const current=shiftTextOf(nm,d), old=shiftTextValue(current);
   const currentRange=range||shiftTextRange(current);
-  shiftTextTarget={nm,d,st,start:currentRange[0],end:currentRange[1]};
+  shiftTextTarget={nm,d,st,start:currentRange[0],end:currentRange[1],top:Number.isFinite(top)?top:shiftTextTop(current)};
   $('#shiftTextTitle').textContent=`${nm}さん ${M}/${d} の重要テキスト`;
   $('#shiftTextInput').value=old||'';
   $('#shiftTextDelete').style.display=old?'block':'none';
@@ -1341,8 +1343,8 @@ $('#shiftTextSave').onclick=()=>{
   if(!shiftTextTarget) return;
   const text=$('#shiftTextInput').value.trim();
   if(!text){ appAlert('文字を入力してください。削除する場合は「この文字だけ削除」を押してください。'); return; }
-  const {nm,d,st,start,end}=shiftTextTarget, staff=S.staff[nm]; if(!staff) return;
-  rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st,start,end};
+  const {nm,d,st,start,end,top}=shiftTextTarget, staff=S.staff[nm]; if(!staff) return;
+  rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st,start,end,top};
   touchUpdated(); save(); closeShiftTextEditor(); if(dayViewDay!=null) openDayView(dayViewDay);
 };
 $('#shiftTextDelete').onclick=async()=>{
@@ -1358,9 +1360,9 @@ let shiftTextPlaceMode=false;
 function setShiftTextPlaceMode(on){ shiftTextPlaceMode=!!on; const b=$('#dayTextPlace'); if(b){ b.classList.toggle('active',shiftTextPlaceMode); b.textContent=shiftTextPlaceMode?'置く場所をタップ':'文字を置く'; } }
 function bindShiftTextBox(box){
   let drag=null,moved=false;
-  box.addEventListener('pointerdown',e=>{ if(closedMonthEditBlocked()) return; e.preventDefault(); e.stopPropagation(); const edge=e.target.classList.contains('left')?'left':e.target.classList.contains('right')?'right':'move',dt=box.closest('.dtime'),rect=dt&&dt.getBoundingClientRect(),scale=rect&&dt.offsetWidth?rect.width/dt.offsetWidth:1; drag={x:e.clientX,start:+box.dataset.start,end:+box.dataset.end,edge,scale:scale||1}; moved=false; box.setPointerCapture(e.pointerId); });
-  box.addEventListener('pointermove',e=>{ if(!drag) return; const delta=Math.round(((e.clientX-drag.x)/(HW*drag.scale))*2)/2; if(Math.abs(e.clientX-drag.x)>4) moved=true; let start=drag.start,end=drag.end; if(drag.edge==='move'){ const duration=end-start; start=Math.max(AX0,Math.min(AX1-duration,start+delta)); end=start+duration; } else if(drag.edge==='left') start=Math.max(AX0,Math.min(end-.5,start+delta)); else end=Math.max(start+.5,Math.min(AX1,end+delta)); box.dataset.start=start; box.dataset.end=end; box.style.left=((start-AX0)*HW)+'px'; box.style.width=((end-start)*HW)+'px'; });
-  box.addEventListener('pointerup',e=>{ if(!drag) return; e.preventDefault(); e.stopPropagation(); const {start:oldStart,end:oldEnd}=drag, start=+box.dataset.start,end=+box.dataset.end; drag=null; if(moved&&(start!==oldStart||end!==oldEnd)){ const nm=box.dataset.n,d=+box.dataset.d,st=box.dataset.st,staff=S.staff[nm],old=shiftTextOf(nm,d),text=shiftTextValue(old); if(staff&&text){ rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st,start,end}; touchUpdated(); save(); } return; } editShiftText(box.dataset.n,+box.dataset.d,box.dataset.st,[start,end]); });
+  box.addEventListener('pointerdown',e=>{ if(closedMonthEditBlocked()) return; e.preventDefault(); e.stopPropagation(); const edge=e.target.classList.contains('left')?'left':e.target.classList.contains('right')?'right':'move',dt=box.closest('.dtime'),rect=dt&&dt.getBoundingClientRect(),scale=rect&&dt.offsetWidth?rect.width/dt.offsetWidth:1,maxTop=Math.max(2,(dt?dt.offsetHeight:52)-box.offsetHeight-2); drag={x:e.clientX,y:e.clientY,start:+box.dataset.start,end:+box.dataset.end,top:+box.dataset.top,edge,scale:scale||1,maxTop}; moved=false; box.setPointerCapture(e.pointerId); });
+  box.addEventListener('pointermove',e=>{ if(!drag) return; const delta=Math.round(((e.clientX-drag.x)/(HW*drag.scale))*2)/2,deltaY=(e.clientY-drag.y)/drag.scale; if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>4) moved=true; let start=drag.start,end=drag.end,top=drag.top; if(drag.edge==='move'){ const duration=end-start; start=Math.max(AX0,Math.min(AX1-duration,start+delta)); end=start+duration; top=Math.max(2,Math.min(drag.maxTop,drag.top+deltaY)); } else if(drag.edge==='left') start=Math.max(AX0,Math.min(end-.5,start+delta)); else end=Math.max(start+.5,Math.min(AX1,end+delta)); box.dataset.start=start; box.dataset.end=end; box.dataset.top=top; box.style.left=((start-AX0)*HW)+'px'; box.style.top=top+'px'; box.style.width=((end-start)*HW)+'px'; });
+  box.addEventListener('pointerup',e=>{ if(!drag) return; e.preventDefault(); e.stopPropagation(); const {start:oldStart,end:oldEnd,top:oldTop}=drag, start=+box.dataset.start,end=+box.dataset.end,top=+box.dataset.top; drag=null; if(moved&&(start!==oldStart||end!==oldEnd||Math.abs(top-oldTop)>.5)){ const nm=box.dataset.n,d=+box.dataset.d,st=box.dataset.st,staff=S.staff[nm],old=shiftTextOf(nm,d),text=shiftTextValue(old); if(staff&&text){ rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st,start,end,top}; touchUpdated(); save(); } return; } editShiftText(box.dataset.n,+box.dataset.d,box.dataset.st,[start,end],top); });
   box.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); });
   box.addEventListener('pointercancel',()=>{ drag=null; });
 }
@@ -2570,7 +2572,7 @@ function printTimeCell(nm,d,st,hr){
   const shift=printDecisionMarks(decision,hr);
   const hold=decision&&decision.off?'':printHoldMarks(nm,d,st,hr);
   const textRec=shiftTextOf(nm,d), textValue=shiftTextValue(textRec), textStore=textRec?(typeof textRec==='string'?(staff.store||'大須'):(textRec.store||staff.store||'大須')):'', textRange=shiftTextRange(textRec), textHour=Math.floor(textRange[0]);
-  const important=hr===textHour&&textValue&&textStore===st?`<span class="pimportant" style="left:${(textRange[0]-textHour)*100}%;width:${(textRange[1]-textRange[0])*100}%">${esc(textValue)}</span>`:'';
+  const important=hr===textHour&&textValue&&textStore===st?`<span class="pimportant" style="left:${(textRange[0]-textHour)*100}%;top:${shiftTextTop(textRec)>14?'50%':'0'};width:${(textRange[1]-textRange[0])*100}%">${esc(textValue)}</span>`:'';
   if(!wish&&!shift&&!hold&&!important) return '<td></td>';
   return `<td class="ptime${wish?' haswish':''}">${wish}${shift}${hold}${important}</td>`;
 }
