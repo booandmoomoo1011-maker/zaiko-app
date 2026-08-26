@@ -402,7 +402,7 @@
   .dbar .btime{position:relative; z-index:2; pointer-events:auto; cursor:pointer;}
   .dbar.decisionbar .btime{color:#111;}
   .shifttext{position:absolute;left:8px;right:8px;top:4px;z-index:5;color:#050505;font-size:12px;font-weight:900;line-height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;}
-  .dtextbtn{position:absolute;right:2px;bottom:2px;width:19px;height:19px;border:1px solid #555;border-radius:5px;padding:0;background:#fff;color:#111;font-size:10px;font-weight:900;cursor:pointer;z-index:5;}
+  .dtextbtn{position:absolute;right:25px;bottom:2px;width:19px;height:19px;border:1px solid #555;border-radius:5px;padding:0;background:#fff;color:#111;font-size:10px;font-weight:900;cursor:pointer;z-index:5;}
   .dbar .btime:hover{text-decoration:underline;}
   .dbar .shiftconflict{position:absolute; top:0; bottom:0; z-index:1; background:#e53935; pointer-events:none; animation:shiftConflictBlink .85s ease-in-out infinite;}
   @keyframes shiftConflictBlink{0%,100%{opacity:.86;}50%{opacity:.16;}}
@@ -775,7 +775,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.136</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.137</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1043,7 +1043,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.136"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.137"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1249,7 +1249,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.136</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.137</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1316,13 +1316,14 @@ function staffHasAnyDecision(nm,d){
   return STORES.some(st=>decisionHasTime(supportOf(nm,d,st)));
 }
 function shiftTextOf(nm,d){ return (((S.staff[nm]||{}).shiftText||{})[key(d)])||null; }
-function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=typeof rec==='string'?rec:rec.text, target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); return text&&target===st?`<span class="shifttext">${esc(text)}</span>`:''; }
-function shiftTextButton(nm,d,st){ const rec=shiftTextOf(nm,d), has=!!(rec&&(typeof rec==='string'?rec:rec.text)); return `<button type="button" class="dtextbtn${has?' hastext':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="重要テキストを入力・変更">文</button>`; }
+function shiftTextValue(rec){ const text=rec&&(typeof rec==='string'?rec:rec.text); return text&&String(text).trim().toLowerCase()!=='false'?String(text).trim():''; }
+function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=shiftTextValue(rec), target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); return text&&target===st?`<span class="shifttext">${esc(text)}</span>`:''; }
+function shiftTextButton(nm,d,st){ const has=!!shiftTextValue(shiftTextOf(nm,d)); return `<button type="button" class="dtextbtn${has?' hastext':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="重要テキストを入力・変更">文</button>`; }
 let shiftTextTarget=null;
 function editShiftText(nm,d,st){
   if(closedMonthEditBlocked()) return;
   const staff=S.staff[nm]; if(!staff) return;
-  const current=shiftTextOf(nm,d), old=current?(typeof current==='string'?current:current.text):'';
+  const current=shiftTextOf(nm,d), old=shiftTextValue(current);
   shiftTextTarget={nm,d,st};
   $('#shiftTextTitle').textContent=`${nm}さん ${M}/${d} の重要テキスト`;
   $('#shiftTextInput').value=old||'';
