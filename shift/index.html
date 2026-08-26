@@ -250,6 +250,8 @@
   .mtime.mpm{background:#f6c6da; color:#9c3160;}
   .mtime.mall{background:linear-gradient(90deg,#bfe6c4 0 50%,#f6c6da 50%); color:#5a4630;}
   .mtime.mtetsu{background:#2f9ad0; color:#fff;}
+  .shiftimportant{display:block;margin-top:2px;color:#000;font-size:10px;font-weight:900;line-height:1.25;word-break:break-word;}
+  .today-important{color:#000;font-size:15px;font-weight:900;margin-top:7px;}
 
   /* modal */
   .mask{position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:90; padding:14px;}
@@ -635,7 +637,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.75</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.76</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -826,7 +828,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.75"; window.APP_UPDATED="2026-08-25";
+window.APP_VERSION="v1.76"; window.APP_UPDATED="2026-08-27";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1605,6 +1607,7 @@ $("#staffNoticeConfirm").onclick=()=>{
 };
 function renderMine(me){
   const dec=S.staff[me].decided||{}, wsh=S.staff[me].wish||{}, tet=S.staff[me].tetsu||{};
+  const shiftTexts=S.staff[me].shiftText||{};
   const ownerNotices=wsh._ownerNotices||{};
   const home=S.staff[me].store||"大須";
   const hc=(STORE_COLOR[home]||STORE_COLOR["大須"]).hd;
@@ -1650,6 +1653,9 @@ function renderMine(me){
       if(tv.am) body+=`<span class="mtime mam"><span class="amp">AM</span>${tv.am.start||''}-${tv.am.end||''}</span>`;
       if(tv.pm) body+=`<span class="mtime mpm"><span class="amp">PM</span>${tv.pm.start||''}-${tv.pm.end||''}</span>`;
     }
+    const importantRec=isShiftDayPublished(key(d))?shiftTexts[key(d)]:null;
+    const importantText=importantRec?(typeof importantRec==='string'?importantRec:importantRec.text):'';
+    if(importantText) body+=`<span class="shiftimportant">${esc(importantText)}</span>`;
     const note=(S.staff[me].notes||{})[key(d)];
     const nb=note?`<span class="mbubble" style="color:${hc}"></span>`:'';
     const rq=(S.staff[me].req||{})[key(d)];
@@ -1677,6 +1683,8 @@ function renderMine(me){
       if(_tetsuTimes.length){ const _tc=STORE_COLOR['鉄板'].hd; _todayMain+=`<div class="today-shift-main today-shift-line"><span class="today-store" style="background:${_tc}">鉄板</span><span>${esc(_tetsuTimes.join(' / '))}</span></div>`; }
     }
   }
+  const _todayImportantRec=_todayDecided?shiftTexts[_todayKey]:null, _todayImportant=_todayImportantRec?(typeof _todayImportantRec==='string'?_todayImportantRec:_todayImportantRec.text):'';
+  if(_todayImportant) _todayMain+=`<div class="today-important">${esc(_todayImportant)}</div>`;
   html+=`<div class="today-shift"><div class="today-shift-title">本日のシフト<span class="today-shift-date">${_todayLabel}</span></div>${_todayMain}</div>`;
   $("#staffMine").innerHTML=html;
   const _u=$("#updatedLbl"); if(_u) _u.textContent = S.updatedAt ? `最終更新 ${String(S.updatedAt).replace(/^\d{4}\//,'')}` : "";
