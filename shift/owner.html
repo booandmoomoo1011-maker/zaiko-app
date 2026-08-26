@@ -124,7 +124,7 @@
   #tbody td.blankcell{background:#fff; cursor:default;}
   #tbody td.wishentry{cursor:pointer;}
   #tbody td.wishentry:hover{background:#fff9dd; box-shadow:inset 0 0 0 1px #e5c75b;}
-  #tbody td.stoff{background:#347fa8 !important;}
+  #tbody td.stoff{background:#bfe3f5 !important;}
   .storeoff-btn{width:100%; height:100%; margin:0; border:1px solid currentColor; background:rgba(255,255,255,.42); color:inherit; font:inherit; font-weight:900; border-radius:7px; padding:5px 4px; cursor:pointer; white-space:nowrap;}
   .ownerclosedstatus{display:inline-block;color:#735f17;background:#fff3bd;border:1px solid #e5c85c;border-radius:8px;padding:3px 8px;font-weight:900;}
   #ownerView.closedmonth #decideBtn,#ownerView.closedmonth #unpublishBtn{background:#ddd;color:#777;cursor:not-allowed;}
@@ -302,6 +302,7 @@
   thead th.daycol .daypublish.on{border-color:#2fa04a;background:#e8f7ec;color:#247c36;}
   thead th.daycol .daypublish:disabled{border-color:#e1e5e8;background:#f5f6f7;color:#b5bcc2;cursor:not-allowed;}
   thead th.daycol .daypublish.undecided:disabled{border-color:#d0aa22;background:#f4d65c;color:#3f3600;opacity:1;}
+  thead th.daycol.undecidedday{background:#fff3b8;}
   .daymask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:60; padding:12px;}
   .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1120px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
   .dmz{position:absolute; z-index:12; touch-action:none;}
@@ -391,7 +392,8 @@
   .drow.haswishdec .dbar.holdbar{top:23px; height:17px;}
   .drow.haswishdec .dbar.reqpend,.drow.haswishdec .dbar.reqok,.drow.haswishdec .dbar.reqrej{top:23px; height:17px;}
   .drow.ruler .dname{background:#fbe6ec; color:var(--pink-d); flex-direction:row; align-items:center; font-weight:700;}
-  .dtime{position:relative; box-sizing:border-box; border-right:1px solid #cfd5d9; background-image:repeating-linear-gradient(to right, transparent 0, transparent 39px, #ececec 39px, #ececec 40px);}
+  .dtime{position:relative; background-image:repeating-linear-gradient(to right, transparent 0, transparent 39px, #d8dde0 39px, #d8dde0 40px);}
+  .dtime::after{content:"";position:absolute;top:0;bottom:0;right:-1px;width:1px;background:#aeb8be;z-index:7;pointer-events:none;}
   .tick{position:absolute; top:0; font-size:13px; color:#111; font-weight:800; padding-left:2px;}
   .dbar{position:absolute; top:4px; height:19px; border-radius:5px; color:#fff; font-size:10px; font-weight:700; justify-content:space-between;
     padding:0 5px; display:flex; align-items:center; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.18);}
@@ -400,7 +402,7 @@
   .dbar .btime{position:relative; z-index:2; pointer-events:auto; cursor:pointer;}
   .dbar.decisionbar .btime{color:#111;}
   .shifttext{position:absolute;left:8px;right:8px;top:4px;z-index:5;color:#050505;font-size:12px;font-weight:900;line-height:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;}
-  .dtextbtn{width:19px;height:19px;flex:0 0 19px;border:1px solid #555;border-radius:5px;padding:0;background:#fff;color:#111;font-size:10px;font-weight:900;cursor:pointer;}
+  .dtextbtn{position:absolute;right:2px;bottom:2px;width:19px;height:19px;border:1px solid #555;border-radius:5px;padding:0;background:#fff;color:#111;font-size:10px;font-weight:900;cursor:pointer;z-index:5;}
   .dbar .btime:hover{text-decoration:underline;}
   .dbar .shiftconflict{position:absolute; top:0; bottom:0; z-index:1; background:#e53935; pointer-events:none; animation:shiftConflictBlink .85s ease-in-out infinite;}
   @keyframes shiftConflictBlink{0%,100%{opacity:.86;}50%{opacity:.16;}}
@@ -447,7 +449,7 @@
   table.pgrid td.pn.pn-5{font-size:calc(var(--fsN,9.75px) * .86); letter-spacing:-.1px;}
   table.pgrid td.pn.pn-6{font-size:calc(var(--fsN,9.75px) * .73); letter-spacing:-.2px;}
   table.pgrid td.pn.pn-long{font-size:calc(var(--fsN,9.75px) * .62); letter-spacing:-.3px;}
-  table.pgrid tr.pst td{font-weight:800; font-size:var(--fsS,7.5px); text-align:left; padding-left:2px;}
+  table.pgrid tr.pst td{font-weight:800; font-size:var(--fsS,7.5px); text-align:center; padding:0; color:#000; vertical-align:middle;}
   table.pgrid tr.pst td.phr{font-weight:600; font-size:var(--fs,6px); text-align:center; padding:0; color:#555; background:#f2f2f2;}
   table.pgrid td.ptime{position:relative;}
   .pmark{position:absolute; display:block; box-sizing:border-box;}
@@ -487,7 +489,7 @@
   table.wovgrid td.wpn.wpn-5{font-size:calc(var(--wnfs,16px) * .82); letter-spacing:-.15px;}
   table.wovgrid td.wpn.wpn-6{font-size:calc(var(--wnfs,16px) * .70); letter-spacing:-.25px;}
   table.wovgrid td.wpn.wpn-long{font-size:calc(var(--wnfs,16px) * .58); letter-spacing:-.35px;}
-  table.wovgrid td.woff{background:#347fa8;}
+  table.wovgrid td.woff{background:#bfe3f5;}
   /* 各店舗の先頭にくり返す「店舗名＋日にち曜日」見出し行 */
   table.wovgrid tr.wsthead td{height:auto; font-weight:800; background:#f4f4f4; line-height:1.25; padding:2px 0;}
   table.wovgrid tr.wsthead td.wpn{font-size:var(--wshfs,11px); padding-left:3px;}
@@ -773,7 +775,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.135</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.136</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -934,6 +936,18 @@
   </div>
 </div>
 
+<!-- 日別の重要テキスト入力（確認表示用ダイアログとは分離） -->
+<div class="cmtmask" id="shiftTextMask">
+  <div class="cmtbox" style="max-width:440px;">
+    <div class="ttl" id="shiftTextTitle">重要テキスト</div>
+    <div style="font-size:13px;line-height:1.6;margin-bottom:8px;">濃い黒文字で、コピーとスタッフ画面にも表示します。</div>
+    <textarea id="shiftTextInput" maxlength="80" placeholder="例：（研修）" style="box-sizing:border-box;width:100%;min-height:110px;padding:10px;border:1.5px solid #555;border-radius:8px;font:inherit;color:#111;background:#fff;resize:vertical;"></textarea>
+    <button id="shiftTextSave" type="button">保存</button>
+    <button id="shiftTextDelete" type="button" style="display:none;background:#222;margin-top:8px;">この文字だけ削除</button>
+    <button id="shiftTextClose" type="button" style="background:#c9c9c9;margin-top:8px;">閉じる</button>
+  </div>
+</div>
+
 <!-- 要請（時間を入れてスタッフのカレンダーへ送信） -->
 <div class="cmtmask" id="reqMask">
   <div class="cmtbox">
@@ -1029,7 +1043,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.135"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.136"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1235,7 +1249,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.135</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.136</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1304,13 +1318,36 @@ function staffHasAnyDecision(nm,d){
 function shiftTextOf(nm,d){ return (((S.staff[nm]||{}).shiftText||{})[key(d)])||null; }
 function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=typeof rec==='string'?rec:rec.text, target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); return text&&target===st?`<span class="shifttext">${esc(text)}</span>`:''; }
 function shiftTextButton(nm,d,st){ const rec=shiftTextOf(nm,d), has=!!(rec&&(typeof rec==='string'?rec:rec.text)); return `<button type="button" class="dtextbtn${has?' hastext':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" title="重要テキストを入力・変更">文</button>`; }
+let shiftTextTarget=null;
 function editShiftText(nm,d,st){
   if(closedMonthEditBlocked()) return;
   const staff=S.staff[nm]; if(!staff) return;
   const current=shiftTextOf(nm,d), old=current?(typeof current==='string'?current:current.text):'';
-  const value=appPrompt(`${nm}さん ${M}/${d} の重要テキストを入力してください。\n空欄で保存すると削除します。`,old);
-  Promise.resolve(value).then(text=>{ if(text==null) return; text=String(text).trim(); rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; if(text) staff.shiftText[key(d)]={text,store:st}; else delete staff.shiftText[key(d)]; if(!Object.keys(staff.shiftText).length) delete staff.shiftText; touchUpdated(); save(); if(dayViewDay!=null) openDayView(dayViewDay); });
+  shiftTextTarget={nm,d,st};
+  $('#shiftTextTitle').textContent=`${nm}さん ${M}/${d} の重要テキスト`;
+  $('#shiftTextInput').value=old||'';
+  $('#shiftTextDelete').style.display=old?'block':'none';
+  $('#shiftTextMask').style.display='flex';
+  setTimeout(()=>$('#shiftTextInput').focus(),30);
 }
+function closeShiftTextEditor(){ $('#shiftTextMask').style.display='none'; shiftTextTarget=null; }
+$('#shiftTextSave').onclick=()=>{
+  if(!shiftTextTarget) return;
+  const text=$('#shiftTextInput').value.trim();
+  if(!text){ appAlert('文字を入力してください。削除する場合は「この文字だけ削除」を押してください。'); return; }
+  const {nm,d,st}=shiftTextTarget, staff=S.staff[nm]; if(!staff) return;
+  rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st};
+  touchUpdated(); save(); closeShiftTextEditor(); if(dayViewDay!=null) openDayView(dayViewDay);
+};
+$('#shiftTextDelete').onclick=async()=>{
+  if(!shiftTextTarget) return;
+  if(!await appConfirm('この重要テキストだけを削除しますか？')) return;
+  const {nm,d}=shiftTextTarget, staff=S.staff[nm]; if(!staff) return;
+  rememberDayUndo(d); if(staff.shiftText){ delete staff.shiftText[key(d)]; if(!Object.keys(staff.shiftText).length) delete staff.shiftText; }
+  touchUpdated(); save(); closeShiftTextEditor(); if(dayViewDay!=null) openDayView(dayViewDay);
+};
+$('#shiftTextClose').onclick=closeShiftTextEditor;
+$('#shiftTextMask').onclick=e=>{ if(e.target.id==='shiftTextMask') closeShiftTextEditor(); };
 function canManageStaff(){ return !window.shiftEditorMode; }
 
 /* ---- 希望テキスト ---- */
@@ -1403,7 +1440,7 @@ function renderOwner(){
     const dayDecided=!!(S.decidedDays&&S.decidedDays[key(d)]), dayPublished=isShiftDayPublished(key(d));
     const publishLabel=!dayDecided?"未確定":(dayPublished?"✓ 公開":"□ 公開");
     const publishHint=dayDecided?(dayPublished?"公開を取り消します":"この日の決定シフトを公開します"):"先にこの日を決定してください";
-    th+=`<th class="daycol ${cls}" data-day="${d}" data-guide-key="edit-date" data-guide="日付を押すとシフト編集できます" role="button" tabindex="0"${HOL[key(d)]?` aria-label="${esc(HOL[key(d)])} ${M}/${d}"`:""}><span class="daybutton">${DOW[dow]}<br>${M}/${d}</span><button type="button" class="daypublish${dayPublished?' on':''}${!dayDecided?' undecided':''}" data-day="${d}" data-guide-key="publish-day" data-guide="決定済みの日だけスタッフへ公開・非公開できます" title="${publishHint}" aria-label="${publishHint}"${_monthClosed||!dayDecided?' disabled':''}>${publishLabel}</button></th>`; }
+    th+=`<th class="daycol ${cls}${!dayDecided?' undecidedday':''}" data-day="${d}" data-guide-key="edit-date" data-guide="日付を押すとシフト編集できます" role="button" tabindex="0"${HOL[key(d)]?` aria-label="${esc(HOL[key(d)])} ${M}/${d}"`:""}><span class="daybutton">${DOW[dow]}<br>${M}/${d}</span><button type="button" class="daypublish${dayPublished?' on':''}${!dayDecided?' undecided':''}" data-day="${d}" data-guide-key="publish-day" data-guide="決定済みの日だけスタッフへ公開・非公開できます" title="${publishHint}" aria-label="${publishHint}"${_monthClosed||!dayDecided?' disabled':''}>${publishLabel}</button></th>`; }
   $("#thead").innerHTML=th+"</tr>";
   $("#thead").onclick=(e)=>{ const button=e.target.closest&&e.target.closest('.daypublish'); if(button){ e.stopPropagation(); togglePublishedDay(+button.dataset.day); return; } const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day) openDayView(+th.dataset.day); };
   $("#thead").onkeydown=(e)=>{ if(e.target.closest&&e.target.closest('.daypublish')) return; if(e.key!=="Enter"&&e.key!==" ") return; const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day){ e.preventDefault(); openDayView(+th.dataset.day); } };
@@ -1847,9 +1884,9 @@ function openDayView(d){
 (function(){
   const modal=document.querySelector('.daymodal'); if(!modal) return;
   let swipe=null;
-  modal.addEventListener('pointerdown',e=>{ if(e.pointerType!=='touch'||(e.target.closest&&e.target.closest('button,input,textarea,.dresize'))) return; swipe={x:e.clientX,y:e.clientY,t:Date.now()}; },{passive:true});
-  modal.addEventListener('pointerup',e=>{ if(!swipe||e.pointerType!=='touch') return; const dx=e.clientX-swipe.x,dy=e.clientY-swipe.y,ms=Date.now()-swipe.t; swipe=null; if(ms>900||Math.abs(dx)<90||Math.abs(dx)<Math.abs(dy)*1.5) return; if(dx<0&&dayViewDay<DAYS) openDayView(dayViewDay+1); else if(dx>0&&dayViewDay>1) openDayView(dayViewDay-1); },{passive:true});
-  modal.addEventListener('pointercancel',()=>{ swipe=null; },{passive:true});
+  modal.addEventListener('touchstart',e=>{ if(e.touches.length!==1||(e.target.closest&&e.target.closest('button,input,textarea,.dresize,.dbar'))) return; const t=e.touches[0]; swipe={x:t.clientX,y:t.clientY,t:Date.now()}; },{passive:true,capture:true});
+  modal.addEventListener('touchend',e=>{ if(!swipe||!e.changedTouches.length) return; const t=e.changedTouches[0],dx=t.clientX-swipe.x,dy=t.clientY-swipe.y,ms=Date.now()-swipe.t; swipe=null; if(ms>900||Math.abs(dx)<110||Math.abs(dx)<Math.abs(dy)*1.5) return; if(dx<0&&dayViewDay<DAYS) openDayView(dayViewDay+1); else if(dx>0&&dayViewDay>1) openDayView(dayViewDay-1); },{passive:true,capture:true});
+  modal.addEventListener('touchcancel',()=>{ swipe=null; },{passive:true,capture:true});
 })();
 function fitDayGrid(){
   const g=$("#dayGrid"), sc=document.querySelector('.dayscroll');
@@ -2502,14 +2539,12 @@ function printTimeCell(nm,d,st,hr){
 }
 function pDayTable(d, blank){
   const dow=DOW[new Date(Y,M-1,d).getDay()];
-  let h=`<div class="pdtitle">${M}/${d}（${dow}）</div><table class="pgrid"><thead><tr><th class="pn"></th>`;
-  for(let hr=PX0;hr<PX1;hr++) h+=`<th>${hr}</th>`;
-  h+=`</tr></thead><tbody>`;
+  let h=`<div class="pdtitle">${M}/${d}（${dow}）</div><table class="pgrid"><tbody>`;
   let EMPTY=""; for(let hr=PX0;hr<PX1;hr++) EMPTY+="<td></td>";
   STORES.forEach(st=>{
     const list=printStoreStaff(st,d);
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
-    h+=`<tr class="pst"><td class="pn" style="color:${col.ink}">${st}</td>`;
+    h+=`<tr class="pst"><td class="pn" style="background:${col.head};color:#000;text-align:center">${st}</td>`;
     for(let hr=PX0;hr<PX1;hr++) h+=`<td class="phr">${hr}</td>`;
     h+=`</tr>`;
     const rowN=printStoreRows(st,d);
@@ -2528,7 +2563,7 @@ function pDayTable(d, blank){
   return h+`</tbody></table>`;
 }
 function printRowCount(days){
-  let r=1; // 時間の見出し行
+  let r=0;
   STORES.forEach(st=>{
     const dayRows=(days||[]).map(d=>printStoreRows(st,d));
     r+=1+Math.max(printStoreRows(st),...dayRows);
