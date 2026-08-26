@@ -763,7 +763,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.128</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.129</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1019,7 +1019,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.128"; window.APP_UPDATED="2026-08-26";
+window.APP_VERSION="v1.129"; window.APP_UPDATED="2026-08-26";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1225,7 +1225,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.128</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.129</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2287,10 +2287,10 @@ $("#oneOk").onclick=()=>{
   $("#oneMask").style.display="none";
   const dd=dayViewDay; oneT=null; if(dd!=null) openDayView(dd);
 };
-function deleteDecisionSegment(nm,d,seg){
+function deleteDecisionSegment(nm,d,seg,st){
   const stf=S.staff[nm]||{};
-  const decided=stf.decided||{};
-  const k=key(d), dec=decided[k];
+  const store=st||stf.store||"大須", k=key(d);
+  const home=isStaffHomeStore(nm,store), dec=storeDecision(nm,d,store);
   if(!dec) return false;
   rememberDayUndo(d);
   clearDayDecisionOnShiftChange(d);
@@ -2300,14 +2300,28 @@ function deleteDecisionSegment(nm,d,seg){
     delete dec[seg];
   }
   const hasShift=!!(dec.off||dec.all||dec.am||dec.pm||dec.start||dec.end);
-  if(!hasShift) delete decided[k];
+  if(!hasShift){
+    if(home){
+      delete (stf.decided||{})[k];
+    }else{
+      const byStore=((stf.support||{})[k]||{});
+      if(byStore[store]===dec){
+        delete byStore[store];
+        if(!Object.keys(byStore).length) delete stf.support[k];
+        if(stf.support&&!Object.keys(stf.support).length) delete stf.support;
+      }else if(store==='鉄板'&&stf.tetsu&&stf.tetsu[k]===dec){
+        delete stf.tetsu[k];
+        if(!Object.keys(stf.tetsu).length) delete stf.tetsu;
+      }
+    }
+  }
   return true;
 }
 $("#oneDelete").onclick=async()=>{
   if(closedMonthEditBlocked()||!oneT) return;
   const target={...oneT};
   if(!await appConfirm(`${target.nm}さんの選んだ時間帯だけを削除します。\n同じ日の別の時間帯と、ほかの人のシフトは残ります。`,{title:"この時間帯だけ削除しますか？",confirmText:"この線だけ削除",kind:"danger",icon:"🗑️"})) return;
-  if(deleteDecisionSegment(target.nm,target.d,target.seg)){ touchUpdated(); save(); }
+  if(deleteDecisionSegment(target.nm,target.d,target.seg,target.st)){ touchUpdated(); save(); }
   $("#oneMask").style.display="none";
   const dd=dayViewDay; oneT=null; if(dd!=null) openDayView(dd);
 };
