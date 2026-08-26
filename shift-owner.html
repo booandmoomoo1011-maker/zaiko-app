@@ -405,7 +405,8 @@
   .shifttext:active{cursor:grabbing;}
   .shifttext .sthandle{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;}
   .shifttext .sthandle.left{left:0}.shifttext .sthandle.right{right:0}
-  #dayTextPlace.active{background:#111!important;color:#fff!important;box-shadow:0 0 0 2px #f4d65c;}
+  #dayTextPlace{background:#fff!important;color:#111!important;border:1.5px solid #111!important;}
+  #dayTextPlace.active{background:#fff!important;color:#111!important;box-shadow:0 0 0 3px #f4d65c;}
   .dbar .btime:hover{text-decoration:underline;}
   .dbar .shiftconflict{position:absolute; top:0; bottom:0; z-index:1; background:#e53935; pointer-events:none; animation:shiftConflictBlink .85s ease-in-out infinite;}
   @keyframes shiftConflictBlink{0%,100%{opacity:.86;}50%{opacity:.16;}}
@@ -778,7 +779,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.138</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.139</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1046,7 +1047,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.138"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.139"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1252,7 +1253,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.138</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.139</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1904,6 +1905,22 @@ function openDayView(d){
   modal.addEventListener('touchstart',e=>{ if(e.touches.length!==1||(e.target.closest&&e.target.closest('button,input,textarea,.dresize,.dbar,.shifttext'))) return; const t=e.touches[0]; swipe={x:t.clientX,y:t.clientY,t:Date.now()}; },{passive:true,capture:true});
   modal.addEventListener('touchend',e=>{ if(!swipe||!e.changedTouches.length) return; const t=e.changedTouches[0],dx=t.clientX-swipe.x,dy=t.clientY-swipe.y,ms=Date.now()-swipe.t; swipe=null; if(ms>900||Math.abs(dx)<110||Math.abs(dx)<Math.abs(dy)*1.5) return; if(dx<0&&dayViewDay<DAYS) openDayView(dayViewDay+1); else if(dx>0&&dayViewDay>1) openDayView(dayViewDay-1); },{passive:true,capture:true});
   modal.addEventListener('touchcancel',()=>{ swipe=null; },{passive:true,capture:true});
+})();
+(function(){
+  const modal=document.querySelector('.daymodal'); if(!modal) return;
+  let totalX=0,resetTimer=null,locked=false;
+  modal.addEventListener('wheel',e=>{
+    if(e.ctrlKey||Math.abs(e.deltaX)<=Math.abs(e.deltaY)||(e.target.closest&&e.target.closest('input,textarea,.shifttext'))) return;
+    e.preventDefault();
+    if(locked) return;
+    totalX+=e.deltaX;
+    clearTimeout(resetTimer); resetTimer=setTimeout(()=>{ totalX=0; },180);
+    if(Math.abs(totalX)<70) return;
+    const direction=totalX>0?1:-1; totalX=0; locked=true;
+    if(direction>0&&dayViewDay<DAYS) openDayView(dayViewDay+1);
+    else if(direction<0&&dayViewDay>1) openDayView(dayViewDay-1);
+    setTimeout(()=>{ locked=false; },550);
+  },{passive:false,capture:true});
 })();
 function fitDayGrid(){
   const g=$("#dayGrid"), sc=document.querySelector('.dayscroll');
