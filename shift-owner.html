@@ -310,6 +310,7 @@
   .dmz-b{left:0; bottom:-2px; height:9px; width:100%; cursor:ns-resize;}
   .dmz-c{right:-2px; bottom:-2px; width:20px; height:20px; cursor:nwse-resize; background:linear-gradient(135deg,transparent 45%,#c9c9c9 45%,#c9c9c9 55%,transparent 55%,transparent 70%,#c9c9c9 70%,#c9c9c9 80%,transparent 80%); border-bottom-right-radius:14px;}
   .dayhead{display:flex; justify-content:space-between; align-items:center; padding:9px 14px; border-bottom:1px solid var(--line); flex:0 0 auto;}
+  .dayhead.weekendholiday{background:#fff8d6;}
   .dayhead h3{margin:0; font-size:20px; color:#111; white-space:nowrap; flex:0 0 auto;}
   .dayhead h3 .weekend{color:#d83f58;}
   .dayhead button{border:none; background:#eee; color:#555; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:700; white-space:nowrap; flex:0 0 auto; font-size:13px;}
@@ -786,7 +787,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.142</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.143</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1064,7 +1065,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.142"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.143"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1270,7 +1271,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.142</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.143</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1888,6 +1889,7 @@ function openDayView(d){
   const _closed=ownerMonthIsClosed();
   setShiftTextPlaceMode(false);
   const dayDow=new Date(Y,M-1,d).getDay(), dow=DOW[dayDow];
+  document.querySelector('.dayhead')?.classList.toggle('weekendholiday',dayDow===0||dayDow===6||isHol(d));
   $("#dayTitle").innerHTML=`${Y}年${M}月${d}日<span class="${dayDow===0||dayDow===6||isHol(d)?'weekend':''}">(${dow})</span>`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   $("#dayPrev").disabled=d<=1; $("#dayNext").disabled=d>=DAYS;
   const W=(AX1-AX0)*HW;
