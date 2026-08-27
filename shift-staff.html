@@ -30,6 +30,7 @@
   *{box-sizing:border-box;}
   html,body{max-width:100%; overflow-x:hidden;}
   body{margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;}
+  button,input,select,textarea,option{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;}
   /* スタッフは携帯利用：細い画面向け調整 */
   @media (max-width:480px){
     header h1{font-size:15px;}
@@ -39,6 +40,7 @@
     .day .qbtn{padding:6px 12px;}
     .slist{padding:0 8px;}
     .noteinp{font-size:13px;}
+    .monthclosednotice .closed-change{display:block;margin-top:2px;}
   }
   header{background:#2b2b2b; color:#fff; padding:5px 12px; position:sticky; top:0; z-index:20;
     display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
@@ -236,7 +238,7 @@
   .mcell .wsmall{font-size:8px; color:#c2c2c2; font-weight:700; white-space:normal; word-break:break-all; overflow:hidden; min-width:0; line-height:1.35;}
   .staffnotice-star{margin-left:auto;flex:0 0 20px;width:20px;height:20px;border:1px solid #d9a900;border-radius:50%;padding:0;background:#fff3ad;color:#e7b700;font-size:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(180,135,0,.3);}
   .staffnotice-star.confirmed{background:#fff0df;border-color:#ef8b24;color:#ef8b24;box-shadow:0 1px 3px rgba(180,90,0,.28);}
-  #staffNoticeMask .cmtbox,#staffNoticeMask .ttl,#staffNoticeMask button,.staffnotice-banner,.staffnotice-banner button{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;}
+  #staffNoticeMask .cmtbox,#staffNoticeMask .ttl,#staffNoticeMask button,.staffnotice-banner,.staffnotice-banner button{font-family:inherit;}
   #staffNoticeMask .ttl,#staffNoticeMask button{font-weight:500;}
   .staffnotice-banner{max-width:604px;margin:8px auto 0;padding:9px 11px;border:2px solid #efc53f;border-radius:11px;background:#fff8d9;color:#735f17;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:0 2px 8px rgba(160,120,0,.12);}
   .staffnotice-banner button{border:none;border-radius:8px;background:#e2b400;color:#fff;padding:7px 11px;font-weight:500;white-space:nowrap;cursor:pointer;}
@@ -590,7 +592,7 @@
   </div>
 </div>
 <!-- PWA_INSTALL_KIT_START (ホーム画面追加：SW登録＋インストールボタン＋LINE案内) -->
-<div id="pwaBar" style="display:none;position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#111;color:#fff;padding:12px 14px;font-size:14px;line-height:1.7;box-shadow:0 2px 10px rgba(0,0,0,.35);font-family:sans-serif;">
+<div id="pwaBar" style="display:none;position:fixed;left:0;right:0;top:0;z-index:2147483000;background:#111;color:#fff;padding:12px 14px;font-size:14px;line-height:1.7;box-shadow:0 2px 10px rgba(0,0,0,.35);font-family:inherit;">
   <div style="font-weight:700;margin-bottom:4px;">📱 ホーム画面に追加する方法</div>
   <div id="pwaBarMsg" style="color:#ffe;"></div>
   <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -598,7 +600,7 @@
     <button id="pwaBarClose" style="background:#555;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:13px;">閉じる</button>
   </div>
 </div>
-<button id="pwaInstallBtn" style="display:none;position:fixed;right:14px;bottom:14px;z-index:2147483000;background:#06c755;color:#fff;border:0;border-radius:24px;padding:12px 18px;font-size:15px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.35);font-family:sans-serif;">📲 ホーム画面に追加</button>
+<button id="pwaInstallBtn" style="display:none;position:fixed;right:14px;bottom:14px;z-index:2147483000;background:#06c755;color:#fff;border:0;border-radius:24px;padding:12px 18px;font-size:15px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.35);font-family:inherit;">📲 ホーム画面に追加</button>
 <script>
 (function(){
   try{
@@ -637,7 +639,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト希望 <span class="demoTag">v1.76</span></h1>
+  <h1>シフト希望 <span class="demoTag">v1.77</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -828,7 +830,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.76"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.77"; window.APP_UPDATED="2026-08-27";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1625,7 +1627,7 @@ function renderMine(me){
   html+=`<div class="month-submit-wrap"><button type="button" class="month-submit-btn${_submitted?' submitted':''}" id="monthSubmit" ${_locked?'disabled':''}>${_deadlineLocked?'締め切り済み（毎月20日まで）':(_submitted?'✓ この月は提出済み（20日まで修正できます）':'この月の希望を提出')}</button></div>`;
   const _unreadNoticeDays=[]; for(let d=1;d<=DAYS;d++){ const n=isShiftDayPublished(key(d))?ownerNotices[key(d)]:null; if(n&&n.text&&!n.acknowledgedAt) _unreadNoticeDays.push(d); }
   if(_unreadNoticeDays.length) html+=`<div class="staffnotice-banner"><span>★ オーナーからの案内が${_unreadNoticeDays.length}件あります</span><button type="button" data-notice-day="${_unreadNoticeDays[0]}">案内を確認</button></div>`;
-  if(_locked) html+=`<div class="monthclosednotice">🔒 この月の希望提出は締め切りました。変更は責任者に連絡してください。</div>`;
+  if(_locked) html+=`<div class="monthclosednotice"><span>🔒 この月の希望提出は締め切りました。</span><span class="closed-change">変更は責任者に連絡してください。</span></div>`;
   html+='<div class="mcal"><div class="mcalgrid">';
   DOW.forEach((dw,i)=>html+=`<div class="mch ${i===0?'sun':i===6?'sat':''}">${dw}</div>`);
   for(let i=0;i<first;i++) html+='<div class="mcell empty"></div>';

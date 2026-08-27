@@ -411,8 +411,9 @@
   #dayTextHistory{background:#fff!important;color:#111!important;border:1.5px solid #111!important;}
   .shift-history-list{display:flex;flex-direction:column;gap:7px;max-height:48vh;overflow:auto;}
   .shift-history-row{display:flex;gap:6px;align-items:center;}
-  .shift-history-row .history-use{flex:1;margin:0;background:#fff;color:#111;border:1px solid #bbb;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .shift-history-row .history-use{flex:1;margin:0;height:34px;background:#fff;color:#111;border:1.5px dashed #555;border-radius:7px;text-align:center;font-family:inherit;font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;}
   .shift-history-row .history-delete{width:38px;margin:0;background:#222;color:#fff;flex:0 0 38px;}
+  .shift-history-ghost{position:fixed;z-index:2147483001;width:180px;height:34px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border:2px dashed #444;border-radius:7px;background:#fff;color:#111;font-family:inherit;font-size:13px;font-weight:800;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.25);transform:translate(-50%,-50%);}
   .dbar .btime:hover{text-decoration:underline;}
   .dbar .shiftconflict{position:absolute; top:0; bottom:0; z-index:1; background:#e53935; pointer-events:none; animation:shiftConflictBlink .85s ease-in-out infinite;}
   @keyframes shiftConflictBlink{0%,100%{opacity:.86;}50%{opacity:.16;}}
@@ -785,7 +786,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.141</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.142</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1063,7 +1064,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.141"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.142"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1269,7 +1270,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.141</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.142</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1378,7 +1379,16 @@ function ensureShiftTextHistory(){
 }
 function rememberShiftTextHistory(text){ text=String(text||'').trim(); if(!text||text.toLowerCase()==='false') return; const history=ensureShiftTextHistory().filter(v=>v!==text); history.unshift(text); S.shiftTextHistory=history.slice(0,10); }
 function setShiftTextPlaceMode(on){ shiftTextPlaceMode=!!on; const b=$('#dayTextPlace'); if(b){ b.classList.toggle('active',shiftTextPlaceMode); b.textContent=shiftTextPlaceMode?(selectedShiftTextPreset?`${selectedShiftTextPreset}を置く`:'置く場所をタップ'):'文字を置く'; } }
-function openShiftTextHistory(){ const list=$('#shiftTextHistoryList'),history=ensureShiftTextHistory(); list.innerHTML=history.length?history.map((text,i)=>`<div class="shift-history-row"><button type="button" class="history-use" data-i="${i}">${esc(text)}</button><button type="button" class="history-delete" data-i="${i}" aria-label="${esc(text)}を履歴から削除">×</button></div>`).join(''):'<div style="color:#888;font-size:13px;padding:8px 2px;">まだ履歴がありません。</div>'; list.querySelectorAll('.history-use').forEach(b=>b.onclick=()=>{ selectedShiftTextPreset=history[+b.dataset.i]||''; $('#shiftTextHistoryMask').style.display='none'; setShiftTextPlaceMode(!!selectedShiftTextPreset); }); list.querySelectorAll('.history-delete').forEach(b=>b.onclick=()=>{ S.shiftTextHistory.splice(+b.dataset.i,1); save(); openShiftTextHistory(); }); $('#shiftTextHistoryMask').style.display='flex'; }
+function placeHistoryText(text,dt,row,clientX,clientY){ const nm=row.dataset.n,d=+row.dataset.d,st=row.dataset.st,staff=S.staff[nm]; if(!staff||!dt) return false; const start=Math.max(AX0,Math.min(AX1-.5,_xToHour({clientX},dt,false))),end=Math.min(AX1,start+3),rect=dt.getBoundingClientRect(),scale=rect.width/(dt.offsetWidth||rect.width||1),localTop=(clientY-rect.top)/(scale||1),top=Math.max(2,Math.min(28,localTop-11)); rememberDayUndo(d); if(!staff.shiftText) staff.shiftText={}; staff.shiftText[key(d)]={text,store:st,start,end,top}; rememberShiftTextHistory(text); touchUpdated(); save(); openDayView(d); return true; }
+function bindShiftHistoryDrag(button,text){
+  button.onpointerdown=e=>{ if(e.button!=null&&e.button!==0) return; e.preventDefault(); e.stopPropagation(); const startX=e.clientX,startY=e.clientY,mask=$('#shiftTextHistoryMask'),ghost=document.createElement('div'); ghost.className='shift-history-ghost'; ghost.textContent=text; ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px'; ghost.style.display='none'; document.body.appendChild(ghost); let moved=false;
+    const move=ev=>{ if(Math.hypot(ev.clientX-startX,ev.clientY-startY)>6&&!moved){ moved=true; mask.style.display='none'; ghost.style.display='flex'; } if(!moved) return; ev.preventDefault(); ghost.style.left=ev.clientX+'px'; ghost.style.top=ev.clientY+'px'; const sc=document.querySelector('.dayscroll'),r=sc&&sc.getBoundingClientRect(); if(r){ if(ev.clientY<r.top+45) sc.scrollTop-=18; else if(ev.clientY>r.bottom-45) sc.scrollTop+=18; } };
+    const finish=ev=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',finish); window.removeEventListener('pointercancel',cancel); if(!moved){ ghost.remove(); selectedShiftTextPreset=text; mask.style.display='none'; setShiftTextPlaceMode(true); return; } ghost.style.display='none'; const target=document.elementFromPoint(ev.clientX,ev.clientY),dt=target&&target.closest&&target.closest('.dtime'),row=dt&&dt.closest('.drow[data-n]'); ghost.remove(); if(!dt||!row||!placeHistoryText(text,dt,row,ev.clientX,ev.clientY)) mask.style.display='flex'; };
+    const cancel=()=>{ window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',finish); window.removeEventListener('pointercancel',cancel); ghost.remove(); mask.style.display='flex'; };
+    window.addEventListener('pointermove',move,{passive:false}); window.addEventListener('pointerup',finish); window.addEventListener('pointercancel',cancel);
+  };
+}
+function openShiftTextHistory(){ const list=$('#shiftTextHistoryList'),history=ensureShiftTextHistory(); list.innerHTML=history.length?history.map((text,i)=>`<div class="shift-history-row"><button type="button" class="history-use" data-i="${i}">${esc(text)}</button><button type="button" class="history-delete" data-i="${i}" aria-label="${esc(text)}を履歴から削除">×</button></div>`).join(''):'<div style="color:#888;font-size:13px;padding:8px 2px;">まだ履歴がありません。</div>'; list.querySelectorAll('.history-use').forEach(b=>bindShiftHistoryDrag(b,history[+b.dataset.i]||'')); list.querySelectorAll('.history-delete').forEach(b=>b.onclick=()=>{ S.shiftTextHistory.splice(+b.dataset.i,1); save(); openShiftTextHistory(); }); $('#shiftTextHistoryMask').style.display='flex'; }
 $('#shiftTextHistoryClose').onclick=()=>$('#shiftTextHistoryMask').style.display='none';
 $('#shiftTextHistoryMask').onclick=e=>{ if(e.target.id==='shiftTextHistoryMask') $('#shiftTextHistoryMask').style.display='none'; };
 function bindShiftTextBox(box){
