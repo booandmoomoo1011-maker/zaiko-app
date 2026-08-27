@@ -462,8 +462,8 @@
   table.pgrid td.pn.pn-6{font-size:calc(var(--fsN,9.75px) * .73); letter-spacing:-.2px;}
   table.pgrid td.pn.pn-long{font-size:calc(var(--fsN,9.75px) * .62); letter-spacing:-.3px;}
   table.pgrid tr.pst td{font-weight:800; font-size:var(--fsS,7.5px); text-align:center; padding:0; color:#000; vertical-align:middle;}
-  table.pgrid tr.pst td.phr{font-weight:600; font-size:calc(var(--fs,6px) * 2); text-align:center; padding:0; color:#555; background:#f2f2f2;}
-  table.pgrid td.ptime{position:relative;}
+  table.pgrid tr.pst td.phr{font-weight:600; font-size:var(--fs,6px); text-align:center; padding:0; color:#555; background:#f2f2f2;}
+  table.pgrid td.ptime{position:relative; overflow:visible;}
   .pmark{position:absolute; display:block; box-sizing:border-box;}
   .pmark.pwish{top:8%; height:36%; background:#eee; border-top:1px dotted #aaa; border-bottom:1px dotted #aaa; z-index:3;}
   .pmark.pshift,.pmark.phold{top:18%; height:64%;}
@@ -471,9 +471,9 @@
   .pmark.pam{background:#a9ddb2;}
   .pmark.ppm{background:#efafca;}
   .pmark.phold{background:#78c6e8; z-index:2;}
-  .pmark .pendpoint{position:absolute;top:50%;transform:translateY(-50%);color:#000;font-size:11px;font-weight:900;line-height:1;z-index:4;}
-  .pmark .pendpoint.start{left:1px}.pmark .pendpoint.end{right:1px}
-  .pmark .breakmins{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#000;font-size:11px;font-weight:900;white-space:nowrap;z-index:5;}
+  .pmark .pendpoint{position:absolute;top:50%;color:#000;font-family:"Arial Narrow",Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:-1px;line-height:1;white-space:nowrap;z-index:4;}
+  .pmark .pendpoint.start{left:1px;transform:translateY(-50%) scaleX(.72);transform-origin:left center}.pmark .pendpoint.end{right:1px;transform:translateY(-50%) scaleX(.72);transform-origin:right center}
+  .pmark .breakmins{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scaleX(.8);color:#000;font-family:"Arial Narrow",Arial,sans-serif;font-size:11px;font-weight:900;letter-spacing:-.7px;white-space:nowrap;z-index:5;}
   .pimportant{position:absolute;top:0;box-sizing:border-box;border:.7px dashed #555;border-radius:2px;background:rgba(255,255,255,.94);color:#000;font-family:inherit;font-size:6px;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;z-index:8;}
   /* 画面プレビューでの1枚ずつの区切り */
   #ppBody .psheet{margin-bottom:14px; padding-bottom:14px; border-bottom:2px dashed #bbb;}
@@ -787,7 +787,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.145</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.146</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1065,7 +1065,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.145"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.146"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1271,7 +1271,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.145</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.146</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
