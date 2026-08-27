@@ -477,6 +477,9 @@
   .pmark .pendpoint{position:absolute;top:50%;color:#000;font-family:"Arial Narrow",Arial,sans-serif;font-size:9px;font-weight:400;letter-spacing:.12px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;z-index:4;}
   .pmark .pendpoint.start{left:1px;transform:translateY(-50%)}.pmark .pendpoint.end{right:1px;transform:translateY(-50%)}
   .pmark .pendpoint.start.half{transform:translateY(-50%)}.pmark .pendpoint.end.half{transform:translateY(-50%)}
+  .pmark.shortline .pendpoint{left:50%;right:auto;font-size:8px;letter-spacing:0;}
+  .pmark.shortline .pendpoint.start,.pmark.shortline .pendpoint.start.half{top:27%;transform:translate(-50%,-50%)}
+  .pmark.shortline .pendpoint.end,.pmark.shortline .pendpoint.end.half{top:73%;transform:translate(-50%,-50%)}
   .pmark .breakmins{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#000;font-family:"Arial Narrow",Arial,sans-serif;font-size:9px;font-weight:400;letter-spacing:.12px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;z-index:5;}
   .pimportant{position:absolute;top:0;box-sizing:border-box;border:.7px dashed #555;border-radius:2px;background:rgba(255,255,255,.94);color:#000;font-family:inherit;font-size:6px;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;z-index:8;}
   /* 画面プレビューでの1枚ずつの区切り */
@@ -792,7 +795,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.154</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.155</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1070,7 +1073,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.154"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.155"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1276,7 +1279,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.154</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.155</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2593,20 +2596,16 @@ function printWishMarks(w,hr){
 function printDecisionMarks(rec,hr){
   if(!rec||rec.off) return '';
   let html='';
-  const segments=rec.all?['all']:['am','pm'];
-  const parts=segments.map(seg=>({seg,part:rec[seg]})).filter(item=>item.part).map(item=>({seg:item.seg,part:item.part,s:pHM(item.part.start),e:pHM(item.part.end)})).filter(item=>item.s!=null&&item.e!=null&&item.e>item.s);
+  const parts=['all','am','pm'].map(seg=>({seg,part:rec[seg]})).filter(item=>item.part).map(item=>({seg:item.seg,part:item.part,s:pHM(item.part.start),e:pHM(item.part.end)})).filter(item=>item.s!=null&&item.e!=null&&item.e>item.s);
   parts.forEach((item,index)=>{
     const {part,s,e}=item;
     const color=pHM(part.start)>=14||hr>=17?'ppm':'pam';
     const sharedStart=parts.some((other,otherIndex)=>otherIndex!==index&&other.e!=null&&s!=null&&Math.abs(other.e-s)<.001);
-    const sharedEnd=parts.some((other,otherIndex)=>otherIndex!==index&&other.s!=null&&e!=null&&Math.abs(other.s-e)<.001);
     const shortLine=e-s<2.5;
-    const showStart=!sharedStart;
-    const showEnd=!sharedEnd&&(!shortLine||!showStart);
-    const inner=(showStart&&hr<=s&&s<hr+1?`<b class="pendpoint start${s%1?' half':''}">${esc(part.start)}</b>`:'')+(showEnd&&hr<e&&e<=hr+1?`<b class="pendpoint end${e%1?' half':''}">${esc(part.end)}</b>`:'');
-    html+=printSegmentMark(part.start,part.end,hr,`pshift ${color}`,inner);
+    const inner=(!sharedStart&&hr<=s&&s<hr+1?`<b class="pendpoint start${s%1?' half':''}">${esc(part.start)}</b>`:'')+(hr<e&&e<=hr+1?`<b class="pendpoint end${e%1?' half':''}">${esc(part.end)}</b>`:'');
+    html+=printSegmentMark(part.start,part.end,hr,`pshift ${color}${shortLine?' shortline':''}`,inner);
   });
-  if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)){ const s=pHM(rec.start),e=pHM(rec.end),shortLine=s!=null&&e!=null&&e-s<2.5,inner=(hr<=s&&s<hr+1?`<b class="pendpoint start${s%1?' half':''}">${esc(rec.start)}</b>`:'')+(!shortLine&&hr<e&&e<=hr+1?`<b class="pendpoint end${e%1?' half':''}">${esc(rec.end)}</b>`:''); html+=printSegmentMark(rec.start,rec.end,hr,`pshift ${s>=14||hr>=17?'ppm':'pam'}`,inner); }
+  if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)){ const s=pHM(rec.start),e=pHM(rec.end),shortLine=s!=null&&e!=null&&e-s<2.5,inner=(hr<=s&&s<hr+1?`<b class="pendpoint start${s%1?' half':''}">${esc(rec.start)}</b>`:'')+(hr<e&&e<=hr+1?`<b class="pendpoint end${e%1?' half':''}">${esc(rec.end)}</b>`:''); html+=printSegmentMark(rec.start,rec.end,hr,`pshift ${s>=14||hr>=17?'ppm':'pam'}${shortLine?' shortline':''}`,inner); }
   return html;
 }
 function printHoldMarks(nm,d,st,hr){
