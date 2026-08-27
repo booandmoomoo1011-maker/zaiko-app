@@ -559,12 +559,27 @@
   .ownerguide[hidden]{display:none !important;}
   .ownerguide-text{font-weight:700;}
   .ownerguide-dismiss{display:block; margin-top:7px; padding:4px 0; border:0; background:none; color:#557895; font:inherit; font-size:11px; cursor:pointer; text-decoration:underline;}
+  .save-state{display:inline-flex;align-items:center;justify-content:center;min-width:96px;padding:5px 10px;border-radius:9px;font-size:13px;font-weight:900;line-height:1.2;background:#eef1f3;color:#555;border:1px solid rgba(255,255,255,.35);}
+  .save-state.saving{background:#fff0b8;color:#735f17;}
+  .save-state.saved{background:#dff3e5;color:#176b37;}
+  .save-state.failed{background:#ffdfe4;color:#9b2437;}
+  .save-state.locked{background:#ffe4a8;color:#7a5000;}
+  .edit-conflict{display:none;padding:10px 14px;background:#fff0c7;color:#704900;border-bottom:2px solid #e0ad39;font-size:14px;font-weight:900;line-height:1.55;}
+  .edit-conflict.show{display:block;}
+  .audit-list{max-height:58vh;overflow:auto;border:1px solid #e1e1e1;border-radius:10px;background:#fafafa;}
+  .audit-row{padding:10px 12px;border-bottom:1px solid #e5e5e5;background:#fff;}
+  .audit-row:last-child{border-bottom:0;}
+  .audit-meta{font-size:12px;color:#666;font-weight:700;margin-bottom:4px;}
+  .audit-summary{font-size:14px;color:#222;line-height:1.55;word-break:break-word;}
+  .audit-empty{padding:22px 12px;text-align:center;color:#888;font-size:13px;}
   @media(max-width:600px){
     .appdialog{border-radius:22px;padding:24px 18px 18px;}
     .appdialog-icon{width:64px;height:64px;font-size:32px;}
     .appdialog-title{font-size:20px;margin-left:34px;margin-right:34px;}
     .appdialog-message{font-size:15px;text-align:left;}
     .appdialog-actions button{font-size:16px;min-height:50px;}
+    .save-state{min-width:86px;font-size:12px;padding:5px 8px;}
+    .edit-conflict{font-size:13px;padding:9px 10px;}
   }
 
 </style>
@@ -583,7 +598,7 @@
   </script>
   <script type="module">
   import { initializeApp } from 'firebase/app';
-  import { getDatabase, ref, set, remove, update, get, onValue } from 'firebase/database';
+  import { getDatabase, ref, set, remove, update, get, onValue, push, runTransaction, onDisconnect, query, limitToLast } from 'firebase/database';
   import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signInWithRedirect } from 'firebase/auth';
   try{
     const app = initializeApp({
@@ -598,37 +613,144 @@
     const db = getDatabase(app), auth=getAuth(app);
     const BASE='zaiko/shift';
     const fbKey=(s)=>String(s).replace(/[.#$\[\]\/]/g,'_');
-    let _suppressUntil=0;
+    let _suppressUntil=0, _currentUser=null, _actorName='オーナー', _actorRole='owner';
+    const _sessionId=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2));
+    let _lastSavedPayload=null, _lastRemoteValue=null;
+    let _activeLockRef=null, _activeLockKey='', _ownsLock=false, _lockUnsubscribe=null, _lockHeartbeat=null;
     window.fbTouch=function(){ _suppressUntil=Date.now()+1500; };
+
+    const clone=(value)=>value==null?value:JSON.parse(JSON.stringify(value));
+    const same=(a,b)=>JSON.stringify(a===undefined?null:a)===JSON.stringify(b===undefined?null:b);
+    const dateLabel=(date)=>/^\d{4}-\d{2}-\d{2}$/.test(date)?date.replace(/-/g,'/') : date;
+    function actorLabel(slot){
+      if(!slot) return _currentUser&&(_currentUser.displayName||_currentUser.email)||'オーナー';
+      const n=String(slot).replace(/\D/g,''); return n?'編集者'+n:'編集者';
+    }
+    function changedKeys(a,b){
+      const out=[]; new Set(Object.keys(a||{}).concat(Object.keys(b||{}))).forEach(k=>{ if(!same((a||{})[k],(b||{})[k])) out.push(k); }); return out;
+    }
+    function summarizeChanges(previous,next){
+      if(!previous) return '';
+      const items=[];
+      const pm=previous.meta||{}, nm=next.meta||{};
+      if(!same(pm.published,nm.published)) items.push(nm.published?'シフト全体を公開':'シフト全体を非公開');
+      changedKeys(pm.decidedDays,nm.decidedDays).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).slice(0,3).forEach(k=>items.push(dateLabel(k)+'の決定・公開状態を変更'));
+      changedKeys((pm.decidedDays||{})._published,(nm.decidedDays||{})._published).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).slice(0,3).forEach(k=>items.push(dateLabel(k)+'の公開状態を変更'));
+      changedKeys(pm.storeMemo,nm.storeMemo).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).slice(0,2).forEach(k=>items.push(dateLabel(k)+'の店舗メモを変更'));
+      changedKeys(pm.storeOff,nm.storeOff).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).slice(0,2).forEach(k=>items.push(dateLabel(k)+'の店舗休みを変更'));
+      if(!same(pm.roster,nm.roster)) items.push('スタッフ名簿・順番を変更');
+      const prevStaff=previous.staff||{}, nextStaff=next.staff||{};
+      new Set(Object.keys(prevStaff).concat(Object.keys(nextStaff))).forEach(name=>{
+        if(items.length>=8) return;
+        const a=prevStaff[name], b=nextStaff[name];
+        if(!a&&b){ items.push(name+'さんを追加'); return; }
+        if(a&&!b){ items.push(name+'さんを削除'); return; }
+        if(!a||!b||same(a,b)) return;
+        const dateFields=[['wish','希望'],['decided','決定シフト'],['notes','備考'],['req','要請'],['ooff','休み'],['shiftText','予定文字']];
+        let found=false;
+        dateFields.forEach(([field,label])=>{
+          if(items.length>=8) return;
+          changedKeys(a[field],b[field]).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).slice(0,2).forEach(k=>{ items.push(name+'さん '+dateLabel(k)+'の'+label+'を変更'); found=true; });
+        });
+        if(!found && !same(a.store,b.store)) items.push(name+'さんの所属店舗を変更');
+        else if(!found) items.push(name+'さんのシフト情報を変更');
+      });
+      if(!items.length) return '';
+      return items.slice(0,8).join('、')+(items.length>8?' ほか':'');
+    }
+    function auditEntry(summary){
+      return {actor:_actorName,actorRole:_actorRole,uid:_currentUser?_currentUser.uid:'',at:new Date().toISOString(),month:(window.shiftCurrentMonthKey?window.shiftCurrentMonthKey():''),summary:summary,version:'v1.152'};
+    }
+    function showSaveState(kind,message){
+      badge.textContent=message;
+      if(typeof window.shiftSaveState==='function') window.shiftSaveState(kind,message);
+    }
+    window.fbRememberRemote=function(payload,value){ _lastSavedPayload=clone(payload); if(value) _lastRemoteValue=clone(value); };
+    window.fbRestoreRemote=function(){ if(_lastRemoteValue&&typeof window.shiftApplyRemote==='function') window.shiftApplyRemote(clone(_lastRemoteValue)); };
+    window.fbLoadAudit=async function(){
+      if(!_currentUser||_actorRole!=='owner') throw new Error('owner-only');
+      const snap=await get(query(ref(db,BASE+'/auditLog'),limitToLast(100))), rows=[];
+      snap.forEach(child=>{ const value=child.val()||{}; value.id=child.key; rows.push(value); });
+      return rows.sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))).slice(0,100);
+    };
 
     const badge=document.createElement('div');
     badge.id='fb-badge';
     badge.style.cssText='position:fixed;left:6px;bottom:6px;z-index:99999;font-size:10px;padding:2px 7px;border-radius:8px;background:rgba(0,0,0,.55);color:#fff;font-family:sans-serif;pointer-events:none;';
     badge.textContent='☁ 接続確認中…';
     if(document.body) document.body.appendChild(badge); else document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(badge));
-    onValue(ref(db,'.info/connected'), s=>{ badge.textContent = s.val()? '🟢 共有オン' : '🔴 未接続'; });
+    onValue(ref(db,'.info/connected'), s=>{
+      badge.textContent=s.val()?'🟢 共有オン':'🔴 未接続';
+      if(!s.val()) showSaveState('failed','⚠ 未接続');
+      else if(window.fbOwnerReady&&!window.shiftWriteBlocked) showSaveState('saved','✓ 接続済み');
+    });
 
-    window.fbPush=function(payload){
+    window.fbPush=async function(payload){
       if(!payload || !window.fbOwnerReady) return;
+      if(window.shiftWriteBlocked){ showSaveState('locked','🔒 同時編集のため保存停止'); if(window.fbRestoreRemote) window.fbRestoreRemote(); return; }
       _suppressUntil=Date.now()+1500;
+      showSaveState('saving','● 保存中…');
       try{
         if(payload.mode==='staff'){
           if(!payload.key) return;
-          set(ref(db,BASE+'/staff/'+fbKey(payload.key)), payload.node)
-            .then(()=>{ badge.textContent='✅ 送信 '+new Date().toLocaleTimeString('ja-JP'); })
-            .catch(e=>{ _suppressUntil=0; badge.textContent='❌ 送信失敗'; console.warn(e); });
+          await set(ref(db,BASE+'/staff/'+fbKey(payload.key)), payload.node);
         } else if(payload.mode==='owner'){
+          const changes={}, m=payload.meta||{}, st=payload.staff||{};
           if(window.shiftEditorMode){
-            const m=payload.meta||{};
-            update(ref(db,BASE+'/meta'),{published:!!m.published,updatedAt:m.updatedAt||'',decidedMonths:m.decidedMonths||{},decidedDays:m.decidedDays||{},storeMemo:m.storeMemo||{},storeOff:m.storeOff||{}})
-              .catch(e=>{ _suppressUntil=0; console.warn(e); });
-          } else set(ref(db,BASE+'/meta'), payload.meta).catch(e=>{ _suppressUntil=0; console.warn(e); });
-          const st=payload.staff||{};
-          Object.keys(st).forEach(nm=> set(ref(db,BASE+'/staff/'+fbKey(nm)), st[nm]).catch(e=>console.warn(e)) );
-          badge.textContent='✅ 送信 '+new Date().toLocaleTimeString('ja-JP');
+            changes['meta/published']=!!m.published;
+            changes['meta/updatedAt']=m.updatedAt||'';
+            changes['meta/decidedMonths']=m.decidedMonths||{};
+            changes['meta/decidedDays']=m.decidedDays||{};
+            changes['meta/storeMemo']=m.storeMemo||{};
+            changes['meta/storeOff']=m.storeOff||{};
+          }else changes.meta=m;
+          Object.keys(st).forEach(name=>{ changes['staff/'+fbKey(name)]=st[name]; });
+          const summary=summarizeChanges(_lastSavedPayload,payload);
+          if(summary){ const auditKey=push(ref(db,BASE+'/auditLog')).key; changes['auditLog/'+auditKey]=auditEntry(summary); }
+          await update(ref(db,BASE),changes);
+          _lastSavedPayload=clone(payload);
+          _lastRemoteValue={meta:clone(payload.meta||{}),staff:clone(payload.staff||{})};
         }
-      }catch(e){ console.warn(e); }
+        showSaveState('saved','✓ 保存済み '+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
+      }catch(e){
+        _suppressUntil=0; showSaveState('failed','⚠ 送信失敗'); console.warn(e);
+      }
     };
+
+    async function releaseMonthLock(){
+      if(_lockHeartbeat){ clearInterval(_lockHeartbeat); _lockHeartbeat=null; }
+      if(_lockUnsubscribe){ _lockUnsubscribe(); _lockUnsubscribe=null; }
+      const old=_activeLockRef, owned=_ownsLock; _activeLockRef=null; _activeLockKey=''; _ownsLock=false;
+      if(old&&owned){ try{ await remove(old); }catch(e){} }
+    }
+    async function claimMonthLock(year,month){
+      if(!_currentUser||!window.fbOwnerReady) return;
+      const monthKey=year+'-'+String(month).padStart(2,'0');
+      if(_activeLockKey===monthKey&&_activeLockRef) return;
+      await releaseMonthLock();
+      const lockRef=ref(db,BASE+'/editLocks/'+monthKey), now=Date.now();
+      const mine={uid:_currentUser.uid,sessionId:_sessionId,actor:_actorName,role:_actorRole,at:now};
+      try{
+        const result=await runTransaction(lockRef,current=>{
+          if(!current||current.sessionId===mine.sessionId||!Number(current.at)||now-Number(current.at)>120000) return mine;
+          return;
+        },{applyLocally:false});
+        _activeLockKey=monthKey; _activeLockRef=lockRef; _ownsLock=!!result.committed;
+        if(result.committed){
+          window.shiftSetConflict&&window.shiftSetConflict(null);
+          try{ await onDisconnect(lockRef).remove(); }catch(e){}
+          _lockHeartbeat=setInterval(()=>{ if(_activeLockRef) update(_activeLockRef,{at:Date.now(),actor:_actorName,role:_actorRole}).catch(()=>{}); },45000);
+        }else window.shiftSetConflict&&window.shiftSetConflict(result.snapshot.val()||{actor:'別の編集者'});
+        _lockUnsubscribe=onValue(lockRef,snap=>{
+          const holder=snap.val();
+          if(holder&&holder.sessionId===_sessionId){ _ownsLock=true; window.shiftSetConflict&&window.shiftSetConflict(null); return; }
+          if(holder){ _ownsLock=false; window.shiftSetConflict&&window.shiftSetConflict(holder); return; }
+          if(_activeLockKey===monthKey) setTimeout(()=>{ _activeLockRef=null; _activeLockKey=''; _ownsLock=false; claimMonthLock(year,month); },300);
+        });
+      }catch(e){ window.shiftSetConflict&&window.shiftSetConflict({actor:'通信確認中'}); console.warn(e); }
+    }
+    window.fbClaimMonthLock=claimMonthLock;
+    addEventListener('beforeunload',()=>{ if(_activeLockRef&&_ownsLock) remove(_activeLockRef).catch(()=>{}); });
     function randomToken(){
       const a=new Uint8Array(32); crypto.getRandomValues(a);
       let s=''; a.forEach(v=>s+=String.fromCharCode(v));
@@ -636,6 +758,7 @@
     }
     window.fbIssueStaffUrl=async function(nm,store,node,force){
       if(!window.fbOwnerReady || window.shiftEditorMode) throw new Error('管理者ログインが必要です');
+      if(window.shiftWriteBlocked) throw new Error('同時編集中のため変更できません');
       const staffKey=fbKey(nm), mapSnap=await get(ref(db,BASE+'/access/byStaff/'+staffKey));
       let token=mapSnap.val(), oldToken=token;
       if(token && !force){ const old=await get(ref(db,BASE+'/access/tokens/'+token)); if(!old.exists()||old.val().active!==true) token=null; }
@@ -652,12 +775,15 @@
     window.fbRemoveStaff=async function(nm,roster){
       if(!window.fbOwnerReady) return;
       if(window.shiftEditorMode) throw new Error('編集者はスタッフを削除できません');
+      if(window.shiftWriteBlocked) throw new Error('同時編集中のため変更できません');
       _suppressUntil=Date.now()+1500;
       try{
         const staffKey=fbKey(nm), mapSnap=await get(ref(db,BASE+'/access/byStaff/'+staffKey)), token=mapSnap.val();
         const changes={}; changes['staff/'+staffKey]=null; changes['access/byStaff/'+staffKey]=null;
         if(roster) changes['meta/roster']=roster;
         if(token) changes['access/tokens/'+token+'/active']=false;
+        const auditKey=push(ref(db,BASE+'/auditLog')).key;
+        changes['auditLog/'+auditKey]=auditEntry(nm+'さんを削除');
         await update(ref(db,BASE),changes);
       }catch(e){ console.warn(e); throw e; }
     };
@@ -682,6 +808,7 @@
     };
 
     async function beginOwner(user){
+      _currentUser=user; _actorRole='owner'; _actorName=actorLabel('');
       const adminRef=ref(db,BASE+'/access/admins/'+user.uid);
       try{
         const admins=await get(ref(db,BASE+'/access/admins'));
@@ -695,7 +822,8 @@
         onValue(ref(db,BASE),snap=>{
           if(Date.now()<_suppressUntil) return;
           if(typeof window.shiftApplyRemote==='function'){
-            window.shiftApplyRemote(snap.exists()? snap.val() : null);
+            const value=snap.exists()? snap.val() : null; _lastRemoteValue=clone(value);
+            window.shiftApplyRemote(value);
             badge.textContent='📥 受信 '+new Date().toLocaleTimeString('ja-JP');
           }
         },e=>{ console.warn(e); window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid); });
@@ -706,10 +834,11 @@
         await set(ref(db,BASE+'/access/editorSessions/'+user.uid),token);
         const permit=await get(ref(db,BASE+'/access/editorTokens/'+token));
         if(!permit.exists() || permit.val().active!==true) throw new Error('inactive-editor');
+        _currentUser=user; _actorRole='editor'; _actorName=actorLabel(permit.val().slot||'');
         window.shiftEditorMode=true; window.fbOwnerReady=true;
         if(typeof window.shiftOwnerAuthorized==='function') window.shiftOwnerAuthorized(user.uid,true);
         const remote={meta:null,staff:null};
-        const apply=()=>{ if(remote.meta!==null && remote.staff!==null && typeof window.shiftApplyRemote==='function') window.shiftApplyRemote(remote); };
+        const apply=()=>{ if(remote.meta!==null && remote.staff!==null && typeof window.shiftApplyRemote==='function'){ _lastRemoteValue=clone(remote); window.shiftApplyRemote(remote); } };
         onValue(ref(db,BASE+'/meta'),snap=>{ if(Date.now()<_suppressUntil) return; remote.meta=snap.val()||{}; apply(); badge.textContent='📥 受信 '+new Date().toLocaleTimeString('ja-JP'); },()=>window.shiftOwnerDenied(user.uid,true));
         onValue(ref(db,BASE+'/staff'),snap=>{ if(Date.now()<_suppressUntil) return; remote.staff=snap.val()||{}; apply(); },()=>window.shiftOwnerDenied(user.uid,true));
       }catch(e){ window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid,true); }
@@ -792,7 +921,8 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.151</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.152</span></h1>
+  <span id="saveState" class="save-state">接続確認中</span>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -822,8 +952,10 @@
     <button class="btn gray" id="unpublishBtn" type="button" data-guide-key="unpublish-month" data-guide="この月の公開済みシフトをまとめて非公開にします">公開済みをまとめて非公開</button>
     <button class="btn gray" id="rosterBtn" type="button" data-guide-key="manage-staff" data-guide="スタッフ名の登録と専用URLの発行ができます">👥 名前</button>
     <button class="btn gray" id="editorUrlBtn" type="button" data-guide-key="editor-urls" data-guide="シフト編集者３人分の専用URLを発行できます">🔗 編集者</button>
+    <button class="btn gray" id="auditBtn" type="button" data-guide-key="audit-history" data-guide="更新者・日時・変更内容を確認できます">🕘 編集履歴</button>
     <button class="btn gray" id="setBtn" type="button" data-guide-key="settings" data-guide="アプリの設定を確認できます">⚙ 設定</button>
   </div>
+  <div id="editConflictBanner" class="edit-conflict" role="alert"></div>
   <div class="gridwrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
 </div>
 
@@ -842,6 +974,16 @@
     </div>
     <div style="font-size:12px;color:#a33;line-height:1.6;">「再発行」を押すと、その人の古いURLは使えなくなります。</div>
     <button id="editorUrlClose" type="button" style="background:#c9c9c9;margin-top:12px;">閉じる</button>
+  </div>
+</div>
+
+<!-- 編集履歴（Google管理者本人だけ） -->
+<div class="cmtmask" id="auditMask">
+  <div class="cmtbox" style="max-width:620px;text-align:left;">
+    <div class="ttl" style="text-align:center;">🕘 シフト編集履歴</div>
+    <div style="font-size:12px;color:#666;line-height:1.7;margin-bottom:10px;">更新者・日時・変更内容を新しい順に表示します。履歴は追記専用で、過去の記録を書き換えたり削除したりできません。</div>
+    <div id="auditList" class="audit-list"><div class="audit-empty">読み込み中…</div></div>
+    <button id="auditClose" type="button" style="background:#c9c9c9;margin-top:10px;">閉じる</button>
   </div>
 </div>
 
@@ -1070,11 +1212,30 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.151"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.152"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
+window.shiftWriteBlocked=false;
+window.shiftCurrentMonthKey=()=>`${Y}-${String(M).padStart(2,'0')}`;
+window.shiftSaveState=function(kind,message){
+  const el=document.getElementById('saveState'); if(!el) return;
+  el.className='save-state '+(kind||''); el.textContent=message||'';
+};
+window.shiftSetConflict=function(holder){
+  const el=document.getElementById('editConflictBanner');
+  window.shiftWriteBlocked=!!holder;
+  if(!el) return;
+  if(holder){
+    const actor=holder.actor||'別の編集者';
+    el.textContent='⚠ '+actor+'さんが同じ月を編集中です。上書き防止のため、この画面からの保存を止めています。相手が画面を閉じると自動で解除されます。';
+    el.classList.add('show'); window.shiftSaveState('locked','🔒 保存停止中');
+  }else{
+    el.textContent=''; el.classList.remove('show');
+    if(window.fbOwnerReady) window.shiftSaveState('saved','✓ 編集できます');
+  }
+};
 
 /* ボタンごとの操作案内。非表示設定だけを端末に保存し、シフトデータには触れない */
 const OWNER_GUIDE_STORAGE_KEY="zaikonOwnerHiddenGuides_v1";
@@ -1251,7 +1412,14 @@ let S;
 try{ S=JSON.parse(localStorage.getItem(STORE_KEY)) || seed(); }catch(e){ S=seed(); }
 function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
 let _fbPushT=null;
-function save(){ saveLocal(); if(!window.fbOwnerReady) return; if(window.fbTouch) window.fbTouch(); try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){} }
+function save(){
+  if(window.shiftWriteBlocked){ window.shiftSaveState('locked','🔒 同時編集のため保存停止'); if(window.fbRestoreRemote) setTimeout(window.fbRestoreRemote,0); return; }
+  saveLocal();
+  if(!window.fbOwnerReady){ window.shiftSaveState('saving','● 接続待ち'); return; }
+  window.shiftSaveState('saving','● 保存中…');
+  if(window.fbTouch) window.fbTouch();
+  try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){ window.shiftSaveState('failed','⚠ 送信失敗'); }
+}
 function buildFbPayload(){ /* オーナー: 全員分＋公開状態をクラウドへ */
   var staffOut={}; Object.keys(S.staff||{}).forEach(function(nm){ var nd=Object.assign({},S.staff[nm]); nd.nm=nm; staffOut[nm]=nd; });
   return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{}, storeOff:S.storeOff||{}, roster:S.roster||{} }, staff:staffOut };
@@ -1262,6 +1430,7 @@ function shiftApplyRemote(val){ try{
   Object.keys(raw).forEach(function(k){ var nd=raw[k]||{}; var nm=nd.nm||k; nd.store=nd.store||"大須"; nd.wish=nd.wish||{}; nd.decided=nd.decided||{}; nd.notes=nd.notes||{}; staff[nm]=nd; });
   S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.storeOff=meta.storeOff||{}; S.roster=meta.roster||S.roster||{}; S.staff=staff;
   saveLocal();
+  if(window.fbRememberRemote) window.fbRememberRemote(buildFbPayload(),val);
   var ov=document.querySelector('#ownerView'), sv=document.querySelector('#staffView');
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
   if(typeof renderStaff==='function' && sv && sv.style.display!=='none') renderStaff();
@@ -1276,9 +1445,11 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.151</span>';
-    ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.152</span>';
+    ['rosterBtn','editorUrlBtn','auditBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
+  window.shiftSaveState('saved','✓ 接続済み');
+  if(window.fbClaimMonthLock) window.fbClaimMonthLock(Y,M);
 };
 window.shiftOwnerDenied=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'),t=document.getElementById('ownerAccessText'),b=document.getElementById('ownerLoginBtn');
@@ -1479,6 +1650,7 @@ function buildPalette(){
     d.onclick=()=>{ pickColor=c; buildPalette(); }; p.appendChild(d); });
 }
 function renderOwner(){
+  if(window.fbOwnerReady&&window.fbClaimMonthLock) window.fbClaimMonthLock(Y,M);
   const _monthClosed=ownerMonthIsClosed();
   const _submitKey=`${Y}-${pad(M)}`;
   const _deadlinePassed=ownerSubmissionDeadlinePassed();
@@ -2818,7 +2990,28 @@ $("#setBtn").onclick=()=>{ $("#setUndo").disabled=!hasClearBackup(); $("#setUndo
 $("#setClose").onclick=()=>$("#setMask").style.display="none";
 $("#setMask").onclick=e=>{ if(e.target.id==="setMask") $("#setMask").style.display="none"; };
 function hasClearBackup(){ try{ return !!localStorage.getItem(BK_KEY); }catch(e){ return false; } }
+async function openAuditHistory(){
+  const mask=$("#auditMask"), list=$("#auditList");
+  mask.style.display="flex"; list.innerHTML='<div class="audit-empty">読み込み中…</div>';
+  try{
+    const rows=await window.fbLoadAudit(); list.innerHTML='';
+    if(!rows.length){ list.innerHTML='<div class="audit-empty">まだ編集履歴はありません。</div>'; return; }
+    rows.forEach(row=>{
+      const item=document.createElement('div'); item.className='audit-row';
+      const meta=document.createElement('div'); meta.className='audit-meta';
+      const dt=row.at?new Date(row.at):null;
+      const time=dt&&!Number.isNaN(dt.getTime())?dt.toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'日時不明';
+      meta.textContent=time+'　'+(row.actor||'更新者不明')+(row.month?'　'+row.month:'');
+      const summary=document.createElement('div'); summary.className='audit-summary'; summary.textContent=row.summary||'シフト情報を変更';
+      item.append(meta,summary); list.appendChild(item);
+    });
+  }catch(e){ list.innerHTML='<div class="audit-empty" style="color:#a33;">履歴を読み込めませんでした。Google管理者の接続を確認してください。</div>'; }
+}
+$("#auditBtn").onclick=openAuditHistory;
+$("#auditClose").onclick=()=>$("#auditMask").style.display='none';
+$("#auditMask").onclick=e=>{ if(e.target.id==='auditMask') $("#auditMask").style.display='none'; };
 $("#setClear").onclick=async()=>{
+  if(window.shiftWriteBlocked){ appAlert('同じ月を別の人が編集中のため、クリアできません。'); return; }
   if(!await appConfirm("入力内容をぜんぶ消して、まっさらにします。\n動作確認で入れたデータと共有クラウドの内容も消えます。\n\nこのあと「戻す」で元に戻せます。",{title:"入力内容をすべて消しますか？",confirmText:"すべて消す",kind:"danger",icon:"🗑️"})) return;
   try{ localStorage.setItem(BK_KEY, JSON.stringify(S)); }catch(e){}
   const oldNames=Object.keys(S.staff||{});
@@ -2831,6 +3024,7 @@ $("#setClear").onclick=async()=>{
   appAlert("クリアしました。元に戻すときは ⚙設定 →「戻す」。");
 };
 $("#setUndo").onclick=async()=>{
+  if(window.shiftWriteBlocked){ appAlert('同じ月を別の人が編集中のため、戻せません。'); return; }
   if(!hasClearBackup()){ appAlert("戻せる内容がありません（まだクリアしていません）。"); return; }
   if(!await appConfirm("さっきクリアした内容に戻します。\n現在の状態は上書きされます。",{title:"元の内容に戻しますか？",confirmText:"元に戻す",icon:"↩️"})) return;
   let bk=null; try{ bk=localStorage.getItem(BK_KEY); }catch(e){}
