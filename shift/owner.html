@@ -462,18 +462,18 @@
   table.pgrid td.pn.pn-6{font-size:calc(var(--fsN,9.75px) * .73); letter-spacing:-.2px;}
   table.pgrid td.pn.pn-long{font-size:calc(var(--fsN,9.75px) * .62); letter-spacing:-.3px;}
   table.pgrid tr.pst td{font-weight:800; font-size:var(--fsS,7.5px); text-align:center; padding:0; color:#000; vertical-align:middle;}
-  table.pgrid tr.pst td.phr{font-weight:600; font-size:var(--fs,6px); text-align:center; padding:0; color:#555; background:#f2f2f2;}
+  table.pgrid tr.pst td.phr{font-weight:600; font-size:calc(var(--fs,6px) * 2); text-align:center; padding:0; color:#555; background:#f2f2f2;}
   table.pgrid td.ptime{position:relative;}
   .pmark{position:absolute; display:block; box-sizing:border-box;}
-  .pmark.pwish{top:8%; height:36%; background:#eee; border-top:1px dotted #aaa; border-bottom:1px dotted #aaa;}
+  .pmark.pwish{top:8%; height:36%; background:#eee; border-top:1px dotted #aaa; border-bottom:1px dotted #aaa; z-index:3;}
   .pmark.pshift,.pmark.phold{top:18%; height:64%;}
-  td.ptime.haswish .pmark.pshift,td.ptime.haswish .pmark.phold{top:53%; height:40%;}
+  td.ptime.haswish .pmark.pshift,td.ptime.haswish .pmark.phold{top:36%; height:64%;}
   .pmark.pam{background:#a9ddb2;}
   .pmark.ppm{background:#efafca;}
-  .pmark.phold{background:#9fd8f2; z-index:2;}
-  .pmark .pendpoint{position:absolute;top:50%;transform:translateY(-50%);color:#000;font-size:5.5px;font-weight:900;line-height:1;z-index:4;}
+  .pmark.phold{background:#78c6e8; z-index:2;}
+  .pmark .pendpoint{position:absolute;top:50%;transform:translateY(-50%);color:#000;font-size:11px;font-weight:900;line-height:1;z-index:4;}
   .pmark .pendpoint.start{left:1px}.pmark .pendpoint.end{right:1px}
-  .pmark .breakmins{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#000;font-size:5.5px;font-weight:900;white-space:nowrap;z-index:5;}
+  .pmark .breakmins{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#000;font-size:11px;font-weight:900;white-space:nowrap;z-index:5;}
   .pimportant{position:absolute;top:0;box-sizing:border-box;border:.7px dashed #555;border-radius:2px;background:rgba(255,255,255,.94);color:#000;font-family:inherit;font-size:6px;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;z-index:8;}
   /* 画面プレビューでの1枚ずつの区切り */
   #ppBody .psheet{margin-bottom:14px; padding-bottom:14px; border-bottom:2px dashed #bbb;}
@@ -505,7 +505,6 @@
   /* 各店舗の先頭にくり返す「店舗名＋日にち曜日」見出し行 */
   table.wovgrid tr.wsthead td{height:auto; font-weight:800; background:#f4f4f4; line-height:1.25; padding:2px 0;}
   table.wovgrid tr.wsthead td.wpn{font-size:var(--wshfs,11px); padding-left:3px;}
-  table.wovgrid tr.wsthead.wst-osu td.wpn{font-size:var(--wosufs,22px);}
   table.wovgrid tr.wsthead td.wdh{font-size:var(--wdhfs,11px); color:#222;}
   table.wovgrid tr.wsthead td.wdh.wsun{color:#c0392b;} table.wovgrid tr.wsthead td.wdh.wsat{color:#2f6fd0;}
   .wovsheet{width:100%;}
@@ -788,7 +787,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.144</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.145</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1066,7 +1065,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.144"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.145"; window.APP_UPDATED="2026-08-27";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1272,7 +1271,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.144</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.145</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2558,6 +2557,7 @@ function shiftSegs(v){
 }
 /* 店舗ごとの固定マス数（印刷）。実人数がこれより多い時は全員ぶん出す */
 const PRINT_ROWS={ "大須":18, "那古野":10, "鉄板":6 };
+const PRINT_BLANK_ROWS={ "大須":2, "鉄板":1 };
 function printStoreStaff(st,d){
   const roster=((getRoster()||{})[st]||[]).slice();
   const home=roster.filter(nm=>isStaffHomeStore(nm,st));
@@ -2569,7 +2569,7 @@ function printStoreStaff(st,d){
   });
   return home.concat(assigned);
 }
-function printStoreRows(st,d){ return Math.max(PRINT_ROWS[st]||0,(d==null?storeStaff(st):printStoreStaff(st,d)).length); }
+function printStoreRows(st,d){ const count=(d==null?storeStaff(st):printStoreStaff(st,d)).length; return PRINT_BLANK_ROWS[st]!=null?count+PRINT_BLANK_ROWS[st]:Math.max(PRINT_ROWS[st]||0,count); }
 function printDayIsDecided(d){ return !!(S.decidedDays&&S.decidedDays[key(d)]); }
 function printSegmentMark(start,end,hr,cls,inner){
   const s=typeof start==='number'?start:pHM(start), e=typeof end==='number'?end:pHM(end);
@@ -2718,7 +2718,7 @@ function pOverviewSheet(mode){  /* mode: 'wish'=希望 / 'decided'=決定 */
   STORES.forEach(st=>{
     const list=orderedStoreStaff(st); const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     /* 店舗ごとに「店舗名＋日にち曜日」の見出し行をくり返す */
-    h+=`<tr class="wsthead${st==='大須'?' wst-osu':''}"><td class="wpn" style="color:${col.ink};background:${col.bg};">${st}（${list.length}）</td>`;
+    h+=`<tr class="wsthead"><td class="wpn" style="color:${col.ink};background:${col.bg};">${st}（${list.length}）</td>`;
     for(let d=1;d<=DAYS;d++){ const dow=DOW[new Date(Y,M-1,d).getDay()]; const hol=isHol(d);
       const wk=(dow==="日"||hol)?' wsun':(dow==="土")?' wsat':'';
       h+=`<td class="wdh${wk}" style="background:${col.head}">${M}/${d}<br>${dow}</td>`; }
@@ -2752,14 +2752,12 @@ function buildOverviewPrint(mode){
   const nfs =16;                          // 名前（メニュー相当の16px。長い名前だけ自動縮小）
   const dhfs=Math.max(9,   rowMM*1.45);   // 日にち・曜日（大きめ）
   const shfs=Math.max(9,   rowMM*1.45);   // 那古野・鉄板の店舗名（現状維持）
-  const osufs=Math.max(18, rowMM*2.90);   // 大須の店舗名（従来の2倍）
   [$("#printArea"),$("#ppBody")].forEach(el=>{ if(!el) return; const s=el.style;
     s.setProperty('--wrh',  rowMM.toFixed(2)+'mm');
     s.setProperty('--wcfs', cfs.toFixed(1)+'px');
     s.setProperty('--wnfs', nfs.toFixed(1)+'px');
     s.setProperty('--wdhfs',dhfs.toFixed(1)+'px');
     s.setProperty('--wshfs',shfs.toFixed(1)+'px');
-    s.setProperty('--wosufs',osufs.toFixed(1)+'px');
   });
   $("#ppTitle").textContent=`印刷プレビュー（${mode==='decided'?'決定シフト':'希望シフト'}・A4横1枚・${M}月）`;
   $("#ppMask").style.display="flex";
