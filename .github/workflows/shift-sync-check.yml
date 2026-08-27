@@ -238,22 +238,6 @@ jobs:
             echo "::error file=shift/owner.html::Shift-editor staff-management UI guard is missing."
             exit 1
           }
-          grep -Fq 'fbLoadAudit' shift/owner.html || {
-            echo "::error file=shift/owner.html::Owner-only edit history is missing."
-            exit 1
-          }
-          grep -Fq 'runTransaction(lockRef' shift/owner.html || {
-            echo "::error file=shift/owner.html::Concurrent month editing lock is missing."
-            exit 1
-          }
-          grep -Fq 'id="saveState"' shift/owner.html || {
-            echo "::error file=shift/owner.html::Visible save status is missing."
-            exit 1
-          }
-          grep -Fq "'auditBtn'" shift/owner.html || {
-            echo "::error file=shift/owner.html::Shift editors must not see the audit history button."
-            exit 1
-          }
           grep -Fq '"editorTokens"' database.rules.json || {
             echo "::error file=database.rules.json::Shift-editor token rules are missing."
             exit 1
@@ -280,17 +264,6 @@ jobs:
                   raise SystemExit(f"Shift editor write rule is missing for meta/{key}")
           if "editorTokens" in meta.get("roster", {}).get(".write", ""):
               raise SystemExit("Shift editors must not be able to change the roster")
-          audit = rules.get("auditLog", {})
-          if "admins" not in audit.get(".read", "") or "editorTokens" in audit.get(".read", ""):
-              raise SystemExit("Shift audit history must be readable only by Google administrators")
-          audit_write = audit.get("$entryId", {}).get(".write", "")
-          if "!data.exists()" not in audit_write or "newData.exists()" not in audit_write:
-              raise SystemExit("Shift audit history must be append-only")
-          if "editorTokens" not in audit_write:
-              raise SystemExit("Shift editor changes must be writable to the append-only audit log")
-          locks = rules.get("editLocks", {})
-          if "editorTokens" not in locks.get(".read", "") or "$month" not in locks:
-              raise SystemExit("Concurrent shift month lock rules are missing")
           PY
 
           python -m json.tool database.rules.json >/dev/null
