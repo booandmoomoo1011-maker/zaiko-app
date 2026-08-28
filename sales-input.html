@@ -1637,6 +1637,15 @@ function renderCalendar() {
   const holidays = getHolidays();
   const entered  = getEntered();
 
+  // 点滅の対象月：今月（今日より前）と、過去の月（ただし記録が1件以上ある月だけ）
+  const _isCurMonth  = (calYear === today.getFullYear() && calMonth === today.getMonth());
+  const _isPastMonth = (calYear < today.getFullYear()) || (calYear === today.getFullYear() && calMonth < today.getMonth());
+  let _pastMonthHasEntry = false;
+  if (_isPastMonth) {
+    const _mp = calYear + '-' + String(calMonth + 1).padStart(2, '0');
+    _pastMonthHasEntry = Object.keys(entered).some(k => k.indexOf(_mp) === 0);
+  }
+
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
   const dows = ['日','月','火','水','木','金','土'];
@@ -1661,9 +1670,13 @@ function renderCalendar() {
     if (dow === 0) cls += ' sunday';
     if (dow === 6) cls += ' saturday';
     if (isHoliday) cls += ' holiday-day';
-    // 未入力の日を点滅：今月・今日より前・お休みと入力済みは除く（今日が10日なら1〜9日）
-    if (calYear === today.getFullYear() && calMonth === today.getMonth()
-        && !isToday && !isFuture && !isHoliday && !isEntered) cls += ' missing-blink';
+    // 未入力の日を点滅（お休み・入力済みは除く）
+    // 今月＝今日より前／過去の月＝記録が1件以上ある月だけ（使い始める前の空の月は点滅しない）
+    var _blink = !isHoliday && !isEntered && (
+      (_isCurMonth && !isToday && !isFuture) ||
+      (_isPastMonth && _pastMonthHasEntry)
+    );
+    if (_blink) cls += ' missing-blink';
 
     var _dotColor = STORE_DOT_COLORS[currentStore] || '#43a047';
     const dot = isEntered && !isHoliday
