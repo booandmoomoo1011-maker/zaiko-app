@@ -25,11 +25,13 @@
   <title>売上入力</title>
   <script>
     (function(){
-      var p = new URLSearchParams(location.search);
-      if (p.get('v') !== '2.73') {
-        p.set('v', '2.73');
-        history.replaceState(null, '', location.pathname + '?' + p.toString());
-      }
+      try {
+        var p = new URLSearchParams(location.search);
+        if (p.get('v') !== '2.74') {
+          p.set('v', '2.74');
+          history.replaceState(null, '', location.pathname + '?' + p.toString());
+        }
+      } catch(e) {}
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -253,6 +255,12 @@
     .cal-day.selected { outline:2px solid #f9c500; outline-offset:1px; }
     .cal-day.holiday-day { background:#b2ebf2 !important; color:#006064 !important; }
     .cal-day.holiday-day.today { background:#1a237e !important; color:white !important; }
+    /* 未入力の日を点滅（今月・今日より前・お休みと入力済みは除く） */
+    @keyframes calMissingBlink {
+      0%, 100% { background:#ffebee; box-shadow: inset 0 0 0 2px #ef9a9a; }
+      50%      { background:#ffcdd2; box-shadow: inset 0 0 0 3px #e53935; }
+    }
+    .cal-day.missing-blink { color:#c62828 !important; font-weight:800; animation: calMissingBlink 1s ease-in-out infinite; }
     #cal-card { position:relative; overflow:visible; }
     #cal-popup {
       display:none; position:absolute; z-index:200;
@@ -540,7 +548,7 @@
   <button id="btn-back" onclick="backToStoreSelect()" style="display:none;position:absolute;top:50%;left:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px 10px;font-size:18px;cursor:pointer;color:white;line-height:1;">◀</button>
   <h1>売上入力システム</h1>
   <div class="sub" id="hdr-store"></div>
-  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.73</div>
+  <div style="font-size:11px;opacity:0.75;color:white;margin-top:4px;">v2.74</div>
   <div id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.7);margin-top:2px;">Firebase確認中...</div>
   <button onclick="openSettings()" style="position:absolute;top:50%;right:10px;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:8px;font-size:20px;cursor:pointer;color:white;line-height:1;">⚙️</button>
 </div>
@@ -937,7 +945,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.73';
+const APP_VERSION = 'v2.74';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -1653,6 +1661,9 @@ function renderCalendar() {
     if (dow === 0) cls += ' sunday';
     if (dow === 6) cls += ' saturday';
     if (isHoliday) cls += ' holiday-day';
+    // 未入力の日を点滅：今月・今日より前・お休みと入力済みは除く（今日が10日なら1〜9日）
+    if (calYear === today.getFullYear() && calMonth === today.getMonth()
+        && !isToday && !isFuture && !isHoliday && !isEntered) cls += ' missing-blink';
 
     var _dotColor = STORE_DOT_COLORS[currentStore] || '#43a047';
     const dot = isEntered && !isHoliday
