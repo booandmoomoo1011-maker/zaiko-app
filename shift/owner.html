@@ -81,11 +81,13 @@
   .btn.decide{background:#2fa04a; color:#fff;} .btn.share{background:#06c755; color:#fff;}
   .btn.decideall{background:#e6a700; color:#fff;}
   .btn.undecideall{background:#f4d65c; color:#3f3600;}
+  .btn.unpublish{background:#dff3e4; color:#247c36;}
   .btn.req{background:#5a6b7a; color:#fff;}
   .status{padding:7px 14px; font-size:12px; color:#888; background:#fff;}
   .barrow{padding:4px 10px; gap:6px;}
   .barrow strong{font-size:14px;}
-  .barrow .btn{padding:5px 9px !important; font-size:12px !important;}
+  .barrow .btn{height:36px; min-height:36px; padding:0 13px !important; font-size:13px !important; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; line-height:1; white-space:nowrap; flex:0 0 auto; box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .barrow .btn:disabled{opacity:.55; cursor:not-allowed; box-shadow:none;}
   .barrow input{padding:4px !important;}
   .statusInline{font-size:11px; color:#888; white-space:nowrap;}
   .stoggle{display:flex; background:#ededed; border-radius:20px; padding:3px; margin-left:8px; flex:0 0 auto;}
@@ -100,7 +102,6 @@
   header .btn.share{padding:6px 12px; font-size:13px;}
   .sbar span{white-space:nowrap; font-size:12px; flex:0 0 auto;}
   .sbar .btn.share{padding:7px 11px; white-space:nowrap;}
-  .barrow .btn{padding:7px 11px; font-size:13px;}
   .pub{color:#2fa04a; font-weight:700;} .unpub{color:#c98a00; font-weight:700;}
   .note{padding:8px 14px; font-size:12px; color:#a06; background:#fff0f5;}
 
@@ -798,7 +799,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.158</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.159</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -817,13 +818,12 @@
     <input id="printStart" type="number" min="1" max="31" value="1" title="開始日" style="display:none;">
     <span style="font-size:11px;color:#888;display:none;">〜3日</span>
     <button class="btn gray" id="wishPrintBtn" type="button" data-guide-key="print-wish" data-guide="スタッフの希望シフトを印刷します">🖨 希望シフト</button>
-    <button class="btn gray" id="printBtn" type="button" data-guide-key="print-decided" data-guide="作成したシフトを印刷します">🖨 決定シフト</button>
     <button class="btn gray" id="printPickBtn" type="button" data-guide-key="print-day" data-guide="日付を選んで日別シフトを印刷します">🖨 日別(選ぶ)</button>
     <button class="btn gray" id="printBlankBtn" type="button" data-guide-key="print-blank" data-guide="記入用の白紙シフトを印刷します">🖨 白紙</button>
     <button class="btn decideall" id="decideAllBtn" type="button" data-guide-key="decide-all" data-guide="その月の全部の日をまとめて決定にします（公開はしません）">まとめて決定</button>
     <button class="btn undecideall" id="undecideAllBtn" type="button" data-guide-key="undecide-all" data-guide="その月の全部の日をまとめて未確定に戻します（決定した時間や希望は消えません）">まとめて未確定に戻す</button>
     <button class="btn decide" id="decideBtn" type="button" data-guide-key="publish-month" data-guide="決定済みの日をまとめてスタッフへ公開します">決定済みをまとめて公開</button>
-    <button class="btn gray" id="unpublishBtn" type="button" data-guide-key="unpublish-month" data-guide="この月の公開済みシフトをまとめて非公開にします">公開済みをまとめて非公開</button>
+    <button class="btn unpublish" id="unpublishBtn" type="button" data-guide-key="unpublish-month" data-guide="この月の公開済みシフトをまとめて非公開にします">公開済みをまとめて非公開</button>
     <button class="btn gray" id="rosterBtn" type="button" data-guide-key="manage-staff" data-guide="スタッフ名の登録と専用URLの発行ができます">👥 名前</button>
     <button class="btn gray" id="editorUrlBtn" type="button" data-guide-key="editor-urls" data-guide="シフト編集者３人分の専用URLを発行できます">🔗 編集者</button>
     <button class="btn gray" id="setBtn" type="button" data-guide-key="settings" data-guide="アプリの設定を確認できます">⚙ 設定</button>
@@ -1074,7 +1074,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.158"; window.APP_UPDATED="2026-08-29";
+window.APP_VERSION="v1.159"; window.APP_UPDATED="2026-08-29";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1280,7 +1280,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.158</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.159</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2809,7 +2809,6 @@ $("#dpPrint").onclick=()=>{
   buildPrintDays(days, dpBlank, `・${dpBlank?'白紙・':''}選んだ${days.length}日 / 1枚に3日`);
 };
 $("#wishPrintBtn").onclick=()=>buildOverviewPrint('wish');
-$("#printBtn").onclick=()=>buildOverviewPrint('decided');
 $("#printPickBtn").onclick=()=>openDpPicker(false);
 $("#printBlankBtn").onclick=()=>openDpPicker(true);
 $("#ppPrint").onclick=()=>window.print();
