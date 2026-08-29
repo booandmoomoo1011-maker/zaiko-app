@@ -79,6 +79,8 @@
   .btn{padding:8px 14px; font-size:14px; font-weight:700; border:none; border-radius:9px; cursor:pointer;}
   .btn.gray{background:#eee; color:#555;} .btn.pink{background:var(--pink); color:#fff;}
   .btn.decide{background:#2fa04a; color:#fff;} .btn.share{background:#06c755; color:#fff;}
+  .btn.decideall{background:#e6a700; color:#fff;}
+  .btn.undecideall{background:#f4d65c; color:#3f3600;}
   .btn.req{background:#5a6b7a; color:#fff;}
   .status{padding:7px 14px; font-size:12px; color:#888; background:#fff;}
   .barrow{padding:4px 10px; gap:6px;}
@@ -298,8 +300,8 @@
   thead th.daycol:hover{background:#f7d0dc;}
   thead th.daycol .daybutton{display:block; padding:2px 4px; border:1px solid rgba(118,126,135,.3); border-radius:6px; background:rgba(255,255,255,.72); box-shadow:0 1px 2px rgba(0,0,0,.08);}
   thead th.daycol:hover .daybutton,thead th.daycol:focus-visible .daybutton{border-color:#d68a9e; background:#fff5f8; box-shadow:0 0 0 2px rgba(232,96,127,.13);}
-  thead th.daycol .daypublish{pointer-events:auto;display:block;width:100%;margin:3px 0 0;padding:2px 3px;border:1px solid #bac5ce;border-radius:5px;background:#fff;color:#6a7881;font-size:9px;font-weight:900;line-height:1.15;white-space:nowrap;cursor:pointer;}
-  thead th.daycol .daypublish.on{border-color:#2fa04a;background:#e8f7ec;color:#247c36;}
+  thead th.daycol .daypublish{pointer-events:auto;display:block;width:100%;margin:3px 0 0;padding:2px 3px;border:1px solid #1a6fd4;border-radius:5px;background:#fff;color:#1a6fd4;font-size:9px;font-weight:900;line-height:1.15;white-space:nowrap;cursor:pointer;}
+  thead th.daycol .daypublish.on{border-color:#1a6fd4;background:#1a6fd4;color:#fff;}
   thead th.daycol .daypublish:disabled{border-color:#e1e5e8;background:#f5f6f7;color:#b5bcc2;cursor:not-allowed;}
   thead th.daycol .daypublish.undecided:disabled{border-color:#d0aa22;background:#f4d65c;color:#3f3600;opacity:1;}
   thead th.daycol.undecidedday{background:#fff3b8;}
@@ -796,7 +798,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.156</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.158</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -810,10 +812,6 @@
   <div class="bar barrow">
     <strong id="oMonthLabel" style="color:var(--pink-d);white-space:nowrap;"><span style="color:#c74a68">大須</span>・<span style="color:#8a6d00">那古野</span>・<span style="color:#1e6f95">鉄板</span></strong>
     <select id="oYearSel" class="ymsel"></select><select id="oMonthSel" class="ymsel"></select>
-    <div class="stoggle" id="oViewToggle">
-      <button id="ovWish" class="on" type="button" data-guide-key="view-wish" data-guide="スタッフが提出した希望シフトを表示します">希望</button>
-      <button id="ovDec" type="button" data-guide-key="view-decided" data-guide="作成した決定シフトを表示します">決定</button>
-    </div>
     <span id="oStatus" class="statusInline"></span>
     <div class="spacer"></div>
     <input id="printStart" type="number" min="1" max="31" value="1" title="開始日" style="display:none;">
@@ -822,6 +820,8 @@
     <button class="btn gray" id="printBtn" type="button" data-guide-key="print-decided" data-guide="作成したシフトを印刷します">🖨 決定シフト</button>
     <button class="btn gray" id="printPickBtn" type="button" data-guide-key="print-day" data-guide="日付を選んで日別シフトを印刷します">🖨 日別(選ぶ)</button>
     <button class="btn gray" id="printBlankBtn" type="button" data-guide-key="print-blank" data-guide="記入用の白紙シフトを印刷します">🖨 白紙</button>
+    <button class="btn decideall" id="decideAllBtn" type="button" data-guide-key="decide-all" data-guide="その月の全部の日をまとめて決定にします（公開はしません）">まとめて決定</button>
+    <button class="btn undecideall" id="undecideAllBtn" type="button" data-guide-key="undecide-all" data-guide="その月の全部の日をまとめて未確定に戻します（決定した時間や希望は消えません）">まとめて未確定に戻す</button>
     <button class="btn decide" id="decideBtn" type="button" data-guide-key="publish-month" data-guide="決定済みの日をまとめてスタッフへ公開します">決定済みをまとめて公開</button>
     <button class="btn gray" id="unpublishBtn" type="button" data-guide-key="unpublish-month" data-guide="この月の公開済みシフトをまとめて非公開にします">公開済みをまとめて非公開</button>
     <button class="btn gray" id="rosterBtn" type="button" data-guide-key="manage-staff" data-guide="スタッフ名の登録と専用URLの発行ができます">👥 名前</button>
@@ -1074,7 +1074,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.156"; window.APP_UPDATED="2026-08-27";
+window.APP_VERSION="v1.158"; window.APP_UPDATED="2026-08-29";
 window.shiftEditorMode=false;
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
@@ -1280,7 +1280,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.156</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.158</span>';
     ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1493,6 +1493,8 @@ function renderOwner(){
     (_publication.published?`<span class="pub">✅ ${_publication.published}/${_publication.decided}日公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
   $("#decideBtn").textContent=_monthClosed?"受付終了":"決定済みをまとめて公開";
   $("#decideBtn").disabled=_monthClosed||!_publication.decided;
+  { const _dab=$("#decideAllBtn"); if(_dab) _dab.disabled=_monthClosed; }
+  { const _uab=$("#undecideAllBtn"); if(_uab) _uab.disabled=_monthClosed||!_publication.decided; }
   $("#unpublishBtn").disabled=_monthClosed||!_publication.published;
   const today=new Date(), todayStr=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
   let th=`<tr><th class="corner name">スタッフ</th>`;
@@ -2814,8 +2816,6 @@ $("#ppPrint").onclick=()=>window.print();
 $("#ppClose").onclick=()=>$("#ppMask").style.display="none";
 $("#ppMask").onclick=e=>{ if(e.target.id==="ppMask") $("#ppMask").style.display="none"; };
 /* ---- 月表の 希望⇔決定 切替 ---- */
-$("#ovWish").onclick=()=>{ ownerMode='wish'; $("#ovWish").classList.add('on'); $("#ovDec").classList.remove('on'); renderOwner(); };
-$("#ovDec").onclick=()=>{ ownerMode='decided'; $("#ovDec").classList.add('on'); $("#ovWish").classList.remove('on'); renderOwner(); };
 
 /* ---- 設定：入力内容のクリア／戻す（動作確認用）---- */
 const BK_KEY=STORE_KEY+"_bk";
@@ -2925,6 +2925,33 @@ $("#unpublishBtn").onclick=async()=>{
   if(!dates.length){ appAlert("この月に公開中の日はありません"); return; }
   if(!await appConfirm(`公開中の${dates.length}日分をまとめて非公開にします。\nスタッフには勤務時間が表示されなくなります。`,{title:"公開済みをまとめて非公開にしますか？",confirmText:"まとめて非公開",kind:"danger",icon:"⚠️"})) return;
   const marked=ensurePublishedDayMap(); dates.forEach(date=>{ delete marked[date]; });
+  syncShiftPublicationFlag();
+  touchUpdated(); save(); renderOwner();
+  if(document.querySelector("#staffView").style.display!=="none") renderStaff();
+};
+
+$("#decideAllBtn").onclick=async()=>{
+  if(closedMonthEditBlocked()) return;
+  if(!S.decidedDays||typeof S.decidedDays!=="object") S.decidedDays={};
+  const undecided=[]; for(let d=1;d<=DAYS;d++){ const date=key(d); if(!S.decidedDays[date]) undecided.push(date); }
+  if(!undecided.length){ appAlert("この月はすべての日がすでに決定になっています。"); return; }
+  if(!await appConfirm(`未確定の${undecided.length}日分をまとめて「決定」にします。\n公開はされません。`,{title:"まとめて決定にしますか？",confirmText:"まとめて決定 ✓",icon:"📅"})) return;
+  if(S.published&&(!S.decidedDays._published||typeof S.decidedDays._published!=="object")) ensurePublishedDayMap();
+  undecided.forEach(date=>{ S.decidedDays[date]=true; });
+  touchUpdated(); save(); renderOwner();
+  if(document.querySelector("#staffView").style.display!=="none") renderStaff();
+};
+
+$("#undecideAllBtn").onclick=async()=>{
+  if(closedMonthEditBlocked()) return;
+  if(!S.decidedDays||typeof S.decidedDays!=="object") S.decidedDays={};
+  const decided=[]; for(let d=1;d<=DAYS;d++){ const date=key(d); if(S.decidedDays[date]) decided.push(date); }
+  if(!decided.length){ appAlert("この月に決定になっている日はありません。"); return; }
+  const pubCount=decided.filter(date=>isShiftDayPublished(date)).length;
+  const extra=pubCount?`\n※公開中の${pubCount}日分も未確定に戻り、非公開になります。`:"";
+  if(!await appConfirm(`決定済みの${decided.length}日分をまとめて「未確定」に戻します。\n決定した時間やスタッフの希望は消えません。${extra}`,{title:"まとめて未確定に戻しますか？",confirmText:"未確定に戻す",kind:"danger",icon:"↩"})) return;
+  const marked=(S.decidedDays._published&&typeof S.decidedDays._published==="object")?S.decidedDays._published:null;
+  decided.forEach(date=>{ if(marked) delete marked[date]; delete S.decidedDays[date]; });
   syncShiftPublicationFlag();
   touchUpdated(); save(); renderOwner();
   if(document.querySelector("#staffView").style.display!=="none") renderStaff();
