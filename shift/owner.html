@@ -1101,7 +1101,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.160"; window.APP_UPDATED="2026-08-29";
+window.APP_VERSION="v1.161"; window.APP_UPDATED="2026-08-29";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1254,6 +1254,15 @@ const STORE_COLOR={
   "鉄板":  { bg:"#d5ecf8", head:"#eaf6fc", ink:"#1e6f95", hd:"#57b7e3" }
 };
 const DEC_COLOR={ "大須":"#f2a9c0", "那古野":"#ecd06a", "鉄板":"#9dd3ef" };
+const DEC_EDITOR_COLOR={ editor1:"#3b9c63", editor2:"#e8607f", editor3:"#e58a2a" }; /* 最終決定者：店長／ヒナキ／兄 */
+function newDayDecisionRecord(){
+  return { decided:true, actorSlot:window.shiftEditorSlot||"owner", actorName:window.shiftEditorName||"オーナー", at:new Date().toISOString() };
+}
+function dayDecisionColor(date,store){
+  const rec=S.decidedDays&&S.decidedDays[date];
+  const slot=rec&&typeof rec==="object"?rec.actorSlot:"owner";
+  return DEC_EDITOR_COLOR[slot]||DEC_COLOR[store];
+}
 const STOFF_COLOR="#347fa8";  /* 店舗の休みの日：濃い青（個人休みの薄い青と区別） */
 
 /* ---- 祝日 自動判定（毎年）---- */
@@ -1601,7 +1610,7 @@ function renderOwner(){
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     const isOff=d=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);  /* この店舗のこの日が休みか */
     rows+=`<tr class="secrow"><td class="name secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）</td>`;
-    for(let d=1;d<=DAYS;d++){ const _dc=isOff(d)?STOFF_COLOR:((S.decidedDays&&S.decidedDays[key(d)])?DEC_COLOR[st]:col.head); rows+=`<td class="sechead" style="background:${_dc}"></td>`; }
+    for(let d=1;d<=DAYS;d++){ const _dc=isOff(d)?STOFF_COLOR:((S.decidedDays&&S.decidedDays[key(d)])?dayDecisionColor(key(d),st):col.head); rows+=`<td class="sechead" style="background:${_dc}"></td>`; }
     rows+=`</tr>`;
     list.forEach(nm=>{
       const stf=S.staff[nm]||{};
@@ -2134,7 +2143,7 @@ $("#dayDecide").onclick=()=>{
   const k=key(dayViewDay), willDecide=!S.decidedDays[k];
   if(willDecide){
     if(S.published&&(!S.decidedDays._published||typeof S.decidedDays._published!=="object")) ensurePublishedDayMap();
-    S.decidedDays[k]=true;
+    S.decidedDays[k]=newDayDecisionRecord();
   }else{
     const marked=isShiftDayPublished(k)?ensurePublishedDayMap():S.decidedDays._published;
     if(marked&&typeof marked==="object") delete marked[k];
@@ -3024,7 +3033,7 @@ $("#decideAllBtn").onclick=async()=>{
   if(!undecided.length){ appAlert("この月はすべての日がすでに決定になっています。"); return; }
   if(!await appConfirm(`未確定の${undecided.length}日分をまとめて「決定」にします。\n公開はされません。`,{title:"まとめて決定にしますか？",confirmText:"まとめて決定 ✓",icon:"📅"})) return;
   if(S.published&&(!S.decidedDays._published||typeof S.decidedDays._published!=="object")) ensurePublishedDayMap();
-  undecided.forEach(date=>{ S.decidedDays[date]=true; });
+  undecided.forEach(date=>{ S.decidedDays[date]=newDayDecisionRecord(); });
   touchUpdated(); save(); renderOwner();
   if(document.querySelector("#staffView").style.display!=="none") renderStaff();
 };
@@ -3473,3 +3482,4 @@ initWho(); buildPalette(); showOwner();
 
 </body>
 </html>
+
