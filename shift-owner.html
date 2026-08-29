@@ -586,6 +586,7 @@
   <script>
     window.fbPush=function(){}; window.fbRemoveStaff=function(){}; window.fbTouch=function(){};
     window.fbIssueStaffUrl=async function(){ throw new Error('管理者ログインが必要です'); };
+    window.fbLoadEditHistory=async function(){ return []; };
     window.fbOwnerReady=false;
   </script>
   <script type="module">
@@ -632,6 +633,10 @@
           } else set(ref(db,BASE+'/meta'), payload.meta).catch(e=>{ _suppressUntil=0; console.warn(e); });
           const st=payload.staff||{};
           Object.keys(st).forEach(nm=> set(ref(db,BASE+'/staff/'+fbKey(nm)), st[nm]).catch(e=>console.warn(e)) );
+          if(payload.audit){
+            const auditKey=Date.now()+'_'+Math.random().toString(36).slice(2,10);
+            set(ref(db,BASE+'/editHistory/'+auditKey),payload.audit).catch(e=>console.warn('editHistory',e));
+          }
           badge.textContent='✅ 送信 '+new Date().toLocaleTimeString('ja-JP');
         }
       }catch(e){ console.warn(e); }
@@ -672,6 +677,7 @@
     window.fbIssueEditorUrl=async function(slot,force){
       if(!window.fbOwnerReady || window.shiftEditorMode) throw new Error('管理者ログインが必要です');
       if(!['editor1','editor2','editor3'].includes(slot)) throw new Error('編集者の番号が正しくありません');
+      const editorName=(window.SHIFT_EDITOR_NAMES||{})[slot]||slot;
       const slotRef=ref(db,BASE+'/access/editorSlots/'+slot);
       const oldSnap=await get(slotRef); let token=oldSnap.val();
       if(token && !force){
@@ -682,10 +688,17 @@
         const oldToken=token; token=randomToken(); const changes={};
         if(oldToken) changes['access/editorTokens/'+oldToken+'/active']=false;
         changes['access/editorSlots/'+slot]=token;
-        changes['access/editorTokens/'+token]={active:true,slot:slot,createdAt:new Date().toISOString()};
+        changes['access/editorTokens/'+token]={active:true,slot:slot,name:editorName,createdAt:new Date().toISOString()};
         await update(ref(db,BASE),changes);
+      }else{
+        await update(ref(db,BASE+'/access/editorTokens/'+token),{slot:slot,name:editorName});
       }
       return 'https://zaiko-app-two.vercel.app/shift/owner.html?editor='+encodeURIComponent(token);
+    };
+    window.fbLoadEditHistory=async function(){
+      if(!window.fbOwnerReady || window.shiftEditorMode) throw new Error('管理者ログインが必要です');
+      const snap=await get(ref(db,BASE+'/editHistory')), raw=snap.val()||{};
+      return Object.keys(raw).map(k=>Object.assign({key:k},raw[k]||{})).sort((a,b)=>String(b.at||b.key).localeCompare(String(a.at||a.key))).slice(0,200);
     };
 
     async function beginOwner(user){
@@ -697,6 +710,7 @@
       try{
         const mine=await get(adminRef);
         if(mine.val()!==true) throw new Error('not-admin');
+        window.shiftEditorMode=false; window.shiftEditorSlot='owner'; window.shiftEditorName='オーナー';
         window.fbOwnerReady=true;
         if(typeof window.shiftOwnerAuthorized==='function') window.shiftOwnerAuthorized(user.uid);
         onValue(ref(db,BASE),snap=>{
@@ -713,7 +727,9 @@
         await set(ref(db,BASE+'/access/editorSessions/'+user.uid),token);
         const permit=await get(ref(db,BASE+'/access/editorTokens/'+token));
         if(!permit.exists() || permit.val().active!==true) throw new Error('inactive-editor');
-        window.shiftEditorMode=true; window.fbOwnerReady=true;
+        const slot=permit.val().slot||'editor';
+        window.shiftEditorMode=true; window.shiftEditorSlot=slot; window.shiftEditorName=permit.val().name||(window.SHIFT_EDITOR_NAMES||{})[slot]||'編集者';
+        window.fbOwnerReady=true;
         if(typeof window.shiftOwnerAuthorized==='function') window.shiftOwnerAuthorized(user.uid,true);
         const remote={meta:null,staff:null};
         const apply=()=>{ if(remote.meta!==null && remote.staff!==null && typeof window.shiftApplyRemote==='function') window.shiftApplyRemote(remote); };
@@ -799,7 +815,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.159</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.160</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -825,7 +841,8 @@
     <button class="btn decide" id="decideBtn" type="button" data-guide-key="publish-month" data-guide="決定済みの日をまとめてスタッフへ公開します">決定済みをまとめて公開</button>
     <button class="btn unpublish" id="unpublishBtn" type="button" data-guide-key="unpublish-month" data-guide="この月の公開済みシフトをまとめて非公開にします">公開済みをまとめて非公開</button>
     <button class="btn gray" id="rosterBtn" type="button" data-guide-key="manage-staff" data-guide="スタッフ名の登録と専用URLの発行ができます">👥 名前</button>
-    <button class="btn gray" id="editorUrlBtn" type="button" data-guide-key="editor-urls" data-guide="シフト編集者３人分の専用URLを発行できます">🔗 編集者</button>
+    <button class="btn gray" id="editorUrlBtn" type="button" data-guide-key="editor-urls" data-guide="店長・ヒナキ・兄の専用URLを確認できます">🔗 編集者</button>
+    <button class="btn gray" id="historyBtn" type="button" data-guide-key="edit-history" data-guide="誰がいつ何を変更したか確認できます">🕘 編集履歴</button>
     <button class="btn gray" id="setBtn" type="button" data-guide-key="settings" data-guide="アプリの設定を確認できます">⚙ 設定</button>
   </div>
   <div class="gridwrap"><table id="tbl"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
@@ -837,15 +854,25 @@
     <div class="ttl" style="text-align:center;">🔗 シフト編集者専用URL</div>
     <div style="font-size:13px;color:#666;line-height:1.7;margin-bottom:12px;">Google登録なしでシフトを編集できます。名前の登録・削除、スタッフURL発行、全データ消去はできません。</div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;">
-      <button id="editor1Copy" type="button" style="background:#2f9ad0;">編集者1 URLをコピー</button>
+      <button id="editor1Copy" type="button" style="background:#2f9ad0;">店長 URLをコピー</button>
       <button id="editor1Reissue" type="button" style="background:#c0596b;">再発行</button>
-      <button id="editor2Copy" type="button" style="background:#2f9ad0;">編集者2 URLをコピー</button>
+      <button id="editor2Copy" type="button" style="background:#2f9ad0;">ヒナキ URLをコピー</button>
       <button id="editor2Reissue" type="button" style="background:#c0596b;">再発行</button>
-      <button id="editor3Copy" type="button" style="background:#2f9ad0;">編集者3 URLをコピー</button>
+      <button id="editor3Copy" type="button" style="background:#2f9ad0;">兄 URLをコピー</button>
       <button id="editor3Reissue" type="button" style="background:#c0596b;">再発行</button>
     </div>
     <div style="font-size:12px;color:#a33;line-height:1.6;">「再発行」を押すと、その人の古いURLは使えなくなります。</div>
     <button id="editorUrlClose" type="button" style="background:#c9c9c9;margin-top:12px;">閉じる</button>
+  </div>
+</div>
+
+<!-- 編集履歴（オーナーだけが閲覧） -->
+<div class="cmtmask" id="historyMask">
+  <div class="cmtbox" style="max-width:620px;text-align:left;">
+    <div class="ttl" style="text-align:center;">🕘 編集履歴</div>
+    <div style="font-size:12px;color:#666;line-height:1.7;margin-bottom:10px;">公開後の変更から、オーナー・店長・ヒナキ・兄の操作を新しい順に表示します。</div>
+    <div id="historyList" style="max-height:58vh;overflow:auto;border-top:1px solid #ddd;"></div>
+    <button id="historyClose" type="button" style="background:#c9c9c9;margin-top:12px;">閉じる</button>
   </div>
 </div>
 
@@ -1074,8 +1101,11 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.159"; window.APP_UPDATED="2026-08-29";
+window.APP_VERSION="v1.160"; window.APP_UPDATED="2026-08-29";
 window.shiftEditorMode=false;
+window.shiftEditorSlot="owner";
+window.shiftEditorName="オーナー";
+window.SHIFT_EDITOR_NAMES={editor1:"店長",editor2:"ヒナキ",editor3:"兄"};
 const DOW=["日","月","火","水","木","金","土"];
 const COLORS=["#7ec8f0","#2fd18f","#39c07d","#f28ec0","#a97ff0","#e8607f","#127a99","#c9c23a","#b0b6bd","#5a6068","#e8563a","#f0a020","#1f9e8f","#a021c0","#a07a2a"];
 const $=s=>document.querySelector(s);
@@ -1254,17 +1284,75 @@ function seed(){
 let S;
 try{ S=JSON.parse(localStorage.getItem(STORE_KEY)) || seed(); }catch(e){ S=seed(); }
 function saveLocal(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
+function auditClone(v){ try{ return JSON.parse(JSON.stringify(v||{})); }catch(e){ return {}; } }
+function auditSame(a,b){ try{ return JSON.stringify(a)==JSON.stringify(b); }catch(e){ return a===b; } }
+function auditValue(v){
+  if(v==null || (typeof v==="object" && !Object.keys(v).length)) return "なし";
+  if(typeof v==="string") return v.slice(0,36);
+  if(typeof v==="boolean") return v?"あり":"なし";
+  if(v.off) return "休み";
+  if(v.allday) return "一日OK";
+  const ranges=[];
+  (function walk(x){
+    if(!x||typeof x!=="object") return;
+    if(typeof x.start==="string"&&typeof x.end==="string") ranges.push(x.start+"～"+x.end);
+    Object.keys(x).forEach(k=>{ if(k!=="start"&&k!=="end") walk(x[k]); });
+  })(v);
+  return ranges.length?Array.from(new Set(ranges)).slice(0,3).join("、"):"内容あり";
+}
+function auditDateChanges(before,after,label,out){
+  before=before||{}; after=after||{};
+  const keys=Array.from(new Set(Object.keys(before).concat(Object.keys(after)))).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k));
+  keys.forEach(date=>{ if(!auditSame(before[date],after[date])) out.push(date.replace(/-/g,"/")+"："+label+"を変更"); });
+}
+function auditDescribe(before,after){
+  before=before||{}; after=after||{}; const out=[];
+  auditDateChanges(before.decidedDays,after.decidedDays,"決定状態",out);
+  auditDateChanges((before.decidedDays||{})._published,(after.decidedDays||{})._published,"公開状態",out);
+  auditDateChanges(before.storeOff,after.storeOff,"店舗休み",out);
+  auditDateChanges(before.storeMemo,after.storeMemo,"店舗メモ",out);
+  if(!auditSame(before.roster,after.roster)) out.push("スタッフ名簿を変更");
+  const bs=before.staff||{}, as=after.staff||{};
+  const fieldNames={wish:"希望",decided:"決定シフト",notes:"備考",req:"要請",notice:"案内",notices:"案内",support:"応援勤務",helps:"応援勤務"};
+  Array.from(new Set(Object.keys(bs).concat(Object.keys(as)))).forEach(nm=>{
+    const b=bs[nm],a=as[nm];
+    if(!b&&a){ out.push(nm+"：スタッフ情報を追加"); return; }
+    if(b&&!a){ out.push(nm+"：スタッフ情報を削除"); return; }
+    if(!b||!a||auditSame(b,a)) return;
+    if(b.store!==a.store) out.push(nm+"：所属店舗を "+(b.store||"未設定")+" → "+(a.store||"未設定"));
+    Array.from(new Set(Object.keys(b).concat(Object.keys(a)))).filter(k=>k!=="nm"&&k!=="store").forEach(field=>{
+      const bv=b[field],av=a[field]; if(auditSame(bv,av)) return;
+      const label=fieldNames[field]||"シフト内容", bk=bv||{},ak=av||{};
+      const dates=Array.from(new Set(Object.keys(bk).concat(Object.keys(ak)))).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k));
+      if(dates.length) dates.forEach(date=>{ if(!auditSame(bk[date],ak[date])) out.push(nm+" "+date.replace(/-/g,"/")+" "+label+"："+auditValue(bk[date])+" → "+auditValue(ak[date])); });
+      else out.push(nm+"："+label+"を変更");
+    });
+  });
+  if(before.published!==after.published && !out.some(x=>x.includes("公開状態"))) out.push("月の公開状態を変更");
+  return Array.from(new Set(out)).slice(0,12);
+}
+let _auditBaseline=auditClone(S), _pendingAudit=[];
 let _fbPushT=null;
-function save(){ saveLocal(); if(!window.fbOwnerReady) return; if(window.fbTouch) window.fbTouch(); try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){} }
+function save(){
+  saveLocal();
+  if(!window.fbOwnerReady){ _auditBaseline=auditClone(S); return; }
+  const changes=auditDescribe(_auditBaseline,S); _auditBaseline=auditClone(S);
+  changes.forEach(x=>{ if(!_pendingAudit.includes(x)) _pendingAudit.push(x); });
+  if(window.fbTouch) window.fbTouch();
+  try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){}
+}
 function buildFbPayload(){ /* オーナー: 全員分＋公開状態をクラウドへ */
   var staffOut={}; Object.keys(S.staff||{}).forEach(function(nm){ var nd=Object.assign({},S.staff[nm]); nd.nm=nm; staffOut[nm]=nd; });
-  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{}, storeOff:S.storeOff||{}, roster:S.roster||{} }, staff:staffOut };
+  const details=_pendingAudit.splice(0,12);
+  const audit=details.length?{actor:window.shiftEditorName||"オーナー",actorSlot:window.shiftEditorSlot||"owner",at:new Date().toISOString(),summary:details.join(" ／ ").slice(0,480),version:window.APP_VERSION}:null;
+  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{}, storeOff:S.storeOff||{}, roster:S.roster||{} }, staff:staffOut, audit:audit };
 }
 function shiftApplyRemote(val){ try{
   if(!val || (!val.meta && !val.staff)) return; /* クラウドが空ならローカル維持 */
   var meta=val.meta||{}, raw=val.staff||{}, staff={};
   Object.keys(raw).forEach(function(k){ var nd=raw[k]||{}; var nm=nd.nm||k; nd.store=nd.store||"大須"; nd.wish=nd.wish||{}; nd.decided=nd.decided||{}; nd.notes=nd.notes||{}; staff[nm]=nd; });
   S.published=!!meta.published; S.updatedAt=meta.updatedAt||S.updatedAt||""; S.decidedMonths=meta.decidedMonths||{}; S.decidedDays=meta.decidedDays||{}; S.storeMemo=meta.storeMemo||{}; S.storeOff=meta.storeOff||{}; S.roster=meta.roster||S.roster||{}; S.staff=staff;
+  _auditBaseline=auditClone(S); _pendingAudit=[];
   saveLocal();
   var ov=document.querySelector('#ownerView'), sv=document.querySelector('#staffView');
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
@@ -1280,8 +1368,8 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（編集者） <span class="demoTag">v1.159</span>';
-    ['rosterBtn','editorUrlBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.160</span>';
+    ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
 window.shiftOwnerDenied=function(uid,isEditor){
@@ -3315,6 +3403,29 @@ $("#rosterStore").onchange=renderRosterList;
 $("#rosterAdd").onclick=rosterAddName;
 $("#rosterName").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); rosterAddName(); } });
 
+/* ================= 編集履歴（オーナーだけ） ================= */
+function formatHistoryTime(iso){
+  try{ return new Date(iso).toLocaleString("ja-JP",{timeZone:"Asia/Tokyo",year:"numeric",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}); }catch(e){ return iso||""; }
+}
+async function openEditHistory(){
+  const list=$("#historyList"); $("#historyMask").style.display="flex";
+  list.textContent="読み込み中…";
+  try{
+    const rows=await window.fbLoadEditHistory();
+    list.innerHTML="";
+    if(!rows.length){ list.textContent="まだ編集履歴はありません。公開後の変更から記録されます。"; return; }
+    rows.forEach(row=>{
+      const item=document.createElement("div"); item.style.cssText="padding:10px 4px;border-bottom:1px solid #e5e5e5;line-height:1.55;";
+      const head=document.createElement("div"); head.style.cssText="font-weight:800;color:#333;"; head.textContent=(row.actor||"不明")+"　"+formatHistoryTime(row.at);
+      const body=document.createElement("div"); body.style.cssText="font-size:13px;color:#555;margin-top:3px;white-space:pre-wrap;"; body.textContent=row.summary||"変更";
+      item.appendChild(head); item.appendChild(body); list.appendChild(item);
+    });
+  }catch(e){ list.textContent="履歴を読み込めませんでした。通信を確認してもう一度お試しください。"; }
+}
+$("#historyBtn").onclick=openEditHistory;
+$("#historyClose").onclick=()=>$("#historyMask").style.display="none";
+$("#historyMask").onclick=e=>{ if(e.target.id==="historyMask") $("#historyMask").style.display="none"; };
+
 /* ================= シフト編集者専用URL（3人分） ================= */
 async function copyEditorUrl(slot,force){
   if(force && !await appConfirm('この編集者の古いURLを利用停止にして、新しいURLを発行します。',{title:'URLを再発行しますか？',confirmText:'再発行する',kind:'danger',icon:'🔗'})) return;
@@ -3322,8 +3433,9 @@ async function copyEditorUrl(slot,force){
   const old=b.textContent; b.disabled=true; b.textContent='準備中…';
   try{
     const url=await window.fbIssueEditorUrl(slot,!!force);
-    try{ await navigator.clipboard.writeText(url); appAlert((force?'新しい':'')+'編集者専用URLをコピーしました。\nこのURLだけを本人へ送ってください。'); }
-    catch(e){ appPrompt('この編集者専用URLをコピーしてください。',url); }
+    const editorName=(window.SHIFT_EDITOR_NAMES||{})[slot]||"編集者";
+    try{ await navigator.clipboard.writeText(url); appAlert((force?'新しい':'')+editorName+'専用URLをコピーしました。\nこのURLだけを本人へ送ってください。'); }
+    catch(e){ appPrompt(editorName+'専用URLをコピーしてください。',url); }
   }catch(e){ appAlert('編集者URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
   b.disabled=false; b.textContent=old;
 }

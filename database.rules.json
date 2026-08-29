@@ -141,6 +141,13 @@
             ".write": "auth != null && (root.child('zaiko/shift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/shift/access/editorTokens/' + root.child('zaiko/shift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)"
           }
         },
+        "editHistory": {
+          "$entry": {
+            ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            ".write": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || (root.child('zaiko/shift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/shift/access/editorTokens/' + root.child('zaiko/shift/access/editorSessions/' + auth.uid).val()).child('active').val() === true))",
+            ".validate": "newData.hasChildren(['actor','actorSlot','at','summary','version']) && newData.child('actor').isString() && newData.child('actorSlot').isString() && newData.child('at').isString() && newData.child('summary').isString() && newData.child('version').isString() && ((root.child('zaiko/shift/access/admins').child(auth.uid).val() === true && newData.child('actorSlot').val() === 'owner') || ((root.child('zaiko/shift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/shift/access/editorTokens/' + root.child('zaiko/shift/access/editorSessions/' + auth.uid).val()).child('active').val() === true) && newData.child('actorSlot').val() === root.child('zaiko/shift/access/editorTokens/' + root.child('zaiko/shift/access/editorSessions/' + auth.uid).val()).child('slot').val()))"
+          }
+        },
         "staff": {
           ".read": "auth != null && (root.child('zaiko/shift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/shift/access/editorTokens/' + root.child('zaiko/shift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)",
           "$staffKey": {
