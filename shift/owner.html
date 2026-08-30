@@ -611,7 +611,7 @@
     .appdialog-actions button{font-size:16px;min-height:50px;}
   }
 
-  /* v1.163 携帯オーナー：濃紺＋シャンパンゴールドのプロ仕様 */
+  /* v1.164 携帯オーナー：濃紺＋シャンパンゴールドのプロ仕様 */
   @media(max-width:600px){
     :root{--mobile-navy:#14283b;--mobile-navy-2:#203d58;--mobile-gold:#c8a45a;--mobile-gold-light:#ead9a9;--mobile-silver:#d8e0e7;}
     body{background:linear-gradient(180deg,#e9eef3 0%,#f7f8fa 42%,#eef2f5 100%);color:#243443;-webkit-tap-highlight-color:transparent;}
@@ -706,6 +706,15 @@
     #ownerAccessGate #ownerLoginBtn{border:1px solid #a88437!important;border-radius:11px!important;background:linear-gradient(180deg,#f4dda0 0%,#c8a45a 58%,#a98437 100%)!important;color:#203448!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.66),0 4px 10px rgba(52,42,20,.3)!important;text-shadow:0 1px 0 #fff;}
   }
 
+  .teamnotice-mask{position:fixed;inset:0;z-index:180;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(8,22,34,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .teamnotice-card{width:min(620px,100%);max-height:92dvh;overflow:auto;border:1px solid #c8a45a;border-radius:20px;padding:20px;background:linear-gradient(180deg,#fff 0%,#eef2f5 100%);box-shadow:0 22px 54px rgba(4,18,29,.48),inset 0 1px 0 #fff}
+  .teamnotice-title{margin:0 0 5px;color:#173047;font-size:20px;font-weight:900}.teamnotice-help{margin:0 0 14px;color:#61717e;font-size:12px;line-height:1.7}
+  .teamnotice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.teamnotice-field{display:flex;flex-direction:column;gap:5px;color:#263b4d;font-size:13px;font-weight:900}.teamnotice-field textarea{width:100%;min-height:90px;resize:vertical;border:1px solid #aebbc4;border-radius:11px;padding:10px;background:#fff;color:#263747;font-size:14px;line-height:1.6;box-shadow:inset 0 1px 3px rgba(19,44,63,.08)}
+  .teamnotice-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:15px}.teamnotice-actions button,#dayTeamNotice{border:1px solid #a88437;border-radius:10px;padding:8px 13px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.66),0 3px 7px rgba(17,37,52,.2)}
+  #teamNoticeCancel{border-color:#8998a4;background:linear-gradient(180deg,#fff 0%,#dce3e8 100%);color:#263b4d}#teamNoticeSave,#dayTeamNotice{background:linear-gradient(180deg,#f4dda0 0%,#c8a45a 58%,#a98437 100%);color:#203448}
+  @media(max-width:600px){
+    .daymask{padding:0;align-items:stretch;justify-content:stretch}.daymodal{width:100%!important;max-width:100%!important;height:100dvh!important;max-height:100dvh;border:0;border-radius:0;left:auto!important;top:auto!important;margin:0!important}.dayhead{flex-wrap:wrap;gap:6px;padding:7px 8px}.dayhead h3{flex:1 1 100%;text-align:center}.daylegend{order:2;display:flex;overflow-x:auto;max-width:100%;padding-bottom:2px}.daylegend button{flex:0 0 auto;min-height:38px}.dayhead>#dayDecide,.dayhead>#dayClose{min-height:38px}.dmz{display:none!important}.dayscroll{overscroll-behavior:contain}.teamnotice-grid{grid-template-columns:1fr}.teamnotice-card{padding:17px 14px;border-radius:17px}.teamnotice-field textarea{min-height:74px}
+  }
 </style>
   <!-- ===== Firebase（シフト共有 / 売上と同じDBの zaiko/shift）===== -->
   <script type="importmap">
@@ -724,7 +733,7 @@
   <script type="module">
   import { initializeApp } from 'firebase/app';
   import { getDatabase, ref, set, remove, update, get, onValue } from 'firebase/database';
-  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signInWithRedirect, setPersistence, browserLocalPersistence } from 'firebase/auth';
   try{
     const app = initializeApp({
       apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
@@ -836,22 +845,15 @@
     async function beginOwner(user){
       const adminRef=ref(db,BASE+'/access/admins/'+user.uid);
       try{
-        const admins=await get(ref(db,BASE+'/access/admins'));
-        if(!admins.exists()) await set(adminRef,true); /* 初回移行時だけ。現行公開ルール下で管理者を登録 */
-      }catch(e){}
-      try{
         const mine=await get(adminRef);
         if(mine.val()!==true) throw new Error('not-admin');
         window.shiftEditorMode=false; window.shiftEditorSlot='owner'; window.shiftEditorName='オーナー';
         window.fbOwnerReady=true;
         if(typeof window.shiftOwnerAuthorized==='function') window.shiftOwnerAuthorized(user.uid);
-        onValue(ref(db,BASE),snap=>{
-          if(Date.now()<_suppressUntil) return;
-          if(typeof window.shiftApplyRemote==='function'){
-            window.shiftApplyRemote(snap.exists()? snap.val() : null);
-            badge.textContent='📥 受信 '+new Date().toLocaleTimeString('ja-JP');
-          }
-        },e=>{ console.warn(e); window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid); });
+        const remote={meta:null,staff:null};
+        const apply=()=>{ if(remote.meta!==null&&remote.staff!==null&&typeof window.shiftApplyRemote==='function') window.shiftApplyRemote(remote); };
+        onValue(ref(db,BASE+'/meta'),snap=>{ if(Date.now()<_suppressUntil) return; remote.meta=snap.val()||{}; apply(); badge.textContent='📥 受信 '+new Date().toLocaleTimeString('ja-JP'); },e=>{ console.warn(e); window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid); });
+        onValue(ref(db,BASE+'/staff'),snap=>{ if(Date.now()<_suppressUntil) return; remote.staff=snap.val()||{}; apply(); },e=>{ console.warn(e); window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid); });
       }catch(e){ window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid); }
     }
     async function beginEditor(user,token){
@@ -875,7 +877,9 @@
       catch(e){ if(e&&/popup|operation-not-supported/i.test(e.code||e.message||'')) await signInWithRedirect(auth,provider); else throw e; }
     };
     const editorToken=new URLSearchParams(location.search).get('editor')||'';
-    onAuthStateChanged(auth,user=>{ if(user){ if(editorToken) beginEditor(user,editorToken); else beginOwner(user); } else if(editorToken){ signInAnonymously(auth).catch(()=>window.shiftOwnerDenied('',true)); } else if(typeof window.shiftOwnerSignedOut==='function') window.shiftOwnerSignedOut(); });
+    setPersistence(auth,browserLocalPersistence).catch(e=>console.warn('auth persistence',e)).finally(()=>{
+      onAuthStateChanged(auth,user=>{ if(user){ if(editorToken) beginEditor(user,editorToken); else beginOwner(user); } else if(editorToken){ signInAnonymously(auth).catch(()=>window.shiftOwnerDenied('',true)); } else if(typeof window.shiftOwnerSignedOut==='function') window.shiftOwnerSignedOut(); });
+    });
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _suppressUntil=0; });
   }catch(e){ console.warn('Firebase初期化エラー', e); }
   </script>
@@ -947,7 +951,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.163</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.164</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1244,11 +1248,25 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button></div><button id="dayDecide" type="button" style="background:#f4d65c;color:#111;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">未確定</button><button id="dayClose" type="button">閉じる</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button><button type="button" id="dayTeamNotice">📣 全員への連絡</button></div><button id="dayDecide" type="button" style="background:#f4d65c;color:#111;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">未確定</button><button id="dayClose" type="button">閉じる</button></div>
     <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
     <div class="dmz dmz-c" data-mz="c" title="幅と縦を変える"></div>
+  </div>
+</div>
+
+<div class="teamnotice-mask" id="teamNoticeMask" role="dialog" aria-modal="true" aria-labelledby="teamNoticeTitle">
+  <div class="teamnotice-card">
+    <h3 class="teamnotice-title" id="teamNoticeTitle">📣 全員への連絡</h3>
+    <p class="teamnotice-help" id="teamNoticeHelp">その日に勤務するスタッフへ表示します。空欄の区分は表示されません。</p>
+    <div class="teamnotice-grid">
+      <label class="teamnotice-field">3店舗共通<textarea id="teamNoticeAll" placeholder="全店舗の勤務スタッフへの連絡"></textarea></label>
+      <label class="teamnotice-field">大須だけ<textarea id="teamNoticeOsu" placeholder="大須で勤務するスタッフへの連絡"></textarea></label>
+      <label class="teamnotice-field">那古野だけ<textarea id="teamNoticeNagono" placeholder="那古野で勤務するスタッフへの連絡"></textarea></label>
+      <label class="teamnotice-field">鉄板だけ<textarea id="teamNoticeTeppan" placeholder="鉄板で勤務するスタッフへの連絡"></textarea></label>
+    </div>
+    <div class="teamnotice-actions"><button type="button" id="teamNoticeCancel">キャンセル</button><button type="button" id="teamNoticeSave">保存する</button></div>
   </div>
 </div>
 
@@ -1258,7 +1276,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.163"; window.APP_UPDATED="2026-08-30";
+window.APP_VERSION="v1.164"; window.APP_UPDATED="2026-08-30";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1370,7 +1388,7 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#appDialogMask"
 const isLightColor=hex=>{const h=String(hex).replace("#","");const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return (0.299*r+0.587*g+0.114*b)>175;};
 const pad=n=>String(n).padStart(2,"0");
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const SHIFT_START_YEAR=2026, SHIFT_START_MONTH=9, SHIFT_END_YEAR=2030;
+const SHIFT_START_YEAR=2026, SHIFT_START_MONTH=8, SHIFT_END_YEAR=2030;
 let Y=SHIFT_START_YEAR, M=SHIFT_START_MONTH, DAYS=30;
 function japanToday(){
   try{
@@ -1507,11 +1525,33 @@ function save(){
   if(window.fbTouch) window.fbTouch();
   try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){}
 }
+function publicShiftSegments(rec){
+  if(!rec||rec.off) return [];
+  const out=[];
+  ['all','am','pm'].forEach(seg=>{ const v=rec[seg]; if(v&&(v.start||v.end)) out.push({seg:seg,start:v.start||'',end:v.end||''}); });
+  if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)) out.push({seg:'all',start:rec.start||'',end:rec.end||''});
+  return out;
+}
+function buildPublishedSchedule(){
+  const out={}, published=S.decidedDays&&S.decidedDays._published;
+  Object.keys(S.decidedDays||{}).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&S.decidedDays[date]&&S.published&&(!published||typeof published!=='object'||published[date]===true)).forEach(date=>{
+    out[date]=names().map(nm=>{
+      const sf=S.staff[nm]||{}, home=sf.store||'大須', shifts=[];
+      const homeRec=(sf.decided||{})[date]||null;
+      publicShiftSegments(homeRec).forEach(x=>shifts.push(Object.assign({store:home},x)));
+      STORES.forEach(st=>{ if(st===home) return; const rec=st==='鉄板'?((sf.tetsu||{})[date]||null):((((sf.support||{})[date]||{})[st])||null); publicShiftSegments(rec).forEach(x=>shifts.push(Object.assign({store:st},x))); });
+      return {name:nm,homeStore:home,off:!!(homeRec&&homeRec.off),shifts:shifts};
+    });
+  });
+  return out;
+}
 function buildFbPayload(){ /* オーナー: 全員分＋公開状態をクラウドへ */
   var staffOut={}; Object.keys(S.staff||{}).forEach(function(nm){ var nd=Object.assign({},S.staff[nm]); nd.nm=nm; staffOut[nm]=nd; });
+  let publicMeta={}; try{ publicMeta=JSON.parse(JSON.stringify(S.storeMemo||{})); }catch(e){ publicMeta=Object.assign({},S.storeMemo||{}); }
+  publicMeta._publishedSchedule=buildPublishedSchedule();
   const details=_pendingAudit.splice(0,12);
   const audit=details.length?{actor:window.shiftEditorName||"オーナー",actorSlot:window.shiftEditorSlot||"owner",at:new Date().toISOString(),summary:details.join(" ／ ").slice(0,480),version:window.APP_VERSION}:null;
-  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:S.storeMemo||{}, storeOff:S.storeOff||{}, roster:S.roster||{} }, staff:staffOut, audit:audit };
+  return { mode:'owner', meta:{ published:!!S.published, updatedAt:S.updatedAt||'', decidedMonths:S.decidedMonths||{}, decidedDays:S.decidedDays||{}, storeMemo:publicMeta, storeOff:S.storeOff||{}, roster:S.roster||{} }, staff:staffOut, audit:audit };
 }
 function shiftApplyRemote(val){ try{
   if(!val || (!val.meta && !val.staff)) return; /* クラウドが空ならローカル維持 */
@@ -1524,6 +1564,7 @@ function shiftApplyRemote(val){ try{
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
   if(typeof renderStaff==='function' && sv && sv.style.display!=='none') renderStaff();
   var dm=document.querySelector('#dayMask'); if(typeof openDayView==='function' && dm && dm.style.display==='flex') openDayView(dayViewDay);
+  if(window.fbOwnerReady&&!window.shiftEditorMode&&!(meta.storeMemo&&meta.storeMemo._publishedSchedule)) setTimeout(()=>{ if(window.fbPush) window.fbPush(buildFbPayload()); },500);
 }catch(e){ console.warn('applyRemote',e); } }
 window.shiftApplyRemote=shiftApplyRemote;
 window.shiftOwnerSignedOut=function(){
@@ -1534,7 +1575,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.163</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.164</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2195,6 +2236,26 @@ function wishBars(w,moved){
   if(!w.all&&!w.am&&!w.pm&&(w.start||w.end)){ bars+=wishUncoveredBar('wishbar wall',pHM(w.start),pHM(w.end),`希望 ${w.start||''}〜${w.end||''}`,moved); bars+=wishFadeCovers(moved,w.start,w.end); }
   return bars;
 }
+function teamNoticeRecord(date){ return ((((S.storeMemo||{})._staffNotices)||{})[date])||{}; }
+function openTeamNotice(){
+  if(dayViewDay==null||closedMonthEditBlocked()) return;
+  const date=key(dayViewDay), rec=teamNoticeRecord(date);
+  $('#teamNoticeTitle').textContent=`📣 ${M}月${dayViewDay}日　全員への連絡`;
+  $('#teamNoticeAll').value=rec.all||''; $('#teamNoticeOsu').value=rec['大須']||''; $('#teamNoticeNagono').value=rec['那古野']||''; $('#teamNoticeTeppan').value=rec['鉄板']||'';
+  $('#teamNoticeMask').style.display='flex'; setTimeout(()=>$('#teamNoticeAll').focus(),20);
+}
+$('#dayTeamNotice').onclick=openTeamNotice;
+$('#teamNoticeCancel').onclick=()=>$('#teamNoticeMask').style.display='none';
+$('#teamNoticeMask').onclick=e=>{ if(e.target.id==='teamNoticeMask') $('#teamNoticeMask').style.display='none'; };
+$('#teamNoticeSave').onclick=()=>{
+  if(dayViewDay==null||closedMonthEditBlocked()) return;
+  rememberDayUndo(dayViewDay);
+  if(!S.storeMemo||typeof S.storeMemo!=='object') S.storeMemo={};
+  if(!S.storeMemo._staffNotices||typeof S.storeMemo._staffNotices!=='object') S.storeMemo._staffNotices={};
+  const date=key(dayViewDay), rec={all:$('#teamNoticeAll').value.trim(),'大須':$('#teamNoticeOsu').value.trim(),'那古野':$('#teamNoticeNagono').value.trim(),'鉄板':$('#teamNoticeTeppan').value.trim(),updatedAt:new Date().toISOString()};
+  if(rec.all||rec['大須']||rec['那古野']||rec['鉄板']) S.storeMemo._staffNotices[date]=rec; else delete S.storeMemo._staffNotices[date];
+  touchUpdated(); save(); $('#teamNoticeMask').style.display='none';
+};
 function openDayView(d){
   if(dayUndoDate!==key(d)){ dayUndoDate=key(d); dayUndoHistory=[]; }
   if(dayViewDay!==d||$("#dayMask").style.display!=="flex") dayUserZoom=1;
@@ -2221,7 +2282,7 @@ function openDayView(d){
   g.classList.toggle('closedmonth',_closed);
   $('#dayTextPlace').disabled=_closed;
   $('#dayTextHistory').disabled=_closed;
-  g.querySelectorAll('.storememo').forEach(inp=>{ inp.disabled=_closed; });
+  $('#dayTeamNotice').disabled=_closed;
   g.querySelectorAll('.storeoff-btn,.dreq,.dnotice').forEach(b=>{ b.disabled=_closed; });
   syncDayUndoButton();
   g.querySelectorAll('.cbubble').forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
@@ -2235,11 +2296,10 @@ function openDayView(d){
   g.querySelectorAll('.drow.tadd').forEach(row=>row.onclick=()=>openSupportPicker(+row.dataset.d,row.dataset.st));
   g.querySelectorAll('.holdbar').forEach(bindHoldBlock);
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
-  g.querySelectorAll('.storememo').forEach(inp=>{ inp.onclick=(e)=>e.stopPropagation(); inp.onchange=()=>{ if(closedMonthEditBlocked()) return; rememberDayUndo(dayViewDay); if(!S.storeMemo) S.storeMemo={}; const k=key(dayViewDay); if(!S.storeMemo[k]) S.storeMemo[k]={}; const st=inp.dataset.st, t=inp.value.trim(); if(t) S.storeMemo[k][st]=t; else delete S.storeMemo[k][st]; save(); }; });
   g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toggleStoreOff(b.dataset.st); });
   g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f, bar.dataset.st); });
   $("#dayMask").style.display="flex"; _syncDayDecideBtn();
-  // 初期表示は従来どおり横幅に合わせ、2本指操作で全店舗を縮小できる。
+  // 携帯では文字が読める大きさを保ち、横スクロールと2本指操作を使う。
   requestAnimationFrame(fitDayGrid);
 }
 (function(){
@@ -2277,7 +2337,9 @@ function fitDayGrid(){
   const g=$("#dayGrid"), sc=document.querySelector('.dayscroll');
   if(!g||!sc) return;
   const gw=Math.max(g.scrollWidth,1), gh=Math.max(g.scrollHeight,1);
-  const scale=Math.max(.3,Math.min(3,Math.min(sc.clientWidth/gw,2)*dayUserZoom));
+  const fit=Math.min(sc.clientWidth/gw,2), mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
+  const base=mobile?Math.max(.72,fit):fit;
+  const scale=Math.max(.3,Math.min(3,base*dayUserZoom));
   g.style.transformOrigin="top left";
   g.style.transform="scale("+scale+")";
   const frame=$("#dayGridFrame");
@@ -2478,10 +2540,9 @@ function dvStoreSection(st,d,W,ticks){
   const col=STORE_COLOR[st]||STORE_COLOR["大須"];
   const displayList=orderedStoreStaff(st);
   names().forEach(nm=>{ const t=supportOf(nm,d,st); if(t&&(t.all||t.am||t.pm)&&!isStaffHomeStore(nm,st)&&displayList.indexOf(nm)<0) displayList.push(nm); });
-  const _sm=((S.storeMemo||{})[key(d)]||{})[st]||"";
   const _soff=!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);
   const _hbg=_soff?STOFF_COLOR:col.head;
-  let h=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}"><button type="button" class="storeoff-btn${_soff?' on':''}" data-st="${st}" aria-pressed="${_soff?'true':'false'}" data-guide-key="store-off" data-guide="店舗名を押すと、その店舗の休みを切り替えできます">${st}（${displayList.length}）${_soff?'<span class="storeoff-state">休み</span>':''}</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${ticks}</div><textarea class="storememo" data-st="${st}" placeholder="${st}のメモ">${esc(_sm)}</textarea></div>`;
+  let h=`<div class="drow sec secr" style="background:${_hbg}"><div class="dname secname" style="background:${col.bg};color:${col.ink}"><button type="button" class="storeoff-btn${_soff?' on':''}" data-st="${st}" aria-pressed="${_soff?'true':'false'}" data-guide-key="store-off" data-guide="店舗名を押すと、その店舗の休みを切り替えできます">${st}（${displayList.length}）${_soff?'<span class="storeoff-state">休み</span>':''}</button></div><div class="dtime" style="width:${W}px;background:${_hbg}">${ticks}</div></div>`;
   displayList.forEach(nm=>{
     if(isStaffHomeStore(nm,st)){ h+=dvStaffRow(nm,d,W,st); return; }
     const t=supportOf(nm,d,st)||{}, staffOff=monthlyStaffOff(nm,st,d); let bars="";
