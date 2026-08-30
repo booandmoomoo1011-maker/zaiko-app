@@ -26,6 +26,7 @@
   *{box-sizing:border-box;}
   body{margin:0; font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; background:var(--bg); color:var(--ink); -webkit-text-size-adjust:100%;}
   input::placeholder,textarea::placeholder{color:#c9c9c9; opacity:1; font-weight:400;}
+  .mobileOwnerTop,.mobileSettingsActions{display:none;}
   /* スタッフは携帯利用：細い画面向け調整 */
   @media (max-width:480px){
     header h1{font-size:15px;}
@@ -41,7 +42,33 @@
     header h1{font-size:13px;}
     .demoTag{font-size:10px; padding:2px 6px;}
     header .btn.share{padding:5px 8px; font-size:11px;}
-    /* 上のバー：ボタンをコンパクトに、折り返してもスッキリ */
+    #shareOwnerBtn{display:none !important;}
+    /* 携帯は決定シフトを見る画面を最初に表示。編集は日付を押して開く。 */
+    #ownerView.mobile-readonly .bar.barrow{display:none;}
+    .mobileOwnerTop{display:flex;align-items:center;gap:7px;padding:7px 8px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:34px;z-index:15;}
+    .mobileOwnerToday,.mobileOwnerArrow,.mobileOwnerSettings{border:1px solid #d9dde1;background:#fff;color:#34404a;border-radius:22px;min-height:38px;font-weight:800;cursor:pointer;}
+    .mobileOwnerToday{padding:0 14px;font-size:14px;}
+    .mobileOwnerArrow{width:38px;font-size:20px;line-height:1;}
+    .mobileOwnerSettings{width:42px;font-size:18px;}
+    .mobileOwnerRange{flex:1;min-width:0;text-align:center;font-size:13px;font-weight:800;line-height:1.25;color:#394654;white-space:nowrap;}
+    .mobileOwnerRange small{display:block;color:#87919a;font-size:10px;font-weight:700;}
+    #ownerView.mobile-readonly #tbody{pointer-events:none;}
+    #ownerView.mobile-readonly thead .daypublish{display:none;}
+    #ownerView.mobile-readonly thead th.daycol{padding:8px 3px;min-width:78px;cursor:pointer;}
+    #ownerView.mobile-readonly thead th.daycol .daybutton{font-size:13px;line-height:1.4;}
+    #ownerView.mobile-readonly #tbl td.name,#ownerView.mobile-readonly #tbl th.name{min-width:112px;max-width:112px;width:112px;}
+    #ownerView.mobile-readonly #tbody tr.staffrow td{height:48px;vertical-align:middle;}
+    #ownerView.mobile-readonly #tbody tr.secrow td{height:22px;}
+    #ownerView.mobile-readonly #tbody .wish{padding:2px 3px;text-align:center;}
+    .mobileWishTime{display:block;color:#9aa2aa;font-size:9px;font-weight:700;line-height:1.25;white-space:nowrap;margin-bottom:2px;}
+    .mobileDecisionOnly .chip{display:block;margin:1px 2px;padding:3px 4px;font-size:10px;line-height:1.25;}
+    .mobileSettingsActions{display:block;border-bottom:1px solid #e5e5e5;margin:0 0 12px;padding:0 0 12px;}
+    .mobileSettingsActions .mobileSettingsGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+    .mobileSettingsActions button{width:100%;border:none;border-radius:8px;padding:10px 7px;color:#333;background:#edf0f2;font-weight:800;font-size:12px;cursor:pointer;}
+    .mobileSettingsActions button.primary{background:#2fa04a;color:#fff;}
+    .mobileSettingsActions button.warn{background:#f4d65c;color:#3f3600;}
+    .mobileSettingsActions button:disabled{opacity:.45;cursor:not-allowed;}
+    /* 上のバー：PC用は維持し、携帯では設定内に収納 */
     .bar.barrow{gap:5px 6px; padding:7px 8px;}
     .barrow strong#oMonthLabel{font-size:12px;}
     .barrow .ymsel{padding:5px 4px; font-size:13px;}
@@ -51,11 +78,12 @@
     /* 月の表：日列を少し詰めて多く見えるように＋文字を読みやすく */
     #tbl thead th{min-width:54px; font-size:11px;}
     #tbl td.name, #tbl th.name{min-width:126px; max-width:126px; width:126px; font-size:12px;}
-    .gridwrap{max-height:calc(100vh - 132px); -webkit-overflow-scrolling:touch;}
+    .gridwrap{max-height:calc(100vh - 82px); -webkit-overflow-scrolling:touch;}
     /* 日別タイムライン：指でも押しやすく */
     .daymodal{width:99vw; max-width:99vw; height:96vh;}
     .dayhead h3{font-size:13px;}
     .dayhead button{padding:7px 10px; font-size:13px;}
+    .dayhead #dayClose{display:inline-flex !important;}
     .dbar .dresize{width:16px;}
     .dbar .btime{padding:2px 3px;}
     .storeoff-btn{font-size:12px;}
@@ -317,10 +345,19 @@
   .dayhead h3{margin:0; font-size:20px; color:#111; white-space:nowrap; flex:0 0 auto;}
   .dayhead h3 .weekend{color:#d83f58;}
   .dayhead button{border:none; background:#eee; color:#555; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:700; white-space:nowrap; flex:0 0 auto; font-size:13px;}
+  .dayhead #dayClose{display:none;}
   #mPalette{display:none;}
   .daylegend{display:flex; gap:6px; flex-wrap:nowrap; align-items:center; margin:0 6px; flex:1 1 auto; justify-content:center; overflow:hidden;}
   .daylegend .dayundo{min-width:82px; background:#fff; color:#44515a; border:1.5px solid #c8d2d9; padding:8px 12px; font-size:14px; font-weight:900;}
   .daylegend .dayundo:disabled{color:#aab2b8; background:#f4f5f6; border-color:#e1e4e7; cursor:default;}
+  @media(max-width:600px){
+    .dayhead{flex-wrap:wrap;gap:6px;padding:7px 8px;}
+    .dayhead h3{font-size:13px;max-width:calc(100% - 128px);overflow:hidden;text-overflow:ellipsis;}
+    .dayhead button{padding:7px 9px;font-size:12px;}
+    .dayhead .daylegend{order:3;width:100%;margin:0;justify-content:flex-start;overflow-x:auto;padding-bottom:2px;}
+    .dayhead .daylegend button{flex:0 0 auto;}
+    .dayhead #dayClose{display:inline-flex !important;}
+  }
   .dayscroll{overflow:auto; flex:1 1 auto; padding:4px; touch-action:pan-x pan-y; overscroll-behavior:contain;}
   .dayruler{position:sticky; top:0; z-index:9; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:hidden;}
   .dayruler-track{transform-origin:top left; will-change:transform;}
@@ -815,7 +852,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.160</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.162</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -826,6 +863,13 @@
 
 <!-- ============ オーナー ============ -->
 <div id="ownerView" style="display:none;">
+  <div class="mobileOwnerTop" aria-label="携帯用の決定シフト操作">
+    <button class="mobileOwnerArrow" id="mobileOwnerPrev" type="button" aria-label="前の月">‹</button>
+    <button class="mobileOwnerToday" id="mobileOwnerToday" type="button">今日</button>
+    <div class="mobileOwnerRange" id="mobileOwnerRange"></div>
+    <button class="mobileOwnerArrow" id="mobileOwnerNext" type="button" aria-label="次の月">›</button>
+    <button class="mobileOwnerSettings" id="mobileSettingsBtn" type="button" aria-label="設定">⚙</button>
+  </div>
   <div class="bar barrow">
     <strong id="oMonthLabel" style="color:var(--pink-d);white-space:nowrap;"><span style="color:#c74a68">大須</span>・<span style="color:#8a6d00">那古野</span>・<span style="color:#1e6f95">鉄板</span></strong>
     <select id="oYearSel" class="ymsel"></select><select id="oMonthSel" class="ymsel"></select>
@@ -950,9 +994,27 @@
 <div class="cmtmask" id="setMask">
   <div class="cmtbox" style="max-width:360px;">
     <div class="ttl">⚙ 設定</div>
-    <div style="font-size:12px;color:#666;line-height:1.7;margin-bottom:10px;">動作確認で入力したものを消せます。消したあとでも「戻す」で直前のクリアを取り消せます（共有クラウドも一緒に消えます）。</div>
-    <button id="setClear" type="button" style="background:#c0596b;">🧹 入力内容をぜんぶクリア</button>
-    <button id="setUndo" type="button" style="background:#2f9ad0;margin-top:8px;">↩ 戻す（さっきのクリアを取り消す）</button>
+    <div class="mobileSettingsActions">
+      <div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:9px;">印刷・公開・名前などの操作をここにまとめています。</div>
+      <div class="mobileSettingsGrid">
+        <button type="button" data-mobile-action="wishPrintBtn">🖨 希望印刷</button>
+        <button type="button" data-mobile-action="printPickBtn">🖨 日別印刷</button>
+        <button type="button" data-mobile-action="printBlankBtn">🖨 白紙印刷</button>
+        <button type="button" class="warn" data-mobile-action="decideAllBtn">まとめて決定</button>
+        <button type="button" class="warn" data-mobile-action="undecideAllBtn">未確定に戻す</button>
+        <button type="button" class="primary" data-mobile-action="decideBtn">まとめて公開</button>
+        <button type="button" data-mobile-action="unpublishBtn">まとめて非公開</button>
+        <button type="button" data-mobile-action="rosterBtn" data-owner-only="true">👥 名前</button>
+        <button type="button" data-mobile-action="editorUrlBtn" data-owner-only="true">🔗 編集者</button>
+        <button type="button" data-mobile-action="historyBtn" data-owner-only="true">🕘 編集履歴</button>
+        <button type="button" data-mobile-action="shareOwnerBtn" data-owner-only="true">🔗 オーナーURL</button>
+      </div>
+    </div>
+    <div class="desktopDangerSettings">
+      <div style="font-size:12px;color:#666;line-height:1.7;margin-bottom:10px;">動作確認で入力したものを消せます。消したあとでも「戻す」で直前のクリアを取り消せます（共有クラウドも一緒に消えます）。</div>
+      <button id="setClear" type="button" style="background:#c0596b;">🧹 入力内容をぜんぶクリア</button>
+      <button id="setUndo" type="button" style="background:#2f9ad0;margin-top:8px;">↩ 戻す（さっきのクリアを取り消す）</button>
+    </div>
     <button id="setClose" type="button" style="background:#c9c9c9;margin-top:8px;">閉じる</button>
   </div>
 </div>
@@ -1087,7 +1149,7 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button></div><button id="dayDecide" type="button" style="background:#f4d65c;color:#111;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">未確定</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button></div><button id="dayDecide" type="button" style="background:#f4d65c;color:#111;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">未確定</button><button id="dayClose" type="button">閉じる</button></div>
     <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
@@ -1101,7 +1163,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.161"; window.APP_UPDATED="2026-08-29";
+window.APP_VERSION="v1.162"; window.APP_UPDATED="2026-08-30";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1377,7 +1439,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.160</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.162</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1536,6 +1598,43 @@ function wishChip(w,isWeekend,managerDecided){
 /* ================= オーナー画面 ================= */
 let editing=null, pickColor=COLORS[5];
 let ownerMode='wish';  /* 月表の表示：wish=希望 / decided=決定だけ */
+const OWNER_MOBILE_QUERY='(max-width:600px)';
+let mobileOwnerScrollPending=true;
+function ownerMobileView(){ return !!(window.matchMedia&&window.matchMedia(OWNER_MOBILE_QUERY).matches); }
+function mobileDecisionRecord(nm,d,st){
+  if(!S.decidedDays||!S.decidedDays[key(d)]) return null;
+  return storeDecision(nm,d,st);
+}
+function mobileStaffHasMonthDecision(nm,st){
+  for(let d=1;d<=DAYS;d++) if(mobileDecisionRecord(nm,d,st)) return true;
+  return false;
+}
+function mobileStoreStaff(st){
+  const ordered=[];
+  orderedStoreStaff(st).forEach(nm=>{ if(mobileStaffHasMonthDecision(nm,st)&&ordered.indexOf(nm)<0) ordered.push(nm); });
+  names().forEach(nm=>{ if(mobileStaffHasMonthDecision(nm,st)&&ordered.indexOf(nm)<0) ordered.push(nm); });
+  return ordered;
+}
+function mobileDecisionCell(w,dv){
+  if(!dv) return '';
+  const wish=w?wishText(w):'';
+  return `<div class="wish mobileDecisionOnly">${wish?`<span class="mobileWishTime">${esc(wish)}</span>`:''}${decChips(dv)}</div>`;
+}
+function updateMobileOwnerHeader(){
+  const range=$('#mobileOwnerRange'); if(!range) return;
+  range.innerHTML=`${Y}年 ${M}月1日～${M}月${DAYS}日<small>決定シフト・日付を押すと編集</small>`;
+  const prev=$('#mobileOwnerPrev'),next=$('#mobileOwnerNext');
+  if(prev) prev.disabled=Y===SHIFT_START_YEAR&&M===SHIFT_START_MONTH;
+  if(next) next.disabled=Y===SHIFT_END_YEAR&&M===12;
+}
+function scrollMobileOwnerToToday(){
+  if(!ownerMobileView()) return;
+  const sc=document.querySelector('#ownerView .gridwrap'); if(!sc) return;
+  const today=japanToday(),day=(today.year===Y&&today.month===M)?today.day:1;
+  const th=document.querySelector(`#thead th.daycol[data-day="${day}"]`);
+  if(!th) return;
+  sc.scrollLeft=Math.max(0,th.offsetLeft-sc.clientWidth*.42);
+}
 function decChips(dv){
   if(!dv) return "";
   if(dv.off) return `<div class="chip" style="background:#b0b6bd">休み</div>`;
@@ -1580,12 +1679,16 @@ function buildPalette(){
     d.onclick=()=>{ pickColor=c; buildPalette(); }; p.appendChild(d); });
 }
 function renderOwner(){
+  const _mobile=ownerMobileView();
+  ownerMode=_mobile?'decided':'wish';
   const _monthClosed=ownerMonthIsClosed();
   const _submitKey=`${Y}-${pad(M)}`;
   const _deadlinePassed=ownerSubmissionDeadlinePassed();
   const _submittedCount=names().filter(nm=>_deadlinePassed||!!(((((S.staff[nm]||{}).wish||{})._submittedMonths)||{})[_submitKey])).length;
   const _publication=monthPublicationCounts();
   $("#ownerView").classList.toggle("closedmonth",_monthClosed);
+  $("#ownerView").classList.toggle("mobile-readonly",_mobile);
+  updateMobileOwnerHeader();
   $("#oStatus").innerHTML=(_monthClosed?'<span class="ownerclosedstatus">🔒 受付終了・閲覧のみ　</span>':'')+(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${_submittedCount}/${names().length}名　`+
     (_publication.published?`<span class="pub">✅ ${_publication.published}/${_publication.decided}日公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
   $("#decideBtn").textContent=_monthClosed?"受付終了":"決定済みをまとめて公開";
@@ -1593,7 +1696,7 @@ function renderOwner(){
   { const _dab=$("#decideAllBtn"); if(_dab) _dab.disabled=_monthClosed; }
   { const _uab=$("#undecideAllBtn"); if(_uab) _uab.disabled=_monthClosed||!_publication.decided; }
   $("#unpublishBtn").disabled=_monthClosed||!_publication.published;
-  const today=new Date(), todayStr=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  const today=japanToday(), todayStr=`${today.year}-${pad(today.month)}-${pad(today.day)}`;
   let th=`<tr><th class="corner name">スタッフ</th>`;
   for(let d=1;d<=DAYS;d++){ const dow=new Date(Y,M-1,d).getDay(); const hol=isHol(d);
     const cls=((dow===0||hol)?"sun ":dow===6?"sat ":"")+(key(d)===todayStr?"today":"");
@@ -1606,7 +1709,7 @@ function renderOwner(){
   $("#thead").onkeydown=(e)=>{ if(e.target.closest&&e.target.closest('.daypublish')) return; if(e.key!=="Enter"&&e.key!==" ") return; const th=e.target.closest&&e.target.closest('th.daycol'); if(th&&th.dataset.day){ e.preventDefault(); openDayView(+th.dataset.day); } };
   let rows="";
   STORES.forEach(st=>{
-    const list=orderedStoreStaff(st);         /* 画面と印刷で同じ登録順・人数を使う */
+    const list=_mobile?mobileStoreStaff(st):orderedStoreStaff(st); /* 携帯閲覧は決定時間がある人だけ。編集画面は全員。 */
     const col=STORE_COLOR[st]||STORE_COLOR["大須"];
     const isOff=d=>!!(S.storeOff&&S.storeOff[key(d)]&&S.storeOff[key(d)][st]);  /* この店舗のこの日が休みか */
     rows+=`<tr class="secrow"><td class="name secname" style="background:${col.bg};color:${col.ink}">${st}（${list.length}）</td>`;
@@ -1623,7 +1726,10 @@ function renderOwner(){
         const cc=(key(d)===todayStr?" todayc":"");
         const w=wish[key(d)];
         let wt;
-        if(ownerMode==='decided'){ const dv=storeDecision(nm,d,st); wt=dv?`<div class="wish">${decChips(dv)}</div>`:""; }
+        if(ownerMode==='decided'){
+          const dv=_mobile?mobileDecisionRecord(nm,d,st):storeDecision(nm,d,st);
+          wt=_mobile?mobileDecisionCell(w,dv):(dv?`<div class="wish">${decChips(dv)}</div>`:"");
+        }
         else { const managerDecided=nm==='店長'&&staffHasAnyDecision(nm,d); wt=w?`<div class="wish">${wishChip(w,(dow===0||dow===6||hol),managerDecided)}</div>`:""; }
         const hasNote=!!((stf.notes||{})[key(d)]);
         const bubble=hasNote?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
@@ -1640,12 +1746,12 @@ function renderOwner(){
       rows+="</tr>";
     });
     /* ＋名前を記入（オーナーだけ。この店舗に直接追加）*/
-    if(canManageStaff()){
+    if(canManageStaff()&&!_mobile){
       rows+=`<tr class="addrow"><td class="name addname"><input class="addinp" data-st="${esc(st)}" type="text" placeholder="＋" autocomplete="off" style="width:100%;box-sizing:border-box;border:none;background:transparent;font-size:13px;color:#2fa04a;font-weight:700;padding:2px;"></td>`;
       for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
       rows+=`</tr>`;
     }
-    const blanks=Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 目安の数。提出で埋まっても常にSPARE_ROWS行の空きを自動追加 */
+    const blanks=_mobile?0:Math.max((BLANK_SLOTS[st]||0)-list.length, SPARE_ROWS);  /* 携帯閲覧では空白行を出さない */
     for(let bi=0; bi<blanks; bi++){
       rows+=`<tr class="blankrow"><td class="name blankname">&nbsp;</td>`;
       for(let d=1;d<=DAYS;d++){ rows+=`<td class="blankcell${isOff(d)?' stoff':''}"></td>`; }
@@ -1653,6 +1759,10 @@ function renderOwner(){
     }
   });
   $("#tbody").innerHTML=rows;
+  if(_mobile){
+    if(mobileOwnerScrollPending){ mobileOwnerScrollPending=false; requestAnimationFrame(scrollMobileOwnerToToday); }
+    return;
+  }
   document.querySelectorAll("#tbody td[data-d]").forEach(td=>{
     td.ondblclick=(e)=>{ clearTimeout(td._wishOpenTimer); if(_monthClosed||(e.target.closest && e.target.closest('.cbubble'))) return;
       const nm=td.dataset.n, k=key(+td.dataset.d);
@@ -2134,6 +2244,7 @@ function toggleStoreOff(st){
 function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"未確定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#f4d65c"); b.style.color=on||locked?"#fff":"#111"; }
 $("#dayPrev").onclick=()=>{ if(dayViewDay>1) openDayView(dayViewDay-1); };
 $("#dayNext").onclick=()=>{ if(dayViewDay<DAYS) openDayView(dayViewDay+1); };
+$("#dayClose").onclick=()=>{ $("#dayMask").style.display="none"; renderOwner(); };
 $("#dayTextPlace").onclick=()=>{ if(!closedMonthEditBlocked()){ selectedShiftTextPreset=''; setShiftTextPlaceMode(!shiftTextPlaceMode); } };
 $("#dayTextHistory").onclick=()=>{ if(!closedMonthEditBlocked()) openShiftTextHistory(); };
 $("#dayDecide").onclick=()=>{
@@ -2286,7 +2397,7 @@ function dvStoreSection(st,d,W,ticks){
     const offCount=staffOff?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
     h+=`<div class="drow sedit${staffOff?' staffoff':''}" data-n="${esc(nm)}" data-d="${d}" data-st="${st}" title="名前をタップして休み・時間をタップして応援時間を編集"><div class="dname"><span class="dnm"><span class="day-namebutton" role="button" data-guide-key="support-staff" data-guide="名前を押すと、そのスタッフの休みを全店舗で切り替えできます">${esc(nm)}${offCount}</span>${cf?'<span class="warn">⚠</span>':''}<span class="dactions">${ownerRequestButton(nm,d)}${ownerNoticeButton(nm,d)}</span></span></div><div class="dtime" style="width:${W}px">${bars}${staffOff?'':holdbars(nm,d,st)}${shiftTextHtml(nm,d,st)}</div></div>`;
   });
-  h+=`<div class="drow tadd" data-d="${d}" data-st="${st}"><div class="dname"><span class="taddtxt">＋ 名前を追加</span></div><div class="dtime" style="width:${W}px"><span class="taddhint">タップして提出者から選ぶ</span></div></div>`;
+  h+=`<div class="drow tadd" data-d="${d}" data-st="${st}"><div class="dname"><span class="taddtxt">＋ 名前を追加</span></div><div class="dtime" style="width:${W}px"><span class="taddhint">タップして全スタッフから選ぶ</span></div></div>`;
   return h;
 }
 function openSupportPicker(d,st){
@@ -2295,9 +2406,9 @@ function openSupportPicker(d,st){
   const monthOrder=[];
   STORES.forEach(home=>orderedStoreStaff(home).forEach(nm=>{ if(monthOrder.indexOf(nm)<0) monthOrder.push(nm); }));
   names().forEach(nm=>{ if(monthOrder.indexOf(nm)<0) monthOrder.push(nm); });
-  const cand=monthOrder.filter(nm=>(S.staff[nm].wish||{})[key(d)] && (S.staff[nm].store||"大須")!==st && !ass.has(nm));
+  const cand=monthOrder.filter(nm=>(S.staff[nm].store||"大須")!==st && !ass.has(nm));
   const wrap=$("#pickList");
-  if(!cand.length){ wrap.innerHTML='<div style="color:#888;font-size:13px;padding:8px;">この日にシフトを提出した人がいません。</div>'; }
+  if(!cand.length){ wrap.innerHTML='<div style="color:#888;font-size:13px;padding:8px;">追加できるスタッフがいません。</div>'; }
   else{
     wrap.innerHTML=cand.map(nm=>{
       const w=(S.staff[nm].wish||{})[key(d)]; const wt=w?wishText(w):"";
@@ -2913,11 +3024,51 @@ $("#ppClose").onclick=()=>$("#ppMask").style.display="none";
 $("#ppMask").onclick=e=>{ if(e.target.id==="ppMask") $("#ppMask").style.display="none"; };
 /* ---- 月表の 希望⇔決定 切替 ---- */
 
+/* ---- 携帯の閲覧ナビゲーション／設定メニュー ---- */
+function setOwnerMonthOffset(delta){
+  let y=Y,m=M+delta;
+  if(m<1){ y--; m=12; } else if(m>12){ y++; m=1; }
+  if(shiftMonthBeforeStart(y,m)||(y===SHIFT_END_YEAR&&m>12)||y>SHIFT_END_YEAR) return;
+  Y=y; M=m; normalizeShiftMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y);
+  mobileOwnerScrollPending=true; fillYM(); renderOwner();
+}
+function showOwnerToday(){
+  const today=japanToday();
+  Y=today.year; M=today.month; normalizeShiftMonth();
+  if(Y>SHIFT_END_YEAR){ Y=SHIFT_END_YEAR; M=12; }
+  DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y);
+  mobileOwnerScrollPending=true; fillYM(); renderOwner();
+}
+$('#mobileOwnerPrev').onclick=()=>setOwnerMonthOffset(-1);
+$('#mobileOwnerNext').onclick=()=>setOwnerMonthOffset(1);
+$('#mobileOwnerToday').onclick=showOwnerToday;
+
+function openSettingsMenu(mobile){
+  const mask=$('#setMask');
+  mask.classList.toggle('mobile-menu-open',!!mobile);
+  const danger=mask.querySelector('.desktopDangerSettings'); if(danger) danger.style.display=canManageStaff()?'':'none';
+  $('#setUndo').disabled=!hasClearBackup(); $('#setUndo').style.opacity=hasClearBackup()?'1':'.5';
+  mask.querySelectorAll('[data-mobile-action]').forEach(button=>{
+    const target=document.getElementById(button.dataset.mobileAction);
+    const ownerOnly=button.dataset.ownerOnly==='true';
+    button.style.display=ownerOnly&&!canManageStaff()?'none':'';
+    button.disabled=!target||!!target.disabled;
+  });
+  mask.style.display='flex';
+}
+$('#mobileSettingsBtn').onclick=()=>openSettingsMenu(true);
+document.querySelectorAll('#setMask [data-mobile-action]').forEach(button=>button.onclick=()=>{
+  const target=document.getElementById(button.dataset.mobileAction);
+  if(!target||target.disabled) return;
+  $('#setMask').style.display='none';
+  target.click();
+});
+
 /* ---- 設定：入力内容のクリア／戻す（動作確認用）---- */
 const BK_KEY=STORE_KEY+"_bk";
-$("#setBtn").onclick=()=>{ $("#setUndo").disabled=!hasClearBackup(); $("#setUndo").style.opacity=hasClearBackup()?"1":".5"; $("#setMask").style.display="flex"; };
-$("#setClose").onclick=()=>$("#setMask").style.display="none";
-$("#setMask").onclick=e=>{ if(e.target.id==="setMask") $("#setMask").style.display="none"; };
+$("#setBtn").onclick=()=>openSettingsMenu(false);
+$("#setClose").onclick=()=>{ $("#setMask").style.display="none"; $("#setMask").classList.remove('mobile-menu-open'); };
+$("#setMask").onclick=e=>{ if(e.target.id==="setMask"){ $("#setMask").style.display="none"; $("#setMask").classList.remove('mobile-menu-open'); } };
 function hasClearBackup(){ try{ return !!localStorage.getItem(BK_KEY); }catch(e){ return false; } }
 $("#setClear").onclick=async()=>{
   if(!await appConfirm("入力内容をぜんぶ消して、まっさらにします。\n動作確認で入れたデータと共有クラウドの内容も消えます。\n\nこのあと「戻す」で元に戻せます。",{title:"入力内容をすべて消しますか？",confirmText:"すべて消す",kind:"danger",icon:"🗑️"})) return;
@@ -3068,7 +3219,7 @@ function fillYM(){
   const om=$("#oMonthSel"); if(om){ om.innerHTML=""; for(let m=firstMonth;m<=12;m++){ const o=document.createElement("option"); o.value=m; o.textContent=m+"月"+(ownerMonthIsClosed(Y,m)?"（受付終了）":""); if(m===M)o.selected=true; om.appendChild(o); } }
 }
 function setYM(){ Y=+$("#yearSel").value; M=+$("#monthSel").value; normalizeShiftMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderStaff(); }
-function setYMOwner(){ Y=+$("#oYearSel").value; M=+$("#oMonthSel").value; normalizeShiftMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); fillYM(); renderOwner(); }
+function setYMOwner(){ Y=+$("#oYearSel").value; M=+$("#oMonthSel").value; normalizeShiftMonth(); DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); mobileOwnerScrollPending=true; fillYM(); renderOwner(); }
 function fillNames(){
   const dl=$("#nameList"); if(dl) dl.innerHTML=""; /* 候補（記録）は残さない */
 }
@@ -3275,8 +3426,19 @@ function showStaff(){ $("#staffView").style.display=""; $("#ownerView").style.di
   $("#tbStaff").classList.add("on"); $("#tbOwner").classList.remove("on"); applyStaffHeader(); renderStaff(); }
 function showOwner(){ $("#staffView").style.display="none"; $("#ownerView").style.display="";
   document.querySelector("header").style.background="#2b2b2b"; $("#shareBtn").style.display="none"; $("#shareOwnerBtn").style.display="";
-  $("#tbOwner").classList.add("on"); $("#tbStaff").classList.remove("on"); fillYM(); renderOwner(); }
+  $("#tbOwner").classList.add("on"); $("#tbStaff").classList.remove("on");
+  if(ownerMobileView()){
+    const today=japanToday(); Y=today.year; M=today.month; normalizeShiftMonth();
+    if(Y>SHIFT_END_YEAR){ Y=SHIFT_END_YEAR; M=12; }
+    DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); mobileOwnerScrollPending=true;
+  }
+  fillYM(); renderOwner(); }
 $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
+if(window.matchMedia){
+  const ownerMq=window.matchMedia(OWNER_MOBILE_QUERY);
+  const ownerModeChanged=()=>{ const ov=$("#ownerView"); if(ov&&ov.style.display!=="none"){ mobileOwnerScrollPending=true; renderOwner(); } };
+  if(ownerMq.addEventListener) ownerMq.addEventListener('change',ownerModeChanged); else if(ownerMq.addListener) ownerMq.addListener(ownerModeChanged);
+}
 
 /* ================= 名前の登録（店舗ごと・roster） ================= */
 function getRoster(){ if(!S.roster||typeof S.roster!=="object") S.roster={}; STORES.forEach(function(s){ if(!Array.isArray(S.roster[s])) S.roster[s]=[]; }); return S.roster; }
@@ -3482,4 +3644,3 @@ initWho(); buildPalette(); showOwner();
 
 </body>
 </html>
-
