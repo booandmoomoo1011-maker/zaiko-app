@@ -335,7 +335,7 @@
   thead th.daycol .daypublish.undecided:disabled{border-color:#d0aa22;background:#f4d65c;color:#3f3600;opacity:1;}
   thead th.daycol.undecidedday{background:#fff3b8;}
   .daymask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:60; padding:12px;}
-  .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1120px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
+  .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1320px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
   .dmz{position:absolute; z-index:12; touch-action:none;}
   .dmz-r{top:0; right:-2px; width:9px; height:100%; cursor:ew-resize;}
   .dmz-b{left:0; bottom:-2px; height:9px; width:100%; cursor:ns-resize;}
@@ -612,7 +612,7 @@
     .appdialog-actions button{font-size:16px;min-height:50px;}
   }
 
-  /* v1.166 携帯オーナー：上部決定操作＋残文字対策 */
+  /* v1.167 日別編集：PC初期サイズと携帯タイムライン同期 */
   @media(max-width:600px){
     :root{--mobile-navy:#14283b;--mobile-navy-2:#203d58;--mobile-gold:#c8a45a;--mobile-gold-light:#ead9a9;--mobile-silver:#d8e0e7;}
     body{background:linear-gradient(180deg,#e9eef3 0%,#f7f8fa 42%,#eef2f5 100%);color:#243443;-webkit-tap-highlight-color:transparent;}
@@ -954,7 +954,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.166</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.167</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1280,7 +1280,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.166"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.167"; window.APP_UPDATED="2026-08-31";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1537,14 +1537,22 @@ function publicShiftSegments(rec){
   if(!rec.all&&!rec.am&&!rec.pm&&(rec.start||rec.end)) out.push({seg:'all',start:rec.start||'',end:rec.end||''});
   return out;
 }
+function publicBreakSegments(nm,date,store,start,end){
+  const d=+String(date).slice(-2),s=pHM(start),e=pHM(end);
+  if(!d||s==null||e==null||e<=s) return [];
+  const raw=holdsForStore(nm,d,store).filter(h=>h>=s&&h<e).sort((a,b)=>a-b),groups=[];
+  raw.forEach(h=>{ const last=groups[groups.length-1]; if(last&&Math.abs(last[1]-h)<.01) last[1]=Math.min(e,h+.5); else groups.push([h,Math.min(e,h+.5)]); });
+  return groups.filter(g=>g[1]>g[0]).map(g=>({start:hourToStr(g[0]),end:hourToStr(g[1]),minutes:Math.round((g[1]-g[0])*60)}));
+}
 function buildPublishedSchedule(){
   const out={}, published=S.decidedDays&&S.decidedDays._published;
   Object.keys(S.decidedDays||{}).filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)&&S.decidedDays[date]&&S.published&&(!published||typeof published!=='object'||published[date]===true)).forEach(date=>{
     out[date]=names().map(nm=>{
       const sf=S.staff[nm]||{}, home=sf.store||'大須', shifts=[];
       const homeRec=(sf.decided||{})[date]||null;
-      publicShiftSegments(homeRec).forEach(x=>shifts.push(Object.assign({store:home},x)));
-      STORES.forEach(st=>{ if(st===home) return; const rec=st==='鉄板'?((sf.tetsu||{})[date]||null):((((sf.support||{})[date]||{})[st])||null); publicShiftSegments(rec).forEach(x=>shifts.push(Object.assign({store:st},x))); });
+      const append=(store,rec)=>publicShiftSegments(rec).forEach(x=>shifts.push(Object.assign({store,breaks:publicBreakSegments(nm,date,store,x.start,x.end)},x)));
+      append(home,homeRec);
+      STORES.forEach(st=>{ if(st===home) return; const rec=st==='鉄板'?((sf.tetsu||{})[date]||null):((((sf.support||{})[date]||{})[st])||null); append(st,rec); });
       return {name:nm,homeStore:home,off:!!(homeRec&&homeRec.off),shifts:shifts};
     });
   });
@@ -1580,7 +1588,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.166</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.167</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2263,7 +2271,12 @@ $('#teamNoticeSave').onclick=()=>{
 };
 function openDayView(d){
   if(dayUndoDate!==key(d)){ dayUndoDate=key(d); dayUndoHistory=[]; }
-  if(dayViewDay!==d||$("#dayMask").style.display!=="flex") dayUserZoom=1;
+  const resetDayViewport=dayViewDay!==d||$("#dayMask").style.display!=="flex";
+  if(resetDayViewport){
+    dayUserZoom=1;
+    const modal=document.querySelector('.daymodal');
+    if(modal) ['width','max-width','height','position','left','top','margin'].forEach(prop=>modal.style.removeProperty(prop));
+  }
   dayViewDay=d;
   const _closed=ownerMonthIsClosed();
   setShiftTextPlaceMode(false);
@@ -2305,8 +2318,8 @@ function openDayView(d){
   g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toggleStoreOff(b.dataset.st); });
   g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f, bar.dataset.st); });
   $("#dayMask").style.display="flex"; _syncDayDecideBtn();
-  // 携帯では文字が読める大きさを保ち、横スクロールと2本指操作を使う。
-  requestAnimationFrame(fitDayGrid);
+  // 開いた時は左上から表示し、時間軸と全行を同じ倍率で描画する。
+  requestAnimationFrame(()=>{ fitDayGrid(); if(resetDayViewport){ const sc=document.querySelector('.dayscroll'); if(sc) sc.scrollTo(0,0); } });
 }
 (function(){
   const modal=document.querySelector('.daymodal'); if(!modal) return;
@@ -2342,9 +2355,15 @@ function openDayView(d){
 function fitDayGrid(){
   const g=$("#dayGrid"), sc=document.querySelector('.dayscroll');
   if(!g||!sc) return;
-  const gw=Math.max(g.scrollWidth,1), gh=Math.max(g.scrollHeight,1);
-  const fit=Math.min(sc.clientWidth/gw,2), mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
-  const base=mobile?Math.max(.72,fit):fit;
+  // 表全体の幅ではなく「名前欄＋9:00〜23:30」を基準幅にする。
+  // これによりPCの余白過多と、携帯で枠だけ途中で終わるずれを防ぐ。
+  const timelineWidth=(AX1-AX0)*HW, nameWidth=Math.max(104,g.querySelector('.dname')?.offsetWidth||104);
+  const gw=Math.ceil(nameWidth+timelineWidth);
+  g.style.width=gw+"px"; g.style.minWidth=gw+"px";
+  g.querySelectorAll('.drow').forEach(row=>{ row.style.width=gw+"px"; row.style.minWidth=gw+"px"; });
+  const gh=Math.max(g.scrollHeight,1), availableWidth=Math.max(1,sc.clientWidth-8);
+  const fit=availableWidth/gw, mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
+  const base=mobile?Math.max(.72,Math.min(1,fit)):Math.min(1.15,fit);
   const scale=Math.max(.3,Math.min(3,base*dayUserZoom));
   g.style.transformOrigin="top left";
   const transformValue="scale("+scale+")", contentWidth=Math.ceil(gw*scale), contentHeight=Math.ceil(gh*scale);
