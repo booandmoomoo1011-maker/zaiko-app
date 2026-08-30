@@ -612,7 +612,7 @@
     .appdialog-actions button{font-size:16px;min-height:50px;}
   }
 
-  /* v1.165 携帯オーナー：濃紺＋シャンパンゴールドのプロ仕様 */
+  /* v1.166 携帯オーナー：上部決定操作＋残文字対策 */
   @media(max-width:600px){
     :root{--mobile-navy:#14283b;--mobile-navy-2:#203d58;--mobile-gold:#c8a45a;--mobile-gold-light:#ead9a9;--mobile-silver:#d8e0e7;}
     body{background:linear-gradient(180deg,#e9eef3 0%,#f7f8fa 42%,#eef2f5 100%);color:#243443;-webkit-tap-highlight-color:transparent;}
@@ -713,8 +713,8 @@
   .teamnotice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.teamnotice-field{display:flex;flex-direction:column;gap:5px;color:#263b4d;font-size:13px;font-weight:900}.teamnotice-field textarea{width:100%;min-height:90px;resize:vertical;border:1px solid #aebbc4;border-radius:11px;padding:10px;background:#fff;color:#263747;font-size:14px;line-height:1.6;box-shadow:inset 0 1px 3px rgba(19,44,63,.08)}
   .teamnotice-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:15px}.teamnotice-actions button,#dayTeamNotice{border:1px solid #a88437;border-radius:10px;padding:8px 13px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.66),0 3px 7px rgba(17,37,52,.2)}
   #teamNoticeCancel{border-color:#8998a4;background:linear-gradient(180deg,#fff 0%,#dce3e8 100%);color:#263b4d}#teamNoticeSave,#dayTeamNotice{background:linear-gradient(180deg,#f4dda0 0%,#c8a45a 58%,#a98437 100%);color:#203448}
-  .daycommitbar{display:flex;flex:0 0 auto;gap:12px;justify-content:flex-end;padding:10px 14px;border-top:1px solid #aebbc4;background:linear-gradient(180deg,#fff 0%,#e7edf1 100%);box-shadow:0 -4px 12px rgba(12,35,52,.08)}
-  .daycommitbar button{min-width:160px;min-height:46px;border-radius:11px;padding:9px 16px;font-size:15px;font-weight:1000;cursor:pointer}.daycommitbar #dayClose{border:1px solid #7f909d;background:linear-gradient(180deg,#fff 0%,#d8e0e6 100%);color:#253a4b;box-shadow:inset 0 1px 0 #fff,0 3px 7px rgba(17,37,52,.2)}.daycommitbar #dayDecide{border:1px solid #a88437;background:linear-gradient(180deg,#f4dda0 0%,#c8a45a 58%,#a98437 100%);color:#203448;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 9px rgba(73,54,18,.28);text-shadow:0 1px 0 #fff}
+  .daycommitbar{display:flex;flex:0 0 auto;gap:12px;justify-content:flex-end;padding:9px 14px;border-bottom:1px solid #aebbc4;background:linear-gradient(180deg,#fff 0%,#e7edf1 100%);box-shadow:0 4px 12px rgba(12,35,52,.12);z-index:12}
+  .daycommitbar button{min-width:160px;min-height:46px;border-radius:11px;padding:9px 16px;font-size:15px;font-weight:1000;cursor:pointer}.daycommitbar #dayClose{border:1px solid #7f909d;background:linear-gradient(180deg,#fff 0%,#d8e0e6 100%);color:#253a4b;box-shadow:inset 0 1px 0 #fff,0 3px 7px rgba(17,37,52,.2)}.daycommitbar #dayDecide{border:1px solid #000;background:linear-gradient(180deg,#343434 0%,#111 58%,#000 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),0 4px 9px rgba(0,0,0,.35);text-shadow:0 1px 1px #000}
   @media(max-width:600px){
     .daymask{padding:0;align-items:stretch;justify-content:stretch}.daymodal{width:100%!important;max-width:100%!important;height:100dvh!important;max-height:100dvh;border:0;border-radius:0;left:auto!important;top:auto!important;margin:0!important}.dayhead{flex-wrap:wrap;gap:6px;padding:7px 8px}.dayhead h3{flex:1 1 100%;text-align:center}.daylegend{order:2;display:flex;overflow-x:auto;max-width:100%;padding-bottom:2px}.daylegend button{flex:0 0 auto;min-height:38px}.dmz{display:none!important}.dayscroll{overscroll-behavior:contain}.daycommitbar{gap:8px;padding:8px;position:relative;z-index:12}.daycommitbar button{flex:1;min-width:0;min-height:50px;padding:8px 6px;font-size:14px}.teamnotice-grid{grid-template-columns:1fr}.teamnotice-card{padding:17px 14px;border-radius:17px}.teamnotice-field textarea{min-height:74px}
   }
@@ -954,7 +954,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.165</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.166</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1252,8 +1252,8 @@
 <div class="daymask" id="dayMask">
   <div class="daymodal">
     <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button><button type="button" id="dayTeamNotice">📣 全員への連絡</button></div></div>
-    <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
     <div class="daycommitbar"><button id="dayClose" type="button">画面を閉じる</button><button id="dayDecide" type="button" data-guide-key="day-decide" data-guide="このボタンを押した場合だけ、この日のシフトを決定します">このシフトを決定</button></div>
+    <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
     <div class="dmz dmz-c" data-mz="c" title="幅と縦を変える"></div>
@@ -1280,7 +1280,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.165"; window.APP_UPDATED="2026-08-30";
+window.APP_VERSION="v1.166"; window.APP_UPDATED="2026-08-31";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1392,6 +1392,7 @@ document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&$("#appDialogMask"
 const isLightColor=hex=>{const h=String(hex).replace("#","");const r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);return (0.299*r+0.587*g+0.114*b)>175;};
 const pad=n=>String(n).padStart(2,"0");
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const displayText=v=>{ const raw=v&&typeof v==='object'&&'text' in v?v.text:v, text=String(raw==null?'':raw).trim(); return /^(false|null|undefined)$/i.test(text)?'':text; };
 const SHIFT_START_YEAR=2026, SHIFT_START_MONTH=8, SHIFT_END_YEAR=2030;
 let Y=SHIFT_START_YEAR, M=SHIFT_START_MONTH, DAYS=30;
 function japanToday(){
@@ -1579,7 +1580,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.165</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.166</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1646,7 +1647,7 @@ function staffHasAnyDecision(nm,d){
   return STORES.some(st=>decisionHasTime(supportOf(nm,d,st)));
 }
 function shiftTextOf(nm,d){ return (((S.staff[nm]||{}).shiftText||{})[key(d)])||null; }
-function shiftTextValue(rec){ const text=rec&&(typeof rec==='string'?rec:rec.text); return text&&String(text).trim().toLowerCase()!=='false'?String(text).trim():''; }
+function shiftTextValue(rec){ return displayText(rec); }
 function shiftTextRange(rec){ let start=rec&&typeof rec==='object'&&Number.isFinite(+rec.start)?+rec.start:14, end=rec&&typeof rec==='object'&&Number.isFinite(+rec.end)?+rec.end:17; start=Math.max(AX0,Math.min(AX1-.5,Math.round(start*2)/2)); end=Math.max(start+.5,Math.min(AX1,Math.round(end*2)/2)); return [start,end]; }
 function shiftTextTop(rec){ return rec&&typeof rec==='object'&&Number.isFinite(+rec.top)?Math.max(2,Math.min(28,+rec.top)):27; }
 function shiftTextHtml(nm,d,st){ const rec=shiftTextOf(nm,d); if(!rec) return ''; const text=shiftTextValue(rec), target=typeof rec==='string'?((S.staff[nm]||{}).store||'大須'):(rec.store||((S.staff[nm]||{}).store||'大須')); if(!text||target!==st) return ''; const [start,end]=shiftTextRange(rec),top=shiftTextTop(rec),left=(start-AX0)*HW,width=(end-start)*HW; return `<div class="shifttext" data-n="${esc(nm)}" data-d="${d}" data-st="${esc(st)}" data-start="${start}" data-end="${end}" data-top="${top}" style="left:${left}px;top:${top}px;width:${width}px"><span class="sthandle left"></span>${esc(text)}<span class="sthandle right"></span></div>`; }
@@ -1871,7 +1872,7 @@ function renderOwner(){
           wt=_mobile?mobileDecisionCell(w,dv):(dv?`<div class="wish">${decChips(dv)}</div>`:"");
         }
         else { const managerDecided=nm==='店長'&&staffHasAnyDecision(nm,d); wt=w?`<div class="wish">${wishChip(w,(dow===0||dow===6||hol),managerDecided)}</div>`:""; }
-        const hasNote=!!((stf.notes||{})[key(d)]);
+        const hasNote=!!displayText((stf.notes||{})[key(d)]);
         const bubble=hasNote?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
         const rqState=ownerRequestState(nm,d);
         const rqLabel=rqState==='rejected'?'否認済み要請':rqState==='approved'?'承認済み要請':'回答待ち要請';
@@ -1923,7 +1924,7 @@ function renderOwner(){
     td.onkeydown=(e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } };
   });
   document.querySelectorAll("#tbody .cbubble").forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
-    showComment(el.dataset.n, +el.dataset.d, ((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)]); });
+    showComment(el.dataset.n, +el.dataset.d, displayText(((S.staff[el.dataset.n]||{}).notes||{})[key(+el.dataset.d)])); });
   document.querySelectorAll("#tbody .wish").forEach(el=>el.onclick=(e)=>{
     e.stopPropagation();
     if(ownerMode!=='wish') return;
@@ -2291,7 +2292,7 @@ function openDayView(d){
   g.querySelectorAll('.storeoff-btn,.dreq,.dnotice').forEach(b=>{ b.disabled=_closed; });
   syncDayUndoButton();
   g.querySelectorAll('.cbubble').forEach(el=>el.onclick=(e)=>{ e.stopPropagation();
-    showComment(el.dataset.n, +el.dataset.d, (S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)]); });
+    showComment(el.dataset.n, +el.dataset.d, displayText((S.staff[el.dataset.n].notes||{})[key(+el.dataset.d)])); });
   g.querySelectorAll('.drow.dedit').forEach(row=>{ row.onclick=(e)=>dayRowClick(e,row,'edit'); row.ondblclick=(e)=>dayRowDoubleClick(e,row); bindManualDoubleTap(row); });
   g.querySelectorAll('.dreq').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openReq(b.dataset.n, +b.dataset.d); });
   g.querySelectorAll('.dnotice').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openOwnerNotice(b.dataset.n,+b.dataset.d); });
@@ -2404,7 +2405,7 @@ function toggleStoreOff(st){
   }else S.storeOff[k][st]=true;
   save(); openDayView(dayViewDay); renderOwner();
 }
-function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定済みを解除":"このシフトを決定"); b.style.background=locked?"#bbb":(on?"#667481":"linear-gradient(180deg,#ffe89a 0%,#d5af4f 58%,#b58b2f 100%)"); b.style.color=locked||on?"#fff":"#203448"; }
+function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定済みを解除":"このシフトを決定"); b.style.background=locked?"#777":"linear-gradient(180deg,#343434 0%,#111 58%,#000 100%)"; b.style.color="#fff"; }
 $("#dayPrev").onclick=()=>{ if(dayViewDay>1) openDayView(dayViewDay-1); };
 $("#dayNext").onclick=()=>{ if(dayViewDay<DAYS) openDayView(dayViewDay+1); };
 $("#dayClose").onclick=()=>{ $("#dayMask").style.display="none"; renderOwner(); };
@@ -2536,7 +2537,7 @@ function dvStaffRow(nm,d,W,st){
   const wtxt=w&&!w.off?wishMini(w):"";
   let wcls="gray"; if(w&&w.off) wcls="ng"; else if(w&&w.allday) wcls="maru";
   const wishHtml=wtxt?`<span class="dwish ${wcls}">${wtxt}</span>`:"";
-  const note=(stf.notes||{})[key(d)];
+  const note=displayText((stf.notes||{})[key(d)]);
   const nb=note?`<span class="cbubble" data-n="${esc(nm)}" data-d="${d}"></span>`:"";
   const cf=staffDayConflict(nm,d);
   const offCount=v&&v.off?`<span class="staffoff-count">${staffDayOffCount(nm,d)}</span>`:"";
@@ -2872,7 +2873,7 @@ function openOneTime(nm,d,seg,f,st){
   const dec=storeDecision(nm,d,store)||{};
   const cur=(dec[seg]&&dec[seg][f])||'';
   $("#oneTtl").textContent=`${nm}　${M}/${d}　${f==='start'?'開始':'終了'}の時間`;
-  const _note=(S.staff[nm].notes||{})[key(d)];
+  const _note=displayText((S.staff[nm].notes||{})[key(d)]);
   const _nEl=$("#oneNote"); if(_nEl){ _nEl.textContent=_note?`💬 ${_note}`:""; _nEl.style.display=_note?"block":"none"; }
   $("#oneInput").value=cur;
   $("#oneMask").style.display="flex";
@@ -3264,7 +3265,7 @@ function openEditor(nm,d){
   const w=S.staff[nm].wish[key(d)];
   $("#mWish").textContent = w?`希望：${wishText(w)}`:"希望：（なし）";
   $("#mWish").className = "wishline"+((w&&(w.all||w.allday))?" ylw":"");
-  const note=(S.staff[nm].notes||{})[key(d)];
+  const note=displayText((S.staff[nm].notes||{})[key(d)]);
   $("#mNote").textContent = note||"";
   $("#mNote").style.display = note?"block":"none";
   const dvRaw=S.staff[nm].decided[key(d)]||{};
@@ -3459,7 +3460,7 @@ function renderMine(me){
       if(tv.am) body+=`<span class="mtime mam"><span class="amp">AM</span>${tv.am.start||''}-${tv.am.end||''}</span>`;
       if(tv.pm) body+=`<span class="mtime mpm"><span class="amp">PM</span>${tv.pm.start||''}-${tv.pm.end||''}</span>`;
     });
-    const note=(S.staff[me].notes||{})[key(d)];
+    const note=displayText((S.staff[me].notes||{})[key(d)]);
     const nb=note?`<span class="mbubble" style="color:${hc}"></span>`:'';
     const rq=(S.staff[me].req||{})[key(d)];
     let reqInner="";
@@ -3495,7 +3496,7 @@ function drawDayInput(){
   const w=S.staff[me].wish[key(d)]||{};
   const am=w.am||{}, pm=w.pm||{}, al=w.all||(w.allday?{start:'10:00',end:'23:30'}:{});
   const dv=(seg,f)=>{ const o={all:al,am,pm}[seg]; return (o&&o[f])?o[f]:''; };
-  const note=((S.staff[me].notes||{})[key(d)]||'').replace(/"/g,'&quot;');
+  const note=esc(displayText((S.staff[me].notes||{})[key(d)]));
   const hasIn=!!(w.off||w.allday||w.all||w.am||w.pm||w.start||w.end);
   $("#diBody").innerHTML=`<div class="seg2">
     <div class="line lall"><span class="tg all">一日</span><input type="text" class="tinp" placeholder="：" value="${dv('all','start')}" data-seg="all" data-f="start"><span>〜</span><input type="text" class="tinp" placeholder="：" value="${dv('all','end')}" data-seg="all" data-f="end"></div>
