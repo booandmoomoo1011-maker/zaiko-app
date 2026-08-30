@@ -359,12 +359,13 @@
     .dayhead #dayClose{display:inline-flex !important;}
   }
   .dayscroll{overflow:auto; flex:1 1 auto; padding:4px; touch-action:pan-x pan-y; overscroll-behavior:contain;}
-  .dayruler{position:sticky; top:0; z-index:9; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:hidden;}
+  .dayruler{position:sticky; top:0; z-index:9; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:visible; transform-origin:top left;}
   .dayruler-track{transform-origin:top left; will-change:transform;}
   .dayruler .drow.ruler{min-height:29px; background:#fff;}
   .dayruler .drow.ruler .dname{z-index:10; background:#fff; color:#44515a; font-weight:800;}
   .dayruler .dtime{min-height:29px; background-color:#fff;}
   .dayruler .tick{top:4px;}
+  .dayruler .tick.edge{padding-left:0;transform:translateX(-100%);text-align:right;}
   .daygridframe{position:relative;}
   .storememo{position:absolute; left:728px; top:2px; z-index:6; width:4cm; height:3cm; resize:both; min-width:2.5cm; min-height:2cm; box-sizing:border-box; font-family:inherit; font-size:12px; line-height:1.4; padding:5px 7px; border:1.5px solid #e2c98a; border-radius:8px; background:#fffdf3; color:#5a4a2a;}
   #dayGrid{will-change:transform;}
@@ -611,7 +612,7 @@
     .appdialog-actions button{font-size:16px;min-height:50px;}
   }
 
-  /* v1.164 携帯オーナー：濃紺＋シャンパンゴールドのプロ仕様 */
+  /* v1.165 携帯オーナー：濃紺＋シャンパンゴールドのプロ仕様 */
   @media(max-width:600px){
     :root{--mobile-navy:#14283b;--mobile-navy-2:#203d58;--mobile-gold:#c8a45a;--mobile-gold-light:#ead9a9;--mobile-silver:#d8e0e7;}
     body{background:linear-gradient(180deg,#e9eef3 0%,#f7f8fa 42%,#eef2f5 100%);color:#243443;-webkit-tap-highlight-color:transparent;}
@@ -712,8 +713,10 @@
   .teamnotice-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.teamnotice-field{display:flex;flex-direction:column;gap:5px;color:#263b4d;font-size:13px;font-weight:900}.teamnotice-field textarea{width:100%;min-height:90px;resize:vertical;border:1px solid #aebbc4;border-radius:11px;padding:10px;background:#fff;color:#263747;font-size:14px;line-height:1.6;box-shadow:inset 0 1px 3px rgba(19,44,63,.08)}
   .teamnotice-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:15px}.teamnotice-actions button,#dayTeamNotice{border:1px solid #a88437;border-radius:10px;padding:8px 13px;font-weight:900;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.66),0 3px 7px rgba(17,37,52,.2)}
   #teamNoticeCancel{border-color:#8998a4;background:linear-gradient(180deg,#fff 0%,#dce3e8 100%);color:#263b4d}#teamNoticeSave,#dayTeamNotice{background:linear-gradient(180deg,#f4dda0 0%,#c8a45a 58%,#a98437 100%);color:#203448}
+  .daycommitbar{display:flex;flex:0 0 auto;gap:12px;justify-content:flex-end;padding:10px 14px;border-top:1px solid #aebbc4;background:linear-gradient(180deg,#fff 0%,#e7edf1 100%);box-shadow:0 -4px 12px rgba(12,35,52,.08)}
+  .daycommitbar button{min-width:160px;min-height:46px;border-radius:11px;padding:9px 16px;font-size:15px;font-weight:1000;cursor:pointer}.daycommitbar #dayClose{border:1px solid #7f909d;background:linear-gradient(180deg,#fff 0%,#d8e0e6 100%);color:#253a4b;box-shadow:inset 0 1px 0 #fff,0 3px 7px rgba(17,37,52,.2)}.daycommitbar #dayDecide{border:1px solid #a88437;background:linear-gradient(180deg,#f4dda0 0%,#c8a45a 58%,#a98437 100%);color:#203448;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 9px rgba(73,54,18,.28);text-shadow:0 1px 0 #fff}
   @media(max-width:600px){
-    .daymask{padding:0;align-items:stretch;justify-content:stretch}.daymodal{width:100%!important;max-width:100%!important;height:100dvh!important;max-height:100dvh;border:0;border-radius:0;left:auto!important;top:auto!important;margin:0!important}.dayhead{flex-wrap:wrap;gap:6px;padding:7px 8px}.dayhead h3{flex:1 1 100%;text-align:center}.daylegend{order:2;display:flex;overflow-x:auto;max-width:100%;padding-bottom:2px}.daylegend button{flex:0 0 auto;min-height:38px}.dayhead>#dayDecide,.dayhead>#dayClose{min-height:38px}.dmz{display:none!important}.dayscroll{overscroll-behavior:contain}.teamnotice-grid{grid-template-columns:1fr}.teamnotice-card{padding:17px 14px;border-radius:17px}.teamnotice-field textarea{min-height:74px}
+    .daymask{padding:0;align-items:stretch;justify-content:stretch}.daymodal{width:100%!important;max-width:100%!important;height:100dvh!important;max-height:100dvh;border:0;border-radius:0;left:auto!important;top:auto!important;margin:0!important}.dayhead{flex-wrap:wrap;gap:6px;padding:7px 8px}.dayhead h3{flex:1 1 100%;text-align:center}.daylegend{order:2;display:flex;overflow-x:auto;max-width:100%;padding-bottom:2px}.daylegend button{flex:0 0 auto;min-height:38px}.dmz{display:none!important}.dayscroll{overscroll-behavior:contain}.daycommitbar{gap:8px;padding:8px;position:relative;z-index:12}.daycommitbar button{flex:1;min-width:0;min-height:50px;padding:8px 6px;font-size:14px}.teamnotice-grid{grid-template-columns:1fr}.teamnotice-card{padding:17px 14px;border-radius:17px}.teamnotice-field textarea{min-height:74px}
   }
 </style>
   <!-- ===== Firebase（シフト共有 / 売上と同じDBの zaiko/shift）===== -->
@@ -951,7 +954,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.164</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.165</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1248,8 +1251,9 @@
 <!-- 日別タイムライン -->
 <div class="daymask" id="dayMask">
   <div class="daymodal">
-    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button><button type="button" id="dayTeamNotice">📣 全員への連絡</button></div><button id="dayDecide" type="button" style="background:#f4d65c;color:#111;" data-guide-key="day-decide" data-guide="この日のシフトを決定・解除できます">未確定</button><button id="dayClose" type="button">閉じる</button></div>
+    <div class="dayhead"><h3 id="dayTitle"></h3><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button><button type="button" id="dayTeamNotice">📣 全員への連絡</button></div></div>
     <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
+    <div class="daycommitbar"><button id="dayClose" type="button">画面を閉じる</button><button id="dayDecide" type="button" data-guide-key="day-decide" data-guide="このボタンを押した場合だけ、この日のシフトを決定します">このシフトを決定</button></div>
     <div class="dmz dmz-r" data-mz="r" title="幅を変える"></div>
     <div class="dmz dmz-b" data-mz="b" title="縦を変える"></div>
     <div class="dmz dmz-c" data-mz="c" title="幅と縦を変える"></div>
@@ -1276,7 +1280,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.164"; window.APP_UPDATED="2026-08-30";
+window.APP_VERSION="v1.165"; window.APP_UPDATED="2026-08-30";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1575,7 +1579,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.164</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.165</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2267,7 +2271,8 @@ function openDayView(d){
   $("#dayTitle").innerHTML=`${Y}年${M}月${d}日<span class="${dayDow===0||dayDow===6||isHol(d)?'weekend':''}">(${dow})</span>`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   $("#dayPrev").disabled=d<=1; $("#dayNext").disabled=d>=DAYS;
   const W=(AX1-AX0)*HW;
-  let ticks=""; for(let h=AX0; h<=AX1; h++){ ticks+=`<div class="tick" style="left:${(h-AX0)*HW}px">${h}</div>`; }
+  let ticks=""; for(let h=AX0; h<AX1; h++){ ticks+=`<div class="tick" style="left:${(h-AX0)*HW}px">${h}</div>`; }
+  ticks+=`<div class="tick edge" style="left:${(AX1-AX0)*HW}px">23:30</div>`;
   const rulerTrack=$("#dayRulerTrack");
   if(rulerTrack) rulerTrack.innerHTML=`<div class="drow ruler"><div class="dname">時間</div><div class="dtime" style="width:${W}px;min-width:${W}px">${ticks}</div></div>`;
   let html="";
@@ -2341,12 +2346,13 @@ function fitDayGrid(){
   const base=mobile?Math.max(.72,fit):fit;
   const scale=Math.max(.3,Math.min(3,base*dayUserZoom));
   g.style.transformOrigin="top left";
-  g.style.transform="scale("+scale+")";
+  const transformValue="scale("+scale+")", contentWidth=Math.ceil(gw*scale), contentHeight=Math.ceil(gh*scale);
+  g.style.transform=transformValue;
   const frame=$("#dayGridFrame");
-  if(frame){ frame.style.width=Math.ceil(gw*scale)+"px"; frame.style.height=Math.ceil(gh*scale)+"px"; }
+  if(frame){ frame.style.width=contentWidth+"px"; frame.style.minWidth=contentWidth+"px"; frame.style.height=contentHeight+"px"; }
   const ruler=$("#dayRuler"), track=$("#dayRulerTrack");
-  if(track){ track.style.width=gw+"px"; track.style.transform="scale("+scale+")"; }
-  if(ruler){ ruler.style.width=Math.max(sc.clientWidth,Math.ceil(gw*scale))+"px"; ruler.style.height=Math.max(26,Math.ceil(29*scale))+"px"; }
+  if(track){ track.style.width=gw+"px"; track.style.minWidth=gw+"px"; track.style.transform=transformValue; }
+  if(ruler){ ruler.style.width=contentWidth+"px"; ruler.style.minWidth=contentWidth+"px"; ruler.style.height=Math.max(26,Math.ceil(29*scale))+"px"; }
 }
 function setDayZoom(next,clientX,clientY){
   const sc=document.querySelector('.dayscroll');
@@ -2398,7 +2404,7 @@ function toggleStoreOff(st){
   }else S.storeOff[k][st]=true;
   save(); openDayView(dayViewDay); renderOwner();
 }
-function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定ずみ（解除）":"未確定"); b.style.background=locked?"#bbb":(on?"#8a8f98":"#f4d65c"); b.style.color=on||locked?"#fff":"#111"; }
+function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定済みを解除":"このシフトを決定"); b.style.background=locked?"#bbb":(on?"#667481":"linear-gradient(180deg,#ffe89a 0%,#d5af4f 58%,#b58b2f 100%)"); b.style.color=locked||on?"#fff":"#203448"; }
 $("#dayPrev").onclick=()=>{ if(dayViewDay>1) openDayView(dayViewDay-1); };
 $("#dayNext").onclick=()=>{ if(dayViewDay<DAYS) openDayView(dayViewDay+1); };
 $("#dayClose").onclick=()=>{ $("#dayMask").style.display="none"; renderOwner(); };

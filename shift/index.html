@@ -463,9 +463,15 @@
   .staff-view-toggle button{flex:1;border:0;border-radius:10px;padding:10px 8px;background:transparent;color:#dbe5ec;font-weight:900;font-size:14px;cursor:pointer}.staff-view-toggle button.on{color:#203448;background:linear-gradient(180deg,#fff8df 0%,#dfc578 58%,#bd994d 100%);box-shadow:inset 0 1px 0 #fff,0 2px 5px rgba(3,17,28,.35);text-shadow:0 1px 0 #fff}
   .publicshift-pane{display:none;margin:0 8px 18px}.publicshift-head{display:flex;align-items:center;justify-content:space-between;gap:10px;width:min(100%,1100px);margin:0 auto 8px;color:#173047}.publicshift-head strong{font-size:18px}.readonly-badge{border:1px solid #a88437;border-radius:20px;padding:4px 9px;background:linear-gradient(180deg,#fff8df,#dfc578);color:#3d3420;font-size:11px;font-weight:900}
   .publicshift-scroll{width:min(100%,1100px);margin:auto;overflow:auto;border:1px solid #aeb9c2;border-radius:15px;background:#fff;box-shadow:0 8px 22px rgba(15,36,52,.14)}.publicshift-table{border-collapse:separate;border-spacing:0;min-width:max-content;font-size:11px}.publicshift-table th,.publicshift-table td{border-right:1px solid #dce2e6;border-bottom:1px solid #dce2e6}.publicshift-table thead th{position:sticky;top:0;z-index:3;min-width:72px;height:46px;padding:4px;background:linear-gradient(180deg,#f8fafb,#e6ebef);color:#344b5d;text-align:center}.publicshift-table .public-name{position:sticky;left:0;z-index:4;min-width:100px;max-width:100px;padding:6px 8px;background:#fff;color:#263b4d;font-weight:900;text-align:left}.publicshift-table thead .public-name{z-index:5;background:linear-gradient(180deg,#294a64,#173047);color:#fff}.publicshift-table .today-col{background:linear-gradient(180deg,#fff9dc,#f5e5a5)!important;box-shadow:inset 2px 0 0 #c8a45a,inset -2px 0 0 #c8a45a}.publicshift-table td{height:54px;max-width:86px;padding:3px;background:#fff;vertical-align:top}.publicshift-table td.today-col{background:#fff8d6!important}.public-chip{display:block;margin:1px 0;border-radius:6px;padding:3px 4px;color:#fff;font-size:10px;font-weight:900;line-height:1.25;white-space:nowrap}.public-off{display:block;padding-top:11px;color:#56869e;font-weight:900;text-align:center}.public-empty{padding-top:12px;color:#b1bbc2;text-align:center}.publicshift-empty{padding:28px 14px;color:#6b7c88;text-align:center;line-height:1.8}
+  .publicshift-table .can-open{cursor:pointer;touch-action:manipulation}.publicshift-table .can-open:active{filter:brightness(.92)}.public-date-button{width:100%;border:0;background:transparent;color:inherit;font:inherit;font-weight:900;cursor:pointer}
+  .publicday-mask{position:fixed;inset:0;z-index:2147481900;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(5,18,29,.75);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+  .publicday-card{display:flex;flex-direction:column;width:min(1080px,100%);height:min(91dvh,820px);overflow:hidden;border:1px solid #c7a456;border-radius:22px;background:#edf2f5;box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 #fff}
+  .publicday-head{display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;background:linear-gradient(180deg,#294a64 0%,#122b3f 100%);color:#fff;box-shadow:0 4px 13px rgba(8,25,38,.35)}.publicday-head>div{display:flex;align-items:center;gap:10px}.publicday-head h2{margin:0;font-size:20px}.publicday-head button{border:1px solid rgba(255,255,255,.55);border-radius:11px;padding:9px 16px;background:linear-gradient(180deg,#fff 0%,#dce4e9 100%);color:#173047;font-weight:1000;cursor:pointer;box-shadow:inset 0 1px 0 #fff,0 2px 7px rgba(0,0,0,.3)}
+  .publicday-scroll{flex:1 1 auto;overflow:auto;background:#fff}.publicday-timeline{min-width:max-content;padding-bottom:8px}.publicday-row{display:flex;min-width:max-content;border-bottom:1px solid #e0e6ea;min-height:46px}.publicday-name{position:sticky;left:0;z-index:4;display:flex;align-items:center;width:108px;min-width:108px;box-sizing:border-box;padding:5px 8px;border-right:1px solid #b8c4cc;background:#fff;color:#263b4d;font-size:12px;font-weight:900}.publicday-time{position:relative;min-height:46px;background-image:repeating-linear-gradient(to right,transparent 0,transparent 27px,#edf0f2 27px,#edf0f2 28px)}.publicday-axis{position:sticky;top:0;z-index:7;min-height:32px;background:linear-gradient(180deg,#fff,#e7edf1);box-shadow:0 2px 6px rgba(20,43,59,.18)}.publicday-axis .publicday-name{z-index:9;background:linear-gradient(180deg,#fff,#e4eaee)}.publicday-axis .publicday-time{min-height:32px;background-color:#f8fafb}.publicday-tick{position:absolute;top:7px;color:#315068;font-size:11px;font-weight:900;transform:translateX(-1px)}.publicday-tick.edge{transform:translateX(-100%)}.publicday-store{min-height:34px}.publicday-store .publicday-name{color:#fff;font-size:14px;text-shadow:0 1px 1px rgba(0,0,0,.25)}.publicday-store .publicday-time{min-height:34px}.publicday-none{display:flex;align-items:center;padding-left:13px;color:#89969f;font-weight:800}.publicday-bar{position:absolute;top:7px;height:32px;box-sizing:border-box;overflow:hidden;border:1px solid rgba(0,0,0,.13);border-radius:8px;padding:6px 9px;color:#fff;font-size:12px;font-weight:1000;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.52),0 2px 5px rgba(20,42,58,.23);text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  .publicday-notices{flex:0 0 auto;max-height:34dvh;overflow:auto;padding:10px 14px 14px;border-top:1px solid #bdc8cf;background:linear-gradient(180deg,#f5f7f8,#e7edf1)}.publicday-notices .brief-section{margin-top:7px}.shift-time-notice{border-color:#d7c184;background:#fffdf4}.shift-time-notice .brief-label{color:#8d6a25}
   .todaybrief-mask{position:fixed;inset:0;z-index:2147482000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(6,19,30,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.todaybrief-card{width:min(430px,100%);max-height:90dvh;overflow:auto;border:1px solid #c8a45a;border-radius:24px;padding:22px 18px 18px;background:linear-gradient(180deg,#fff 0%,#eef2f5 100%);box-shadow:0 24px 62px rgba(0,0,0,.5),inset 0 1px 0 #fff;text-align:center}.todaybrief-mark{display:inline-block;border-radius:20px;padding:4px 12px;background:linear-gradient(180deg,#f5dfa2,#bd994d);color:#25394b;font-size:10px;font-weight:1000;letter-spacing:.13em}.todaybrief-card h2{margin:8px 0 1px;color:#173047;font-size:25px}.todaybrief-date{color:#71808b;font-size:13px;font-weight:800}.todaybrief-body{margin:15px 0;text-align:left}.brief-section{margin-top:10px;border:1px solid #cfd8df;border-radius:13px;padding:11px 12px;background:#fff;box-shadow:inset 0 1px 0 #fff,0 2px 7px rgba(13,39,58,.08)}.brief-label{margin-bottom:5px;color:#a47c2f;font-size:11px;font-weight:1000;letter-spacing:.04em}.brief-main{color:#20384b;font-size:17px;font-weight:900;line-height:1.55}.brief-message{color:#263b4d;font-size:14px;font-weight:800;line-height:1.7;white-space:pre-wrap}.brief-message+.brief-message{margin-top:7px;padding-top:7px;border-top:1px dashed #d2d9de}.brief-none{color:#87949d;font-weight:700}.todaybrief-card>button{width:100%;border:1px solid #a88437;border-radius:12px;padding:12px;background:linear-gradient(180deg,#f4dda0 0%,#c8a45a 58%,#a98437 100%);color:#203448;font-size:16px;font-weight:1000;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 4px 10px rgba(66,48,15,.28);text-shadow:0 1px 0 #fff}
   .today-detail{margin:-60px auto 70px}.today-detail .brief-section{background:rgba(255,255,255,.82)}
-  @media(max-width:480px){.publicshift-pane{margin-left:4px;margin-right:4px}.publicshift-table thead th{min-width:68px}.publicshift-table .public-name{min-width:88px;max-width:88px}.staff-view-toggle{width:calc(100% - 12px);margin-top:7px}.todaybrief-card{padding:20px 14px 15px;border-radius:20px}}
+  @media(max-width:480px){.publicshift-pane{margin-left:4px;margin-right:4px}.publicshift-table thead th{min-width:68px}.publicshift-table .public-name{min-width:88px;max-width:88px}.staff-view-toggle{width:calc(100% - 12px);margin-top:7px}.todaybrief-card{padding:20px 14px 15px;border-radius:20px}.publicday-mask{padding:0}.publicday-card{width:100%;height:100dvh;border:0;border-radius:0}.publicday-head{padding:10px}.publicday-head h2{font-size:16px}.publicday-head .readonly-badge{font-size:9px;padding:3px 7px}.publicday-head button{padding:9px 14px}.publicday-name{width:94px;min-width:94px}.publicday-notices{max-height:38dvh;padding:8px 9px 12px}}
 </style>
   <!-- ===== Firebase（シフト共有 / 売上と同じDBの zaiko/shift）===== -->
   <script type="importmap">
@@ -647,7 +653,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト <span class="demoTag">v1.79</span></h1>
+  <h1>シフト <span class="demoTag">v1.80</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -837,6 +843,14 @@
   </div>
 </div>
 
+<div class="publicday-mask" id="publicDayMask" role="dialog" aria-modal="true" aria-labelledby="publicDayTitle">
+  <div class="publicday-card">
+    <div class="publicday-head"><div><span class="readonly-badge">閲覧のみ</span><h2 id="publicDayTitle">決定シフト</h2></div><button type="button" id="publicDayClose">閉じる</button></div>
+    <div class="publicday-scroll" id="publicDayTimeline"></div>
+    <div class="publicday-notices" id="publicDayNotices"></div>
+  </div>
+</div>
+
 <div class="todaybrief-mask" id="todayBriefMask" role="dialog" aria-modal="true" aria-labelledby="todayBriefTitle">
   <div class="todaybrief-card">
     <div class="todaybrief-mark">TODAY</div>
@@ -848,7 +862,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.79"; window.APP_UPDATED="2026-08-30";
+window.APP_VERSION="v1.80"; window.APP_UPDATED="2026-08-30";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1614,11 +1628,38 @@ function publicShiftTableHtml(){
   let out=`<div class="publicshift-pane" id="publicShiftPane" style="display:${staffDisplayMode==='decided'?'block':'none'}"><div class="publicshift-head"><strong>${Y}年${M}月　決定シフト</strong><span class="readonly-badge">閲覧のみ</span></div>`;
   if(!rows.length) return out+'<div class="publicshift-scroll"><div class="publicshift-empty">この月の公開済み決定シフトはまだありません。</div></div></div>';
   out+='<div class="publicshift-scroll"><table class="publicshift-table"><thead><tr><th class="public-name">スタッフ</th>';
-  dates.forEach((date,i)=>{ const d=i+1,dow=new Date(Y,M-1,d).getDay(); out+=`<th class="${date===todayKey?'today-col':''}">${d}<br><small>${DOW[dow]}${date===todayKey?'・今日':''}</small></th>`; });
+  dates.forEach((date,i)=>{ const d=i+1,dow=new Date(Y,M-1,d).getDay(),canOpen=Object.prototype.hasOwnProperty.call(schedule,date); out+=`<th data-public-date="${date}" class="${date===todayKey?'today-col ':''}${canOpen?'can-open':''}"><button type="button" class="public-date-button" ${canOpen?'':'disabled'}>${d}<br><small>${DOW[dow]}${date===todayKey?'・今日':''}</small></button></th>`; });
   out+='</tr></thead><tbody>';
-  rows.forEach(nm=>{ out+=`<tr><th class="public-name">${esc(nm)}</th>`; dates.forEach(date=>{ const entry=(schedule[date]||[]).find(row=>row&&row.name===nm), cls=date===todayKey?'today-col':''; let cell='<div class="public-empty">—</div>'; if(entry){ if(entry.off&&!entry.shifts?.length) cell='<span class="public-off">休</span>'; else if((entry.shifts||[]).length) cell=entry.shifts.map(s=>{ const c=(STORE_COLOR[s.store]||STORE_COLOR['大須']).hd; return `<span class="public-chip" style="background:${c};color:${isLightColor(c)?'#263747':'#fff'}">${esc(s.store)}<br>${esc(s.start||'')}〜${esc(s.end||'')}</span>`; }).join(''); } out+=`<td class="${cls}">${cell}</td>`; }); out+='</tr>'; });
+  rows.forEach(nm=>{ out+=`<tr><th class="public-name">${esc(nm)}</th>`; dates.forEach(date=>{ const entry=(schedule[date]||[]).find(row=>row&&row.name===nm), canOpen=Object.prototype.hasOwnProperty.call(schedule,date), cls=(date===todayKey?'today-col ':'')+(canOpen?'can-open':''), attr=canOpen?` data-public-date="${date}"`:''; let cell='<div class="public-empty">—</div>'; if(entry){ if(entry.off&&!entry.shifts?.length) cell='<span class="public-off">休</span>'; else if((entry.shifts||[]).length) cell=entry.shifts.map(s=>{ const c=(STORE_COLOR[s.store]||STORE_COLOR['大須']).hd; return `<span class="public-chip" style="background:${c};color:${isLightColor(c)?'#263747':'#fff'}">${esc(s.store)}<br>${esc(s.start||'')}〜${esc(s.end||'')}</span>`; }).join(''); } out+=`<td class="${cls}"${attr}>${cell}</td>`; }); out+='</tr>'; });
   return out+'</tbody></table></div></div>';
 }
+function publicShiftHour(value){ const m=String(value||'').match(/(\d{1,2})(?::(\d{2}))?/); if(!m) return null; return +m[1]+(+m[2]||0)/60; }
+function publicDayTimelineHtml(date){
+  const start=9,end=23.5,px=56,width=(end-start)*px,entries=publicSchedule()[date]||[];
+  let ticks=''; for(let h=start;h<end;h++) ticks+=`<span class="publicday-tick" style="left:${(h-start)*px}px">${h}</span>`; ticks+=`<span class="publicday-tick edge" style="left:${width}px">23:30</span>`;
+  let html=`<div class="publicday-timeline"><div class="publicday-row publicday-axis"><div class="publicday-name">時間</div><div class="publicday-time" style="width:${width}px;min-width:${width}px">${ticks}</div></div>`;
+  STORES.forEach(st=>{
+    const color=(STORE_COLOR[st]||STORE_COLOR['大須']).hd,workers=[];
+    entries.forEach(entry=>{ const shifts=(entry&&Array.isArray(entry.shifts)?entry.shifts:[]).filter(s=>s&&s.store===st); if(shifts.length) workers.push({name:entry.name,shifts}); });
+    html+=`<div class="publicday-row publicday-store"><div class="publicday-name" style="background:${color}">${esc(st)}</div><div class="publicday-time" style="width:${width}px;min-width:${width}px;background-color:${color}18"></div></div>`;
+    if(!workers.length) html+=`<div class="publicday-row"><div class="publicday-name">—</div><div class="publicday-time publicday-none" style="width:${width}px;min-width:${width}px">勤務なし</div></div>`;
+    workers.forEach(worker=>{
+      const bars=worker.shifts.map(shift=>{ const s=publicShiftHour(shift.start),e=publicShiftHour(shift.end); if(s==null||e==null||e<=s) return ''; const left=Math.max(0,(s-start)*px),right=Math.min(width,(e-start)*px),barWidth=Math.max(38,right-left); return `<div class="publicday-bar" style="left:${left}px;width:${barWidth}px;background:${color};color:${isLightColor(color)?'#203448':'#fff'}">${esc(shift.start||'')}〜${esc(shift.end||'')}</div>`; }).join('');
+      html+=`<div class="publicday-row"><div class="publicday-name">${esc(worker.name||'')}</div><div class="publicday-time" style="width:${width}px;min-width:${width}px">${bars}</div></div>`;
+    });
+  });
+  return html+'</div>';
+}
+function openPublicDay(me,date){
+  if(!Object.prototype.hasOwnProperty.call(publicSchedule(),date)) return;
+  const parts=date.split('-'),day=+parts[2],dow=new Date(+parts[0],+parts[1]-1,day).getDay(),data=todayBriefData(me,date),rec=(((S.staff[me]||{}).shiftText)||{})[date],shiftMessage=rec?(typeof rec==='string'?rec:(rec.text||'')):'';
+  $('#publicDayTitle').textContent=`${+parts[1]}月${day}日（${DOW[dow]}）決定シフト`;
+  $('#publicDayTimeline').innerHTML=publicDayTimelineHtml(date);
+  $('#publicDayNotices').innerHTML=briefSectionsHtml(data,false)+`<div class="brief-section shift-time-notice"><div class="brief-label">シフト時間の連絡事項</div><div class="brief-message${shiftMessage?'':' brief-none'}">${shiftMessage?esc(shiftMessage):'連絡事項はありません'}</div></div>`;
+  $('#publicDayMask').style.display='flex';
+}
+$('#publicDayClose').onclick=()=>$('#publicDayMask').style.display='none';
+$('#publicDayMask').onclick=e=>{ if(e.target.id==='publicDayMask') $('#publicDayMask').style.display='none'; };
 function briefFingerprint(value){ const s=JSON.stringify(value); let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0).toString(36); }
 function todayBriefData(me,date){
   const entry=publicScheduleEntry(me,date), shifts=entry&&Array.isArray(entry.shifts)?entry.shifts:[], stores=Array.from(new Set(shifts.map(x=>x.store).filter(Boolean)));
@@ -1760,6 +1801,7 @@ function renderMine(me){
   $("#staffMine").innerHTML=html;
   const setDisplayMode=mode=>{ staffDisplayMode=mode; try{ localStorage.setItem('zaikonStaffDisplayMode_v1',mode); }catch(e){} renderMine(me); };
   $('#showWishCalendar').onclick=()=>setDisplayMode('wish'); $('#showPublicShift').onclick=()=>setDisplayMode('decided');
+  document.querySelectorAll('#publicShiftPane [data-public-date].can-open').forEach(el=>el.onclick=e=>{ e.preventDefault(); openPublicDay(me,el.dataset.publicDate); });
   setTimeout(()=>maybeShowTodayBrief(me),40);
   const _u=$("#updatedLbl"); if(_u) _u.textContent = S.updatedAt ? `最終更新 ${String(S.updatedAt).replace(/^\d{4}\//,'')}` : "";
   const _ms=$("#monthSubmit"); if(_ms) _ms.onclick=()=>{
@@ -1795,15 +1837,7 @@ function renderMine(me){
     if(Date.now()<staffSwipeBlockUntil) return;
     const selectedDay=+c.dataset.d, selectedKey=key(selectedDay);
     if(isShiftDayPublished(selectedKey)){
-      document.querySelectorAll('#staffMine .mcell.shiftselected').forEach(el=>el.classList.remove('shiftselected'));
-      c.classList.add('shiftselected');
-      const selectedDow=new Date(Y,M-1,selectedDay).getDay();
-      const card=document.querySelector('#staffMine .today-shift');
-      if(card){
-        card.outerHTML=_shiftCard(selectedKey,`${M}月${selectedDay}日（${DOW[selectedDow]}）`,'選択した日のシフト');
-        const nextCard=document.querySelector('#staffMine .today-shift');
-        if(nextCard) nextCard.scrollIntoView({behavior:'smooth',block:'center'});
-      }
+      openPublicDay(me,selectedKey);
       return;
     }
     const rq=(S.staff[me].req||{})[selectedKey];
