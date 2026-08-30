@@ -612,7 +612,7 @@
     .appdialog-actions button{font-size:16px;min-height:50px;}
   }
 
-  /* v1.167 日別編集：PC初期サイズと携帯タイムライン同期 */
+  /* v1.169 2026年9月開始・日別編集の安全な拡大上限 */
   @media(max-width:600px){
     :root{--mobile-navy:#14283b;--mobile-navy-2:#203d58;--mobile-gold:#c8a45a;--mobile-gold-light:#ead9a9;--mobile-silver:#d8e0e7;}
     body{background:linear-gradient(180deg,#e9eef3 0%,#f7f8fa 42%,#eef2f5 100%);color:#243443;-webkit-tap-highlight-color:transparent;}
@@ -954,7 +954,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.167</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.169</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1280,7 +1280,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.167"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.169"; window.APP_UPDATED="2026-08-31";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1393,7 +1393,7 @@ const isLightColor=hex=>{const h=String(hex).replace("#","");const r=parseInt(h.
 const pad=n=>String(n).padStart(2,"0");
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const displayText=v=>{ const raw=v&&typeof v==='object'&&'text' in v?v.text:v, text=String(raw==null?'':raw).trim(); return /^(false|null|undefined)$/i.test(text)?'':text; };
-const SHIFT_START_YEAR=2026, SHIFT_START_MONTH=8, SHIFT_END_YEAR=2030;
+const SHIFT_START_YEAR=2026, SHIFT_START_MONTH=9, SHIFT_END_YEAR=2030;
 let Y=SHIFT_START_YEAR, M=SHIFT_START_MONTH, DAYS=30;
 function japanToday(){
   try{
@@ -1588,7 +1588,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.167</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.169</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2025,7 +2025,8 @@ $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.displ
 
 /* ---- 日別タイムライン ---- */
 const AX0=9, AX1=23.5, HW=40;
-let dayViewDay=null, dayUserZoom=1;
+const DAY_MIN_USER_ZOOM=.7, DAY_MAX_USER_ZOOM=2, DAY_MAX_SCALE=1.2;
+let dayViewDay=null, dayUserZoom=1, dayScale=1, dayZoomRaf=0, dayPendingZoom=null;
 let dayUndoDate=null, dayUndoHistory=[];
 const DAY_UNDO_FIELDS=['decided','support','tetsu','hold','req','ooff'];
 const DAY_UNDO_META=['storeOff','storeMemo','decidedDays'];
@@ -2270,6 +2271,8 @@ $('#teamNoticeSave').onclick=()=>{
   touchUpdated(); save(); $('#teamNoticeMask').style.display='none';
 };
 function openDayView(d){
+  if(dayZoomRaf){ cancelAnimationFrame(dayZoomRaf); dayZoomRaf=0; }
+  dayPendingZoom=null;
   if(dayUndoDate!==key(d)){ dayUndoDate=key(d); dayUndoHistory=[]; }
   const resetDayViewport=dayViewDay!==d||$("#dayMask").style.display!=="flex";
   if(resetDayViewport){
@@ -2364,7 +2367,8 @@ function fitDayGrid(){
   const gh=Math.max(g.scrollHeight,1), availableWidth=Math.max(1,sc.clientWidth-8);
   const fit=availableWidth/gw, mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
   const base=mobile?Math.max(.72,Math.min(1,fit)):Math.min(1.15,fit);
-  const scale=Math.max(.3,Math.min(3,base*dayUserZoom));
+  const scale=Math.max(.3,Math.min(DAY_MAX_SCALE,base*dayUserZoom));
+  dayScale=scale;
   g.style.transformOrigin="top left";
   const transformValue="scale("+scale+")", contentWidth=Math.ceil(gw*scale), contentHeight=Math.ceil(gh*scale);
   g.style.transform=transformValue;
@@ -2375,17 +2379,20 @@ function fitDayGrid(){
   if(ruler){ ruler.style.width=contentWidth+"px"; ruler.style.minWidth=contentWidth+"px"; ruler.style.height=Math.max(26,Math.ceil(29*scale))+"px"; }
 }
 function setDayZoom(next,clientX,clientY){
-  const sc=document.querySelector('.dayscroll');
-  if(!sc) return;
-  const previous=dayUserZoom;
-  dayUserZoom=Math.max(.38,Math.min(2,next));
-  if(dayUserZoom===previous) return;
-  const rect=sc.getBoundingClientRect(), x=clientX-rect.left, y=clientY-rect.top;
-  const oldLeft=sc.scrollLeft+x, oldTop=sc.scrollTop+y;
-  fitDayGrid();
-  const ratio=dayUserZoom/previous;
-  sc.scrollLeft=Math.max(0,oldLeft*ratio-x);
-  sc.scrollTop=Math.max(0,oldTop*ratio-y);
+  dayPendingZoom={zoom:Math.max(DAY_MIN_USER_ZOOM,Math.min(DAY_MAX_USER_ZOOM,next)),clientX,clientY};
+  if(dayZoomRaf) return;
+  dayZoomRaf=requestAnimationFrame(()=>{
+    dayZoomRaf=0;
+    const job=dayPendingZoom; dayPendingZoom=null;
+    const sc=document.querySelector('.dayscroll'); if(!sc||!job) return;
+    const previous=dayUserZoom, previousScale=dayScale; if(job.zoom===previous) return;
+    const rect=sc.getBoundingClientRect(), x=job.clientX-rect.left, y=job.clientY-rect.top;
+    const oldLeft=sc.scrollLeft+x, oldTop=sc.scrollTop+y;
+    dayUserZoom=job.zoom; fitDayGrid();
+    const ratio=dayScale/(previousScale||1);
+    sc.scrollLeft=Math.max(0,oldLeft*ratio-x);
+    sc.scrollTop=Math.max(0,oldTop*ratio-y);
+  });
 }
 (function(){
   const sc=document.querySelector('.dayscroll');
@@ -2427,7 +2434,11 @@ function toggleStoreOff(st){
 function _syncDayDecideBtn(){ const b=$("#dayDecide"); if(!b||dayViewDay==null) return; const locked=ownerMonthIsClosed(), on=!!(S.decidedDays&&S.decidedDays[key(dayViewDay)]); b.disabled=locked; b.textContent=locked?"受付終了":(on?"✓ 決定済みを解除":"このシフトを決定"); b.style.background=locked?"#777":"linear-gradient(180deg,#343434 0%,#111 58%,#000 100%)"; b.style.color="#fff"; }
 $("#dayPrev").onclick=()=>{ if(dayViewDay>1) openDayView(dayViewDay-1); };
 $("#dayNext").onclick=()=>{ if(dayViewDay<DAYS) openDayView(dayViewDay+1); };
-$("#dayClose").onclick=()=>{ $("#dayMask").style.display="none"; renderOwner(); };
+function closeDayView(){
+  if(dayZoomRaf){ cancelAnimationFrame(dayZoomRaf); dayZoomRaf=0; }
+  dayPendingZoom=null; $("#dayMask").style.display="none";
+}
+$("#dayClose").onclick=()=>{ closeDayView(); renderOwner(); };
 $("#dayTextPlace").onclick=()=>{ if(!closedMonthEditBlocked()){ selectedShiftTextPreset=''; setShiftTextPlaceMode(!shiftTextPlaceMode); } };
 $("#dayTextHistory").onclick=()=>{ if(!closedMonthEditBlocked()) openShiftTextHistory(); };
 $("#dayDecide").onclick=()=>{
@@ -2448,7 +2459,7 @@ $("#dayDecide").onclick=()=>{
   if(document.querySelector("#staffView").style.display!=="none") renderStaff();
 };
 $("#dayUndo").onclick=()=>undoDayChange();
-$("#dayMask").onclick=e=>{ if(e.target.id==="dayMask") $("#dayMask").style.display="none"; };
+$("#dayMask").onclick=e=>{ if(e.target.id==="dayMask") closeDayView(); };
 /* ---- 要請（名前の横の✈要請ボタン）---- */
 let reqTarget=null;
 function openReq(nm,d){

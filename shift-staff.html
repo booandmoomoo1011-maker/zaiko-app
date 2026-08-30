@@ -653,7 +653,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト <span class="demoTag">v1.82</span></h1>
+  <h1>シフト <span class="demoTag">v1.83</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -862,7 +862,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.82"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.83"; window.APP_UPDATED="2026-08-31";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -890,7 +890,7 @@ const isLightColor=hex=>{const h=String(hex).replace("#","");const r=parseInt(h.
 const pad=n=>String(n).padStart(2,"0");
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const displayText=v=>{ const raw=v&&typeof v==='object'&&'text' in v?v.text:v, text=String(raw==null?'':raw).trim(); return /^(false|null|undefined)$/i.test(text)?'':text; };
-const STAFF_START_YEAR=2026, STAFF_START_MONTH=8, STAFF_END_YEAR=2030;
+const STAFF_START_YEAR=2026, STAFF_START_MONTH=9, STAFF_END_YEAR=2030;
 let Y=STAFF_START_YEAR, M=STAFF_START_MONTH, DAYS=30;
 function japanToday(){
   try{
@@ -1635,7 +1635,8 @@ function publicShiftTableHtml(){
   return out+'</tbody></table></div></div>';
 }
 function publicShiftHour(value){ const m=String(value||'').match(/(\d{1,2})(?::(\d{2}))?/); if(!m) return null; return +m[1]+(+m[2]||0)/60; }
-let publicDayUserZoom=1,publicDayScale=1;
+const PUBLIC_DAY_MIN_USER_ZOOM=.7, PUBLIC_DAY_MAX_USER_ZOOM=2, PUBLIC_DAY_MAX_SCALE=1.2;
+let publicDayUserZoom=1,publicDayScale=1,publicDayZoomRaf=0,publicDayPendingZoom=null;
 function publicDayTimelineHtml(date){
   const start=9,end=23.5,px=56,width=(end-start)*px,entries=publicSchedule()[date]||[];
   let ticks=''; for(let h=start;h<end;h++) ticks+=`<span class="publicday-tick" style="left:${(h-start)*px}px">${h}</span>`; ticks+=`<span class="publicday-tick edge" style="left:${width}px">23:30</span>`;
@@ -1672,30 +1673,41 @@ function fitPublicDayTimeline(){
   timeline.style.transform='none';
   const naturalWidth=Math.max(timeline.scrollWidth,1),naturalHeight=Math.max(timeline.scrollHeight,1);
   const fit=Math.min(sc.clientWidth/naturalWidth,sc.clientHeight/naturalHeight,1);
-  publicDayScale=Math.max(.28,Math.min(3,fit*publicDayUserZoom));
+  publicDayScale=Math.max(.28,Math.min(PUBLIC_DAY_MAX_SCALE,fit*publicDayUserZoom));
   timeline.style.transform=`scale(${publicDayScale})`;
   frame.style.width=Math.ceil(naturalWidth*publicDayScale)+'px';
   frame.style.minWidth=frame.style.width;
   frame.style.height=Math.ceil(naturalHeight*publicDayScale)+'px';
 }
 function setPublicDayZoom(next,clientX,clientY){
-  const sc=$('#publicDayTimeline'); if(!sc) return;
-  const previousScale=publicDayScale,rect=sc.getBoundingClientRect(),x=clientX-rect.left,y=clientY-rect.top,oldLeft=sc.scrollLeft+x,oldTop=sc.scrollTop+y;
-  publicDayUserZoom=Math.max(.5,Math.min(5,next)); fitPublicDayTimeline();
-  const ratio=publicDayScale/(previousScale||1); sc.scrollLeft=Math.max(0,oldLeft*ratio-x); sc.scrollTop=Math.max(0,oldTop*ratio-y);
+  publicDayPendingZoom={zoom:Math.max(PUBLIC_DAY_MIN_USER_ZOOM,Math.min(PUBLIC_DAY_MAX_USER_ZOOM,next)),clientX,clientY};
+  if(publicDayZoomRaf) return;
+  publicDayZoomRaf=requestAnimationFrame(()=>{
+    publicDayZoomRaf=0;
+    const job=publicDayPendingZoom; publicDayPendingZoom=null;
+    const sc=$('#publicDayTimeline'); if(!sc||!job) return;
+    const previousScale=publicDayScale,rect=sc.getBoundingClientRect(),x=job.clientX-rect.left,y=job.clientY-rect.top,oldLeft=sc.scrollLeft+x,oldTop=sc.scrollTop+y;
+    publicDayUserZoom=job.zoom; fitPublicDayTimeline();
+    const ratio=publicDayScale/(previousScale||1); sc.scrollLeft=Math.max(0,oldLeft*ratio-x); sc.scrollTop=Math.max(0,oldTop*ratio-y);
+  });
 }
 function openPublicDay(me,date){
   if(!Object.prototype.hasOwnProperty.call(publicSchedule(),date)) return;
   const parts=date.split('-'),day=+parts[2],dow=new Date(+parts[0],+parts[1]-1,day).getDay(),data=todayBriefData(me,date),rec=(((S.staff[me]||{}).shiftText)||{})[date],shiftMessage=displayText(rec);
-  publicDayUserZoom=1;
+  if(publicDayZoomRaf){ cancelAnimationFrame(publicDayZoomRaf); publicDayZoomRaf=0; }
+  publicDayPendingZoom=null; publicDayUserZoom=1;
   $('#publicDayTitle').textContent=`${+parts[1]}月${day}日（${DOW[dow]}）決定シフト`;
   $('#publicDayTimeline').innerHTML=publicDayTimelineHtml(date);
   $('#publicDayNotices').innerHTML=briefSectionsHtml(data,false)+`<div class="brief-section shift-time-notice"><div class="brief-label">シフト時間の連絡事項</div><div class="brief-message${shiftMessage?'':' brief-none'}">${shiftMessage?esc(shiftMessage):'連絡事項はありません'}</div></div>`;
   $('#publicDayMask').style.display='flex';
   requestAnimationFrame(()=>{ fitPublicDayTimeline(); $('#publicDayTimeline').scrollTo(0,0); });
 }
-$('#publicDayClose').onclick=()=>$('#publicDayMask').style.display='none';
-$('#publicDayMask').onclick=e=>{ if(e.target.id==='publicDayMask') $('#publicDayMask').style.display='none'; };
+function closePublicDay(){
+  if(publicDayZoomRaf){ cancelAnimationFrame(publicDayZoomRaf); publicDayZoomRaf=0; }
+  publicDayPendingZoom=null; $('#publicDayMask').style.display='none';
+}
+$('#publicDayClose').onclick=closePublicDay;
+$('#publicDayMask').onclick=e=>{ if(e.target.id==='publicDayMask') closePublicDay(); };
 (function(){
   const sc=$('#publicDayTimeline'); if(!sc) return;
   let startDistance=0,startZoom=1,blockClickUntil=0;
