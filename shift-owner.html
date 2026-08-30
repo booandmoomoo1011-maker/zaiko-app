@@ -335,7 +335,7 @@
   thead th.daycol .daypublish.undecided:disabled{border-color:#d0aa22;background:#f4d65c;color:#3f3600;opacity:1;}
   thead th.daycol.undecidedday{background:#fff3b8;}
   .daymask{position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:60; padding:12px;}
-  .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1320px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative;}
+  .daymodal{background:#fff; border-radius:14px; width:96vw; max-width:1320px; height:94vh; display:flex; flex-direction:column; overflow:hidden; position:relative; touch-action:pan-x pan-y;}
   .dmz{position:absolute; z-index:12; touch-action:none;}
   .dmz-r{top:0; right:-2px; width:9px; height:100%; cursor:ew-resize;}
   .dmz-b{left:0; bottom:-2px; height:9px; width:100%; cursor:ns-resize;}
@@ -360,7 +360,7 @@
   }
   .dayscroll{overflow:auto; flex:1 1 auto; padding:4px; touch-action:pan-x pan-y; overscroll-behavior:contain;}
   .dayruler{position:sticky; top:0; z-index:9; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:visible; transform-origin:top left;}
-  .dayruler-track{transform-origin:top left; will-change:transform;}
+  .dayruler-track{zoom:1;}
   .dayruler .drow.ruler{min-height:29px; background:#fff;}
   .dayruler .drow.ruler .dname{z-index:10; background:#fff; color:#44515a; font-weight:800;}
   .dayruler .dtime{min-height:29px; background-color:#fff;}
@@ -368,7 +368,7 @@
   .dayruler .tick.edge{padding-left:0;transform:translateX(-100%);text-align:right;}
   .daygridframe{position:relative;}
   .storememo{position:absolute; left:728px; top:2px; z-index:6; width:4cm; height:3cm; resize:both; min-width:2.5cm; min-height:2cm; box-sizing:border-box; font-family:inherit; font-size:12px; line-height:1.4; padding:5px 7px; border:1.5px solid #e2c98a; border-radius:8px; background:#fffdf3; color:#5a4a2a;}
-  #dayGrid{will-change:transform;}
+  #dayGrid{zoom:1;}
   .drow{display:flex; align-items:stretch; border-bottom:1px solid #f2e6ea; min-height:27px;}
   .drow.dedit{cursor:pointer;} .drow.dedit:hover{background:#fff6f9;}
   .drow.ruler{min-height:22px; background:#fbe6ec;}
@@ -612,7 +612,7 @@
     .appdialog-actions button{font-size:16px;min-height:50px;}
   }
 
-  /* v1.169 2026年9月開始・日別編集の安全な拡大上限 */
+  /* v1.170 日別編集の二重ズーム・固定名座標ずれ対策 */
   @media(max-width:600px){
     :root{--mobile-navy:#14283b;--mobile-navy-2:#203d58;--mobile-gold:#c8a45a;--mobile-gold-light:#ead9a9;--mobile-silver:#d8e0e7;}
     body{background:linear-gradient(180deg,#e9eef3 0%,#f7f8fa 42%,#eef2f5 100%);color:#243443;-webkit-tap-highlight-color:transparent;}
@@ -954,7 +954,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.169</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.170</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1280,7 +1280,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.169"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.170"; window.APP_UPDATED="2026-08-31";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1588,7 +1588,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.169</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.170</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2027,6 +2027,16 @@ $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.displ
 const AX0=9, AX1=23.5, HW=40;
 const DAY_MIN_USER_ZOOM=.7, DAY_MAX_USER_ZOOM=2, DAY_MAX_SCALE=1.2;
 let dayViewDay=null, dayUserZoom=1, dayScale=1, dayZoomRaf=0, dayPendingZoom=null;
+let dayViewportContent='';
+function lockDayPageZoom(){
+  const meta=document.querySelector('meta[name="viewport"]'); if(!meta||dayViewportContent) return;
+  dayViewportContent=meta.getAttribute('content')||'width=device-width, initial-scale=1.0';
+  meta.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+}
+function unlockDayPageZoom(){
+  const meta=document.querySelector('meta[name="viewport"]'); if(!meta||!dayViewportContent) return;
+  meta.setAttribute('content',dayViewportContent); dayViewportContent='';
+}
 let dayUndoDate=null, dayUndoHistory=[];
 const DAY_UNDO_FIELDS=['decided','support','tetsu','hold','req','ooff'];
 const DAY_UNDO_META=['storeOff','storeMemo','decidedDays'];
@@ -2274,7 +2284,9 @@ function openDayView(d){
   if(dayZoomRaf){ cancelAnimationFrame(dayZoomRaf); dayZoomRaf=0; }
   dayPendingZoom=null;
   if(dayUndoDate!==key(d)){ dayUndoDate=key(d); dayUndoHistory=[]; }
-  const resetDayViewport=dayViewDay!==d||$("#dayMask").style.display!=="flex";
+  const dayWasOpen=$("#dayMask").style.display==="flex";
+  const resetDayViewport=dayViewDay!==d||!dayWasOpen;
+  if(!dayWasOpen) lockDayPageZoom();
   if(resetDayViewport){
     dayUserZoom=1;
     const modal=document.querySelector('.daymodal');
@@ -2298,6 +2310,7 @@ function openDayView(d){
   });
   const g=$("#dayGrid");
   g.style.transform="none";
+  g.style.zoom="1";
   g.innerHTML=html;
   g.querySelectorAll('.dbar.wishbar:not(.wishfadecover)').forEach(bar=>{ bar.dataset.guideKey='wish-line'; bar.dataset.guide='希望の線を押すと、その時間をシフトへ入れられます'; });
   g.querySelectorAll('.dbar.decisionbar').forEach(bar=>{ bar.dataset.guideKey='shift-line'; bar.dataset.guide='勤務の線を押すと30分の休憩を追加、時間を押すと編集できます'; bar.onclick=e=>addShiftBreak(e,bar); });
@@ -2334,6 +2347,10 @@ function openDayView(d){
 })();
 (function(){
   const modal=document.querySelector('.daymodal'); if(!modal) return;
+  const stopNativePinch=e=>{ if(e.touches&&e.touches.length>1) e.preventDefault(); };
+  modal.addEventListener('touchstart',stopNativePinch,{passive:false,capture:true});
+  modal.addEventListener('touchmove',stopNativePinch,{passive:false,capture:true});
+  modal.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false,capture:true});
   let swipe=null;
   modal.addEventListener('touchstart',e=>{ if(e.touches.length!==1||(e.target.closest&&e.target.closest('button,input,textarea,.dresize,.dbar,.shifttext'))) return; const t=e.touches[0]; swipe={x:t.clientX,y:t.clientY,t:Date.now()}; },{passive:true,capture:true});
   modal.addEventListener('touchend',e=>{ if(!swipe||!e.changedTouches.length) return; const t=e.changedTouches[0],dx=t.clientX-swipe.x,dy=t.clientY-swipe.y,ms=Date.now()-swipe.t; swipe=null; if(ms>900||Math.abs(dx)<110||Math.abs(dx)<Math.abs(dy)*1.5) return; if(dx<0&&dayViewDay<DAYS) openDayView(dayViewDay+1); else if(dx>0&&dayViewDay>1) openDayView(dayViewDay-1); },{passive:true,capture:true});
@@ -2358,6 +2375,7 @@ function openDayView(d){
 function fitDayGrid(){
   const g=$("#dayGrid"), sc=document.querySelector('.dayscroll');
   if(!g||!sc) return;
+  g.style.transform="none"; g.style.zoom="1";
   // 表全体の幅ではなく「名前欄＋9:00〜23:30」を基準幅にする。
   // これによりPCの余白過多と、携帯で枠だけ途中で終わるずれを防ぐ。
   const timelineWidth=(AX1-AX0)*HW, nameWidth=Math.max(104,g.querySelector('.dname')?.offsetWidth||104);
@@ -2369,13 +2387,12 @@ function fitDayGrid(){
   const base=mobile?Math.max(.72,Math.min(1,fit)):Math.min(1.15,fit);
   const scale=Math.max(.3,Math.min(DAY_MAX_SCALE,base*dayUserZoom));
   dayScale=scale;
-  g.style.transformOrigin="top left";
-  const transformValue="scale("+scale+")", contentWidth=Math.ceil(gw*scale), contentHeight=Math.ceil(gh*scale);
-  g.style.transform=transformValue;
+  const contentWidth=Math.ceil(gw*scale), contentHeight=Math.ceil(gh*scale);
+  g.style.transform="none"; g.style.zoom=String(scale);
   const frame=$("#dayGridFrame");
   if(frame){ frame.style.width=contentWidth+"px"; frame.style.minWidth=contentWidth+"px"; frame.style.height=contentHeight+"px"; }
   const ruler=$("#dayRuler"), track=$("#dayRulerTrack");
-  if(track){ track.style.width=gw+"px"; track.style.minWidth=gw+"px"; track.style.transform=transformValue; }
+  if(track){ track.style.width=gw+"px"; track.style.minWidth=gw+"px"; track.style.transform="none"; track.style.zoom=String(scale); }
   if(ruler){ ruler.style.width=contentWidth+"px"; ruler.style.minWidth=contentWidth+"px"; ruler.style.height=Math.max(26,Math.ceil(29*scale))+"px"; }
 }
 function setDayZoom(next,clientX,clientY){
@@ -2436,7 +2453,7 @@ $("#dayPrev").onclick=()=>{ if(dayViewDay>1) openDayView(dayViewDay-1); };
 $("#dayNext").onclick=()=>{ if(dayViewDay<DAYS) openDayView(dayViewDay+1); };
 function closeDayView(){
   if(dayZoomRaf){ cancelAnimationFrame(dayZoomRaf); dayZoomRaf=0; }
-  dayPendingZoom=null; $("#dayMask").style.display="none";
+  dayPendingZoom=null; $("#dayMask").style.display="none"; unlockDayPageZoom();
 }
 $("#dayClose").onclick=()=>{ closeDayView(); renderOwner(); };
 $("#dayTextPlace").onclick=()=>{ if(!closedMonthEditBlocked()){ selectedShiftTextPreset=''; setShiftTextPlaceMode(!shiftTextPlaceMode); } };
