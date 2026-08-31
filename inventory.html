@@ -470,6 +470,109 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .cf-input{width:100%;height:52px;padding:0 8px;border:2px solid var(--g);border-radius:var(--rs);background:var(--sf);color:var(--tx);font-size:20px;font-weight:700;outline:none;text-align:center}
 .cf-input:focus{box-shadow:0 0 0 3px rgba(29,158,117,0.15)}
 @media(min-width:640px){.hdr{padding:14px 24px}.hdr-h1{display:block!important;font-size:19px}.main{padding:20px 24px}.cards{display:none}.tbl-wrap{display:block}.overlay{align-items:center}.modal{border-radius:16px;padding:24px}.modal-handle{display:none}}
+
+/* ===== v4.8.1 店舗別プロフェッショナルテーマ ===== */
+body[data-store-theme="osu"]{
+  --g:#C96E91;--gd:#8A3F60;--gl:#FBE8F0;
+  --bg:#FBF6F8;--sf:#FFFFFF;--bd:rgba(111,47,72,.12);--bds:rgba(111,47,72,.22);
+  --tx:#30242A;--tm:#716069;--tf:#A08F98;
+  --theme-mid:#D88AA7;--theme-pale:#FFF3F7;--theme-deep:#74334F;
+  --focus-ring:rgba(201,110,145,.18);--theme-shadow:rgba(111,47,72,.13);
+}
+body[data-store-theme="nagono"]{
+  --g:#D1A52C;--gd:#755A0D;--gl:#FFF4C9;
+  --bg:#FCFAF2;--sf:#FFFFFF;--bd:rgba(113,84,8,.13);--bds:rgba(113,84,8,.23);
+  --tx:#302C20;--tm:#706955;--tf:#9E957D;
+  --theme-mid:#E1BD55;--theme-pale:#FFF9E5;--theme-deep:#66500F;
+  --focus-ring:rgba(209,165,44,.20);--theme-shadow:rgba(113,84,8,.13);
+}
+body[data-store-theme="teppan"]{
+  --g:#4F9DBF;--gd:#26677F;--gl:#E3F4FB;
+  --bg:#F4F9FB;--sf:#FFFFFF;--bd:rgba(35,96,122,.12);--bds:rgba(35,96,122,.22);
+  --tx:#223039;--tm:#5D6E77;--tf:#8C9BA2;
+  --theme-mid:#77B8D2;--theme-pale:#ECF8FD;--theme-deep:#205A72;
+  --focus-ring:rgba(79,157,191,.19);--theme-shadow:rgba(35,96,122,.13);
+}
+body[data-store-theme="kamakura"]{
+  --g:#9272BD;--gd:#62498A;--gl:#EEE7F7;
+  --bg:#F8F5FB;--sf:#FFFFFF;--bd:rgba(81,56,112,.12);--bds:rgba(81,56,112,.22);
+  --tx:#2D2735;--tm:#696070;--tf:#978DA0;
+  --theme-mid:#AC92CE;--theme-pale:#F5F0FA;--theme-deep:#513870;
+  --focus-ring:rgba(146,114,189,.20);--theme-shadow:rgba(81,56,112,.14);
+}
+body[data-store-theme]{
+  background:linear-gradient(180deg,var(--theme-pale) 0,var(--bg) 330px);
+  -webkit-font-smoothing:antialiased;
+}
+body[data-store-theme] .app{max-width:980px}
+body[data-store-theme] .hdr{
+  padding:12px 16px;
+  color:#fff;
+  background:linear-gradient(135deg,var(--theme-deep) 0%,var(--g) 62%,var(--theme-mid) 100%);
+  border-bottom:1px solid rgba(255,255,255,.22);
+  box-shadow:0 9px 26px var(--theme-shadow);
+}
+body[data-store-theme] .hdr-in{gap:10px}
+body[data-store-theme] .hdr-title{gap:9px}
+body[data-store-theme] .hdr-title::after{content:'年次棚卸';font-size:16px;font-weight:800;letter-spacing:.03em;white-space:nowrap;color:#fff}
+body[data-store-theme] .hdr-icon{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.2);box-shadow:0 4px 12px rgba(30,18,43,.18)}
+body[data-store-theme] .hdr-icon img{width:34px!important;height:34px!important;border-radius:10px!important}
+body[data-store-theme] .hdr-ctrl{justify-content:flex-end;gap:7px}
+body[data-store-theme] .hdr .role-pill{height:38px;background:rgba(255,255,255,.94);color:var(--theme-deep);border-color:rgba(255,255,255,.72);box-shadow:0 3px 10px rgba(30,18,43,.13)}
+body[data-store-theme] .hdr .btn-sm{background:rgba(255,255,255,.15)!important;color:#fff!important;border-color:rgba(255,255,255,.42)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+body[data-store-theme] .store-bar{background:rgba(255,255,255,.88);border-color:var(--bd);box-shadow:0 4px 14px var(--theme-shadow);backdrop-filter:blur(10px)}
+body[data-store-theme] .store-tabs{gap:7px;padding:10px 0}
+body[data-store-theme] .stab{min-height:36px;padding:7px 16px;border-radius:999px;font-weight:750;background:#fff;box-shadow:0 2px 7px rgba(0,0,0,.04)}
+body[data-store-theme] .stab.active{box-shadow:0 5px 13px var(--theme-shadow)}
+body[data-store-theme] .main{padding-top:20px}
+body[data-store-theme] .notice{border:1px solid color-mix(in srgb,var(--g) 30%,transparent);font-weight:650}
+body[data-store-theme] .stat,
+body[data-store-theme] .card,
+body[data-store-theme] .tbl-wrap{
+  border:1px solid var(--bd);
+  box-shadow:0 5px 18px var(--theme-shadow);
+}
+body[data-store-theme] .stat{padding:16px 10px}
+body[data-store-theme] .stat-label{font-size:12px;letter-spacing:.02em}
+body[data-store-theme] .stat-value{font-size:20px}
+body[data-store-theme] .toolbar{margin-bottom:16px}
+body[data-store-theme] .sw select,
+body[data-store-theme] #search-text,
+body[data-store-theme] #cat-filter-btn{border-color:var(--bd)!important;box-shadow:0 3px 12px rgba(0,0,0,.045)}
+body[data-store-theme] .sw select:focus,
+body[data-store-theme] #search-text:focus,
+body[data-store-theme] .fr input:focus,
+body[data-store-theme] .fr select:focus,
+body[data-store-theme] .inline-input:focus,
+body[data-store-theme] .cf-input:focus{border-color:var(--g)!important;box-shadow:0 0 0 4px var(--focus-ring)!important}
+body[data-store-theme] .btn,
+body[data-store-theme] .btn-sm{font-weight:700;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+body[data-store-theme] .btn-p{background:linear-gradient(135deg,var(--theme-deep),var(--g));border-color:var(--g);box-shadow:0 5px 14px var(--theme-shadow)}
+body[data-store-theme] .btn-p:hover{filter:brightness(1.04)}
+body[data-store-theme] button:active{transform:translateY(1px)}
+body[data-store-theme] .card{padding:16px}
+body[data-store-theme] .cf{background:var(--theme-pale);border:1px solid var(--bd)}
+body[data-store-theme] .card-ftr{border-color:var(--bd)}
+body[data-store-theme] .tbl-wrap{border-radius:14px}
+body[data-store-theme] .tbl-wrap th{background:var(--theme-pale);color:var(--theme-deep);font-weight:800}
+body[data-store-theme] .tbl-wrap tr:not(.done-row):hover td{background:var(--theme-pale)}
+body[data-store-theme] .inline-input,
+body[data-store-theme] .cf-input{border-color:var(--theme-mid)}
+body[data-store-theme] .modal{border:1px solid var(--bd);box-shadow:0 24px 70px rgba(35,24,45,.25)}
+body[data-store-theme] .modal h2{color:var(--theme-deep);font-weight:800}
+body[data-store-theme] .prev-box{border:1px solid var(--bd)}
+body[data-store-theme] .save-status{border-color:var(--bd);box-shadow:0 5px 18px var(--theme-shadow)}
+body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
+@media(max-width:639px){
+  body[data-store-theme] .hdr{padding:10px 11px}
+  body[data-store-theme] .hdr-title::after{font-size:14px}
+  body[data-store-theme] .hdr-icon,body[data-store-theme] .hdr-icon img{width:31px!important;height:31px!important}
+  body[data-store-theme] .hdr .role-pill{min-width:70px;height:36px;padding:0 7px;font-size:11px}
+  body[data-store-theme] .main{padding:15px 10px 24px}
+  body[data-store-theme] .stats{gap:8px}
+  body[data-store-theme] .stat{padding:13px 6px}
+  body[data-store-theme] .card{border-radius:14px}
+}
 </style>
 </head>
 <body>
@@ -584,7 +687,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.8.0';
+const APP_VERSION   = '4.8.1';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -595,7 +698,7 @@ const ADMIN_AUTH_SESSION_KEY = 'zaikoApp_adminUrlAuthenticated';
 const HISTORY_KEY   = 'zaikoApp_history'; // 棚卸履歴
 const DEFAULT_PW    = '2026';
 
-const STORE_COLORS = ['#E8547A','#F5A623','#4BBFD6','#A78BFA','#1D9E75','#D85A30'];
+const STORE_COLORS = ['#C96E91','#D1A52C','#4F9DBF','#9272BD','#1D9E75','#D85A30'];
 const FIXED_STORES = ['大須店','那古野店','鉄板','岐阜鎌倉'];
 const STORE_URL_ALIASES = {
   '1':1,'osu':1,'大須':1,'大須店':1,
@@ -768,6 +871,13 @@ function nowStr(){ return new Date().toLocaleString('ja-JP',{year:'numeric',mont
 function fmt(n){ return parseFloat(n.toFixed(2)).toLocaleString('ja-JP',{minimumFractionDigits:0,maximumFractionDigits:2}); }
 function yen(n){ return '¥'+fmt(n); }
 function storeColor(id){ const i=stores.findIndex(s=>s.id===id); return STORE_COLORS[i%STORE_COLORS.length]; }
+function applyStoreTheme(){
+  const theme={1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[currentStoreId]||'osu';
+  document.body.dataset.storeTheme=theme;
+  const themeColor={osu:'#C96E91',nagono:'#D1A52C',teppan:'#4F9DBF',kamakura:'#9272BD'}[theme];
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content',themeColor);
+}
 function getCategories(){
   // 未登録の店舗IDは空リストを自動作成して返す（デフォルト店舗1にフォールバックしない）
   if(!STORE_CATEGORIES[currentStoreId]){
@@ -1121,6 +1231,7 @@ async function submitRolePw(){
 // 店舗タブ
 // ============================================================
 function renderTabs(){
+  applyStoreTheme();
   const r=ROLES[currentRole];
   const visibleStores=FIXED_STORE_ID_FROM_URL?stores.filter(s=>s.id===FIXED_STORE_ID_FROM_URL):stores;
   document.getElementById('store-tabs').innerHTML=
