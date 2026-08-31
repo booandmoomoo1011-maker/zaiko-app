@@ -14,7 +14,7 @@
 <meta property="og:image:height" content="512">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#c9f2b5">
-<link rel="manifest" href="/inventory.webmanifest?v=3">
+<link rel="manifest" href="/inventory.webmanifest?v=4">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/inventory-32.png?v=3">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/inventory-16.png?v=3">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/inventory-180.png?v=3">
@@ -340,6 +340,28 @@ function shareToLine(){
   });
 }
 
+const INVENTORY_EDITOR_LINKS = [
+  {name:'大須',alias:'osu',color:'#C96E91'},
+  {name:'那古野',alias:'nagono',color:'#D1A52C'},
+  {name:'鉄板',alias:'teppan',color:'#4F9DBF'},
+  {name:'鎌倉',alias:'kamakura',color:'#9272BD'}
+];
+function inventoryEditorUrl(alias){
+  return `https://zaiko-app-two.vercel.app/inventory.html?store=${alias}&role=editor`;
+}
+async function copyInventoryEditorUrl(alias,name){
+  const url=inventoryEditorUrl(alias);
+  try{
+    await navigator.clipboard.writeText(url);
+    showToast(`✅ ${name}の編集者URLをコピーしました`);
+  }catch(_){
+    prompt(`${name}の編集者URLをコピーしてください`,url);
+  }
+}
+function openInventoryEditorUrl(alias){
+  window.open(inventoryEditorUrl(alias),'_blank','noopener,noreferrer');
+}
+
 // Apps ScriptはFirestoreの保存データを読み込むため、まずクラウドへ確実に保存する。
 // 年1回の確定保存はスプレッドシート側の「Zaikon連携」メニューから実行する。
 async function sendToSpreadsheet(){
@@ -585,34 +607,60 @@ body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
     <button id="pwaBarClose" style="background:#555;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-size:13px;">閉じる</button>
   </div>
 </div>
-<button id="pwaInstallBtn" style="display:none;position:fixed;right:14px;bottom:14px;z-index:2147483000;background:#06c755;color:#fff;border:0;border-radius:24px;padding:12px 18px;font-size:15px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.35);font-family:sans-serif;">📲 ホーム画面に追加</button>
+<button id="pwaInstallBtn" style="display:none;position:fixed;right:14px;bottom:14px;z-index:2147483000;background:#06c755;color:#fff;border:0;border-radius:24px;padding:12px 18px;font-size:15px;font-weight:700;box-shadow:0 3px 10px rgba(0,0,0,.35);font-family:sans-serif;">📲 アプリをインストール</button>
 <script>
 (function(){
   try{
+    var launchKey='zaikoInventoryPwaLaunchUrl';
+    var params=new URLSearchParams(location.search);
+    if(params.get('launch')==='pwa'){
+      var savedLaunch=localStorage.getItem(launchKey)||'';
+      if(/^\/inventory\.html\?(?:role=admin|store=(?:osu|nagono|teppan|kamakura)&role=editor)$/.test(savedLaunch)){
+        location.replace(savedLaunch);
+        return;
+      }
+    }
     if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(function(){}); }
     var ua=navigator.userAgent||'';
-    var inLine=/Line\//i.test(ua);
-    var isIOS=/iPhone|iPad|iPod/i.test(ua);
-    var isMobile=/Android|iPhone|iPad|iPod/i.test(ua);
+    var inLine=/Line\/|LIFF/i.test(ua);
+    var isIPadOS=navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1;
+    var isIOS=/iPhone|iPad|iPod/i.test(ua)||isIPadOS;
     var standalone=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
     var bar=document.getElementById('pwaBar');
     var msg=document.getElementById('pwaBarMsg');
     var btn=document.getElementById('pwaInstallBtn');
     var deferred=null;
+    function launchTarget(){
+      var role=params.get('role');
+      var store=params.get('store');
+      if(role==='admin') return '/inventory.html?role=admin';
+      if(role==='editor'&&/^(osu|nagono|teppan|kamakura)$/.test(store||'')) return '/inventory.html?store='+store+'&role=editor';
+      return '/inventory.html?store='+(store||'osu')+'&role=editor';
+    }
+    function rememberLaunchTarget(){
+      try{ localStorage.setItem(launchKey,launchTarget()); }catch(e){}
+    }
     function stepText(){
       if(inLine) return isIOS? "右下メニュー→「Safariで開く」→ 下の共有ボタン（□に↑）→「ホーム画面に追加」" : "右上の「…」→「Chromeで開く」→ 右上の「⋮」→「ホーム画面に追加」";
-      return isIOS? "下の共有ボタン（□に↑）→「ホーム画面に追加」" : "右上の「⋮」→「ホーム画面に追加」／「アプリをインストール」";
+      return isIOS? "下の共有ボタン（□に↑）→「ホーム画面に追加」" : "ブラウザ右上の「…」または「⋮」→「アプリ」→「このサイトをアプリとしてインストール」を選んでください。";
     }
-    function showBar(){ if(!bar||!msg) return; msg.innerHTML=(inLine?"いまLINEの中で開いています。このままだと追加できません。<br>":"")+stepText(); bar.style.display='block'; }
+    function showBar(){ if(!bar||!msg) return; rememberLaunchTarget(); msg.innerHTML=(inLine?"いまLINEの中で開いています。このままだと追加できません。<br>":"")+stepText(); bar.style.display='block'; }
     window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); deferred=e; if(btn&&!standalone) btn.style.display='block'; });
     window.addEventListener('appinstalled',function(){ if(btn) btn.style.display='none'; if(bar) bar.style.display='none'; });
-    if(btn) btn.onclick=async function(){ if(deferred){ deferred.prompt(); try{ await deferred.userChoice; }catch(e){} deferred=null; btn.style.display='none'; } else { showBar(); } };
+    async function startInstall(){
+      if(standalone){ if(typeof showToast==='function') showToast('✅ この端末にはインストール済みです'); return; }
+      rememberLaunchTarget();
+      if(deferred){ deferred.prompt(); try{ await deferred.userChoice; }catch(e){} deferred=null; }
+      else showBar();
+    }
+    window.startInventoryInstall=startInstall;
+    if(btn) btn.onclick=startInstall;
     var cbtn=document.getElementById('pwaBarClose'); if(cbtn) cbtn.onclick=function(){ if(bar) bar.style.display='none'; };
     var copyb=document.getElementById('pwaBarCopy'); if(copyb) copyb.onclick=async function(){ var u=location.href.split('#')[0]; try{ await navigator.clipboard.writeText(u); alert("URLをコピーしました。SafariまたはChromeのアドレス欄に貼り付けて開いてください：\n\n"+u); }catch(e){ alert("このURLをSafari/Chromeで開いてください：\n\n"+u); } };
     if(standalone) return;
     if(inLine){ showBar(); }
     else if(isIOS){ showBar(); }
-    else if(isMobile && btn){ setTimeout(function(){ if(!standalone && !deferred && btn.style.display==='none'){ btn.style.display='block'; } }, 1500); }
+    if(btn){ setTimeout(function(){ if(!standalone){ btn.style.display='block'; } }, 900); }
   }catch(e){}
 })();
 </script>
@@ -687,7 +735,7 @@ body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.8.1';
+const APP_VERSION   = '4.8.2';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -2320,6 +2368,27 @@ function openSettings(){
   const isAdmin=currentRole==='admin';
   document.getElementById('modal-content').innerHTML=`
     <h2>⚙️ 設定・情報</h2>
+    <div style="background:var(--theme-pale,var(--bg));border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--theme-mid,var(--bd));">
+      <div style="font-size:12px;font-weight:800;color:var(--theme-deep,var(--g));margin-bottom:4px;">📲 この端末にアプリを追加</div>
+      <div style="font-size:11px;color:var(--tm);margin-bottom:8px;line-height:1.6;">パソコン・スマートフォンのホーム画面から、現在の管理者／店舗編集者画面を開けるようにします。</div>
+      <button onclick="startInventoryInstall()" style="width:100%;height:48px;background:var(--g);border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">📲 アプリをインストール</button>
+    </div>
+    ${isAdmin?`
+    <div style="background:var(--sf);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--bd);">
+      <div style="font-size:13px;font-weight:800;color:var(--tx);margin-bottom:4px;">🏪 店舗別・編集者URL</div>
+      <div style="font-size:11px;color:var(--tm);margin-bottom:10px;line-height:1.6;">店舗担当者には、該当店舗の編集者URLを送ってください。管理者URLは共有しません。</div>
+      <div style="display:grid;gap:8px;">
+        ${INVENTORY_EDITOR_LINKS.map(link=>`
+          <div style="display:grid;grid-template-columns:minmax(72px,1fr) auto auto;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--bd);border-left:5px solid ${link.color};border-radius:10px;background:#fff;">
+            <div style="min-width:0;">
+              <div style="font-size:13px;font-weight:800;color:var(--tx);">${link.name}</div>
+              <div style="font-size:10px;color:var(--tf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${inventoryEditorUrl(link.alias)}</div>
+            </div>
+            <button class="btn btn-g" style="height:36px;padding:0 10px;font-size:12px;" onclick="openInventoryEditorUrl('${link.alias}')">開く</button>
+            <button class="btn btn-p" style="height:36px;padding:0 10px;font-size:12px;" onclick="copyInventoryEditorUrl('${link.alias}','${link.name}')">コピー</button>
+          </div>`).join('')}
+      </div>
+    </div>`:''}
     <div style="background:#E8F9EE;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #06C755;">
       <div style="font-size:12px;font-weight:700;color:#06C755;margin-bottom:4px;">🔗 アプリを共有</div>
       <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;">現在の店舗に固定されたURLをコピーして共有します。</div>
