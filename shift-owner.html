@@ -359,10 +359,10 @@
     .dayhead #dayClose{display:inline-flex !important;}
   }
   .dayscroll{overflow:auto; flex:1 1 auto; padding:4px; touch-action:pan-x pan-y; overscroll-behavior:contain;}
-  .dayruler{position:sticky; top:0; z-index:9; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:visible; transform-origin:top left;}
+  .dayruler{position:sticky; top:0; z-index:40; min-height:26px; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.1); overflow:visible; transform-origin:top left;}
   .dayruler-track{zoom:1;}
   .dayruler .drow.ruler{min-height:29px; background:#fff;}
-  .dayruler .drow.ruler .dname{z-index:10; background:#fff; color:#44515a; font-weight:800;}
+  .dayruler .drow.ruler .dname{z-index:42; background:#fff; color:#44515a; font-weight:800;}
   .dayruler .dtime{min-height:29px; background-color:#fff;}
   .dayruler .tick{top:4px;}
   .dayruler .tick.edge{padding-left:0;transform:translateX(-100%);text-align:right;}
@@ -375,10 +375,10 @@
   .drow.sec{min-height:0;}
   .drow.sec.secr{min-height:34px; position:relative;}
   .drow.sec.secr .secname{display:flex; align-items:center;}
-  .drow.sec .secname{background:#f3d9e1; color:var(--pink-d); font-weight:800; padding:2px 6px; min-width:104px; max-width:104px; white-space:nowrap; font-size:12px;}
+  .drow.sec .secname{position:sticky;left:0;z-index:31;background:#f3d9e1; color:var(--pink-d); font-weight:800; padding:2px 6px; min-width:104px; max-width:104px; white-space:nowrap; font-size:12px;}
   .drow.sec .dtime{background:#f9e7ee;}
   .dname{position:sticky; left:0; background:#fff; min-width:104px; max-width:104px; padding:2px 6px;
-    font-size:11.5px; display:flex; flex-direction:column; justify-content:center; z-index:2; border-right:1px solid var(--line);}
+    font-size:11.5px; display:flex; flex-direction:column; justify-content:center; z-index:30; border-right:1px solid var(--line); box-shadow:2px 0 4px rgba(28,45,58,.12); isolation:isolate;}
   .drow.staffoff .dname{background:#9fd8f2; color:#0f5a82;}
   .dname .dnm{font-weight:700;display:flex;align-items:center;width:100%;min-width:0;}
   .dname .day-namebutton{display:inline-flex; min-width:0; align-items:center; padding:2px 4px; border:1px solid #d3dce3; border-radius:5px; background:rgba(255,255,255,.8); box-shadow:0 1px 2px rgba(0,0,0,.07); cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -612,7 +612,7 @@
     .appdialog-actions button{font-size:16px;min-height:50px;}
   }
 
-  /* v1.170 日別編集の二重ズーム・固定名座標ずれ対策 */
+  /* v1.171 日別編集の固定名分離・認証復元対策 */
   @media(max-width:600px){
     :root{--mobile-navy:#14283b;--mobile-navy-2:#203d58;--mobile-gold:#c8a45a;--mobile-gold-light:#ead9a9;--mobile-silver:#d8e0e7;}
     body{background:linear-gradient(180deg,#e9eef3 0%,#f7f8fa 42%,#eef2f5 100%);color:#243443;-webkit-tap-highlight-color:transparent;}
@@ -736,7 +736,7 @@
   <script type="module">
   import { initializeApp } from 'firebase/app';
   import { getDatabase, ref, set, remove, update, get, onValue } from 'firebase/database';
-  import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signInWithRedirect, setPersistence, browserLocalPersistence } from 'firebase/auth';
+  import { initializeAuth, GoogleAuthProvider, onAuthStateChanged, signInAnonymously, signInWithPopup, signInWithRedirect, indexedDBLocalPersistence, browserLocalPersistence } from 'firebase/auth';
   try{
     const app = initializeApp({
       apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
@@ -747,7 +747,7 @@
       messagingSenderId:'705085250436',
       appId:            '1:705085250436:web:5bda2efcc70e4ffca25bd1'
     }, 'shift-owner');
-    const db = getDatabase(app), auth=getAuth(app);
+    const db = getDatabase(app), auth=initializeAuth(app,{persistence:[indexedDBLocalPersistence,browserLocalPersistence]});
     const BASE='zaiko/shift';
     const fbKey=(s)=>String(s).replace(/[.#$\[\]\/]/g,'_');
     let _suppressUntil=0;
@@ -874,15 +874,14 @@
         onValue(ref(db,BASE+'/staff'),snap=>{ if(Date.now()<_suppressUntil) return; remote.staff=snap.val()||{}; apply(); },()=>window.shiftOwnerDenied(user.uid,true));
       }catch(e){ window.fbOwnerReady=false; if(typeof window.shiftOwnerDenied==='function') window.shiftOwnerDenied(user.uid,true); }
     }
+    const editorToken=new URLSearchParams(location.search).get('editor')||'';
     window.shiftOwnerLogin=async function(){
+      if(auth.currentUser){ if(editorToken) await beginEditor(auth.currentUser,editorToken); else await beginOwner(auth.currentUser); return; }
       const provider=new GoogleAuthProvider();
       try{ await signInWithPopup(auth,provider); }
       catch(e){ if(e&&/popup|operation-not-supported/i.test(e.code||e.message||'')) await signInWithRedirect(auth,provider); else throw e; }
     };
-    const editorToken=new URLSearchParams(location.search).get('editor')||'';
-    setPersistence(auth,browserLocalPersistence).catch(e=>console.warn('auth persistence',e)).finally(()=>{
-      onAuthStateChanged(auth,user=>{ if(user){ if(editorToken) beginEditor(user,editorToken); else beginOwner(user); } else if(editorToken){ signInAnonymously(auth).catch(()=>window.shiftOwnerDenied('',true)); } else if(typeof window.shiftOwnerSignedOut==='function') window.shiftOwnerSignedOut(); });
-    });
+    onAuthStateChanged(auth,user=>{ if(user){ if(editorToken) beginEditor(user,editorToken); else beginOwner(user); } else if(editorToken){ signInAnonymously(auth).catch(()=>window.shiftOwnerDenied('',true)); } else if(typeof window.shiftOwnerSignedOut==='function') window.shiftOwnerSignedOut(); });
     document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _suppressUntil=0; });
   }catch(e){ console.warn('Firebase初期化エラー', e); }
   </script>
@@ -891,8 +890,8 @@
 <div id="ownerAccessGate" style="position:fixed;inset:0;z-index:2147483646;display:flex;align-items:center;justify-content:center;background:#f7f7f7;padding:24px;box-sizing:border-box;">
   <div style="max-width:440px;width:100%;background:#fff;border:1px solid #ddd;border-radius:14px;padding:28px 22px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.10);">
     <div style="font-size:22px;font-weight:800;color:#333;margin-bottom:10px;">オーナー確認</div>
-    <div id="ownerAccessText" style="font-size:14px;line-height:1.8;color:#666;margin-bottom:16px;">Firebaseを管理しているGoogleアカウントでログインしてください。</div>
-    <button id="ownerLoginBtn" type="button" style="border:0;border-radius:9px;background:#222;color:#fff;padding:11px 18px;font-size:15px;font-weight:700;cursor:pointer;">Googleで管理者ログイン</button>
+    <div id="ownerAccessText" style="font-size:14px;line-height:1.8;color:#666;margin-bottom:16px;">前回のログインを確認しています…</div>
+    <button id="ownerLoginBtn" type="button" style="display:none;border:0;border-radius:9px;background:#222;color:#fff;padding:11px 18px;font-size:15px;font-weight:700;cursor:pointer;">Googleで管理者ログイン</button>
   </div>
 </div>
 <!-- PWA_INSTALL_KIT_START (ホーム画面追加：SW登録＋インストールボタン＋LINE案内) -->
@@ -954,7 +953,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.170</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.171</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1280,7 +1279,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.170"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.171"; window.APP_UPDATED="2026-08-31";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1588,7 +1587,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.170</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.171</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2376,24 +2375,33 @@ function fitDayGrid(){
   const g=$("#dayGrid"), sc=document.querySelector('.dayscroll');
   if(!g||!sc) return;
   g.style.transform="none"; g.style.zoom="1";
-  // 表全体の幅ではなく「名前欄＋9:00〜23:30」を基準幅にする。
-  // これによりPCの余白過多と、携帯で枠だけ途中で終わるずれを防ぐ。
+  g.querySelectorAll('.dtime').forEach(time=>{ time.style.transform="none"; time.style.zoom="1"; });
+  const rulerTrack=$("#dayRulerTrack");
+  if(rulerTrack){
+    rulerTrack.style.transform="none"; rulerTrack.style.zoom="1";
+    rulerTrack.querySelectorAll('.dtime').forEach(time=>{ time.style.transform="none"; time.style.zoom="1"; });
+  }
+  // 名前欄は等倍の固定列として残し、9:00〜23:30の時間領域だけへ倍率を適用する。
   const timelineWidth=(AX1-AX0)*HW, nameWidth=Math.max(104,g.querySelector('.dname')?.offsetWidth||104);
-  const gw=Math.ceil(nameWidth+timelineWidth);
-  g.style.width=gw+"px"; g.style.minWidth=gw+"px";
-  g.querySelectorAll('.drow').forEach(row=>{ row.style.width=gw+"px"; row.style.minWidth=gw+"px"; });
-  const gh=Math.max(g.scrollHeight,1), availableWidth=Math.max(1,sc.clientWidth-8);
-  const fit=availableWidth/gw, mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
+  const baseWidth=Math.ceil(nameWidth+timelineWidth), availableWidth=Math.max(1,sc.clientWidth-8);
+  const fit=availableWidth/baseWidth, mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
   const base=mobile?Math.max(.72,Math.min(1,fit)):Math.min(1.15,fit);
   const scale=Math.max(.3,Math.min(DAY_MAX_SCALE,base*dayUserZoom));
   dayScale=scale;
-  const contentWidth=Math.ceil(gw*scale), contentHeight=Math.ceil(gh*scale);
-  g.style.transform="none"; g.style.zoom=String(scale);
+  const contentWidth=Math.ceil(nameWidth+timelineWidth*scale);
+  g.querySelectorAll('.dtime').forEach(time=>{ time.style.transform="none"; time.style.zoom=String(scale); });
+  g.style.width=contentWidth+"px"; g.style.minWidth=contentWidth+"px";
+  g.querySelectorAll('.drow').forEach(row=>{ row.style.width=contentWidth+"px"; row.style.minWidth=contentWidth+"px"; });
+  const contentHeight=Math.max(g.scrollHeight,1);
   const frame=$("#dayGridFrame");
   if(frame){ frame.style.width=contentWidth+"px"; frame.style.minWidth=contentWidth+"px"; frame.style.height=contentHeight+"px"; }
   const ruler=$("#dayRuler"), track=$("#dayRulerTrack");
-  if(track){ track.style.width=gw+"px"; track.style.minWidth=gw+"px"; track.style.transform="none"; track.style.zoom=String(scale); }
-  if(ruler){ ruler.style.width=contentWidth+"px"; ruler.style.minWidth=contentWidth+"px"; ruler.style.height=Math.max(26,Math.ceil(29*scale))+"px"; }
+  if(track){
+    track.querySelectorAll('.dtime').forEach(time=>{ time.style.transform="none"; time.style.zoom=String(scale); });
+    track.style.width=contentWidth+"px"; track.style.minWidth=contentWidth+"px";
+    const row=track.querySelector('.drow'); if(row){ row.style.width=contentWidth+"px"; row.style.minWidth=contentWidth+"px"; }
+  }
+  if(ruler){ ruler.style.width=contentWidth+"px"; ruler.style.minWidth=contentWidth+"px"; ruler.style.height=Math.max(29,track?.scrollHeight||29)+"px"; }
 }
 function setDayZoom(next,clientX,clientY){
   dayPendingZoom={zoom:Math.max(DAY_MIN_USER_ZOOM,Math.min(DAY_MAX_USER_ZOOM,next)),clientX,clientY};
@@ -2404,10 +2412,11 @@ function setDayZoom(next,clientX,clientY){
     const sc=document.querySelector('.dayscroll'); if(!sc||!job) return;
     const previous=dayUserZoom, previousScale=dayScale; if(job.zoom===previous) return;
     const rect=sc.getBoundingClientRect(), x=job.clientX-rect.left, y=job.clientY-rect.top;
-    const oldLeft=sc.scrollLeft+x, oldTop=sc.scrollTop+y;
+    const fixedNameWidth=Math.max(104,document.querySelector('#dayGrid .dname')?.offsetWidth||104);
+    const oldTimelinePoint=Math.max(0,sc.scrollLeft+x-fixedNameWidth)/(previousScale||1), oldTop=sc.scrollTop+y;
     dayUserZoom=job.zoom; fitDayGrid();
     const ratio=dayScale/(previousScale||1);
-    sc.scrollLeft=Math.max(0,oldLeft*ratio-x);
+    sc.scrollLeft=Math.max(0,fixedNameWidth+oldTimelinePoint*dayScale-x);
     sc.scrollTop=Math.max(0,oldTop*ratio-y);
   });
 }

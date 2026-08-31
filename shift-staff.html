@@ -653,7 +653,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト <span class="demoTag">v1.84</span></h1>
+  <h1>シフト <span class="demoTag">v1.85</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -664,7 +664,7 @@
 <!-- ============ オーナー ============ -->
 <div id="ownerView" style="display:none;">
   <div class="bar barrow">
-    <strong id="oMonthLabel" style="color:var(--pink-d);white-space:nowrap;">大須・那古野 / 2026年7月</strong>
+    <strong id="oMonthLabel" style="color:var(--pink-d);white-space:nowrap;">大須・那古野 / 2026年9月</strong>
     <span id="oStatus" class="statusInline"></span>
     <div class="spacer"></div>
     <input id="printStart" type="number" min="1" max="31" value="1" title="開始日" style="width:48px;padding:6px;border:1.5px solid var(--line);border-radius:8px;">
@@ -862,7 +862,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.84"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.85"; window.APP_UPDATED="2026-08-31";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1621,6 +1621,29 @@ let staffDisplayMode='wish';
 try{ staffDisplayMode=localStorage.getItem('zaikonStaffDisplayMode_v1')==='decided'?'decided':'wish'; }catch(e){}
 function publicSchedule(){ return (((S.storeMemo||{})._publishedSchedule)||{}); }
 function publicScheduleEntry(me,date){ return (publicSchedule()[date]||[]).find(row=>row&&row.name===me)||null; }
+function staffOperationalToday(){
+  const now=japanToday(), start={year:STAFF_START_YEAR,month:STAFF_START_MONTH,day:1};
+  if(staffMonthBeforeStart(now.year,now.month)) return start;
+  if(now.year>STAFF_END_YEAR) return {year:STAFF_END_YEAR,month:12,day:31};
+  return now;
+}
+function showOperationalStaffMonth(){
+  const target=staffOperationalToday();
+  Y=target.year; M=target.month; DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y);
+  fillYM(); saveSel();
+}
+function scrollPublicShiftToOperationalDay(){
+  if(staffDisplayMode!=='decided') return;
+  const target=staffOperationalToday();
+  if(target.year!==Y||target.month!==M) return;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const sc=document.querySelector('#publicShiftPane .publicshift-scroll');
+    const th=sc&&sc.querySelector(`thead [data-public-date="${target.year}-${pad(target.month)}-${pad(target.day)}"]`);
+    const fixed=sc&&sc.querySelector('thead .public-name');
+    if(!sc||!th) return;
+    sc.scrollLeft=Math.max(0,th.offsetLeft-(fixed?fixed.offsetWidth:0)-8);
+  }));
+}
 function publicShiftTableHtml(){
   const prefix=`${Y}-${pad(M)}-`, schedule=publicSchedule(), dates=Array.from({length:DAYS},(_,i)=>prefix+pad(i+1));
   const rows=[], seen=new Set();
@@ -1637,6 +1660,7 @@ function publicShiftTableHtml(){
 function publicShiftHour(value){ const m=String(value||'').match(/(\d{1,2})(?::(\d{2}))?/); if(!m) return null; return +m[1]+(+m[2]||0)/60; }
 const PUBLIC_DAY_MIN_USER_ZOOM=.7, PUBLIC_DAY_MAX_USER_ZOOM=2, PUBLIC_DAY_MAX_SCALE=1.2;
 let publicDayUserZoom=1,publicDayScale=1,publicDayZoomRaf=0,publicDayPendingZoom=null;
+let publicDayPerson='',publicDayDate='';
 let publicDayViewportContent='';
 function lockPublicDayPageZoom(){
   const meta=document.querySelector('meta[name="viewport"]'); if(!meta||publicDayViewportContent) return;
@@ -1703,12 +1727,26 @@ function setPublicDayZoom(next,clientX,clientY){
     const ratio=publicDayScale/(previousScale||1); sc.scrollLeft=Math.max(0,oldLeft*ratio-x); sc.scrollTop=Math.max(0,oldTop*ratio-y);
   });
 }
+function publicDayAdjacentDate(date,step){
+  const parts=String(date||'').split('-').map(Number);
+  if(parts.length!==3||parts.some(n=>!Number.isFinite(n))) return '';
+  const dt=new Date(Date.UTC(parts[0],parts[1]-1,parts[2]));
+  dt.setUTCDate(dt.getUTCDate()+step);
+  const next=`${dt.getUTCFullYear()}-${pad(dt.getUTCMonth()+1)}-${pad(dt.getUTCDate())}`;
+  const first=`${STAFF_START_YEAR}-${pad(STAFF_START_MONTH)}-01`,last=`${STAFF_END_YEAR}-12-31`;
+  if(next<first||next>last||!Object.prototype.hasOwnProperty.call(publicSchedule(),next)) return '';
+  return next;
+}
+function movePublicDay(step){
+  const next=publicDayAdjacentDate(publicDayDate,step);
+  if(next&&publicDayPerson) openPublicDay(publicDayPerson,next);
+}
 function openPublicDay(me,date){
   if(!Object.prototype.hasOwnProperty.call(publicSchedule(),date)) return;
   lockPublicDayPageZoom();
   const parts=date.split('-'),day=+parts[2],dow=new Date(+parts[0],+parts[1]-1,day).getDay(),data=todayBriefData(me,date),rec=(((S.staff[me]||{}).shiftText)||{})[date],shiftMessage=displayText(rec);
   if(publicDayZoomRaf){ cancelAnimationFrame(publicDayZoomRaf); publicDayZoomRaf=0; }
-  publicDayPendingZoom=null; publicDayUserZoom=1;
+  publicDayPendingZoom=null; publicDayUserZoom=1; publicDayPerson=me; publicDayDate=date;
   $('#publicDayTitle').textContent=`${+parts[1]}月${day}日（${DOW[dow]}）決定シフト`;
   $('#publicDayTimeline').innerHTML=publicDayTimelineHtml(date);
   $('#publicDayNotices').innerHTML=briefSectionsHtml(data,false)+`<div class="brief-section shift-time-notice"><div class="brief-label">シフト時間の連絡事項</div><div class="brief-message${shiftMessage?'':' brief-none'}">${shiftMessage?esc(shiftMessage):'連絡事項はありません'}</div></div>`;
@@ -1717,7 +1755,7 @@ function openPublicDay(me,date){
 }
 function closePublicDay(){
   if(publicDayZoomRaf){ cancelAnimationFrame(publicDayZoomRaf); publicDayZoomRaf=0; }
-  publicDayPendingZoom=null; $('#publicDayMask').style.display='none'; unlockPublicDayPageZoom();
+  publicDayPendingZoom=null; publicDayPerson=''; publicDayDate=''; $('#publicDayMask').style.display='none'; unlockPublicDayPageZoom();
 }
 $('#publicDayClose').onclick=closePublicDay;
 $('#publicDayMask').onclick=e=>{ if(e.target.id==='publicDayMask') closePublicDay(); };
@@ -1727,8 +1765,28 @@ $('#publicDayMask').onclick=e=>{ if(e.target.id==='publicDayMask') closePublicDa
   const stopNativePinch=e=>{ if(e.touches&&e.touches.length>1) e.preventDefault(); };
   if(card){ card.addEventListener('touchstart',stopNativePinch,{passive:false,capture:true}); card.addEventListener('touchmove',stopNativePinch,{passive:false,capture:true}); card.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false,capture:true}); }
   let startDistance=0,startZoom=1,blockClickUntil=0;
+  let swipeX=0,swipeY=0,swipeTracking=false,swipeStartedInTimeline=false,swipeStartLeft=0,swipeStartAtLeft=false,swipeStartAtRight=false;
   const distance=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
-  sc.addEventListener('touchstart',e=>{ if(e.touches.length!==2) return; startDistance=distance(e.touches); startZoom=publicDayUserZoom; blockClickUntil=Date.now()+400; e.preventDefault(); },{passive:false});
+  if(card){
+    card.addEventListener('touchstart',e=>{
+      if(e.touches.length!==1||e.target.closest('button')){ swipeTracking=false; return; }
+      swipeX=e.touches[0].clientX; swipeY=e.touches[0].clientY; swipeTracking=true;
+      swipeStartedInTimeline=!!e.target.closest('#publicDayTimeline'); swipeStartLeft=sc.scrollLeft;
+      swipeStartAtLeft=sc.scrollLeft<=2; swipeStartAtRight=sc.scrollLeft+sc.clientWidth>=sc.scrollWidth-2;
+    },{passive:true});
+    card.addEventListener('touchend',e=>{
+      if(!swipeTracking||!e.changedTouches.length) return; swipeTracking=false;
+      const dx=e.changedTouches[0].clientX-swipeX,dy=e.changedTouches[0].clientY-swipeY;
+      if(Math.abs(dx)<55||Math.abs(dx)<=Math.abs(dy)*1.25) return;
+      if(swipeStartedInTimeline&&sc.scrollWidth>sc.clientWidth+2){
+        if((dx>0&&!swipeStartAtLeft)||(dx<0&&!swipeStartAtRight)) return;
+        sc.scrollLeft=swipeStartLeft;
+      }
+      blockClickUntil=Date.now()+500; movePublicDay(dx<0?1:-1);
+    },{passive:true});
+    card.addEventListener('touchcancel',()=>{ swipeTracking=false; },{passive:true});
+  }
+  sc.addEventListener('touchstart',e=>{ if(e.touches.length!==2) return; swipeTracking=false; startDistance=distance(e.touches); startZoom=publicDayUserZoom; blockClickUntil=Date.now()+400; e.preventDefault(); },{passive:false});
   sc.addEventListener('touchmove',e=>{ if(e.touches.length!==2||!startDistance) return; const x=(e.touches[0].clientX+e.touches[1].clientX)/2,y=(e.touches[0].clientY+e.touches[1].clientY)/2; setPublicDayZoom(startZoom*distance(e.touches)/startDistance,x,y); e.preventDefault(); },{passive:false});
   sc.addEventListener('touchend',e=>{ if(e.touches.length<2) startDistance=0; },{passive:true});
   sc.addEventListener('click',e=>{ if(Date.now()<blockClickUntil){ e.preventDefault(); e.stopPropagation(); } },true);
@@ -1874,9 +1932,10 @@ function renderMine(me){
   const _brief=todayBriefData(me,_todayKey);
   html+=_shiftCard(_todayKey,_todayLabel,'本日のシフト')+`<div class="today-shift today-detail">${briefSectionsHtml(_brief,false)}</div>`;
   $("#staffMine").innerHTML=html;
-  const setDisplayMode=mode=>{ staffDisplayMode=mode; try{ localStorage.setItem('zaikonStaffDisplayMode_v1',mode); }catch(e){} renderMine(me); };
+  const setDisplayMode=mode=>{ if(mode==='decided') showOperationalStaffMonth(); staffDisplayMode=mode; try{ localStorage.setItem('zaikonStaffDisplayMode_v1',mode); }catch(e){} renderMine(me); };
   $('#showWishCalendar').onclick=()=>setDisplayMode('wish'); $('#showPublicShift').onclick=()=>setDisplayMode('decided');
   document.querySelectorAll('#publicShiftPane [data-public-date].can-open').forEach(el=>el.onclick=e=>{ e.preventDefault(); openPublicDay(me,el.dataset.publicDate); });
+  scrollPublicShiftToOperationalDay();
   setTimeout(()=>maybeShowTodayBrief(me),40);
   const _u=$("#updatedLbl"); if(_u) _u.textContent = S.updatedAt ? `最終更新 ${String(S.updatedAt).replace(/^\d{4}\//,'')}` : "";
   const _ms=$("#monthSubmit"); if(_ms) _ms.onclick=()=>{
