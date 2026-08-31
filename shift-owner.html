@@ -435,6 +435,7 @@
   .drow.haswishdec .dbar.reqpend,.drow.haswishdec .dbar.reqok,.drow.haswishdec .dbar.reqrej{top:23px; height:17px;}
   .drow.ruler .dname{background:#fbe6ec; color:var(--pink-d); flex-direction:row; align-items:center; font-weight:700;}
   .dtime{position:relative; background-image:repeating-linear-gradient(to right, transparent 0, transparent 39px, #d8dde0 39px, #d8dde0 40px);}
+  .dtime::before{content:"";position:absolute;top:0;bottom:0;right:19px;width:1px;background:#d8dde0;z-index:0;pointer-events:none;}
   .dtime::after{content:"";position:absolute;top:0;bottom:0;right:-1px;width:1px;background:#aeb8be;z-index:7;pointer-events:none;}
   .tick{position:absolute; top:0; font-size:13px; color:#111; font-weight:800; padding-left:2px;}
   .dbar{position:absolute; top:4px; height:19px; border-radius:5px; color:#fff; font-size:10px; font-weight:700; justify-content:space-between;
@@ -953,7 +954,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.171</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.172</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1279,7 +1280,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.171"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.172"; window.APP_UPDATED="2026-08-31";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1587,7 +1588,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.171</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.172</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2023,7 +2024,7 @@ $("#cmtClose").onclick=()=>$("#cmtMask").style.display="none";
 $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.display="none"; };
 
 /* ---- 日別タイムライン ---- */
-const AX0=9, AX1=23.5, HW=40;
+const AX0=9, AX1=23.5, AX_VIEW_END=24, HW=40;
 const DAY_MIN_USER_ZOOM=.7, DAY_MAX_USER_ZOOM=2, DAY_MAX_SCALE=1.2;
 let dayViewDay=null, dayUserZoom=1, dayScale=1, dayZoomRaf=0, dayPendingZoom=null;
 let dayViewportContent='';
@@ -2298,7 +2299,7 @@ function openDayView(d){
   document.querySelector('.dayhead')?.classList.toggle('weekendholiday',dayDow===0||dayDow===6||isHol(d));
   $("#dayTitle").innerHTML=`${Y}年${M}月${d}日<span class="${dayDow===0||dayDow===6||isHol(d)?'weekend':''}">(${dow})</span>`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   $("#dayPrev").disabled=d<=1; $("#dayNext").disabled=d>=DAYS;
-  const W=(AX1-AX0)*HW;
+  const W=(AX_VIEW_END-AX0)*HW;
   let ticks=""; for(let h=AX0; h<AX1; h++){ ticks+=`<div class="tick" style="left:${(h-AX0)*HW}px">${h}</div>`; }
   ticks+=`<div class="tick edge" style="left:${(AX1-AX0)*HW}px">23:30</div>`;
   const rulerTrack=$("#dayRulerTrack");
@@ -2382,7 +2383,7 @@ function fitDayGrid(){
     rulerTrack.querySelectorAll('.dtime').forEach(time=>{ time.style.transform="none"; time.style.zoom="1"; });
   }
   // 名前欄は等倍の固定列として残し、9:00〜23:30の時間領域だけへ倍率を適用する。
-  const timelineWidth=(AX1-AX0)*HW, nameWidth=Math.max(104,g.querySelector('.dname')?.offsetWidth||104);
+  const timelineWidth=(AX_VIEW_END-AX0)*HW, nameWidth=Math.max(104,g.querySelector('.dname')?.offsetWidth||104);
   const baseWidth=Math.ceil(nameWidth+timelineWidth), availableWidth=Math.max(1,sc.clientWidth-8);
   const fit=availableWidth/baseWidth, mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
   const base=mobile?Math.max(.72,Math.min(1,fit)):Math.min(1.15,fit);
@@ -2760,7 +2761,7 @@ function toggleHold(nm,d,h,st){
 }
 function _xToHour(e, dt, snapFloor){
   const rect=dt.getBoundingClientRect();
-  const uw=dt.offsetWidth||((AX1-AX0)*HW);
+  const uw=dt.offsetWidth||((AX_VIEW_END-AX0)*HW);
   const ux=(e.clientX-rect.left)*(uw/(rect.width||uw));
   let hr=AX0+(snapFloor?Math.floor(ux/(HW/2)):Math.round(ux/(HW/2)))*0.5;
   return Math.max(AX0, Math.min(AX1, hr));
@@ -2888,7 +2889,7 @@ function onResizeDown(e){
   const dec=storeDecision(h.dataset.n,+h.dataset.d,store);
   const seg=h.dataset.seg, o=dec&&dec[seg]; if(!o) return;
   const startH=pHM(o.start), endH=pHM(o.end); if(startH==null||endH==null) return;
-  rz={nm:h.dataset.n, d:+h.dataset.d, st:store, seg, edge:(h.dataset.edge||'end'), bar:h.closest('.dbar'), rect:dt.getBoundingClientRect(), uw:dt.offsetWidth||((AX1-AX0)*HW), startH, endH};
+  rz={nm:h.dataset.n, d:+h.dataset.d, st:store, seg, edge:(h.dataset.edge||'end'), bar:h.closest('.dbar'), rect:dt.getBoundingClientRect(), uw:dt.offsetWidth||((AX_VIEW_END-AX0)*HW), startH, endH};
   window.addEventListener('pointermove', onResizeMove);
   window.addEventListener('pointerup', onResizeUp);
 }
