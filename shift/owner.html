@@ -84,8 +84,9 @@
     .dayhead h3{font-size:13px;}
     .dayhead button{padding:7px 10px; font-size:13px;}
     .dayhead #dayClose{display:inline-flex !important;}
-    .dbar .dresize{width:16px;}
-    .dbar .btime{padding:2px 3px;}
+    .dbar .dresize{display:none!important;}
+    .dbar.decisionbar .btime{display:inline-flex;align-items:center;justify-content:center;min-width:34px;min-height:30px;margin:-7px 0;padding:0 4px;border-radius:6px;background:rgba(255,255,255,.78);font-size:11px;font-weight:900;text-decoration:underline;text-underline-offset:2px;touch-action:manipulation;}
+    .mobileTimeHint{display:block!important;margin-top:2px;color:#66541d;font-size:11px;font-weight:900;line-height:1.2;}
     .storeoff-btn{font-size:12px;}
     /* ポップアップ入力：指で押しやすいサイズ */
     .cmtbox{padding:16px 14px;}
@@ -344,6 +345,7 @@
   .daydatebar{display:flex;align-items:center;justify-content:center;flex:0 0 auto;min-height:38px;padding:5px 12px;border-bottom:1px solid #aebbc4;background:#fff;position:relative;z-index:13;}
   .daydatebar.weekendholiday{background:#fff8d6;}
   .daydatebar h3{margin:0;font-size:20px;color:#111;white-space:nowrap;text-align:center;}
+  .mobileTimeHint{display:none;}
   .daydatebar h3 .weekend{color:#d83f58;}
   .dayhead button{border:none; background:#eee; color:#555; border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:700; white-space:nowrap; flex:0 0 auto; font-size:13px;}
   .dayhead #dayClose{display:none;}
@@ -973,7 +975,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.174</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.175</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1272,11 +1274,11 @@
   <div class="daymodal">
     <div class="dayhead"><div class="daylegend"><button type="button" id="dayPrev">← 前の日</button><button type="button" class="dayundo" id="dayUndo" disabled data-guide-key="day-undo" data-guide="この日の直前の変更を１つずつ元に戻します">↶ 戻る</button><button type="button" id="dayNext">次の日 →</button><button type="button" id="dayTextPlace" title="押してからスタッフの空いている時間欄をタップ">文字を置く</button><button type="button" id="dayTextHistory" title="以前使った重要文字から選びます">履歴から選ぶ</button><button type="button" id="dayTeamNotice">📣 全員への連絡</button></div></div>
     <div class="daycommitbar"><button id="dayClose" type="button">画面を閉じる</button><button id="dayDecide" type="button" data-guide-key="day-decide" data-guide="このボタンを押した場合だけ、この日のシフトを決定します">このシフトを決定</button></div>
-    <div class="daydatebar"><h3 id="dayTitle"></h3></div>
+    <div class="daydatebar"><h3 id="dayTitle"></h3><span class="mobileTimeHint">開始・終了時間をタップして変更</span></div>
     <div class="daybody">
       <div class="dayscroll"><div class="dayruler" id="dayRuler"><div class="dayruler-track" id="dayRulerTrack"></div></div><div class="daygridframe" id="dayGridFrame"><div id="dayGrid"></div></div></div>
       <aside class="dayhistorypanel" id="dayHistoryPanel" aria-label="この日の変更履歴">
-        <div class="dayhistoryhead"><strong id="dayHistoryTitle">変更履歴</strong><small>公開した後の変更を、新しい順に表示します。</small></div>
+        <div class="dayhistoryhead"><strong id="dayHistoryTitle">変更履歴</strong><small>決定して公開した内容を、新しい順に表示します。</small></div>
         <div class="dayhistorycols" aria-hidden="true"><span>変更者</span><span>時間</span><span>変更内容</span></div>
         <div class="dayhistorylist" id="dayHistoryList"><div class="dayhistoryempty">読み込み中…</div></div>
       </aside>
@@ -1307,7 +1309,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.174"; window.APP_UPDATED="2026-08-31";
+window.APP_VERSION="v1.175"; window.APP_UPDATED="2026-08-31";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1556,7 +1558,23 @@ function auditDayWasPublished(snapshot,date){
   const days=(snapshot&&snapshot.decidedDays)||{}, marked=days._published;
   return !!(snapshot&&snapshot.published&&days[date]&&(!marked||typeof marked!=="object"||marked[date]===true));
 }
-let _auditBaseline=auditClone(S), _pendingAudit=[];
+let _auditBaseline=auditClone(S), _pendingAudit=[], _draftAuditByDate={}, _auditPublicationActions={};
+function markAuditPublication(date,action){
+  if(/^\d{4}-\d{2}-\d{2}$/.test(String(date||""))) _auditPublicationActions[date]=action;
+}
+function auditDraftItem(text){ return !/：(決定状態|公開状態)を変更$/.test(String(text||"")); }
+function publicationAuditSnapshot(date){
+  const out=[], slash=date.replace(/-/g,"/");
+  Object.keys(S.staff||{}).forEach(nm=>{
+    const sf=S.staff[nm]||{}, home=sf.store||"大須", rec=(sf.decided||{})[date];
+    if(rec) out.push(nm+" "+slash+" 公開シフト（"+home+"）："+auditValue(rec));
+    const support=((sf.support||{})[date])||{};
+    Object.keys(support).forEach(st=>{ if(support[st]) out.push(nm+" "+slash+" 応援勤務（"+st+"）："+auditValue(support[st])); });
+    const old=(sf.tetsu||{})[date];
+    if(old&&!support["鉄板"]) out.push(nm+" "+slash+" 応援勤務（鉄板）："+auditValue(old));
+  });
+  return out.slice(0,30);
+}
 let _fbPushT=null;
 function save(){
   saveLocal();
@@ -1564,8 +1582,17 @@ function save(){
   const before=_auditBaseline, changes=auditDescribe(before,S); _auditBaseline=auditClone(S);
   changes.forEach(text=>{
     const date=auditDateKey(text);
-    if(!date||!auditDayWasPublished(before,date)) return;
-    if(!_pendingAudit.some(x=>x.date===date&&x.text===text)) _pendingAudit.push({date:date,text:text});
+    if(!date||!auditDraftItem(text)) return;
+    const draft=_draftAuditByDate[date]||(_draftAuditByDate[date]=[]);
+    if(!draft.includes(text)) draft.push(text);
+  });
+  const publicationActions=_auditPublicationActions; _auditPublicationActions={};
+  Object.keys(publicationActions).forEach(date=>{
+    const action=publicationActions[date], slash=date.replace(/-/g,"/"), draft=_draftAuditByDate[date]||[];
+    const staged=action==="publish"?(draft.length?draft:publicationAuditSnapshot(date)):[];
+    const finalized=staged.concat(slash+(action==="publish"?"：このシフトを決定して公開":"：公開を取り消し"));
+    finalized.forEach(text=>{ if(!_pendingAudit.some(x=>x.date===date&&x.text===text)) _pendingAudit.push({date:date,text:text}); });
+    if(action==="publish") delete _draftAuditByDate[date];
   });
   if(window.fbTouch) window.fbTouch();
   try{ clearTimeout(_fbPushT); _fbPushT=setTimeout(function(){ if(window.fbPush) window.fbPush(buildFbPayload()); }, 350); }catch(e){}
@@ -1628,7 +1655,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.174</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.175</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1680,6 +1707,8 @@ function togglePublishedDay(d){
   const date=key(d);
   if(!S.decidedDays||!S.decidedDays[date]){ appAlert("先にこの日を決定してください"); return false; }
   const marked=ensurePublishedDayMap();
+  const willPublish=!marked[date];
+  markAuditPublication(date,willPublish?"publish":"unpublish");
   if(marked[date]) delete marked[date]; else marked[date]=true;
   syncShiftPublicationFlag();
   touchUpdated(); save(); renderOwner();
@@ -1880,8 +1909,8 @@ function renderOwner(){
   updateMobileOwnerHeader();
   $("#oStatus").innerHTML=(_monthClosed?'<span class="ownerclosedstatus">🔒 受付終了・閲覧のみ　</span>':'')+(ownerMode==='decided'?`<span style="color:#c99a00;font-weight:800;">決定シフト表示中　</span>`:'')+`提出 ${_submittedCount}/${names().length}名　`+
     (_publication.published?`<span class="pub">✅ ${_publication.published}/${_publication.decided}日公開中</span>`:`<span class="unpub">■ 未公開（作成中）</span>`);
-  $("#decideBtn").textContent=_monthClosed?"受付終了":"決定済みをまとめて公開";
-  $("#decideBtn").disabled=_monthClosed||!_publication.decided;
+  $("#decideBtn").textContent=_monthClosed?"受付終了":(_publication.decided&&_publication.published===_publication.decided?"すべて公開済み":"決定済みをまとめて公開");
+  $("#decideBtn").disabled=_monthClosed||!_publication.decided||_publication.published===_publication.decided;
   { const _dab=$("#decideAllBtn"); if(_dab) _dab.disabled=_monthClosed; }
   { const _uab=$("#undecideAllBtn"); if(_uab) _uab.disabled=_monthClosed||!_publication.decided; }
   $("#unpublishBtn").disabled=_monthClosed||!_publication.published;
@@ -2191,7 +2220,7 @@ function dEditBar(nm,d,seg,cls,ss,ee,st){
   const store=st||((S.staff[nm]||{}).store||"大須");
   const _bg=dayBreakBackground(nm,d,s,e,store)||dayShiftBackground(cls,s,e);
   const overlap=shiftConflictOverlays(nm,d,store,s,e);
-  return `<div class="dbar decisionbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" style="left:${l}px;width:${w}px;${_bg}">${overlap}<span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="start"></span><span class="btime bstart" data-f="start">${ss||''}</span><span class="btime bend" data-f="end">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="end"></span></div>`;
+  return `<div class="dbar decisionbar ${cls}" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" style="left:${l}px;width:${w}px;${_bg}">${overlap}<span class="dresize dresize-l" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="start"></span><span class="btime bstart" data-f="start" role="button" tabindex="0" title="開始時間を変更">${ss||''}</span><span class="btime bend" data-f="end" role="button" tabindex="0" title="終了時間を変更">${ee||''}</span><span class="dresize dresize-r" data-n="${nm}" data-d="${d}" data-seg="${seg}" data-st="${esc(store)}" data-edge="end"></span></div>`;
 }
 function _segsOf(o,out){ if(!o||o.off) return; ['all','am','pm'].forEach(k=>{ if(o[k]){ const s=pHM(o[k].start),e=pHM(o[k].end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }); if(!o.all&&!o.am&&!o.pm&&(o.start||o.end)){ const s=pHM(o.start),e=pHM(o.end); if(s!=null&&e!=null&&e>s) out.push([s,e]); } }
 function supportOf(nm,d,st){
@@ -2372,7 +2401,10 @@ function openDayView(d){
   g.querySelectorAll('.holdbar').forEach(bindHoldBlock);
   g.querySelectorAll('.dresize').forEach(h=>h.addEventListener('pointerdown', onResizeDown));
   g.querySelectorAll('.storeoff-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toggleStoreOff(b.dataset.st); });
-  g.querySelectorAll('.dbar .btime').forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n, +bar.dataset.d, bar.dataset.seg, el.dataset.f, bar.dataset.st); });
+  g.querySelectorAll('.dbar .btime').forEach(el=>{
+    const open=e=>{ e.stopPropagation(); const bar=el.closest('.dbar'); openOneTime(bar.dataset.n,+bar.dataset.d,bar.dataset.seg,el.dataset.f,bar.dataset.st); };
+    el.onclick=open; el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(e); } };
+  });
   $("#dayMask").style.display="flex"; _syncDayDecideBtn();
   loadDayEditHistory(d);
   // 開いた時は左上から表示し、時間軸と全行を同じ倍率で描画する。
@@ -2923,6 +2955,7 @@ function bindManualDoubleTap(row){
 let rz=null;
 function onResizeDown(e){
   if(closedMonthEditBlocked()) return;
+  if(e.pointerType==='touch'||ownerMobileView()) return;
   const h=e.target.closest && e.target.closest('.dresize'); if(!h) return;
   if(e.preventDefault) e.preventDefault(); if(e.stopPropagation) e.stopPropagation();
   const dt=h.closest('.dtime'); if(!dt) return;
@@ -3418,10 +3451,10 @@ document.querySelectorAll(".quick button").forEach(b=>b.onclick=()=>{
 $("#mask").onclick=e=>{ if(e.target.id==="mask") closeEditor(); };
 $("#decideBtn").onclick=async()=>{
   if(closedMonthEditBlocked()) return;
-  const dates=[]; for(let d=1;d<=DAYS;d++){ const date=key(d); if(S.decidedDays&&S.decidedDays[date]) dates.push(date); }
+  const dates=[]; for(let d=1;d<=DAYS;d++){ const date=key(d); if(S.decidedDays&&S.decidedDays[date]&&!isShiftDayPublished(date)) dates.push(date); }
   if(!dates.length){ appAlert("先に公開する日を決定してください"); return; }
   if(!await appConfirm(`決定済みの${dates.length}日分をスタッフに公開します。\n未決定の日は公開されません。`,{title:"決定済みをまとめて公開しますか？",confirmText:"まとめて公開 ✓",icon:"📅"})) return;
-  const marked=ensurePublishedDayMap(); dates.forEach(date=>{ marked[date]=true; });
+  const marked=ensurePublishedDayMap(); dates.forEach(date=>{ markAuditPublication(date,"publish"); marked[date]=true; });
   syncShiftPublicationFlag();
   touchUpdated();
   save(); renderOwner();
@@ -3432,7 +3465,7 @@ $("#unpublishBtn").onclick=async()=>{
   const dates=[]; for(let d=1;d<=DAYS;d++){ const date=key(d); if(isShiftDayPublished(date)) dates.push(date); }
   if(!dates.length){ appAlert("この月に公開中の日はありません"); return; }
   if(!await appConfirm(`公開中の${dates.length}日分をまとめて非公開にします。\nスタッフには勤務時間が表示されなくなります。`,{title:"公開済みをまとめて非公開にしますか？",confirmText:"まとめて非公開",kind:"danger",icon:"⚠️"})) return;
-  const marked=ensurePublishedDayMap(); dates.forEach(date=>{ delete marked[date]; });
+  const marked=ensurePublishedDayMap(); dates.forEach(date=>{ markAuditPublication(date,"unpublish"); delete marked[date]; });
   syncShiftPublicationFlag();
   touchUpdated(); save(); renderOwner();
   if(document.querySelector("#staffView").style.display!=="none") renderStaff();
@@ -3863,7 +3896,7 @@ async function loadDayEditHistory(d){
     const items=[];
     rows.forEach(row=>historyItemsForDate(row,date).forEach(text=>items.push({actor:row.actor||"不明",at:row.at||"",text:text})));
     list.innerHTML="";
-    if(!items.length){ list.innerHTML=auditDayWasPublished(S,date)?'<div class="dayhistoryempty">公開後の変更はありません。</div>':'<div class="dayhistoryempty">この日はまだ公開されていません。<br>公開後に変更した内容から記録します。</div>'; return; }
+    if(!items.length){ list.innerHTML=auditDayWasPublished(S,date)?'<div class="dayhistoryempty">決定して公開した履歴はありません。</div>':'<div class="dayhistoryempty">この日はまだ公開されていません。<br>決定して公開すると履歴へ記録します。</div>'; return; }
     items.slice(0,80).forEach(rec=>{
       const item=document.createElement("div"); item.className="dayhistoryrow";
       const actor=document.createElement("div"); actor.className="dayhistoryactor"; actor.textContent=rec.actor;
@@ -3894,7 +3927,7 @@ async function openEditHistory(){
   try{
     const rows=await window.fbLoadEditHistory();
     list.innerHTML="";
-    if(!rows.length){ list.textContent="まだ編集履歴はありません。公開後の変更から記録されます。"; return; }
+    if(!rows.length){ list.textContent="まだ編集履歴はありません。決定して公開した内容から記録されます。"; return; }
     rows.forEach(row=>{
       const item=document.createElement("div"); item.style.cssText="padding:10px 4px;border-bottom:1px solid #e5e5e5;line-height:1.55;";
       const head=document.createElement("div"); head.style.cssText="font-weight:800;color:#333;"; head.textContent=(row.actor||"不明")+"　"+formatHistoryTime(row.at);
