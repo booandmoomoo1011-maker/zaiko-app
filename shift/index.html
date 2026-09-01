@@ -701,7 +701,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト <span class="demoTag">v1.93</span></h1>
+  <h1>シフト <span class="demoTag">v1.94</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -925,7 +925,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.93"; window.APP_UPDATED="2026-09-01";
+window.APP_VERSION="v1.94"; window.APP_UPDATED="2026-09-01";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1951,7 +1951,7 @@ function todayBriefData(me,date){
   stores.forEach(st=>{ const text=displayText(notice[st]); if(text) messages.push({label:`${st}だけ`,text}); });
   const wish=((S.staff[me]||{}).wish)||{}, personal=((wish._ownerNotices||{})[date])||null;
   const personalText=displayText(personal),data={date:date,entry:entry?{off:!!entry.off,shifts:shifts}:null,messages:messages,personal:personalText?{text:personalText,sentAt:personal.sentAt||''}:null};
-  data.fingerprint=briefFingerprint({date:data.date,messages:data.messages,personal:data.personal}); return data;
+  data.fingerprint=briefFingerprint(data); return data;
 }
 function briefSectionsHtml(data,includeSchedule=true){
   let schedule='未定';
@@ -1962,15 +1962,15 @@ function briefSectionsHtml(data,includeSchedule=true){
   return html;
 }
 function staffPrimaryCardsHtml(data){
-  const team=data.messages||[],teamBody=team.length?team.map(m=>`<div class="staff-primary-message"><small>${esc(m.label)}</small><br>${esc(m.text)}</div>`).join(''):'<div class="staff-primary-message staff-primary-empty">本日の連絡事項はありません</div>';
-  const personal=data.personal?`<div class="staff-primary-message">${esc(data.personal.text)}</div>`:'<div class="staff-primary-message staff-primary-empty">個人への案内はありません</div>';
-  return `<div class="staff-primary-card team"><div class="staff-primary-label">📣 連絡事項</div>${teamBody}</div><div class="staff-primary-card personal"><div class="staff-primary-label">★ あなたへの案内</div>${personal}</div>`;
+  const team=data.messages||[],cards=[];
+  if(team.length) cards.push(`<div class="staff-primary-card team"><div class="staff-primary-label">📣 連絡事項</div>${team.map(m=>`<div class="staff-primary-message"><small>${esc(m.label)}</small><br>${esc(m.text)}</div>`).join('')}</div>`);
+  if(data.personal) cards.push(`<div class="staff-primary-card personal"><div class="staff-primary-label">★ あなたへの案内</div><div class="staff-primary-message">${esc(data.personal.text)}</div></div>`);
+  return cards.join('');
 }
 let todayBriefTarget=null;
 function maybeShowTodayBrief(me){
   const now=japanToday(), date=`${now.year}-${pad(now.month)}-${pad(now.day)}`, data=todayBriefData(me,date), wish=((S.staff[me]||{}).wish)||{}, acks=wish._todayBriefAcks||{};
-  const hasNotice=(data.messages||[]).length>0||!!data.personal;
-  if(!hasNotice||acks[date]===data.fingerprint||$('#todayBriefMask').style.display==='flex') return;
+  if(acks[date]===data.fingerprint||$('#todayBriefMask').style.display==='flex') return;
   todayBriefTarget={me:me,date:date,data:data}; $('#todayBriefDate').textContent=`${now.year}年${now.month}月${now.day}日（${DOW[now.dow]}）`; $('#todayBriefBody').innerHTML=briefSectionsHtml(data); $('#todayBriefMask').style.display='flex';
 }
 $('#todayBriefConfirm').onclick=()=>{
