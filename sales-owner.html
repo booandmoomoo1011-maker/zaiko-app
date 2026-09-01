@@ -101,16 +101,16 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
 .sales-sheet-btn:active { background: #eef0ff; }
 #sales-print-sheet { display: none; }
 
-@page { size: A4 portrait; margin: 8mm; }
+@page { size: A4 landscape; margin: 5mm; }
 @media print {
   body { background: #fff !important; }
   body > *:not(#sales-print-sheet) { display: none !important; }
   #sales-print-sheet { display: block !important; color: #111; font-family: sans-serif; }
-  #sales-print-sheet h1 { margin: 0 0 2mm; text-align: center; font-size: 15pt; }
-  #sales-print-sheet .print-created { margin-bottom: 3mm; text-align: right; font-size: 7pt; color: #666; }
-  #sales-print-sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 7.5pt; }
-  #sales-print-sheet th, #sales-print-sheet td { border: .25mm solid #777; padding: 1.1mm 1mm; text-align: right; }
-  #sales-print-sheet th:first-child, #sales-print-sheet td:first-child { width: 13%; text-align: center; }
+  #sales-print-sheet h1 { margin: 0 0 1mm; text-align: center; font-size: 11pt; }
+  #sales-print-sheet .print-created { margin-bottom: 1mm; text-align: right; font-size: 5pt; color: #666; }
+  #sales-print-sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 5.2pt; line-height: 1; }
+  #sales-print-sheet th, #sales-print-sheet td { height: 4.25mm; box-sizing: border-box; border: .2mm solid #777; padding: .45mm .35mm; text-align: right; overflow: hidden; white-space: nowrap; }
+  #sales-print-sheet th:first-child, #sales-print-sheet td:first-child { width: 8.5%; text-align: center; }
   #sales-print-sheet thead th { background: #1a237e !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   #sales-print-sheet .store-nagono { background: #fff9c4 !important; }
   #sales-print-sheet .store-osu { background: #fce4ec !important; }
@@ -271,7 +271,7 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
   <div id="loading">読み込み中...</div>
   <div id="history-list"></div>
   <div id="sales-print-control" class="sales-print-control">
-    <p id="sales-print-help">画面で選んでいる月の全店舗売上を、A4縦1枚にまとめます。</p>
+    <p id="sales-print-help">画面で選んでいる月を、正式な売上まとめ形式でA4横1枚に印刷します。</p>
     <button class="sales-print-btn" type="button" onclick="printSalesSummary()">🖨 選択中の月の売上まとめを印刷</button>
     <a class="sales-sheet-btn" href="https://docs.google.com/spreadsheets/d/1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">⭐ 売上まとめスプレッドシートを開く</a>
   </div>
@@ -642,19 +642,18 @@ function numericValue(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function salesForDate(store, date) {
+function salesEntryForDate(store, date) {
   const matches = (allData[store] || []).filter(item => item && item.date === date);
-  if (!matches.length) return 0;
-  const latest = matches.reduce((selected, item) => {
+  if (!matches.length) return {};
+  return matches.reduce((selected, item) => {
     const selectedTime = numericValue(selected.updatedAt || selected.savedAt || selected.timestamp);
     const itemTime = numericValue(item.updatedAt || item.savedAt || item.timestamp);
     return itemTime >= selectedTime ? item : selected;
   });
-  return numericValue(latest.netSales);
 }
 
-function formatPrintYen(value) {
-  return value ? '¥' + value.toLocaleString('ja-JP') : '<span class="zero">-</span>';
+function formatPrintNumber(value) {
+  return value ? value.toLocaleString('ja-JP') : '';
 }
 
 window.printSalesSummary = function() {
@@ -664,41 +663,59 @@ window.printSalesSummary = function() {
   }
 
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
-  const storeClasses = ['store-nagono','store-osu','store-teppan','store-kamakura'];
-  const monthly = [0,0,0,0];
-  let weekly = [0,0,0,0];
+  const columnClasses = ['', 'store-osu','store-osu','store-osu','store-osu','store-osu',
+    'store-nagono','store-nagono','store-nagono','store-nagono','store-nagono',
+    'store-teppan','store-teppan','store-teppan','store-teppan','store-teppan',
+    'store-kamakura','store-kamakura','store-kamakura','store-kamakura',''];
+  const monthly = Array(20).fill(0);
+  let weekly = Array(20).fill(0);
   let rows = '';
 
   for (let day = 1; day <= daysInMonth; day++) {
     const date = viewYear + '-' + String(viewMonth).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-    const values = STORES_ORDER.map(store => salesForDate(store, date));
-    values.forEach((value, index) => { weekly[index] += value; monthly[index] += value; });
-    const total = values.reduce((sum, value) => sum + value, 0);
-    rows += '<tr><td>' + day + '日</td>' + values.map((value,index) =>
-      '<td class="' + storeClasses[index] + '">' + formatPrintYen(value) + '</td>'
-    ).join('') + '<td>' + formatPrintYen(total) + '</td></tr>';
+    const osu = salesEntryForDate('大須', date);
+    const nagono = salesEntryForDate('那古野', date);
+    const teppan = salesEntryForDate('鉄板', date);
+    const kamakura = salesEntryForDate('鎌倉', date);
+    const values = [
+      numericValue(osu.netSales), numericValue(osu.male) + numericValue(osu.female),
+      numericValue(osu.lunchSales), numericValue(osu.lunchGuests),
+      numericValue(osu.buhinCash) + numericValue(osu.buhinOther),
+      numericValue(nagono.netSales), numericValue(nagono.male) + numericValue(nagono.female),
+      numericValue(nagono.buhin), numericValue(nagono.lunchSales), numericValue(nagono.lunchGuests),
+      numericValue(teppan.netSales), numericValue(teppan.male) + numericValue(teppan.female),
+      numericValue(teppan.buhin), numericValue(teppan.uber), numericValue(teppan.rocket),
+      numericValue(kamakura.netSales), numericValue(kamakura.male) + numericValue(kamakura.female),
+      kamakura.weather || '', numericValue(kamakura.uber)
+    ];
+    const total = numericValue(osu.netSales) + numericValue(nagono.netSales) + numericValue(teppan.netSales) + numericValue(kamakura.netSales);
+    values.forEach((value, index) => {
+      if (typeof value === 'number') { weekly[index] += value; monthly[index] += value; }
+    });
+    weekly[19] += total;
+    monthly[19] += total;
+    rows += '<tr><td>' + viewMonth + '/' + day + '</td>' + values.map((value,index) =>
+      '<td class="' + columnClasses[index + 1] + '">' + (typeof value === 'number' ? formatPrintNumber(value) : value) + '</td>'
+    ).join('') + '<td>' + formatPrintNumber(total) + '</td></tr>';
 
-    const isWeekEnd = day === 7 || day === 15 || day === 23 || day === daysInMonth;
+    const isWeekEnd = day === 7 || day === 14 || day === 21 || day === 28 || day === daysInMonth;
     if (isWeekEnd) {
-      const start = day === 7 ? 1 : day === 15 ? 8 : day === 23 ? 16 : 24;
-      const weeklyAll = weekly.reduce((sum, value) => sum + value, 0);
-      rows += '<tr class="weekly-total"><td>' + start + '〜' + day + '日 小計</td>' +
-        weekly.map(formatPrintYen).map(value => '<td>' + value + '</td>').join('') +
-        '<td>' + formatPrintYen(weeklyAll) + '</td></tr>';
-      weekly = [0,0,0,0];
+      const start = day <= 7 ? 1 : day <= 14 ? 8 : day <= 21 ? 15 : day <= 28 ? 22 : 29;
+      const subtotalColumns = weekly.map((value,index) => [0,5,10,15,19].includes(index) ? formatPrintNumber(value) : '');
+      rows += '<tr class="weekly-total"><td>' + start + '〜' + day + '日 週間売上</td>' +
+        subtotalColumns.map(value => '<td>' + value + '</td>').join('') + '</tr>';
+      weekly = Array(20).fill(0);
     }
   }
 
-  const monthlyAll = monthly.reduce((sum, value) => sum + value, 0);
-  rows += '<tr class="monthly-total"><td>月合計</td>' +
-    monthly.map(formatPrintYen).map(value => '<td>' + value + '</td>').join('') +
-    '<td>' + formatPrintYen(monthlyAll) + '</td></tr>';
+  rows += '<tr class="monthly-total"><td>合計</td>' +
+    monthly.map(formatPrintNumber).map(value => '<td>' + value + '</td>').join('') + '</tr>';
 
   const now = new Date();
   document.getElementById('sales-print-sheet').innerHTML =
     '<h1>' + viewYear + '年' + viewMonth + '月　売上まとめ</h1>' +
     '<div class="print-created">印刷日時：' + now.toLocaleString('ja-JP') + '</div>' +
-    '<table><thead><tr><th>日付</th><th>那古野</th><th>大須</th><th>鉄板</th><th>鎌倉</th><th>全店合計</th></tr></thead>' +
+    '<table><thead><tr><th>日付</th><th>大須売上</th><th>大須人数</th><th>大須ランチ</th><th>ランチ人数</th><th>大須物販</th><th>那古野売上</th><th>那古野人数</th><th>那古野物販</th><th>那古野ランチ</th><th>ランチ人数</th><th>鉄板売上</th><th>鉄板人数</th><th>鉄板物販</th><th>鉄板Uber</th><th>鉄板Rocket</th><th>鎌倉売上</th><th>鎌倉人数</th><th>天気</th><th>鎌倉Uber</th><th>総売上</th></tr></thead>' +
     '<tbody>' + rows + '</tbody></table>';
   window.print();
 };
