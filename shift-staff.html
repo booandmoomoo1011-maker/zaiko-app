@@ -435,10 +435,18 @@
   #ppPrint{background:var(--pink); color:#fff;} #ppClose{background:#ddd; color:#333;}
   .ppscroll{overflow:auto; padding:16px; background:#8f8f8f;}
   .ppsheet{background:#fff; width:1040px; max-width:100%; margin:0 auto; padding:12px; box-shadow:0 3px 14px rgba(0,0,0,.35);}
+  .staff-print-select-mask{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(8,20,31,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .staff-print-select-card{width:min(440px,100%);max-height:88dvh;overflow:auto;border:1px solid #c8a45a;border-radius:20px;padding:18px;background:#f5f7f8;box-shadow:0 22px 60px rgba(0,0,0,.5)}
+  .staff-print-select-card h2{margin:0 0 5px;color:#173047;font-size:21px}.staff-print-select-card>p{margin:0 0 13px;color:#5d6e7a;font-size:13px;font-weight:700}
+  .staff-print-page-list{display:grid;gap:8px;margin-bottom:14px}.staff-print-page-option{display:flex;align-items:center;gap:10px;border:1px solid #cbd5dc;border-radius:11px;padding:11px 12px;background:#fff;color:#20384b;font-weight:900;cursor:pointer}
+  .staff-print-page-option input{width:20px;height:20px;accent-color:#b18b36}.staff-print-select-tools,.staff-print-select-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .staff-print-select-tools{margin-bottom:13px}.staff-print-select-card button{border:1px solid #b8c4cc;border-radius:10px;padding:9px 13px;background:#fff;color:#263b4d;font-weight:900;cursor:pointer}
+  .staff-print-select-actions{justify-content:flex-end}.staff-print-select-actions .staff-print-go{border-color:#9b772d;background:linear-gradient(180deg,#f3dc9b,#c7a14c);color:#1e3446}.staff-print-select-actions .staff-print-go:disabled{opacity:.45;cursor:not-allowed}
 
   @media print{
     body>*{display:none !important;}
     #printArea{display:block !important;}
+    #printArea,#printArea *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
     @page{ size:A4 landscape; margin:6mm; }
   }
 
@@ -693,7 +701,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト <span class="demoTag">v1.91</span></h1>
+  <h1>シフト <span class="demoTag">v1.92</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -917,7 +925,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.91"; window.APP_UPDATED="2026-09-01";
+window.APP_VERSION="v1.92"; window.APP_UPDATED="2026-09-01";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1755,9 +1763,32 @@ function staffPublishedMiniatureHtml(){
   if(!dates.length) return '';
   return `<section class="staff-miniature-section" aria-label="公開済みシフトのオーナー共通表示"><div class="staff-miniature-head"><strong>${Y}年${M}月　公開済みシフト一覧</strong><div class="staff-miniature-actions"><span class="readonly-badge">閲覧のみ</span><button type="button" class="staff-miniature-print" id="staffPublishedPrint">🖨 印刷</button></div></div><div class="staff-miniature-wrap"><div class="staff-miniature-canvas" style="${staffPublishedPrintStyle(dates)}">${staffPublishedSheetsHtml(dates)}</div></div></section>`;
 }
-function printStaffPublishedSchedule(){
+function chooseStaffPublishedPrintPages(dates){
+  const pages=[]; for(let i=0;i<dates.length;i+=3) pages.push(dates.slice(i,i+3));
+  return new Promise(resolve=>{
+    const mask=document.createElement('div'); mask.className='staff-print-select-mask';
+    const label=page=>{ const first=Number(page[0].slice(-2)),last=Number(page[page.length-1].slice(-2)); return first===last?`${first}日`:`${first}〜${last}日`; };
+    mask.innerHTML=`<div class="staff-print-select-card" role="dialog" aria-modal="true" aria-labelledby="staffPrintSelectTitle"><h2 id="staffPrintSelectTitle">印刷するページを選択</h2><p>3日ごとのページから、必要なものだけ選べます。</p><div class="staff-print-page-list">${pages.map((page,index)=>`<label class="staff-print-page-option"><input type="checkbox" value="${index}" checked><span>${index+1}ページ目（${label(page)}）</span></label>`).join('')}</div><div class="staff-print-select-tools"><button type="button" data-action="all">すべて選択</button><button type="button" data-action="none">選択を解除</button></div><div class="staff-print-select-actions"><button type="button" data-action="cancel">閉じる</button><button type="button" class="staff-print-go" data-action="print">選択したページを印刷</button></div></div>`;
+    const boxes=()=>Array.from(mask.querySelectorAll('input[type="checkbox"]')),go=mask.querySelector('.staff-print-go');
+    const update=()=>{ go.disabled=!boxes().some(box=>box.checked); };
+    mask.addEventListener('change',update);
+    mask.addEventListener('click',event=>{
+      const action=event.target.closest('button')?.dataset.action; if(!action) return;
+      if(action==='all'){ boxes().forEach(box=>box.checked=true); update(); return; }
+      if(action==='none'){ boxes().forEach(box=>box.checked=false); update(); return; }
+      if(action==='cancel'){ mask.remove(); resolve(null); return; }
+      if(action==='print'){ const selected=boxes().filter(box=>box.checked).map(box=>Number(box.value)); mask.remove(); resolve(selected); }
+    });
+    document.body.appendChild(mask); update();
+  });
+}
+async function printStaffPublishedSchedule(){
   const prefix=`${Y}-${pad(M)}-`,dates=Object.keys(publicSchedule()).filter(date=>date.startsWith(prefix)&&Array.isArray(publicSchedule()[date])).sort(); if(!dates.length) return;
-  const area=$('#printArea'); area.style.cssText=staffPublishedPrintStyle(dates); area.innerHTML=staffPublishedSheetsHtml(dates); window.print();
+  const selectedPages=await chooseStaffPublishedPrintPages(dates); if(!selectedPages||!selectedPages.length) return;
+  const pageGroups=[]; for(let i=0;i<dates.length;i+=3) pageGroups.push(dates.slice(i,i+3));
+  const selectedDates=selectedPages.flatMap(index=>pageGroups[index]||[]);
+  const area=$('#printArea'); area.style.cssText=staffPublishedPrintStyle(selectedDates); area.innerHTML=staffPublishedSheetsHtml(selectedDates);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>window.print()));
 }
 function fitStaffPublishedMiniature(){
   document.querySelectorAll('.staff-miniature-wrap').forEach(wrap=>{ const canvas=wrap.querySelector('.staff-miniature-canvas'); if(!canvas) return; canvas.style.zoom='1'; const scale=Math.min(1,Math.max(1,wrap.clientWidth-8)/Math.max(canvas.offsetWidth,1)); canvas.style.zoom=String(scale); });
