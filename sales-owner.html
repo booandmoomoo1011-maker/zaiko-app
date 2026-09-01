@@ -99,28 +99,6 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
   font: 700 14px inherit; cursor: pointer; text-decoration: none;
 }
 .sales-sheet-btn:active { background: #eef0ff; }
-#sales-print-sheet { display: none; }
-
-@page { size: 297mm 210mm; margin: 5mm; }
-@media print {
-  html, body { width: 297mm !important; min-width: 297mm !important; height: 210mm !important; margin: 0 !important; background: #fff !important; }
-  body > *:not(#sales-print-sheet) { display: none !important; }
-  #sales-print-sheet { display: block !important; width: 287mm !important; min-width: 287mm !important; margin: 0 auto !important; color: #111; font-family: sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  #sales-print-sheet h1 { margin: 0 0 1mm; text-align: center; font-size: 11pt; }
-  #sales-print-sheet .print-created { margin-bottom: 1mm; text-align: right; font-size: 5pt; color: #666; }
-  #sales-print-sheet table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 5.2pt; line-height: 1; }
-  #sales-print-sheet th, #sales-print-sheet td { height: 4.25mm; box-sizing: border-box; border: .2mm solid #777; padding: .45mm .35mm; text-align: right; overflow: hidden; white-space: nowrap; }
-  #sales-print-sheet th:first-child, #sales-print-sheet td:first-child { width: 8.5%; text-align: center; }
-  #sales-print-sheet thead th { background: #1a237e !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  #sales-print-sheet .store-nagono { background: #fff9c4 !important; }
-  #sales-print-sheet .store-osu { background: #fce4ec !important; }
-  #sales-print-sheet .store-teppan { background: #e1f5fe !important; }
-  #sales-print-sheet .store-kamakura { background: #f3e5f5 !important; }
-  #sales-print-sheet .weekly-total td { background: #fff8df !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  #sales-print-sheet .monthly-total td { background: #e8eaf6 !important; font-weight: 900; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  #sales-print-sheet .zero { color: #bbb; }
-}
-
 #loading { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
 #fb-status { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 4px; }
 #owner-access-gate {
@@ -269,15 +247,13 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
     </div>
   </div>
   <div id="sales-print-control" class="sales-print-control">
-    <p id="sales-print-help">画面で選んでいる月を、正式な売上まとめ形式でA4横1枚に印刷します。</p>
-    <button class="sales-print-btn" type="button" onclick="printSalesSummary()">🖨 選択中の月の売上まとめを印刷</button>
+    <p id="sales-print-help">選択月をスプレッドシートの正式な「A4印刷用」PDFで開きます。</p>
+    <button class="sales-print-btn" type="button" onclick="printOfficialSalesSummary()">🖨 選択中の月を正式PDFで開く</button>
     <a class="sales-sheet-btn" href="https://docs.google.com/spreadsheets/d/1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">⭐ 売上まとめスプレッドシートを開く</a>
   </div>
   <div id="loading">読み込み中...</div>
   <div id="history-list"></div>
 </div>
-
-<div id="sales-print-sheet" aria-hidden="true"></div>
 
 <!-- 設定オーバーレイ -->
 <div id="settings-overlay" onclick="closeSettings()"></div>
@@ -352,6 +328,9 @@ let auth = null;
 let ownerAuthorized = false;
 let ownerAccessMode = 'none';
 let ownerDataStarted = false;
+let sheetsAccessToken = '';
+const SALES_SUMMARY_SPREADSHEET_ID = '1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4';
+const SALES_SUMMARY_PRINT_SHEET = 'A4印刷用';
 const SALES_OWNER_SHARE_PARAM = 'ownerAccess';
 const SALES_OWNER_SHARE_STORAGE = 'zaiko_sales_owner_access_token';
 const SALES_OWNER_SHARE_SLOT = 'shared1';
@@ -637,87 +616,91 @@ window.openStore = async function(store) {
   } catch(e) { alert('店舗を開けませんでした：' + e.message); }
 };
 
-function numericValue(value) {
-  const number = Number(String(value == null ? '' : value).replace(/[^0-9.-]/g, ''));
-  return Number.isFinite(number) ? number : 0;
+function reiwaSalesSheetName(year, month) {
+  const reiwaYear = year - 2018;
+  return reiwaYear > 0 ? 'R' + reiwaYear + '/' + month : '';
 }
 
-function salesEntryForDate(store, date) {
-  const matches = (allData[store] || []).filter(item => item && item.date === date);
-  if (!matches.length) return {};
-  return matches.reduce((selected, item) => {
-    const selectedTime = numericValue(selected.updatedAt || selected.savedAt || selected.timestamp);
-    const itemTime = numericValue(item.updatedAt || item.savedAt || item.timestamp);
-    return itemTime >= selectedTime ? item : selected;
+async function requestSheetsAccessToken() {
+  const provider = new GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/spreadsheets');
+  provider.setCustomParameters({
+    prompt: 'consent',
+    login_hint: auth && auth.currentUser && auth.currentUser.email ? auth.currentUser.email : ''
   });
+  const result = await signInWithPopup(auth, provider);
+  const admin = await get(ref(db, 'zaiko/shift/access/admins/' + result.user.uid));
+  if (admin.val() !== true) throw new Error('管理者に登録されたGoogleアカウントを選択してください。');
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  if (!credential || !credential.accessToken) throw new Error('スプレッドシートの操作権限を取得できませんでした。');
+  sheetsAccessToken = credential.accessToken;
+  return sheetsAccessToken;
 }
 
-function formatPrintNumber(value) {
-  return value ? value.toLocaleString('ja-JP') : '';
+async function sheetsApiFetch(url, options) {
+  let token = sheetsAccessToken || await requestSheetsAccessToken();
+  let response = await fetch(url, Object.assign({}, options, {
+    headers: Object.assign({}, options && options.headers, {'Authorization':'Bearer ' + token})
+  }));
+  if (response.status === 401) {
+    sheetsAccessToken = '';
+    token = await requestSheetsAccessToken();
+    response = await fetch(url, Object.assign({}, options, {
+      headers: Object.assign({}, options && options.headers, {'Authorization':'Bearer ' + token})
+    }));
+  }
+  return response;
 }
 
-window.printSalesSummary = function() {
+window.printOfficialSalesSummary = async function() {
   if (!ownerAuthorized || ownerAccessMode !== 'admin') {
     alert('売上まとめの印刷は管理者だけが利用できます。');
     return;
   }
-
-  const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
-  const columnClasses = ['', 'store-osu','store-osu','store-osu','store-osu','store-osu',
-    'store-nagono','store-nagono','store-nagono','store-nagono','store-nagono',
-    'store-teppan','store-teppan','store-teppan','store-teppan','store-teppan',
-    'store-kamakura','store-kamakura','store-kamakura','store-kamakura',''];
-  const monthly = Array(20).fill(0);
-  let weekly = Array(20).fill(0);
-  let rows = '';
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = viewYear + '-' + String(viewMonth).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-    const osu = salesEntryForDate('大須', date);
-    const nagono = salesEntryForDate('那古野', date);
-    const teppan = salesEntryForDate('鉄板', date);
-    const kamakura = salesEntryForDate('鎌倉', date);
-    const values = [
-      numericValue(osu.netSales), numericValue(osu.male) + numericValue(osu.female),
-      numericValue(osu.lunchSales), numericValue(osu.lunchGuests),
-      numericValue(osu.buhinCash) + numericValue(osu.buhinOther),
-      numericValue(nagono.netSales), numericValue(nagono.male) + numericValue(nagono.female),
-      numericValue(nagono.buhin), numericValue(nagono.lunchSales), numericValue(nagono.lunchGuests),
-      numericValue(teppan.netSales), numericValue(teppan.male) + numericValue(teppan.female),
-      numericValue(teppan.buhin), numericValue(teppan.uber), numericValue(teppan.rocket),
-      numericValue(kamakura.netSales), numericValue(kamakura.male) + numericValue(kamakura.female),
-      kamakura.weather || '', numericValue(kamakura.uber)
-    ];
-    const total = numericValue(osu.netSales) + numericValue(nagono.netSales) + numericValue(teppan.netSales) + numericValue(kamakura.netSales);
-    values.forEach((value, index) => {
-      if (typeof value === 'number') { weekly[index] += value; monthly[index] += value; }
-    });
-    weekly[19] += total;
-    monthly[19] += total;
-    rows += '<tr><td>' + viewMonth + '/' + day + '</td>' + values.map((value,index) =>
-      '<td class="' + columnClasses[index + 1] + '">' + (typeof value === 'number' ? formatPrintNumber(value) : value) + '</td>'
-    ).join('') + '<td>' + formatPrintNumber(total) + '</td></tr>';
-
-    const isWeekEnd = day === 7 || day === 14 || day === 21 || day === 28 || day === daysInMonth;
-    if (isWeekEnd) {
-      const start = day <= 7 ? 1 : day <= 14 ? 8 : day <= 21 ? 15 : day <= 28 ? 22 : 29;
-      const subtotalColumns = weekly.map((value,index) => [0,5,10,15,19].includes(index) ? formatPrintNumber(value) : '');
-      rows += '<tr class="weekly-total"><td>' + start + '〜' + day + '日 週間売上</td>' +
-        subtotalColumns.map(value => '<td>' + value + '</td>').join('') + '</tr>';
-      weekly = Array(20).fill(0);
-    }
+  const monthSheet = reiwaSalesSheetName(viewYear, viewMonth);
+  if (!monthSheet) {
+    alert('この年月はスプレッドシートの対象外です。');
+    return;
+  }
+  const button = document.querySelector('.sales-print-btn');
+  const originalButtonText = button ? button.textContent : '';
+  if (button) {
+    button.disabled = true;
+    button.textContent = '正式PDFを準備しています…';
   }
 
-  rows += '<tr class="monthly-total"><td>合計</td>' +
-    monthly.map(formatPrintNumber).map(value => '<td>' + value + '</td>').join('') + '</tr>';
+  try {
+    const metadataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SALES_SUMMARY_SPREADSHEET_ID + '?fields=sheets.properties(title,sheetId)';
+    const metadataResponse = await sheetsApiFetch(metadataUrl, {method:'GET'});
+    const metadata = await metadataResponse.json();
+    if (!metadataResponse.ok) throw new Error(metadata.error && metadata.error.message ? metadata.error.message : 'スプレッドシートを確認できませんでした。');
+    const sheets = (metadata.sheets || []).map(item => item.properties || {});
+    if (!sheets.some(sheet => sheet.title === monthSheet)) throw new Error('「' + monthSheet + '」の月シートがまだありません。');
+    const printSheet = sheets.find(sheet => sheet.title === SALES_SUMMARY_PRINT_SHEET);
+    if (!printSheet) throw new Error('「A4印刷用」シートが見つかりません。');
 
-  const now = new Date();
-  document.getElementById('sales-print-sheet').innerHTML =
-    '<h1>' + viewYear + '年' + viewMonth + '月　売上まとめ</h1>' +
-    '<div class="print-created">印刷日時：' + now.toLocaleString('ja-JP') + '</div>' +
-    '<table><thead><tr><th>日付</th><th>大須売上</th><th>大須人数</th><th>大須ランチ</th><th>ランチ人数</th><th>大須物販</th><th>那古野売上</th><th>那古野人数</th><th>那古野物販</th><th>那古野ランチ</th><th>ランチ人数</th><th>鉄板売上</th><th>鉄板人数</th><th>鉄板物販</th><th>鉄板Uber</th><th>鉄板Rocket</th><th>鎌倉売上</th><th>鎌倉人数</th><th>天気</th><th>鎌倉Uber</th><th>総売上</th></tr></thead>' +
-    '<tbody>' + rows + '</tbody></table>';
-  window.print();
+    const range = encodeURIComponent("'" + SALES_SUMMARY_PRINT_SHEET + "'!B1");
+    const updateUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SALES_SUMMARY_SPREADSHEET_ID + '/values/' + range + '?valueInputOption=USER_ENTERED';
+    const updateResponse = await sheetsApiFetch(updateUrl, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({values:[[monthSheet]]})
+    });
+    const updateResult = await updateResponse.json();
+    if (!updateResponse.ok) throw new Error(updateResult.error && updateResult.error.message ? updateResult.error.message : '印刷月を設定できませんでした。');
+
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    const pdfUrl = 'https://docs.google.com/spreadsheets/d/' + SALES_SUMMARY_SPREADSHEET_ID + '/export' +
+      '?format=pdf&gid=' + encodeURIComponent(printSheet.sheetId) + '&range=A1%3AU39&size=A4&portrait=false&fitw=true' +
+      '&sheetnames=false&printtitle=false&pagenumbers=false&gridlines=false&fzr=false&attachment=false';
+    window.location.href = pdfUrl;
+  } catch(e) {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalButtonText;
+    }
+    alert('正式PDFを開けませんでした：' + (e.message || e));
+  }
 };
 
 function renderHistory() {
