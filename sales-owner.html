@@ -247,8 +247,8 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
     </div>
   </div>
   <div id="sales-print-control" class="sales-print-control">
-    <p id="sales-print-help">選択月をスプレッドシートの正式な「A4印刷用」PDFで開きます。</p>
-    <button class="sales-print-btn" type="button" onclick="printOfficialSalesSummary()">🖨 選択中の月を正式PDFで開く</button>
+    <p id="sales-print-help">「A4印刷用」を開き、B1で印刷月を選んでスプレッドシートから印刷します。</p>
+    <button class="sales-print-btn" type="button" onclick="openOfficialSalesPrintSheet()">🖨 A4印刷用シートを開く</button>
     <a class="sales-sheet-btn" href="https://docs.google.com/spreadsheets/d/1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">⭐ 売上まとめスプレッドシートを開く</a>
   </div>
   <div id="loading">読み込み中...</div>
@@ -328,9 +328,8 @@ let auth = null;
 let ownerAuthorized = false;
 let ownerAccessMode = 'none';
 let ownerDataStarted = false;
-let sheetsAccessToken = '';
 const SALES_SUMMARY_SPREADSHEET_ID = '1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4';
-const SALES_SUMMARY_PRINT_SHEET = 'A4印刷用';
+const SALES_SUMMARY_PRINT_URL = 'https://docs.google.com/spreadsheets/d/' + SALES_SUMMARY_SPREADSHEET_ID + '/edit?gid=2026082901#gid=2026082901&range=A1:U39';
 const SALES_OWNER_SHARE_PARAM = 'ownerAccess';
 const SALES_OWNER_SHARE_STORAGE = 'zaiko_sales_owner_access_token';
 const SALES_OWNER_SHARE_SLOT = 'shared1';
@@ -652,11 +651,15 @@ async function sheetsApiFetch(url, options) {
   return response;
 }
 
-window.printOfficialSalesSummary = async function() {
+window.openOfficialSalesPrintSheet = async function() {
   if (!ownerAuthorized || ownerAccessMode !== 'admin') {
     alert('売上まとめの印刷は管理者だけが利用できます。');
     return;
   }
+  const opened = window.open(SALES_SUMMARY_PRINT_URL, '_blank', 'noopener');
+  if (!opened) window.location.href = SALES_SUMMARY_PRINT_URL;
+  return;
+  /* 旧Sheets API自動印刷処理は使用しない。A4印刷用シートを直接開く。 */
   const monthSheet = reiwaSalesSheetName(viewYear, viewMonth);
   if (!monthSheet) {
     alert('この年月はスプレッドシートの対象外です。');
