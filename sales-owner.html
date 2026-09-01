@@ -247,8 +247,9 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
     </div>
   </div>
   <div id="sales-print-control" class="sales-print-control">
-    <p id="sales-print-help">「A4印刷用」を開き、B1で印刷月を選んでスプレッドシートから印刷します。</p>
-    <button class="sales-print-btn" type="button" onclick="openOfficialSalesPrintSheet()">🖨 A4印刷用シートを開く</button>
+    <p id="sales-print-help">①でB1の印刷月を選び、アプリへ戻って②を押してください。</p>
+    <button class="sales-print-btn" type="button" onclick="openOfficialSalesPrintSheet()">① A4印刷用で月を選ぶ</button>
+    <button class="sales-print-btn" type="button" style="margin-top:9px;background:linear-gradient(135deg,#176b3a,#269453);" onclick="openOfficialSalesPdf()">② A4横PDFを開いて印刷</button>
     <a class="sales-sheet-btn" href="https://docs.google.com/spreadsheets/d/1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">⭐ 売上まとめスプレッドシートを開く</a>
   </div>
   <div id="loading">読み込み中...</div>
@@ -330,6 +331,7 @@ let ownerAccessMode = 'none';
 let ownerDataStarted = false;
 const SALES_SUMMARY_SPREADSHEET_ID = '1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4';
 const SALES_SUMMARY_PRINT_URL = 'https://docs.google.com/spreadsheets/d/' + SALES_SUMMARY_SPREADSHEET_ID + '/edit?gid=2026082901#gid=2026082901&range=A1:U39';
+const SALES_SUMMARY_PDF_URL = 'https://docs.google.com/spreadsheets/d/' + SALES_SUMMARY_SPREADSHEET_ID + '/export?format=pdf&gid=2026082901&range=A1%3AU39&size=A4&portrait=false&scale=4&fitw=true&sheetnames=false&printtitle=false&pagenumbers=false&gridlines=false&fzr=false&top_margin=0.50&bottom_margin=0.50&left_margin=0.25&right_margin=0.25&attachment=false';
 const SALES_OWNER_SHARE_PARAM = 'ownerAccess';
 const SALES_OWNER_SHARE_STORAGE = 'zaiko_sales_owner_access_token';
 const SALES_OWNER_SHARE_SLOT = 'shared1';
@@ -650,6 +652,15 @@ async function sheetsApiFetch(url, options) {
   }
   return response;
 }
+
+window.openOfficialSalesPdf = function() {
+  if (!ownerAuthorized || ownerAccessMode !== 'admin') {
+    alert('売上まとめの印刷は管理者だけが利用できます。');
+    return;
+  }
+  const opened = window.open(SALES_SUMMARY_PDF_URL, '_blank', 'noopener');
+  if (!opened) window.location.href = SALES_SUMMARY_PDF_URL;
+};
 
 window.openOfficialSalesPrintSheet = async function() {
   if (!ownerAuthorized || ownerAccessMode !== 'admin') {
