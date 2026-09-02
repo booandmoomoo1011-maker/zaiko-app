@@ -614,9 +614,9 @@
         accessStage='D1';
         window.SHIFT_ACCESS_VALID=true;
         window.SHIFT_STAFF_IDENTITY={staffKey:access.staffKey,name:access.name,store:access.store||'大須'};
-        let remoteMeta={}, remoteNode=null;
+        let remoteMeta={}, remoteNode=null, remoteMetaReady=false, remoteNodeReady=false;
         const apply=()=>{
-          if(!window.SHIFT_ACCESS_VALID || !remoteNode || typeof window.shiftApplyRemote!=='function') return;
+          if(!window.SHIFT_ACCESS_VALID || !remoteMetaReady || !remoteNodeReady || !remoteNode || typeof window.shiftApplyRemote!=='function') return;
           const one={}; one[access.staffKey]=remoteNode;
           window.shiftApplyRemote({meta:remoteMeta,staff:one});
           badge.textContent='📥 受信 '+new Date().toLocaleTimeString('ja-JP');
@@ -632,9 +632,10 @@
           const v=snap.val();
           if(!v || v.active!==true || v.staffKey!==access.staffKey){ stopAccess('T3'); return; }
         },()=>stopAccess('T4'));
-        onValue(ref(db,BASE+'/meta'),snap=>{ remoteMeta=snap.val()||{}; apply(); },()=>stopAccess('M1'));
+        onValue(ref(db,BASE+'/meta'),snap=>{ remoteMeta=snap.val()||{}; remoteMetaReady=true; apply(); },()=>stopAccess('M1'));
         onValue(ref(db,BASE+'/staff/'+access.staffKey),snap=>{
           remoteNode=snap.val();
+          remoteNodeReady=true;
           if(!remoteNode){ stopAccess('D2'); return; }
           apply();
         },()=>stopAccess('D3'));
@@ -923,7 +924,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.95"; window.APP_UPDATED="2026-09-01";
+window.APP_VERSION="v1.96"; window.APP_UPDATED="2026-09-02";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
