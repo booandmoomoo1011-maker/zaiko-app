@@ -995,7 +995,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.177</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.178</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1329,7 +1329,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.177"; window.APP_UPDATED="2026-09-01";
+window.APP_VERSION="v1.178"; window.APP_UPDATED="2026-09-01";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1679,7 +1679,7 @@ window.shiftOwnerSignedOut=function(){
 window.shiftOwnerAuthorized=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.177</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.178</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -3980,8 +3980,9 @@ async function copyEditorUrl(slot,force){
   try{
     const url=await window.fbIssueEditorUrl(slot,!!force);
     const editorName=(window.SHIFT_EDITOR_NAMES||{})[slot]||"編集者";
-    try{ await navigator.clipboard.writeText(url); appAlert((force?'新しい':'')+editorName+'専用URLをコピーしました。\nこのURLだけを本人へ送ってください。'); }
-    catch(e){ appPrompt(editorName+'専用URLをコピーしてください。',url); }
+    const copyText=editorName+'\n'+url;
+    try{ await navigator.clipboard.writeText(copyText); appAlert((force?'新しい':'')+editorName+'専用URLを、名前付きでコピーしました。\nこの内容を本人へ送ってください。'); }
+    catch(e){ appPrompt(editorName+'の名前と専用URLをコピーしてください。',copyText); }
   }catch(e){ appAlert('編集者URLを準備できませんでした。管理者ログインと通信状態を確認してください。'); }
   b.disabled=false; b.textContent=old;
 }
