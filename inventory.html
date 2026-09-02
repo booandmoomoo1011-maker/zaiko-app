@@ -42,7 +42,7 @@ function ensureXlsxLoaded(){
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Firebase設定
 const firebaseConfig = {
@@ -245,41 +245,6 @@ window.flushFirestoreSave = function() {
   return window.saveToFirestore({ immediate: true });
 };
 
-// Firestoreからデータを取得して適用
-window.loadFromFirestore = async function() {
-  try {
-    const snap = await getDoc(doc(db, 'inventory', 'main'));
-    if (!snap.exists()) {
-      console.log('Firestoreにデータなし（初回起動）');
-      return false;
-    }
-    const d = snap.data();
-    if (!d.stores || !d.allItems) return false;
-    _lastCloudData = syncState(d);
-
-    // localStorageのデータと比較して新しい方を使う
-    const localRaw = localStorage.getItem('zaikoApp_v1');
-    const localData = localRaw ? JSON.parse(localRaw) : null;
-    const localTime = localData?.savedAt ? new Date(localData.savedAt) : new Date(0);
-    const cloudTime = d.updatedAt ? new Date(d.updatedAt) : new Date(0);
-
-    if (cloudTime > localTime) {
-      // クラウドの方が新しい → クラウドを適用
-      applySyncState(syncState(d));
-      _lastSyncData = firestoreComparable(d);
-      if (typeof window.setSaveStatus === 'function') window.setSaveStatus('cloud', 'クラウド同期済み');
-      console.log('Firestoreデータを適用（クラウドが新しい）');
-      return true;
-    } else {
-      console.log('localStorageを使用（ローカルが新しい）');
-      return false;
-    }
-  } catch(e) {
-    console.warn('Firestore読み込みエラー（オフライン？）:', e);
-    return false;
-  }
-};
-
 // リアルタイム監視（他のユーザーが更新したら自動反映）
 window.startFirestoreSync = function() {
   onSnapshot(doc(db, 'inventory', 'main'), (snap) => {
@@ -329,16 +294,18 @@ window.startFirestoreSync = function() {
 };
 
 // DOMContentLoaded後に初期化
-window.addEventListener('DOMContentLoaded', async () => {
-  // Firestoreからデータ取得
-  const loaded = await window.loadFromFirestore();
-  if (loaded) {
-    // クラウドデータをlocalStorageにも同期
-    if (typeof saveData === 'function') saveData({ skipFirestore: true });
-    if (typeof renderTabs === 'function') renderTabs();
-    if (typeof render === 'function') render();
+window.addEventListener('DOMContentLoaded', () => {
+  // 先に表示済みの端末データを基準にし、監視の初回受信だけでクラウドとの差分を確認する
+  if (window._appStores && window._appAllItems) {
+    _lastSyncData = firestoreComparable(syncState({
+      stores: window._appStores,
+      allItems: window._appAllItems,
+      nextStoreId: window._appNextStoreId,
+      nextItemId: window._appNextItemId,
+      categories: window._appStoreCategories,
+      inventoryYear: window._appInventoryYear
+    }));
   }
-  // リアルタイム監視開始
   window.startFirestoreSync();
 });
 </script>
@@ -750,7 +717,7 @@ body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.8.2';
+const APP_VERSION   = '4.8.4';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
