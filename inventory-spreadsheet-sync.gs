@@ -3,9 +3,8 @@
  *
  * 重要:
  * - 既存の「大須」「那古野」「鉄板」「鎌倉」シートは読み取りだけです。
- * - 書き込み先は「連携_大須」「連携_那古野」「連携_鉄板」「連携_鎌倉」と
- *   「Zaikon連携設定」だけです。
- * - スプレッドシートからFirestoreへ書き戻す処理はありません。
+ * - 棚卸同期の書き込み先は「連携_店舗名」と「Zaikon連携設定」です。
+ * - 「価格マスター」の確認済み変更だけ、Firestoreの現在価格と履歴へ反映します。
  */
 
 const ZAIKON_SYNC = Object.freeze({
@@ -29,8 +28,11 @@ function onOpen() {
     .createMenu('Zaikon連携')
     .addItem('① 初期設定（元シートは変更しない）', 'setupZaikonSafeSync')
     .addItem('② 連携シートへ安全同期', 'syncZaikonToStaging')
-    .addItem('③ 入力した年度で4店舗を保存', 'saveZaikonAnnualSnapshot')
+    .addItem('③ 入力した年度で全店舗を保存', 'saveZaikonAnnualSnapshot')
     .addItem('④ 元4シートを年度名でコピー保存', 'archiveOriginalSheetsByYear')
+    .addSeparator()
+    .addItem('価格マスターを更新', 'syncZaikonPriceMaster')
+    .addItem('価格変更を確認・反映', 'applyZaikonPriceChanges')
     .addSeparator()
     .addItem('自動同期を停止（年1回運用）', 'disableZaikonAutoSync')
     .addToUi();
@@ -77,12 +79,13 @@ function syncZaikonToStaging() {
     const activeItems = inventory.allItems.filter(item => item.active !== false);
     const fetchedAt = new Date();
 
-    ZAIKON_SYNC.stores.forEach(store => {
+    getSyncStores_(inventory).forEach(store => {
       const source = ss.getSheetByName(store.sourceSheet);
-      const stage = ss.getSheetByName(store.stageSheet);
+      const stage = getOrCreateSheet_(ss, store.stageSheet);
+      prepareStageSheet_(stage);
       // 初回だけ元シートから補助情報を引き継ぎ、以後は連携シート側の変更を保持する。
       // 翌年度準備で税率・備考を空にした後、前年値が復活しないための構造。
-      const metadataSource = stage.getLastRow() > 1 ? stage : source;
+      const metadataSource = stage.getLastRow() > 1 ? stage : (source || stage);
       const sourceMeta = readExistingMetadata_(metadataSource);
       const storeItems = activeItems
         .filter(item => Number(item.storeId) === store.id)
@@ -111,7 +114,7 @@ function saveZaikonAnnualSnapshot() {
     throw new Error('在庫アプリで棚卸年（西暦4桁）を入力してから実行してください。');
   }
 
-  const targets = ZAIKON_SYNC.stores.map(store => ({
+  const targets = getSyncStores_(inventory).map(store => ({
     store,
     name: String(year) + store.sourceSheet,
   }));
@@ -129,7 +132,7 @@ function saveZaikonAnnualSnapshot() {
   const answer = ui.alert(
     year + '年度を確定保存します',
     targets.map(target => target.name).join('、') +
-      ' を固定保存します。\n\n保存後、連携4シートは ' + (year + 1) +
+      ' を固定保存します。\n\n保存後、連携シートは ' + (year + 1) +
       '年度用に、商品ID・物品名・カテゴリ・保管場所・単位だけを残します。\n' +
       '確定タブは自動更新されません。実行しますか？',
     ui.ButtonSet.YES_NO
@@ -149,14 +152,14 @@ function saveZaikonAnnualSnapshot() {
       throw new Error('保存処理中に同名タブが作成されたため中止しました: ' +
         newlyExisting.map(target => target.name).join('、'));
     }
-    // 4店舗すべてを先に固定保存する。途中失敗時は今回作成分だけ取り消す。
+    // 対象店舗すべてを先に固定保存する。途中失敗時は今回作成分だけ取り消す。
     targets.forEach(target => {
       const source = ss.getSheetByName(target.store.stageSheet);
       created.push(createFixedYearSheet_(ss, source, target.name, year, savedAt));
     });
     allSnapshotsCreated = true;
 
-    // 確定保存が4店舗すべて成功した後だけ、翌年度の作業用シートを準備する。
+    // 確定保存が全店舗成功した後だけ、翌年度の作業用シートを準備する。
     targets.forEach(target => {
       prepareNextYearStage_(ss.getSheetByName(target.store.stageSheet), year + 1);
     });
@@ -165,10 +168,10 @@ function saveZaikonAnnualSnapshot() {
     ensureSettingsLayout_(settings);
     settings.getRange('B8').setValue(year + '年度 / ' +
       Utilities.formatDate(savedAt, Session.getScriptTimeZone(), 'yyyy/MM/dd HH:mm:ss'));
-    settings.getRange('B9').setValue((year + 1) + '年度（単価・数量・税率・棚卸額・更新日・備考は空欄）');
+    settings.getRange('B9').setValue((year + 1) + '年度（最新単価を保持し、数量・税率・棚卸額・更新日・備考は空欄）');
     SpreadsheetApp.flush();
     ss.toast(
-      year + '年度を固定保存し、連携4シートを' + (year + 1) + '年度用に準備しました。',
+      year + '年度を固定保存し、連携シートを' + (year + 1) + '年度用に準備しました。',
       'Zaikon年度保存',
       10
     );
@@ -274,13 +277,13 @@ function prepareNextYearStage_(sheet, nextYear) {
   const lastRow = sheet.getLastRow();
   if (lastRow > 1) {
     const rowCount = lastRow - 1;
-    // 商品ID・物品名・カテゴリ・保管場所・単位を残す。
-    sheet.getRange(2, 5, rowCount, 2).clearContent();   // 単価・数量
+    // 商品ID・物品名・カテゴリ・保管場所・最新単価・単位を残し、数量だけ次年度用に空にする。
+    sheet.getRange(2, 6, rowCount, 1).clearContent();   // 数量
     sheet.getRange(2, 8, rowCount, 7).clearContent();   // 税率～取得日時
   }
   sheet.getRange('A1').setNote(
-    nextYear + '年度の作業用シート。商品ID・物品名・カテゴリ・保管場所・単位を保持し、' +
-    '単価・数量・税率・棚卸額・更新日・備考・状態は空欄です。元シートは変更していません。'
+    nextYear + '年度の作業用シート。商品ID・物品名・カテゴリ・保管場所・最新単価・単位を保持し、' +
+    '数量・税率・棚卸額・更新日・備考・状態は空欄です。元シートは変更していません。'
   );
 }
 
@@ -557,4 +560,149 @@ function compareInventoryItems_(a, b) {
   const category = String(a.cat || '').localeCompare(String(b.cat || ''), 'ja');
   if (category !== 0) return category;
   return String(a.name || '').localeCompare(String(b.name || ''), 'ja');
+}
+
+// ============================================================
+// v2: 新規店舗・価格マスター・確認付き書き戻し
+// ============================================================
+const ZAIKON_PRICE_SHEET = '価格マスター';
+const ZAIKON_PRICE_HEADERS = Object.freeze([
+  '商品ID','店舗ID','店舗名','商品名','仕入先','現在価格','新価格','価格変更日','変更者','備考','状態'
+]);
+
+function safeSheetName_(value) {
+  return String(value || '新店舗').replace(/[\\/?*\[\]:]/g, '').slice(0, 70) || '新店舗';
+}
+
+function getSyncStores_(inventory) {
+  const configured = new Map(ZAIKON_SYNC.stores.map(store => [Number(store.id), store]));
+  return (inventory.stores || []).map(raw => {
+    const id = Number(raw.id);
+    if (configured.has(id)) return configured.get(id);
+    const name = safeSheetName_(raw.name || ('店舗' + id));
+    return { id, sourceSheet: name, stageSheet: '連携_' + name };
+  });
+}
+
+function syncZaikonPriceMaster() {
+  const ss = getZaikonSpreadsheet_();
+  const inventory = fetchFirestoreInventory_();
+  const sheet = getOrCreateSheet_(ss, ZAIKON_PRICE_SHEET);
+  const pending = readPendingPriceChanges_(sheet);
+  const storeNames = new Map((inventory.stores || []).map(store => [Number(store.id), store.name]));
+  const rows = (inventory.allItems || []).filter(item => item.active !== false).map(item => {
+    const saved = pending[String(item.id)] || {};
+    return [
+      Number(item.id), Number(item.storeId), storeNames.get(Number(item.storeId)) || ('店舗' + item.storeId),
+      item.name || '', item.supplier || item.cat || '', Number(item.price) || 0,
+      saved.newPrice === '' ? '' : saved.newPrice, saved.effectiveDate || '', saved.changedBy || '',
+      saved.note || '', saved.status || ''
+    ];
+  });
+  preparePriceMaster_(sheet);
+  if (sheet.getLastRow() > 1) sheet.getRange(2, 1, sheet.getLastRow() - 1, ZAIKON_PRICE_HEADERS.length).clearContent();
+  if (rows.length) sheet.getRange(2, 1, rows.length, ZAIKON_PRICE_HEADERS.length).setValues(rows);
+  sheet.getRange(2, 6, Math.max(rows.length, 1), 2).setNumberFormat('#,##0.##');
+  sheet.getRange('A1').setNote('新価格・変更日・変更者を入力し、Zaikon連携メニューの「価格変更を確認・反映」を実行してください。過年度タブは変更しません。');
+  ss.toast('価格マスターを更新しました。入力途中の新価格は保持しています。', 'Zaikon価格管理', 8);
+}
+
+function readPendingPriceChanges_(sheet) {
+  if (!sheet || sheet.getLastRow() < 2 || sheet.getLastColumn() < ZAIKON_PRICE_HEADERS.length) return {};
+  const result = {};
+  sheet.getRange(2, 1, sheet.getLastRow() - 1, ZAIKON_PRICE_HEADERS.length).getValues().forEach(row => {
+    const id = String(Number(row[0]) || '');
+    if (!id) return;
+    result[id] = {newPrice:row[6], effectiveDate:formatSheetDate_(row[7]), changedBy:String(row[8]||'').trim(), note:String(row[9]||''), status:String(row[10]||'')};
+  });
+  return result;
+}
+
+function formatSheetDate_(value) {
+  if (value instanceof Date && !isNaN(value)) return Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  return String(value || '').trim();
+}
+
+function preparePriceMaster_(sheet) {
+  if (sheet.getMaxColumns() < ZAIKON_PRICE_HEADERS.length) sheet.insertColumnsAfter(sheet.getMaxColumns(), ZAIKON_PRICE_HEADERS.length - sheet.getMaxColumns());
+  sheet.setFrozenRows(1);
+  [80,70,120,190,150,90,90,110,110,180,120].forEach((width,index)=>sheet.setColumnWidth(index+1,width));
+  sheet.getRange('G2:J').setBackground('#FFF2B8').setFontColor('#111111');
+  sheet.getRange('A:F').setBackground('#F3F3F3').setFontColor('#111111');
+  sheet.getRange('K:K').setBackground('#EFEFEF');
+  sheet.getRange(1, 1, 1, ZAIKON_PRICE_HEADERS.length).setValues([Array.from(ZAIKON_PRICE_HEADERS)]).setBackground('#111111').setFontColor('#FFFFFF').setFontWeight('bold');
+}
+
+function applyZaikonPriceChanges() {
+  const ss = getZaikonSpreadsheet_();
+  const sheet = ss.getSheetByName(ZAIKON_PRICE_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) throw new Error('先に「価格マスターを更新」を実行してください。');
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, ZAIKON_PRICE_HEADERS.length).getValues();
+  const changes = rows.map((row,index)=>({
+    row:index+2,itemId:Number(row[0]),storeId:Number(row[1]),productName:String(row[3]||''),supplier:String(row[4]||'').trim(),
+    currentPrice:Number(row[5]),newPrice:row[6]===''?null:Number(row[6]),effectiveDate:formatSheetDate_(row[7]),changedBy:String(row[8]||'').trim(),note:String(row[9]||'').trim()
+  })).filter(change=>change.newPrice!==null && Number.isFinite(change.newPrice) && change.newPrice>=0 && change.newPrice!==change.currentPrice);
+  if (!changes.length) {
+    SpreadsheetApp.getUi().alert('反映する価格変更はありません。');
+    return;
+  }
+  const invalid = changes.filter(change=>!change.itemId || !/^\d{4}-\d{2}-\d{2}$/.test(change.effectiveDate) || !change.changedBy);
+  if (invalid.length) throw new Error('価格変更日または変更者が未入力です。行: ' + invalid.map(change=>change.row).join('、'));
+  const preview = changes.slice(0,20).map(change=>change.productName+'：'+change.currentPrice+'円 → '+change.newPrice+'円').join('\n') + (changes.length>20?'\nほか '+(changes.length-20)+'件':'');
+  const answer = SpreadsheetApp.getUi().alert('価格変更の最終確認', preview+'\n\n変更者・変更日とともに履歴へ保存し、棚卸の現在価格へ反映します。過年度タブは変更しません。', SpreadsheetApp.getUi().ButtonSet.YES_NO);
+  if (answer !== SpreadsheetApp.getUi().Button.YES) return;
+  const lock = LockService.getDocumentLock();
+  if (!lock.tryLock(30000)) throw new Error('別の同期処理が実行中です。少し待って再実行してください。');
+  try {
+    const raw = fetchFirestoreDocumentRaw_();
+    const inventory = decodeFirestoreFields_(raw.fields || {});
+    const items = (inventory.allItems || []).map(item=>Object.assign({},item));
+    const history = [];
+    changes.forEach(change=>{
+      const item = items.find(candidate=>Number(candidate.id)===change.itemId && Number(candidate.storeId)===change.storeId);
+      if (!item) throw new Error('棚卸商品が見つかりません。行: '+change.row);
+      const oldPrice = Number(item.price)||0;
+      if (oldPrice !== change.currentPrice) throw new Error('アプリ側で価格が更新されています。価格マスターを更新してやり直してください。行: '+change.row);
+      const baseline = Number.isFinite(Number(item.previousYearPrice)) ? Number(item.previousYearPrice) : oldPrice;
+      item.price=change.newPrice;item.supplier=change.supplier||item.supplier||item.cat||'';item.previousYearPrice=baseline;
+      item.priceChangedSinceLastYear=change.newPrice!==baseline;item.priceChangedAt=new Date().toISOString();item.priceChangedBy=change.changedBy;
+      item.updatedAt=Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyyy/MM/dd HH:mm');
+      history.push(Object.assign({},change,{oldPrice,newPrice:change.newPrice,inventoryYear:Number(inventory.inventoryYear)||null,createdAt:new Date().toISOString(),type:'price_change'}));
+    });
+    commitPriceChanges_(raw.updateTime, items, history);
+    changes.forEach(change=>sheet.getRange(change.row,7,1,5).setValues([['','','','', '反映済み '+Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'yyyy/MM/dd HH:mm')]]));
+    SpreadsheetApp.flush();
+    ss.toast(changes.length+'件の価格変更を反映しました。', 'Zaikon価格管理', 10);
+    syncZaikonPriceMaster();
+  } finally { lock.releaseLock(); }
+}
+
+function fetchFirestoreDocumentRaw_() {
+  const url='https://firestore.googleapis.com/v1/projects/'+encodeURIComponent(ZAIKON_SYNC.projectId)+'/databases/(default)/documents/inventory/main';
+  const response=UrlFetchApp.fetch(url,{method:'get',muteHttpExceptions:true,headers:{Accept:'application/json'}});
+  if(response.getResponseCode()<200||response.getResponseCode()>=300)throw new Error('Firestoreの取得に失敗しました（HTTP '+response.getResponseCode()+'）');
+  return JSON.parse(response.getContentText());
+}
+
+function encodeFirestoreValue_(value) {
+  if (value === null || value === undefined) return {nullValue:null};
+  if (Array.isArray(value)) return {arrayValue:{values:value.map(encodeFirestoreValue_)}};
+  if (value instanceof Date) return {timestampValue:value.toISOString()};
+  if (typeof value === 'boolean') return {booleanValue:value};
+  if (typeof value === 'number') return Number.isInteger(value)?{integerValue:String(value)}:{doubleValue:value};
+  if (typeof value === 'object') return {mapValue:{fields:encodeFirestoreFields_(value)}};
+  return {stringValue:String(value)};
+}
+
+function encodeFirestoreFields_(object) {
+  const fields={};Object.keys(object||{}).forEach(key=>{fields[key]=encodeFirestoreValue_(object[key]);});return fields;
+}
+
+function commitPriceChanges_(updateTime, items, history) {
+  const base='projects/'+ZAIKON_SYNC.projectId+'/databases/(default)/documents/';
+  const writes=[{update:{name:base+'inventory/main',fields:{allItems:encodeFirestoreValue_(items),updatedAt:{timestampValue:new Date().toISOString()}}},updateMask:{fieldPaths:['allItems','updatedAt']},currentDocument:{updateTime:updateTime}}];
+  history.forEach((record,index)=>writes.push({update:{name:base+'inventoryPriceHistory/sheet_'+Date.now()+'_'+index,fields:encodeFirestoreFields_(record)}}));
+  const url='https://firestore.googleapis.com/v1/projects/'+encodeURIComponent(ZAIKON_SYNC.projectId)+'/databases/(default)/documents:commit';
+  const response=UrlFetchApp.fetch(url,{method:'post',contentType:'application/json',payload:JSON.stringify({writes}),muteHttpExceptions:true});
+  if(response.getResponseCode()<200||response.getResponseCode()>=300)throw new Error('価格反映に失敗しました（HTTP '+response.getResponseCode()+'）: '+response.getContentText().slice(0,240));
 }

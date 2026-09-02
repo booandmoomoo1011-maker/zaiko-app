@@ -23,6 +23,7 @@
 | 私の管理 | `my-management.html` | 本人専用 | https://zaiko-app-two.vercel.app/my-management.html |
 | 毎日在庫 | `index.html` | 在庫入力担当者 | https://zaiko-app-two.vercel.app/ |
 | 在庫管理 | `inventory.html` | 在庫管理担当者 | https://zaiko-app-two.vercel.app/inventory.html |
+| 仕入価格管理 | `price-management.html` | 棚卸管理者・店舗編集者 | https://zaiko-app-two.vercel.app/price-management.html |
 | 売上入力 | `sales-input.html` | 売上入力担当者 | https://zaiko-app-two.vercel.app/sales-input.html |
 | 売上オーナー | `sales-owner.html` | オーナー | https://zaiko-app-two.vercel.app/sales-owner.html |
 | シフト・スタッフ | `shift-staff.html` | スタッフ | https://zaiko-app-two.vercel.app/shift-staff.html |
@@ -116,9 +117,9 @@ OFFICIAL-STRUCTURE.md と照合し、更新後にVercelの成功を確認して�
 
 2026-08-10のGitHub記録確認時点:
 
-- 私の管理: `v1.5`
+- 私の管理: `v2.0`
 - 毎日在庫: `v10.64`
-- 在庫管理: `v4.8.0`
+- 在庫管理: `v4.9.0`
 - 売上入力: `v2.71`
 - シフト・スタッフ: `v1.57`
 - シフト・オーナー: `v1.66`

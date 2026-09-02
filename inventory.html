@@ -312,7 +312,7 @@ window.addEventListener('DOMContentLoaded', () => {
 <script>
 // LINEで共有
 function shareToLine(){
-  const storeAlias={1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[window._appCurrentStoreId]||'osu';
+  const storeAlias={1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[window._appCurrentStoreId]||String(window._appCurrentStoreId);
   const url = 'https://zaiko-app-two.vercel.app/inventory.html?store='+storeAlias+'&role=editor';
   // クリップボードにコピー
   navigator.clipboard.writeText(url).then(()=>{
@@ -322,12 +322,6 @@ function shareToLine(){
   });
 }
 
-const INVENTORY_EDITOR_LINKS = [
-  {name:'大須',alias:'osu',color:'#C96E91'},
-  {name:'那古野',alias:'nagono',color:'#D1A52C'},
-  {name:'鉄板',alias:'teppan',color:'#4F9DBF'},
-  {name:'鎌倉',alias:'kamakura',color:'#9272BD'}
-];
 function inventoryEditorUrl(alias){
   return `https://zaiko-app-two.vercel.app/inventory.html?store=${alias}&role=editor`;
 }
@@ -343,10 +337,30 @@ async function copyInventoryEditorUrl(alias,name){
 function openInventoryEditorUrl(alias){
   window.open(inventoryEditorUrl(alias),'_blank','noopener,noreferrer');
 }
+function inventoryStoreById(storeId){
+  return stores.find(store=>Number(store.id)===Number(storeId));
+}
+function inventoryStoreAlias(storeId){
+  return ({1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[Number(storeId)]||String(storeId));
+}
+function openInventoryEditorUrlByStoreId(storeId){
+  const store=inventoryStoreById(storeId);
+  if(!store) return;
+  openInventoryEditorUrl(inventoryStoreAlias(store.id));
+}
+function copyInventoryEditorUrlByStoreId(storeId){
+  const store=inventoryStoreById(storeId);
+  if(!store) return;
+  copyInventoryEditorUrl(inventoryStoreAlias(store.id),store.name);
+}
 
 // Apps ScriptはFirestoreの保存データを読み込むため、まずクラウドへ確実に保存する。
 // 年1回の確定保存はスプレッドシート側の「Zaikon連携」メニューから実行する。
 async function sendToSpreadsheet(){
+  if(window._fixedInventoryRole!=='admin'&&typeof currentRole!=='undefined'&&currentRole!=='admin'){
+    alert('スプレッドシート連携は管理者だけが使用できます。');
+    return;
+  }
   const year=typeof requireInventoryYear==='function'?requireInventoryYear():null;
   if(!year) return;
   try{
@@ -370,7 +384,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .hdr-icon{width:28px;height:28px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .hdr-ctrl{display:flex;align-items:center;gap:4px;flex:1}
 .role-pill{display:inline-flex;align-items:center;justify-content:center;gap:3px;height:40px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid transparent;white-space:nowrap;min-width:78px;padding:0 8px}
-.role-pill.admin{background:var(--pl);color:var(--p);border-color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd);border-color:var(--gd)}.role-pill.viewer{background:var(--grl);color:var(--gr);border-color:var(--gr)}
+.role-pill.admin{background:var(--pl);color:var(--p);border-color:var(--p)}.role-pill.editor{background:var(--gl);color:var(--gd);border-color:var(--gd)}
 .role-pill.inactive{opacity:0.28;filter:grayscale(0.5)}
 .save-status{position:fixed;left:12px;bottom:12px;z-index:8500;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 11px;border-radius:16px;background:var(--sf);color:var(--tm);border:1px solid var(--bd);box-shadow:var(--sh);font-size:11px;font-weight:700;pointer-events:none;transition:background .2s,color .2s,border-color .2s}
 .save-status.local{background:var(--grl);color:var(--gr);border-color:var(--gr)}
@@ -421,7 +435,7 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .btn-p{background:var(--g);color:#fff;border-color:var(--g)}.btn-p:hover{background:var(--gd)}.btn-p:disabled{opacity:.4;pointer-events:none}
 .btn-g{background:var(--sf);color:var(--tm);border-color:var(--bd)}.btn-g:hover{background:var(--bg)}
 .notice{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--rs);font-size:13px;margin-bottom:14px}
-.notice.editor{background:var(--gl);color:var(--gd)}.notice.viewer{background:var(--grl);color:var(--gr)}
+.notice.editor{background:var(--gl);color:var(--gd)}
 .cards{display:flex;flex-direction:column;gap:10px}
 .card{background:var(--sf);border-radius:var(--ra);padding:14px;box-shadow:var(--sh)}
 .card-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px}
@@ -475,6 +489,10 @@ body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background
 .cf-input:focus{box-shadow:0 0 0 3px rgba(29,158,117,0.15)}
 @media(min-width:640px){.hdr{padding:14px 24px}.hdr-h1{display:block!important;font-size:19px}.main{padding:20px 24px}.cards{display:none}.tbl-wrap{display:block}.overlay{align-items:center}.modal{border-radius:16px;padding:24px}.modal-handle{display:none}}
 
+/* ===== v4.9.0 価格改定連携 ===== */
+.price-changed-box{background:#fff2b8!important;border-color:#e0bd3f!important;color:#111!important}
+.price-change-note{font-size:10px;color:#8a6500;margin-top:3px;font-weight:700}
+.price-manage-btn{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:6px 10px;border:1px solid #c69d32;border-radius:8px;background:#171717;color:#f0cc6d;font-size:11px;font-weight:800;text-decoration:none;white-space:nowrap}
 /* ===== v4.8.3 店舗別プロフェッショナルテーマ ===== */
 body[data-store-theme="osu"]{
   --g:#C96E91;--gd:#8A3F60;--gl:#FBE8F0;
@@ -597,7 +615,7 @@ body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
     var params=new URLSearchParams(location.search);
     if(params.get('launch')==='pwa'){
       var savedLaunch=localStorage.getItem(launchKey)||'';
-      if(/^\/inventory\.html\?(?:role=admin|store=(?:osu|nagono|teppan|kamakura)&role=editor)$/.test(savedLaunch)){
+      if(/^\/inventory\.html\?(?:role=admin|store=(?:osu|nagono|teppan|kamakura|[1-9]\d*)&role=editor)$/.test(savedLaunch)){
         location.replace(savedLaunch);
         return;
       }
@@ -616,7 +634,7 @@ body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
       var role=params.get('role');
       var store=params.get('store');
       if(role==='admin') return '/inventory.html?role=admin';
-      if(role==='editor'&&/^(osu|nagono|teppan|kamakura)$/.test(store||'')) return '/inventory.html?store='+store+'&role=editor';
+      if(role==='editor'&&/^(osu|nagono|teppan|kamakura|[1-9]\d*)$/.test(store||'')) return '/inventory.html?store='+store+'&role=editor';
       return '/inventory.html?store='+(store||'osu')+'&role=editor';
     }
     function rememberLaunchTarget(){
@@ -717,7 +735,7 @@ body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.8.4';
+const APP_VERSION   = '4.9.0';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -740,7 +758,8 @@ function resolveFixedStoreId(){
   try{
     const value=new URLSearchParams(location.search).get('store');
     if(!value) return null;
-    return STORE_URL_ALIASES[String(value).trim().toLowerCase()]||STORE_URL_ALIASES[String(value).trim()]||null;
+    const numeric=Number(value);
+    return (Number.isInteger(numeric)&&numeric>0?numeric:null)||STORE_URL_ALIASES[String(value).trim().toLowerCase()]||STORE_URL_ALIASES[String(value).trim()]||null;
   }catch(_){return null;}
 }
 const FIXED_STORE_ID_FROM_URL=resolveFixedStoreId();
@@ -768,7 +787,6 @@ let STORE_CATEGORIES = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
 const ROLES = {
   admin: {label:'管理者',icon:'🛡',cls:'admin', canAdd:true, canEdit:true, canDelete:true, seePrice:true, seeTotal:true, seeExport:true, manageStores:true},
   editor:{label:'編集者',icon:'✏️',cls:'editor',canAdd:true, canEdit:true, canDelete:false,seePrice:true, seeTotal:false,seeExport:false,manageStores:false},
-  viewer:{label:'閲覧者',icon:'👁',cls:'viewer',canAdd:false,canEdit:false,canDelete:false,seePrice:false,seeTotal:false,seeExport:false,manageStores:false},
 };
 const DEFAULT_STORES = [
   {id:1,name:'大須店'},{id:2,name:'那古野店'},
@@ -902,9 +920,18 @@ function fmt(n){ return parseFloat(n.toFixed(2)).toLocaleString('ja-JP',{minimum
 function yen(n){ return '¥'+fmt(n); }
 function storeColor(id){ const i=stores.findIndex(s=>s.id===id); return STORE_COLORS[i%STORE_COLORS.length]; }
 function applyStoreTheme(){
-  const theme={1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[currentStoreId]||'osu';
+  const preset={1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[currentStoreId];
+  const theme=preset||'custom';
   document.body.dataset.storeTheme=theme;
-  const themeColor={osu:'#C96E91',nagono:'#D1A52C',teppan:'#4F9DBF',kamakura:'#9272BD'}[theme];
+  const themeColor=preset?{osu:'#C96E91',nagono:'#D1A52C',teppan:'#4F9DBF',kamakura:'#9272BD'}[theme]:storeColor(currentStoreId);
+  for(const name of ['--g','--theme-deep','--theme-mid','--theme-pale','--theme-shadow']) document.body.style.removeProperty(name);
+  if(!preset){
+    document.body.style.setProperty('--g',themeColor);
+    document.body.style.setProperty('--theme-deep',themeColor);
+    document.body.style.setProperty('--theme-mid','#D9DDE3');
+    document.body.style.setProperty('--theme-pale','#F3F4F6');
+    document.body.style.setProperty('--theme-shadow','rgba(0,0,0,.12)');
+  }
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta) meta.setAttribute('content',themeColor);
 }
@@ -1218,8 +1245,7 @@ function applyRoleUI(){
   const ex=document.getElementById('btn-export');
   if(ex) ex.style.display=r.seeExport?'':'none';
   const na=document.getElementById('notice-area');
-  if(currentRole==='viewer') na.innerHTML=`<div class="notice viewer">👁 閲覧専用モード。追加・編集・削除・金額表示不可。</div>`;
-  else na.innerHTML='';
+  na.innerHTML='';
   renderInventoryYear();
   updateAllStoresTotal();
 }
@@ -1349,6 +1375,10 @@ function updateStats(){
 const ANNUAL_KEY = 'zaikoApp_annual'; // 年度別棚卸データ
 
 async function completeInventory(){
+  if(currentRole!=='admin'){
+    showToast('棚卸の確定保存は管理者だけが使用できます。','#E24B4A');
+    return;
+  }
   const year=requireInventoryYear();
   if(!year) return;
   const storeName = stores.find(s=>s.id===currentStoreId)?.name||'';
@@ -1806,6 +1836,16 @@ function updateUndoBtn(){
 // ============================================================
 // 描画
 // ============================================================
+function priceManagementUrl(itemId){
+  const storeParam=({1:'osu',2:'nagono',3:'teppan',4:'kamakura'}[currentStoreId]||String(currentStoreId));
+  const base=`/price-management.html?role=${currentRole==='admin'?'admin':'editor'}&store=${encodeURIComponent(storeParam)}`;
+  return itemId?`${base}&item=${encodeURIComponent(itemId)}`:base;
+}
+function priceChangeMarkup(i,compact=false){
+  const changed=!!i.priceChangedSinceLastYear;
+  const base=Number(i.previousYearPrice);
+  return `<div class="${changed?'price-changed-box':''}" style="padding:${compact?'5px 7px':'7px 9px'};border:1px solid var(--bd);border-radius:8px;text-align:right;font-weight:700">${yen(i.price)}</div>${changed&&Number.isFinite(base)?`<div class="price-change-note">前回 ${yen(base)} → 現在 ${yen(i.price)}</div>`:''}`;
+}
 function render(){
   const r=ROLES[currentRole];
   renderInventoryYear();
@@ -1851,9 +1891,7 @@ function render(){
       const qtyF=r.canEdit
         ?`<div class="cf"><div class="cf-label">在庫数</div><input class="cf-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.qty}" onblur="inlineUpdate(${i.id},'qty',this.value)" onfocus="this.select()"><span style="font-size:12px;color:var(--tm);margin-top:2px">${i.unit}</span></div>`
         :`<div class="cf"><div class="cf-label">在庫数</div><div class="cf-value">${fmt(i.qty)} ${esc(i.unit)}</div></div>`;
-      const priceF=r.seePrice&&r.canEdit
-        ?`<div class="cf"><div class="cf-label">仕入単価</div><input class="cf-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.price}" onblur="inlineUpdate(${i.id},'price',this.value)" onfocus="this.select()"></div>`
-        :r.seePrice?`<div class="cf"><div class="cf-label">仕入単価</div><div class="cf-value">${yen(i.price)}</div></div>`:'';
+      const priceF=r.seePrice?`<div class="cf"><div class="cf-label">仕入単価</div>${priceChangeMarkup(i)}<a class="price-manage-btn" href="${priceManagementUrl(i.id)}">価格管理で変更</a></div>`:'';
       const valF=r.seePrice?`<div class="cf"><div class="cf-label">在庫金額</div><div style="font-size:12px;font-weight:600;color:var(--g)" id="cval-${i.id}">${yen(i.qty*i.price)}</div></div>`:'';
       const doneBtn=r.canEdit
         ? isDone
@@ -1885,7 +1923,7 @@ function render(){
       :isOut?`<span class="badge out" data-status-id="${i.id}">在庫切れ</span>`:`<span class="badge ok" data-status-id="${i.id}">在庫あり</span>`;
     const th=`<span class="thumb-sph" id="thumb-t-${i.id}" style="margin-right:8px;cursor:pointer" onclick="openLightbox('${i.id}')">📦</span>`;
     const qtyTd=r.canEdit?`<td class="r"><input class="inline-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.qty}" data-id="${i.id}" data-field="qty" onblur="inlineUpdate(${i.id},'qty',this.value)" onkeydown="inlineKeydown(event,${i.id},'qty',this)" onfocus="this.select()"></td>`:`<td class="r" style="font-weight:700">${fmt(i.qty)}</td>`;
-    const priceTd=r.seePrice&&r.canEdit?`<td class="r"><input class="inline-input" type="number" min="0" step="0.01" inputmode="decimal" value="${i.price}" data-id="${i.id}" data-field="price" onblur="inlineUpdate(${i.id},'price',this.value)" onkeydown="inlineKeydown(event,${i.id},'price',this)" onfocus="this.select()"></td>`:r.seePrice?`<td class="r">${yen(i.price)}</td>`:`<td style="display:none"></td>`;
+    const priceTd=r.seePrice?`<td class="r">${priceChangeMarkup(i,true)}<a class="price-manage-btn" href="${priceManagementUrl(i.id)}">変更</a></td>`:`<td style="display:none"></td>`;
     const valTd=r.seePrice?`<td class="r" style="font-weight:700;color:var(--g)" id="val-${i.id}">${yen(i.qty*i.price)}</td>`:`<td style="display:none"></td>`;
     const doneBtn=r.canEdit
       ? isDone
@@ -2041,6 +2079,10 @@ function deactivateItem(id){
 }
 
 async function openItemModal(id,cont=false){
+  if(!id){
+    location.href=priceManagementUrl();
+    return;
+  }
   editingItem=id?allItems.find(i=>i.id===id):null;
   pendingImage=null;
   const dc=(!editingItem&&_lastCat)?_lastCat:(getCategories()[0]||'その他');
@@ -2073,7 +2115,7 @@ async function openItemModal(id,cont=false){
       <div class="fr"><label>在庫数</label><input id="f-qty" type="number" min="0" step="0.01" inputmode="decimal" value="${v.qty}"></div>
       <div class="fr"><label>単位</label><select id="f-unit">${units.map(u=>`<option${u===v.unit?' selected':''}>${u}</option>`).join('')}</select></div>
     </div>
-    <div class="fr"><label>仕入れ単価（円）</label><input id="f-price" type="number" min="0" step="0.01" inputmode="decimal" value="${v.price}"></div>
+    <div class="fr"><label>仕入れ単価（円）</label><input id="f-price" type="number" min="0" step="0.01" inputmode="decimal" value="${v.price}" readonly><div style="font-size:10px;color:var(--tm);margin-top:4px">単価は仕入価格管理から変更すると履歴に残ります。</div></div>
     <div class="prev-box"><span>在庫金額（試算）</span><strong id="prev-val">${yen(v.qty*v.price)}</strong></div>
     ${isNew?`<div style="display:flex;gap:8px"><button class="btn btn-g" onclick="saveItem(false)" style="flex:1;height:48px;border-color:var(--g);color:var(--g)">✅ 保存</button><button class="btn btn-p" onclick="saveItem(true)" style="flex:1;height:48px">＋ 続けて入力</button></div>`:`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-g" onclick="deactivateItem(${editingItem.id})" style="color:var(--r);border-color:var(--r)">この店舗では使用しない</button><button class="btn btn-p" onclick="saveItem(false)" style="margin-left:auto">保存する</button></div>`}`;
   document.getElementById('f-qty').addEventListener('input',updatePrev);
@@ -2366,15 +2408,15 @@ function openSettings(){
       <div style="font-size:13px;font-weight:800;color:var(--tx);margin-bottom:4px;">🏪 店舗別・編集者URL</div>
       <div style="font-size:11px;color:var(--tm);margin-bottom:10px;line-height:1.6;">店舗担当者には、該当店舗の編集者URLを送ってください。管理者URLは共有しません。</div>
       <div style="display:grid;gap:8px;">
-        ${INVENTORY_EDITOR_LINKS.map(link=>`
-          <div style="display:grid;grid-template-columns:minmax(72px,1fr) auto auto;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--bd);border-left:5px solid ${link.color};border-radius:10px;background:#fff;">
+        ${stores.map((store,index)=>{const alias=inventoryStoreAlias(store.id);return`
+          <div style="display:grid;grid-template-columns:minmax(72px,1fr) auto auto;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--bd);border-left:5px solid ${STORE_COLORS[index%STORE_COLORS.length]};border-radius:10px;background:#fff;">
             <div style="min-width:0;">
-              <div style="font-size:13px;font-weight:800;color:var(--tx);">${link.name}</div>
-              <div style="font-size:10px;color:var(--tf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${inventoryEditorUrl(link.alias)}</div>
+              <div style="font-size:13px;font-weight:800;color:var(--tx);">${esc(store.name)}</div>
+              <div style="font-size:10px;color:var(--tf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${inventoryEditorUrl(alias)}</div>
             </div>
-            <button class="btn btn-g" style="height:36px;padding:0 10px;font-size:12px;" onclick="openInventoryEditorUrl('${link.alias}')">開く</button>
-            <button class="btn btn-p" style="height:36px;padding:0 10px;font-size:12px;" onclick="copyInventoryEditorUrl('${link.alias}','${link.name}')">コピー</button>
-          </div>`).join('')}
+            <button class="btn btn-g" style="height:36px;padding:0 10px;font-size:12px;" onclick="openInventoryEditorUrlByStoreId(${Number(store.id)})">開く</button>
+            <button class="btn btn-p" style="height:36px;padding:0 10px;font-size:12px;" onclick="copyInventoryEditorUrlByStoreId(${Number(store.id)})">コピー</button>
+          </div>`}).join('')}
       </div>
     </div>`:''}
     <div style="background:#E8F9EE;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #06C755;">
@@ -2382,12 +2424,17 @@ function openSettings(){
       <div style="font-size:11px;color:#2e7d32;margin-bottom:8px;">現在の店舗に固定されたURLをコピーして共有します。</div>
       <button onclick="shareToLine()" style="width:100%;height:48px;background:#06C755;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">📤 LINEで共有する</button>
     </div>
-    <div style="background:#EAF2FF;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #4285F4;">
+    <div style="background:#171717;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #444;">
+      <div style="font-size:12px;font-weight:800;color:#f0cc6d;margin-bottom:4px;">¥ 仕入価格管理</div>
+      <div style="font-size:11px;color:#ddd;margin-bottom:8px;">価格改定履歴・新商品・仕入先を管理します。</div>
+      <button onclick="location.href=priceManagementUrl()" style="width:100%;height:48px;background:#111;border:1px solid #c69d32;border-radius:var(--rs);color:#f0cc6d;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;">仕入価格管理を開く</button>
+    </div>
+    ${isAdmin?`<div style="background:#EAF2FF;border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid #4285F4;">
       <div style="font-size:12px;font-weight:700;color:#2563B9;margin-bottom:4px;">📊 スプレッドシート連携</div>
       <div style="font-size:11px;color:#315F9B;margin-bottom:8px;">最新データを送信用にクラウドへ保存します。</div>
       <button onclick="sendToSpreadsheet()" style="width:100%;height:48px;background:#4285F4;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">📤 スプレッドシートに送信</button>
-    </div>
-    ${currentRole==='admin'||currentRole==='editor'?`<button onclick="completeInventoryFromSettings()" style="width:100%;height:48px;background:#FF9800;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;">✅ 棚卸完了</button>`:''}
+    </div>`:''}
+    ${isAdmin?`<button onclick="completeInventoryFromSettings()" style="width:100%;height:48px;background:#FF9800;border:none;border-radius:var(--rs);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:14px;">✅ 棚卸完了</button>`:''}
     <details style="margin-bottom:14px">
       <summary style="cursor:pointer;padding:12px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:700;color:var(--tm)">詳細設定を開く</summary>
       <div style="padding-top:12px">
@@ -2411,8 +2458,8 @@ function openSettings(){
         <button class="btn btn-p" style="flex:1;height:44px;font-size:13px" onclick="openAnnualModal()">📅 年度別データを見る</button>
         <button class="btn btn-g" style="flex:1;height:44px;font-size:13px" onclick="openHistoryModal()">📊 前回比を見る</button>
       </div>
-      <button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:#FF9800;color:#fff;border-color:#FF9800;margin-top:4px" onclick="startNextInventoryYear()">➡️ 翌年度を開始（単価・数量をリセット）</button>
-      <div style="font-size:11px;color:var(--tm);margin-top:7px;line-height:1.6">年度確定タブをスプレッドシートへ保存した後に使用します。商品名・仕入先／カテゴリー・単位・保管場所は残します。</div>
+      <button class="btn" style="width:100%;height:48px;font-size:14px;font-weight:700;background:#FF9800;color:#fff;border-color:#FF9800;margin-top:4px" onclick="startNextInventoryYear()">➡️ 翌年度を開始（数量だけリセット）</button>
+      <div style="font-size:11px;color:var(--tm);margin-top:7px;line-height:1.6">年度確定タブをスプレッドシートへ保存した後に使用します。商品情報と最新価格は残します。</div>
     </div>
     <div style="background:var(--rl);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--r)">
       <div style="font-size:12px;font-weight:700;color:var(--r);margin-bottom:6px">🔴 在庫数を全てゼロにする</div>
@@ -2565,7 +2612,7 @@ async function startNextInventoryYear(){
   }
 
   if(!confirm(
-    `最終確認\n\n${currentYear}年度から${nextYear}年度へ更新します。\n\n残すもの：\n・商品名\n・仕入先／カテゴリー\n・単位\n・店舗と商品ID\n\nリセットするもの：\n・仕入単価\n・数量\n・入力済み状態\n・更新日時\n\n${currentYear}年度の確定タブを保存済みですか？`
+    `最終確認\n\n${currentYear}年度から${nextYear}年度へ更新します。\n\n残すもの：\n・商品名\n・仕入先／カテゴリー\n・単位\n・店舗と商品ID\n・現在の仕入単価\n\nリセットするもの：\n・数量\n・入力済み状態\n・更新日時\n\n${currentYear}年度の確定タブを保存済みですか？`
   )) return;
 
   // リセット直前の完全な文字データを端末へ保存する（写真は従来どおり端末内）。
@@ -2574,7 +2621,9 @@ async function startNextInventoryYear(){
     return;
   }
   allItems.forEach(item=>{
-    item.price=0;
+    item.previousYearPrice=Number(item.price)||0;
+    item.priceChangedSinceLastYear=false;
+    item.newProduct=false;
     item.qty=0;
     item.done=false;
     item.updatedAt='';
@@ -2586,7 +2635,7 @@ async function startNextInventoryYear(){
   closeModal();
   renderTabs();
   render();
-  showToast(`✅ ${nextYear}年度を開始しました。商品情報を残し、単価・数量をリセットしました。`,'#FF9800');
+  showToast(`✅ ${nextYear}年度を開始しました。商品情報と最新価格を残し、数量だけリセットしました。`,'#FF9800');
 }
 
 function exportBackup(){
@@ -2763,6 +2812,13 @@ if(savedDV!==DATA_VERSION){
         createdAt: existing.createdAt || def.createdAt,
         done:      !!existing.done,
         active:    existing.active !== false,
+        supplier:  existing.supplier || '',
+        taxRate:   existing.taxRate || null,
+        ...(Number.isFinite(Number(existing.previousYearPrice))?{previousYearPrice:Number(existing.previousYearPrice)}:{}),
+        priceChangedSinceLastYear: !!existing.priceChangedSinceLastYear,
+        priceChangedAt: existing.priceChangedAt || '',
+        priceChangedBy: existing.priceChangedBy || '',
+        newProduct: !!existing.newProduct,
         image:     '', // 画像はIndexedDB管理
       };
     }
