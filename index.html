@@ -406,7 +406,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.67';
+window.APP_VERSION = 'v10.68';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -5152,8 +5152,15 @@ function saveTempEdit(){
 setInterval(function(){
   try{ saveDraft(); }catch(e){}
 }, 30000);
-try{ initTempSection(); }catch(e){ console.warn('initTempSection:', e); }
-try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
+function initSecondarySections(){
+  try{ initTempSection(); }catch(e){ console.warn('initTempSection:', e); }
+  try{ initWarabiSection(); }catch(e){ console.warn('initWarabiSection:', e); }
+}
+if(typeof requestIdleCallback === 'function'){
+  requestIdleCallback(initSecondarySections, {timeout:800});
+}else{
+  setTimeout(initSecondarySections, 200);
+}
 // 起動時に自動バックアップ保存（データがある場合のみ）
 setTimeout(function(){ try{ saveAutoBackup(); }catch(e){} }, 3000);
 // 30分ごとに自動バックアップ更新
