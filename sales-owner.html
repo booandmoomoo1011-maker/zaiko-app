@@ -475,6 +475,14 @@ window.closeSettings = function() {
 
 // allData をスコープ外に移動
 const allData = {};
+let ownerInitialRenderTimer = null;
+function scheduleOwnerInitialRender() {
+  clearTimeout(ownerInitialRenderTimer);
+  ownerInitialRenderTimer = setTimeout(() => {
+    ownerInitialRenderTimer = null;
+    renderHistory();
+  }, 30);
+}
 
 function startOwnerData() {
   if (ownerDataStarted) return;
@@ -488,7 +496,7 @@ function startOwnerData() {
       } else {
         allData[storeName] = [];
       }
-      renderHistory();
+      scheduleOwnerInitialRender();
     });
   });
 }
