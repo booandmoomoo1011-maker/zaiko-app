@@ -995,7 +995,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.178</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.179</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1329,7 +1329,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.178"; window.APP_UPDATED="2026-09-01";
+window.APP_VERSION="v1.179"; window.APP_UPDATED="2026-09-01";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1668,6 +1668,7 @@ function shiftApplyRemote(val){ try{
   if(typeof renderOwner==='function' && ov && ov.style.display!=='none') renderOwner();
   if(typeof renderStaff==='function' && sv && sv.style.display!=='none') renderStaff();
   var dm=document.querySelector('#dayMask'); if(typeof openDayView==='function' && dm && dm.style.display==='flex') openDayView(dayViewDay);
+  if(typeof window.shiftOwnerDataReady==='function') window.shiftOwnerDataReady();
   if(window.fbOwnerReady&&!window.shiftEditorMode&&!(meta.storeMemo&&meta.storeMemo._publishedSchedule)) setTimeout(()=>{ if(window.fbPush) window.fbPush(buildFbPayload()); },500);
 }catch(e){ console.warn('applyRemote',e); } }
 window.shiftApplyRemote=shiftApplyRemote;
@@ -1677,11 +1678,17 @@ window.shiftOwnerSignedOut=function(){
   if(b) b.style.display='inline-block'; if(g) g.style.display='flex';
 };
 window.shiftOwnerAuthorized=function(uid,isEditor){
-  var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
+  var g=document.getElementById('ownerAccessGate'),t=document.getElementById('ownerAccessText'),b=document.getElementById('ownerLoginBtn');
+  if(t) t.textContent='シフトを読み込んでいます…';
+  if(b) b.style.display='none';
+  if(g) g.style.display='flex';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.178</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.179</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
+};
+window.shiftOwnerDataReady=function(){
+  var g=document.getElementById('ownerAccessGate'); if(g) g.style.display='none';
 };
 window.shiftOwnerDenied=function(uid,isEditor){
   var g=document.getElementById('ownerAccessGate'),t=document.getElementById('ownerAccessText'),b=document.getElementById('ownerLoginBtn');
@@ -3750,7 +3757,7 @@ $("#shareOwnerBtn").onclick=async ()=>{
 function showStaff(){ $("#staffView").style.display=""; $("#ownerView").style.display="none";
   $("#shareOwnerBtn").style.display="none";
   $("#tbStaff").classList.add("on"); $("#tbOwner").classList.remove("on"); applyStaffHeader(); renderStaff(); }
-function showOwner(){ $("#staffView").style.display="none"; $("#ownerView").style.display="";
+function showOwner(skipInitialRender){ $("#staffView").style.display="none"; $("#ownerView").style.display="";
   document.querySelector("header").style.background="#2b2b2b"; $("#shareBtn").style.display="none"; $("#shareOwnerBtn").style.display="";
   $("#tbOwner").classList.add("on"); $("#tbStaff").classList.remove("on");
   if(ownerMobileView()){
@@ -3758,8 +3765,8 @@ function showOwner(){ $("#staffView").style.display="none"; $("#ownerView").styl
     if(Y>SHIFT_END_YEAR){ Y=SHIFT_END_YEAR; M=12; }
     DAYS=new Date(Y,M,0).getDate(); HOL=calcJpHolidays(Y); mobileOwnerScrollPending=true;
   }
-  fillYM(); renderOwner(); }
-$("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
+  fillYM(); if(!skipInitialRender) renderOwner(); }
+$("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=()=>showOwner(false);
 if(window.matchMedia){
   const ownerMq=window.matchMedia(OWNER_MOBILE_QUERY);
   const ownerModeChanged=()=>{ const ov=$("#ownerView"); if(ov&&ov.style.display!=="none"){ mobileOwnerScrollPending=true; renderOwner(); } };
@@ -3996,7 +4003,7 @@ $("#editor1Reissue").onclick=()=>copyEditorUrl('editor1',true);
 $("#editor2Reissue").onclick=()=>copyEditorUrl('editor2',true);
 $("#editor3Reissue").onclick=()=>copyEditorUrl('editor3',true);
 
-initWho(); buildPalette(); showOwner();
+initWho(); buildPalette(); showOwner(true);
 </script>
 
 <!-- PULL_TO_REFRESH_V1 -->
