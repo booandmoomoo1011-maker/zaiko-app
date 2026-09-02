@@ -27,8 +27,8 @@
     (function(){
       try {
         var p = new URLSearchParams(location.search);
-        if (p.get('v') !== '2.76') {
-          p.set('v', '2.76');
+        if (p.get('v') !== '2.77') {
+          p.set('v', '2.77');
           history.replaceState(null, '', location.pathname + '?' + p.toString());
         }
       } catch(e) {}
@@ -951,7 +951,7 @@
 </div>
 
 <script>
-const APP_VERSION = 'v2.76';
+const APP_VERSION = 'v2.77';
 
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate() {
@@ -973,7 +973,6 @@ function doUpdate() {
   cp.set('t', Date.now());
   location.href = location.pathname + '?' + cp.toString();
 }
-checkForUpdate();
 setInterval(checkForUpdate, 5 * 60 * 1000);
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzTUUbcAkNo1czgDCamnPhdRicP8BTH3ePex9fbyoYAooratkz70oTrmDLNu-8J8Xc/exec';
