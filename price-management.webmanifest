@@ -2,7 +2,7 @@
   "name": "仕入価格管理",
   "short_name": "価格管理",
   "start_url": "/price-management.html?role=admin",
-  "scope": "/",
+  "scope": "/price-management.html",
   "display": "standalone",
   "background_color": "#f3f1eb",
   "theme_color": "#090909",

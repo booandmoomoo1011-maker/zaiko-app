@@ -9,7 +9,7 @@
 <meta property="og:description" content="仕入価格の改定履歴と新商品を安全に管理します。">
 <meta property="og:url" content="https://zaiko-app-two.vercel.app/price-management.html">
 <meta property="og:image" content="https://zaiko-app-two.vercel.app/icons/price-management-512.png">
-<link rel="manifest" href="/price-management.webmanifest?v=1.1.0">
+<link rel="manifest" href="/price-management.webmanifest?v=1.1.1">
 <link rel="icon" href="/icons/price-management-32.png">
 <link rel="apple-touch-icon" href="/icons/price-management-180.png">
 <style>
@@ -54,7 +54,7 @@ th,td{border-bottom-color:#e3e0d8}th{background:#efede7;color:#37332c}.price-box
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {getFirestore,doc,onSnapshot,runTransaction,collection,query,orderBy,limit,getDocs} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-const APP_VERSION='1.1.0';
+const APP_VERSION='1.1.1';
 const firebaseConfig={apiKey:'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',authDomain:'zaiko2017inb.firebaseapp.com',projectId:'zaiko2017inb',storageBucket:'zaiko2017inb.firebasestorage.app',messagingSenderId:'705085250436',appId:'1:705085250436:web:f369b4981119887fa25bd1'};
 const db=getFirestore(initializeApp(firebaseConfig));
 const inventoryRef=doc(db,'inventory','main');
