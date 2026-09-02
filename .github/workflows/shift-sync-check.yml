@@ -121,6 +121,7 @@ jobs:
           icon_bases = [
               "icons/daily-inventory",
               "icons/inventory",
+              "icons/price-management",
               "icons/sales-input",
               "icons/sales-owner",
               "icons/shift-staff",

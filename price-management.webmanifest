@@ -4,12 +4,12 @@
   "start_url": "/price-management.html?role=admin",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#090909",
+  "background_color": "#f3f1eb",
   "theme_color": "#090909",
   "icons": [
-    {"src":"/icons/inventory-180.png","sizes":"180x180","type":"image/png","purpose":"any"},
-    {"src":"/icons/inventory-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
-    {"src":"/icons/inventory-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+    {"src":"/icons/price-management-180.png","sizes":"180x180","type":"image/png","purpose":"any"},
+    {"src":"/icons/price-management-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"/icons/price-management-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
   ],
   "id": "/price-management.html"
 }
