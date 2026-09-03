@@ -103,6 +103,7 @@ main{padding:16px 12px 24px;max-width:680px;margin:0 auto;}
 
 /* 販売カード */
 .sales-card{background:rgba(255,255,255,.97);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow-sm);transition:border-color .2s,box-shadow .2s,transform .2s;}
+.sales-card.kama-box-card{border:2px solid #4d356f;}
 .sales-card.done-card{background:var(--done-bg);border-color:var(--done-bd);}
 .sales-card.diff-warn-card{border:2px solid #e02020;box-shadow:0 0 0 3px rgba(224,32,32,.12);}
 .diff-reason-btn{width:100%;padding:9px 14px;background:var(--bg);border:1.5px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);cursor:pointer;text-align:left;transition:all .15s;}
@@ -406,7 +407,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.71';
+window.APP_VERSION = 'v10.72';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -2026,7 +2027,7 @@ function renderSales(){
     if(editMode){
       const saidx=SALES.indexOf(it);html+=`<div class="sales-card"><div class="sname-row"><div class="sort-btns"><button class="sort-btn" onclick="moveItem('sales',${saidx},-1)">▲</button><button class="sort-btn" onclick="moveItem('sales',${saidx},1)">▼</button></div><input class="iname-edit" type="text" id="name_${it.id}" value="${esc(it.name)}" style="flex:1"><button class="del-btn" onclick="delSales('${it.id}')">🗑</button></div></div>`;
     } else {
-      html+=`<div class="sales-card" id="scard_${it.id}">
+      html+=`<div class="sales-card${it.id==='kama-box'?' kama-box-card':''}" id="scard_${it.id}">
         <div class="sname-row">
           <span class="sname">${esc(it.name)}</span>
           <button class="nyuka-inline-btn" onclick="openNyukaInputModal('${it.id}');event.stopPropagation()" style="${it.id.startsWith('strap')?'':'display:none;'}">📦 入荷</button>
