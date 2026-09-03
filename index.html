@@ -103,7 +103,6 @@ main{padding:16px 12px 24px;max-width:680px;margin:0 auto;}
 
 /* 販売カード */
 .sales-card{background:rgba(255,255,255,.97);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow-sm);transition:border-color .2s,box-shadow .2s,transform .2s;}
-.sales-card.kama-box-card{border:2px solid #4d356f;}
 .sales-card.done-card{background:var(--done-bg);border-color:var(--done-bd);}
 .sales-card.diff-warn-card{border:2px solid #e02020;box-shadow:0 0 0 3px rgba(224,32,32,.12);}
 .diff-reason-btn{width:100%;padding:9px 14px;background:var(--bg);border:1.5px solid var(--border2);border-radius:8px;font-size:14px;font-family:inherit;color:var(--text);cursor:pointer;text-align:left;transition:all .15s;}
@@ -351,6 +350,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
   .sec{margin-top:16px;}
   .card,.sales-card{border-radius:13px;}
   .num-input{width:56px;height:43px;}
+  #review-modal{padding:6px!important;}
+  #review-modal>div{max-height:94vh!important;}
+  #review-modal-body{padding:14px 10px!important;}
+  #review-modal .tcard-head{padding:16px 15px;}
+  #review-modal .tcard-title{font-size:20px;}
+  #review-modal .tcard-sub{font-size:14px;}
+  #review-modal .tcard-body{padding:14px 12px;}
+  #review-modal .tcard-grid{columns:1;column-gap:0;}
+  #review-modal .tcard-grid>*{margin-bottom:8px;}
+  #review-modal .tc-row{font-size:16px;padding:8px 10px;gap:9px;border-radius:9px;}
+  #review-modal .tc-row b{font-size:17px;}
+  #review-modal .tc-uber{margin-top:12px;padding:12px;font-size:16px;}
+  #review-modal .tc-uber b{font-size:17px;}
 }
 </style>
 
@@ -407,7 +419,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.72';
+window.APP_VERSION = 'v10.73';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -2027,7 +2039,7 @@ function renderSales(){
     if(editMode){
       const saidx=SALES.indexOf(it);html+=`<div class="sales-card"><div class="sname-row"><div class="sort-btns"><button class="sort-btn" onclick="moveItem('sales',${saidx},-1)">▲</button><button class="sort-btn" onclick="moveItem('sales',${saidx},1)">▼</button></div><input class="iname-edit" type="text" id="name_${it.id}" value="${esc(it.name)}" style="flex:1"><button class="del-btn" onclick="delSales('${it.id}')">🗑</button></div></div>`;
     } else {
-      html+=`<div class="sales-card${it.id==='kama-box'?' kama-box-card':''}" id="scard_${it.id}">
+      html+=`<div class="sales-card" id="scard_${it.id}">
         <div class="sname-row">
           <span class="sname">${esc(it.name)}</span>
           <button class="nyuka-inline-btn" onclick="openNyukaInputModal('${it.id}');event.stopPropagation()" style="${it.id.startsWith('strap')?'':'display:none;'}">📦 入荷</button>
@@ -2052,7 +2064,7 @@ function renderSales(){
         <div class="nyuka-chips" id="nyuka_chips_${it.id}" style="display:none;margin-top:4px;"></div>
       </div>`;
       if(it.id==='kama-box'){
-        html+=`<div style="background:#f8f6fa;border:1px solid #d8d0e0;border-radius:12px;padding:11px 13px;margin:-2px 0 14px;box-shadow:0 2px 8px rgba(67,45,94,.05);">
+        html+=`<div style="background:#f8f6fa;border:2px solid #4d356f;border-radius:12px;padding:11px 13px;margin:-2px 0 14px;box-shadow:0 2px 8px rgba(67,45,94,.05);">
           <div style="font-size:14px;font-weight:800;color:#51465c;margin-bottom:4px;">📦 箱・単品の在庫組み替え</div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:9px;">1箱＝単品6個。入荷・販売には含めず、在庫の組み替えとして記録します。</div>
           <div style="display:flex;gap:8px;">
@@ -3634,7 +3646,7 @@ function openDayReviewModal(){
   const dEl  = document.getElementById('review-modal-date');
   if(!body) { doComplete(); return; }   // 画面が無い時は今まで通り保存する
   if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(dateStr) : dateStr);
-  body.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
+  body.innerHTML = _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
   // ボタンの見た目を最初の状態に戻す
   const b = document.getElementById('review-save-btn');
   if(b){
@@ -3743,7 +3755,7 @@ function _maybeShowDoneReview(){
     const m    = document.getElementById('review-modal');
     if(!body || !m) return;
     if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(t.slash) : t.slash);
-    body.innerHTML = _rvTempHTML(t.iso) + _rvWarabiHTML(t.iso) + _rvStockHTMLFromRecord(rec) + _rvStampRecHTML(rec);
+    body.innerHTML = _rvWarabiHTML(t.iso) + _rvStockHTMLFromRecord(rec) + _rvStampRecHTML(rec);
     _setReviewDoneButtons();
     m.style.display = 'flex';
     body.scrollTop = 0;
@@ -3855,7 +3867,7 @@ function renderTodayCard(){
     const rm = document.getElementById('review-modal');
     const rb = document.getElementById('review-modal-body');
     if(rm && rb && rm.style.display === 'flex'){
-      rb.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
+      rb.innerHTML = _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
     }
   }catch(e){}
   // [追加 v10.47] 完了ずみの日は、タブを閉じて開き直しても「保存済み」の見た目に戻す
