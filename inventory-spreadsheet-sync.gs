@@ -29,10 +29,11 @@ function onOpen() {
     .addItem('① 初期設定（元シートは変更しない）', 'setupZaikonSafeSync')
     .addItem('② 連携シートへ安全同期', 'syncZaikonToStaging')
     .addItem('③ 入力した年度で全店舗を保存', 'saveZaikonAnnualSnapshot')
-    .addItem('④ 元4シートを年度名でコピー保存', 'archiveOriginalSheetsByYear')
+    .addItem('④ 2025記録から2026年度を開始', 'migrateLegacy2025To2026')
     .addSeparator()
     .addItem('価格マスターを更新', 'syncZaikonPriceMaster')
     .addItem('価格変更を確認・反映', 'applyZaikonPriceChanges')
+    .addItem('価格マスター自動更新を開始（5分ごと）', 'enableZaikonPriceAutoSync')
     .addSeparator()
     .addItem('自動同期を停止（年1回運用）', 'disableZaikonAutoSync')
     .addToUi();
@@ -312,18 +313,118 @@ function disableZaikonAutoSync(showMessage) {
 }
 
 function assertSafeStructure_(ss) {
-  const missingSource = ZAIKON_SYNC.stores
-    .filter(store => !ss.getSheetByName(store.sourceSheet))
-    .map(store => store.sourceSheet);
-  if (missingSource.length) {
-    throw new Error('既存シートが見つかりません: ' + missingSource.join('、'));
-  }
-
   const missingStage = ZAIKON_SYNC.stores
     .filter(store => !ss.getSheetByName(store.stageSheet))
     .map(store => store.stageSheet);
   if (missingStage.length || !ss.getSheetByName(ZAIKON_SYNC.settingsSheet)) {
     throw new Error('先に「① 初期設定」を実行してください。');
+  }
+}
+
+function migrateLegacy2025To2026() {
+  const ss = getZaikonSpreadsheet_();
+  const ui = SpreadsheetApp.getUi();
+  const lock = LockService.getDocumentLock();
+  if (!lock.tryLock(30000)) throw new Error('別の同期処理が実行中です。少し待って再実行してください。');
+
+  const created = [];
+  let firestoreReset = false;
+  try {
+    assertSafeStructure_(ss);
+    const pairs = ZAIKON_SYNC.stores.map(store => ({
+      store,
+      original: ss.getSheetByName(store.sourceSheet),
+      archive: ss.getSheetByName('2025' + store.sourceSheet),
+      nextName: '2026' + store.sourceSheet,
+    }));
+    const missing = pairs.filter(pair => !pair.original || !pair.archive)
+      .map(pair => pair.store.sourceSheet);
+    if (missing.length) throw new Error('2025年度の照合対象が見つかりません: ' + missing.join('、'));
+    const existingNext = pairs.filter(pair => ss.getSheetByName(pair.nextName));
+    if (existingNext.length) throw new Error('2026年度タブがすでにあります: ' + existingNext.map(pair => pair.nextName).join('、'));
+
+    pairs.forEach(pair => {
+      const originalValues = pair.original.getDataRange().getValues();
+      const archiveValues = pair.archive.getDataRange().getValues();
+      if (JSON.stringify(originalValues) !== JSON.stringify(archiveValues)) {
+        throw new Error(pair.store.sourceSheet + ' と 2025' + pair.store.sourceSheet + ' の内容が一致しないため中止しました。');
+      }
+    });
+
+    const raw = fetchFirestoreDocumentRaw_();
+    const inventory = decodeFirestoreFields_(raw.fields || {});
+    const activeItems = (inventory.allItems || []).filter(item => item.active !== false);
+    const fetchedAt = new Date();
+    const stores = getSyncStores_(inventory);
+
+    stores.forEach(store => {
+      const stage = getOrCreateSheet_(ss, store.stageSheet);
+      const metadata = readExistingMetadata_(stage);
+      const items = activeItems
+        .filter(item => Number(item.storeId) === Number(store.id))
+        .map(item => Object.assign({}, item, { qty: 0, done: false }))
+        .sort(compareInventoryItems_);
+      const next = stage.copyTo(ss);
+      created.push(next);
+      next.setName('2026' + store.sourceSheet);
+      prepareStageSheet_(next);
+      writeStageSheet_(next, items, metadata, fetchedAt);
+      const lastRow = next.getLastRow();
+      if (lastRow > 1) {
+        next.getRange(2, 6, lastRow - 1, 1).setValue(0).setNumberFormat('0.##');
+        next.getRange(2, 9, lastRow - 1, 6).clearContent();
+      }
+      next.setTabColor('#4285F4');
+      next.getRange('A1').setNote('2026年度の入力用シート。2025年度記録は固定保存済み。商品情報と最新価格を保持し、数量は0から開始します。');
+    });
+
+    const resetAt = new Date();
+    const resetItems = (inventory.allItems || []).map(item => Object.assign({}, item, {
+      qty: 0,
+      done: false,
+      updatedAt: Utilities.formatDate(resetAt, Session.getScriptTimeZone(), 'yyyy/MM/dd HH:mm:ss'),
+    }));
+    commitInventoryYearReset_(raw.updateTime, resetItems, 2026, resetAt);
+    firestoreReset = true;
+
+    pairs.forEach(pair => ss.deleteSheet(pair.original));
+    PropertiesService.getScriptProperties().setProperty('ZAIKON_SPREADSHEET_ID', ss.getId());
+    syncZaikonPriceMaster();
+    SpreadsheetApp.flush();
+    ui.alert('2025年度記録を残し、2026年度を開始しました。\n\n2026年度タブを数量0で作成し、アプリも2026年度・数量0へ更新しました。');
+  } catch (error) {
+    if (!firestoreReset) {
+      created.forEach(sheet => { try { ss.deleteSheet(sheet); } catch (cleanupError) { console.warn(cleanupError); } });
+    }
+    throw error;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function commitInventoryYearReset_(updateTime, items, year, resetAt) {
+  const name = 'projects/' + ZAIKON_SYNC.projectId + '/databases/(default)/documents/' + ZAIKON_SYNC.documentPath;
+  const write = {
+    update: {
+      name,
+      fields: {
+        allItems: encodeFirestoreValue_(items),
+        inventoryYear: encodeFirestoreValue_(year),
+        updatedAt: { timestampValue: resetAt.toISOString() },
+      },
+    },
+    updateMask: { fieldPaths: ['allItems', 'inventoryYear', 'updatedAt'] },
+    currentDocument: { updateTime },
+  };
+  const url = 'https://firestore.googleapis.com/v1/projects/' + encodeURIComponent(ZAIKON_SYNC.projectId) + '/databases/(default)/documents:commit';
+  const response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({ writes: [write] }),
+    muteHttpExceptions: true,
+  });
+  if (response.getResponseCode() < 200 || response.getResponseCode() >= 300) {
+    throw new Error('2026年度への更新に失敗しました（HTTP ' + response.getResponseCode() + '）: ' + response.getContentText().slice(0, 240));
   }
 }
 
@@ -605,6 +706,26 @@ function syncZaikonPriceMaster() {
   sheet.getRange(2, 6, Math.max(rows.length, 1), 2).setNumberFormat('#,##0.##');
   sheet.getRange('A1').setNote('新価格・変更日・変更者を入力し、Zaikon連携メニューの「価格変更を確認・反映」を実行してください。過年度タブは変更しません。');
   ss.toast('価格マスターを更新しました。入力途中の新価格は保持しています。', 'Zaikon価格管理', 8);
+}
+
+function enableZaikonPriceAutoSync() {
+  PropertiesService.getScriptProperties().setProperty(
+    'ZAIKON_SPREADSHEET_ID',
+    SpreadsheetApp.getActiveSpreadsheet().getId()
+  );
+  ScriptApp.getProjectTriggers()
+    .filter(trigger => trigger.getHandlerFunction() === 'syncZaikonPriceMaster')
+    .forEach(trigger => ScriptApp.deleteTrigger(trigger));
+  ScriptApp.newTrigger('syncZaikonPriceMaster')
+    .timeBased()
+    .everyMinutes(5)
+    .create();
+  syncZaikonPriceMaster();
+  SpreadsheetApp.getUi().alert(
+    '価格マスターの自動更新を開始しました。\n\n' +
+    'アプリで保存した価格は、操作なしで5分以内に価格マスターへ反映されます。\n' +
+    '年次棚卸の連携シートと確定年度タブは自動更新しません。'
+  );
 }
 
 function readPendingPriceChanges_(sheet) {
