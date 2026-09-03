@@ -406,7 +406,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.69';
+window.APP_VERSION = 'v10.70';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -680,7 +680,7 @@ function changePasscode(){
   localStorage.setItem('pc_unlocked', np);
   alert('パスコードを変更しました：' + np);
 }
-window.APP_UPDATED = '2026-09-02';
+window.APP_UPDATED = '2026-09-03';
 
 // setSyncStatus：DOM生成後も呼べるようキューイング方式
 window._syncQueue = [];
@@ -1095,6 +1095,8 @@ try {
           <button class="diff-reason-btn" data-reason="数え間違い" onclick="selectDiffReason(this)">🔢 数え間違い</button>
           <button class="diff-reason-btn" data-reason="試食・廃棄" onclick="selectDiffReason(this)">🍽 試食・廃棄</button>
           <button class="diff-reason-btn" data-reason="入荷ミス" onclick="selectDiffReason(this)">📦 入荷ミス</button>
+          <button class="diff-reason-btn" data-reason="箱を崩して単品6個に変更" onclick="selectDiffReason(this)">📦 箱を崩して単品6個に変更</button>
+          <button class="diff-reason-btn" data-reason="単品6個を箱1箱に変更" onclick="selectDiffReason(this)">🎁 単品6個を箱1箱に変更</button>
           <button class="diff-reason-btn" data-reason="その他" onclick="selectDiffReason(this)">📝 その他</button>
         </div>
         <input type="text" id="diff-reason-note" placeholder="補足メモ（任意）"
@@ -1552,6 +1554,59 @@ let editMode=false;
 let completed=false;
 let _stockManual={}; // [v10.59] 本日在庫を手で直した品目（true=自動加算しない）
 let UBER=[]; // Uber Eats売上リスト [{amount, time}]
+let CONVERSIONS=[]; // [v10.70] 釜揚げの箱・単品の在庫組み替え [{type,time,staff}]
+
+function conversionDelta(id, list){
+  return (list||CONVERSIONS).reduce((sum,c)=>{
+    if(c.type==='break') return sum + (id==='kama-solo'?6:id==='kama-box'?-1:0);
+    if(c.type==='make') return sum + (id==='kama-solo'?-6:id==='kama-box'?1:0);
+    return sum;
+  },0);
+}
+function conversionSummary(list){
+  const arr=list||CONVERSIONS;
+  const broken=arr.filter(c=>c.type==='break').length;
+  const made=arr.filter(c=>c.type==='make').length;
+  const parts=[];
+  if(broken) parts.push('箱を崩す '+broken+'回（箱-'+broken+'／単品+'+(broken*6)+'）');
+  if(made) parts.push('箱を作る '+made+'回（単品-'+(made*6)+'／箱+'+made+'）');
+  return parts.join('、');
+}
+function noteWithConversionSummary(note,list){
+  const clean=String(note||'').split('\n').filter(line=>!line.startsWith('【在庫組み替え】')).join('\n').trim();
+  const summary=conversionSummary(list);
+  return summary ? (clean?clean+'\n':'')+'【在庫組み替え】'+summary : clean;
+}
+function renderConversionBox(){
+  const el=document.getElementById('kama-conversion-history');
+  if(!el)return;
+  if(!CONVERSIONS.length){el.innerHTML='<span style="color:var(--text3);">本日の組み替え記録はありません</span>';return;}
+  el.innerHTML=CONVERSIONS.map((c,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px solid var(--border);"><span>${c.type==='break'?'箱−1 → 単品＋6':'単品−6 → 箱＋1'} ${c.time?'<small>'+esc(c.time)+'</small>':''}</span><button type="button" onclick="undoKamaConversion(${i})" style="border:1px solid var(--border2);background:var(--surface);border-radius:6px;color:var(--text2);">取り消す</button></div>`).join('');
+}
+function applyKamaConversion(type){
+  const solo=document.getElementById('stock_kama-solo');
+  const box=document.getElementById('stock_kama-box');
+  if(!solo||!box){showToast('釜揚げ（単品）と釜揚げ（箱）が見つかりません');return;}
+  if(solo.value.trim()===''||box.value.trim()===''){showToast('先に単品と箱の本日在庫を入力してください');return;}
+  const soloQty=$v('stock_kama-solo'), boxQty=$v('stock_kama-box');
+  if(type==='break'&&boxQty<1){showToast('箱の在庫が1箱以上必要です');return;}
+  if(type==='make'&&soloQty<6){showToast('単品の在庫が6個以上必要です');return;}
+  const t=new Date();
+  CONVERSIONS.push({type,time:String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'),staff:(document.getElementById('staff')||{}).value||''});
+  $set('stock_kama-solo',soloQty+(type==='break'?6:-6));
+  $set('stock_kama-box',boxQty+(type==='break'?-1:1));
+  _stockManual['kama-solo']=true; _stockManual['kama-box']=true; window._stockTouched=true;
+  calcStock('kama-solo');calcStock('kama-box');renderConversionBox();saveDraft();
+  showToast(type==='break'?'📦 箱1箱を単品6個に組み替えました':'🎁 単品6個を箱1箱に組み替えました');
+}
+function undoKamaConversion(index){
+  const c=CONVERSIONS[index]; if(!c)return;
+  const solo=$v('stock_kama-solo'), box=$v('stock_kama-box');
+  CONVERSIONS.splice(index,1);
+  $set('stock_kama-solo',solo+(c.type==='break'?-6:6));
+  $set('stock_kama-box',box+(c.type==='break'?1:-1));
+  calcStock('kama-solo');calcStock('kama-box');renderConversionBox();saveDraft();
+}
 
 // 在庫警告の閾値（品目名：閾値以下で赤表示）
 const STOCK_WARN = {
@@ -1596,8 +1651,9 @@ function saveHistory(h){
 function prevStock(id){
   const h=loadHistory();
   if(h.length<1)return null;
-  // 今日の記録を除いた直近の記録を参照
-  const prev=h.find(r=>r.date!==dateStr);
+  // [v10.70] 編集対象日の直前を参照する。過去編集で最新日の在庫を「前日」と誤認しない。
+  const targetDate=editingDate||dateStr;
+  const prev=h.filter(r=>r&&r.date&&r.date<targetDate).sort((a,b)=>b.date.localeCompare(a.date))[0];
   if(!prev)return null;
   let stock=null;
   if(prev.sales&&prev.sales[id]!==undefined)stock=prev.sales[id];
@@ -1732,7 +1788,7 @@ function _doConfirmComplete(){
     const todayNyuka=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
     const sell=$v('sell_'+it.id), free=$v('free_'+it.id);
     // 本日在庫 + 販売 + 無料 ≠ 前日在庫 + 入荷
-    return (stock+sell+free) !== (prev+todayNyuka);
+    return (stock+sell+free) !== (prev+todayNyuka+conversionDelta(it.id));
   });
   if(warns.length){
     openDiffModal(warns);
@@ -1770,10 +1826,11 @@ function openDiffModal(warns){
     const free = $v('free_'+it.id);
     const todayNyuka=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
     // 差異 = 本日在庫 - (前日在庫 + 入荷 - 販売 - 無料)
-    const diff = stock - (prev + todayNyuka - sell - free);
+    const conv = conversionDelta(it.id);
+    const diff = stock - (prev + todayNyuka + conv - sell - free);
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff5f5;border:1px solid #fcc;border-radius:8px;">
       <span style="font-size:13px;font-weight:600;color:var(--text);">${esc(it.name)}</span>
-      <span style="font-size:12px;color:#888;margin:0 8px;">前日${prev}＋入荷${todayNyuka}－販売${sell}－無料${free}</span>
+      <span style="font-size:12px;color:#888;margin:0 8px;">前日${prev}＋入荷${todayNyuka}${conv?'＋組替'+conv:''}－販売${sell}－無料${free}</span>
       <span style="font-size:13px;font-weight:700;color:#e02020;">${diff>0?'+':''}${diff}</span>
     </div>`;
   }).join('');
@@ -1854,6 +1911,7 @@ function editRecord(idx){
   document.getElementById('note').value=r.note||'';
   // [v10.69] 過去日のUberは保存済み値を復元し、変更しなければそのまま維持する。
   UBER=Array.isArray(r.uber)?r.uber.map(u=>({...u})):[];
+  CONVERSIONS=Array.isArray(r.conversions)?r.conversions.map(c=>({...c})):[];
   renderUber();
   SIMPLE.forEach(it=>{$set('simple_'+it.id,r.simple[it.id]||0);});
   STAMP.forEach(it=>{$set('stamp_'+it.id,(r.stamp&&r.stamp[it.id])||0);});
@@ -1864,6 +1922,7 @@ function editRecord(idx){
     NYUKA[it.id]=(r.nyuka&&r.nyuka[it.id])?[...r.nyuka[it.id]]:[];
     renderNyuka(it.id);calcStock(it.id);
   });
+  renderConversionBox();
   // 完了状態を解除
   completed=false;
   const btn=document.getElementById('complete-btn');
@@ -1968,8 +2027,17 @@ function renderSales(){
       </div>`;
     }
   });
+  if(!editMode){
+    html+=`<div style="background:#fff8e1;border:1.5px solid #e0b84f;border-radius:12px;padding:12px 14px;margin:10px 0 14px;">
+      <div style="font-size:15px;font-weight:800;color:#6d4c00;margin-bottom:5px;">📦 釜揚げの箱・単品を組み替える</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:9px;">1箱＝単品6個。入荷・販売には含めず、在庫の組み替えとして記録します。</div>
+      <div style="display:flex;gap:8px;"><button type="button" onclick="applyKamaConversion('break')" style="flex:1;padding:10px 5px;border:0;border-radius:9px;background:#ef6c00;color:#fff;font-weight:800;">箱を崩す<br><small>箱−1・単品＋6</small></button><button type="button" onclick="applyKamaConversion('make')" style="flex:1;padding:10px 5px;border:0;border-radius:9px;background:#6a1b9a;color:#fff;font-weight:800;">箱を作る<br><small>単品−6・箱＋1</small></button></div>
+      <div id="kama-conversion-history" style="font-size:12px;margin-top:9px;"></div>
+    </div>`;
+  }
   if(editMode)html+=`<div class="add-row"><input type="text" id="new-sales-name" placeholder="新しい品目名"><button class="add-row-btn" onclick="addSales()">＋ 追加</button></div>`;
   wrap.innerHTML=html;
+  renderConversionBox();
   if(!editMode)SALES.forEach(it=>{if(NYUKA[it.id]&&NYUKA[it.id].length)renderNyuka(it.id);});
 }
 
@@ -2049,7 +2117,7 @@ function calcStock(id){
   const el = document.getElementById('diff_'+id);
   if(!el) return;
   if(prev !== null && stockEntered){
-    const expected = prev + nyukaTotal - sell - free;
+    const expected = prev + nyukaTotal + conversionDelta(id) - sell - free;
     const diff = stock - expected;
     if(diff === 0){
       el.textContent=''; el.className='dbadge ok';
@@ -2794,7 +2862,7 @@ function doSave(autoSave=false){
     const stock=parseFloat(stockRaw);
     const todayNyuka=(NYUKA[it.id]||[]).reduce((s,n)=>s+n.qty,0);
     const sell=$v('sell_'+it.id), free=$v('free_'+it.id);
-    return (stock+sell+free) !== (prev+todayNyuka);
+    return (stock+sell+free) !== (prev+todayNyuka+conversionDelta(it.id));
   });
   // 編集中の場合はその日付で保存、新規なら今日の日付
   const targetDate = editingDate || dateStr;
@@ -2805,8 +2873,9 @@ function doSave(autoSave=false){
     simpleItems:SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:SALES.map(it=>({id:it.id,name:it.name})),
     stampItems:STAMP.map(it=>({id:it.id,name:it.name})),
-    note:document.getElementById('note').value.trim(),
+    note:noteWithConversionSummary(document.getElementById('note').value.trim(),CONVERSIONS),
     uber:UBER.filter(u=>!u._empty),
+    conversions:CONVERSIONS.map(c=>({...c,staff:c.staff||staff})),
     hasWarn:warns.length>0,
     forceCompleted:_isForceComplete||false,
     warnItems:_isForceComplete?warns.map(function(it){return it.id;}):[],
@@ -2863,6 +2932,7 @@ function doSave(autoSave=false){
       const changedIds=SALES
         .filter(it=>(Number((prev.sales||{})[it.id])||0)!==(Number((record.sales||{})[it.id])||0))
         .map(it=>it.id);
+      if(JSON.stringify(prev.conversions||[])!==JSON.stringify(record.conversions||[])) changedIds.push('kama-solo','kama-box');
       if(changedIds.length) recalculateFollowingStock(h,targetDate,[...new Set(changedIds)],staff,timeStr);
     }
   } else {
@@ -2890,7 +2960,7 @@ function recalculateFollowingStock(history, fromDate, itemIds, staff, timeStr){
       const arrival=((rec.nyuka&&rec.nyuka[id])||[]).reduce((s,n)=>s+(Number(n.qty)||0),0);
       const sold=Number(rec.sales[id+'_sell'])||0;
       const free=Number(rec.sales[id+'_free'])||0;
-      const after=Math.max(0,previous+arrival-sold-free);
+      const after=Math.max(0,previous+arrival+conversionDelta(id,rec.conversions||[])-sold-free);
       rec.sales[id]=after;
       if(before!==after){
         const item=(rec.salesItems||SALES).find(it=>it.id===id)||SALES.find(it=>it.id===id);
@@ -3802,6 +3872,7 @@ function restoreLastValues(){
     $set('stamp_'+it.id, v);
   });
   const isToday = last.date === dateStr;
+  CONVERSIONS = (isToday && Array.isArray(last.conversions)) ? last.conversions.map(c=>({...c})) : [];
   SALES.forEach(it=>{
     const stock=last.sales&&last.sales[it.id]!==undefined?last.sales[it.id]:0;
     const sell = isToday && last.sales&&last.sales[it.id+'_sell']!==undefined ? last.sales[it.id+'_sell'] : 0;
@@ -3822,6 +3893,7 @@ function restoreLastValues(){
   // 色チェック
   SIMPLE.forEach(it=>checkSimpleLow(it.id));
   SALES.forEach(it=>renderNyuka(it.id));
+  renderConversionBox();
   // Uber Eats：今日の記録があれば復元、なければ空に
   UBER = (last.date===dateStr && last.uber) ? [...last.uber] : [];
   renderUber();
@@ -3858,6 +3930,7 @@ function saveDraft(){
       sales: {},
       nyuka: {},
       uber: [...UBER],
+      conversions: CONVERSIONS.map(c=>({...c})),
     };
     draft.stamp = {};
     draft.stockManual = Object.assign({}, _stockManual);
@@ -3923,8 +3996,9 @@ function autoSaveToFirebase(){
     simpleItems: SIMPLE.map(it=>({id:it.id,name:it.name})),
     salesItems:  SALES.map(it=>({id:it.id,name:it.name})),
     stampItems:  STAMP.map(it=>({id:it.id,name:it.name})),
-    note: document.getElementById('note') ? document.getElementById('note').value.trim() : '',
+    note: noteWithConversionSummary(document.getElementById('note') ? document.getElementById('note').value.trim() : '',CONVERSIONS),
     uber: UBER.filter(u=>!u._empty),
+    conversions: CONVERSIONS.map(c=>({...c,staff:c.staff||staff})),
     hasWarn: false,
     forceCompleted: false,
     warnItems: [],
@@ -4015,6 +4089,8 @@ function restoreDraft(){
   });
   SIMPLE.forEach(it=>checkSimpleLow(it.id));
   if(draft.uber) { UBER = [...draft.uber]; renderUber(); }
+  CONVERSIONS = Array.isArray(draft.conversions) ? draft.conversions.map(c=>({...c})) : [];
+  renderConversionBox();
   const noteEl = document.getElementById('note');
   if(noteEl && draft.note !== undefined) noteEl.value = draft.note;
   return true;
