@@ -735,7 +735,7 @@ body[data-store-theme] .upd-banner{box-shadow:0 10px 30px var(--theme-shadow)}
 // ============================================================
 // 定数（最初に全て定義）
 // ============================================================
-const APP_VERSION   = '4.9.1';
+const APP_VERSION   = '4.9.2';
 const DATA_VERSION  = '20260331_tanaoroshi'; // データ更新時にここを変える
 const STORAGE_KEY   = 'zaikoApp_v1';
 const BACKUP_KEY    = 'zaikoApp_backup';
@@ -888,6 +888,12 @@ let currentRole    = 'editor';
 let currentStoreId = 1;
 let nextStoreId    = 5;
 let nextItemId     = NEXT_ITEM_ID;
+function allocateNextItemId(){
+  const maxUsed=allItems.reduce((max,item)=>Math.max(max,Number(item.id)||0),0);
+  const id=Math.max(Number(nextItemId)||NEXT_ITEM_ID,maxUsed+1,NEXT_ITEM_ID);
+  nextItemId=id+1;
+  return id;
+}
 let inventoryYear  = null;
 let editingItem    = null;
 let pendingImage   = null;
@@ -2057,7 +2063,7 @@ function activateCandidateItem(item){
 function addCandidateFromSource(candidate,source){
   if(!candidate||!source) return;
   const category=(STORE_CATEGORIES[currentStoreId]||[]).includes(source.cat)?source.cat:(getCategories()[0]||'その他');
-  const item={id:nextItemId++,storeId:currentStoreId,name:source.name,cat:category,qty:0,unit:source.unit,price:Number(source.price)||0,updatedAt:nowStr(),createdAt:nowStr(),done:false,active:true,image:''};
+  const item={id:allocateNextItemId(),storeId:currentStoreId,name:source.name,cat:category,qty:0,unit:source.unit,price:Number(source.price)||0,updatedAt:nowStr(),createdAt:nowStr(),done:false,active:true,image:''};
   allItems.push(item);
   saveData();
   render();
@@ -2192,7 +2198,7 @@ async function saveItem(cont=false){
     savedId=editingItem.id;
   }else{
     obj.createdAt=nowStr();
-    savedId=nextItemId++;
+    savedId=allocateNextItemId();
     allItems.push({id:savedId,...obj});
   }
   // 画像をIndexedDBに保存
@@ -2208,10 +2214,14 @@ async function saveItem(cont=false){
   else{closeModal();}
 }
 async function deleteItem(id){
-  if(!confirm('この商品を削除しますか？')) return;
-  allItems=allItems.filter(i=>i.id!==id);
-  await idbDeleteImage(id); // 画像も確実に削除してから保存
-  saveData(); render();
+  const item=allItems.find(i=>i.id===id&&i.storeId===currentStoreId);
+  if(!item) return;
+  if(!confirm(`「${item.name}」をこの店舗の棚卸対象から外しますか？\n\n商品ID ${item.id} と商品情報は削除せず保存します。後から商品候補から再追加できます。`)) return;
+  item.active=false;
+  item.done=false;
+  item.updatedAt=nowStr();
+  saveData();render();
+  showToast('この店舗では使用しない商品に変更しました');
 }
 
 // ============================================================
