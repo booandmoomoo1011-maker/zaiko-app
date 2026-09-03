@@ -406,7 +406,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.70';
+window.APP_VERSION = 'v10.71';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1110,6 +1110,20 @@ try {
   </div>
 </div>
 
+<!-- 入荷なし最終確認 -->
+<div id="no-arrival-modal" style="display:none;position:fixed;inset:0;background:rgba(28,20,38,.72);z-index:3200;align-items:center;justify-content:center;padding:18px;">
+  <div role="dialog" aria-modal="true" aria-labelledby="no-arrival-title" style="background:var(--surface);border-radius:20px;width:100%;max-width:430px;overflow:hidden;box-shadow:0 18px 55px rgba(0,0,0,.38);border:2px solid #8b74a8;">
+    <div style="background:#59436f;padding:15px 20px;color:#fff;font-size:18px;font-weight:800;letter-spacing:.03em;">⚠️ 最終確認</div>
+    <div style="padding:22px 20px 20px;text-align:center;">
+      <div style="width:58px;height:58px;margin:0 auto 14px;border-radius:50%;background:#f3ecdf;color:#8a5a12;display:flex;align-items:center;justify-content:center;font-size:30px;">📦</div>
+      <div id="no-arrival-title" style="font-size:22px;line-height:1.45;font-weight:800;color:var(--text);margin-bottom:10px;">本日は入荷が<br>ありませんでしたか？</div>
+      <p style="font-size:14px;line-height:1.65;color:var(--text2);margin:0 0 19px;">入荷記録が1件もありません。<br>内容を確認してから選んでください。</p>
+      <button type="button" onclick="confirmNoArrivalComplete()" style="width:100%;padding:15px 12px;background:#6f5688;border:2px solid #6f5688;border-radius:12px;color:#fff;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:10px;">はい、ありません</button>
+      <button type="button" onclick="closeNoArrivalModal()" style="width:100%;padding:13px 12px;background:#fff;border:2px solid #8f829d;border-radius:12px;color:#40354b;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;">戻って確認</button>
+    </div>
+  </div>
+</div>
+
 
 <div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;" onclick="closeSettingsModal(event)">
   <div style="background:var(--surface);border-radius:16px;max-width:360px;margin:16px auto 16px;padding:0;overflow:hidden;position:relative;" onclick="event.stopPropagation()">
@@ -1580,7 +1594,7 @@ function noteWithConversionSummary(note,list){
 function renderConversionBox(){
   const el=document.getElementById('kama-conversion-history');
   if(!el)return;
-  if(!CONVERSIONS.length){el.innerHTML='<span style="color:var(--text3);">本日の組み替え記録はありません</span>';return;}
+  if(!CONVERSIONS.length){el.innerHTML='';return;}
   el.innerHTML=CONVERSIONS.map((c,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px solid var(--border);"><span>${c.type==='break'?'箱−1 → 単品＋6':'単品−6 → 箱＋1'} ${c.time?'<small>'+esc(c.time)+'</small>':''}</span><button type="button" onclick="undoKamaConversion(${i})" style="border:1px solid var(--border2);background:var(--surface);border-radius:6px;color:var(--text2);">取り消す</button></div>`).join('');
 }
 function applyKamaConversion(type){
@@ -1797,20 +1811,31 @@ function _doConfirmComplete(){
   }
 }
 
-// [v10.69] 入荷が1件も無い日だけ、保存直前に最終確認する。
-// キャンセル時は同じ入力画面に留まり、別の「戻って確認」画面は作らない。
+// [v10.71] 入荷が1件も無い日だけ、見落としにくい専用画面で最終確認する。
+// 「戻って確認」は保存せず、同じ入力画面に留まる。
 function confirmNoArrivalThenReview(){
   const hasArrival = SALES.some(it=>(NYUKA[it.id]||[]).some(n=>(Number(n.qty)||0)>0));
   const targetISO = (editingDate||dateStr).replace(/\//g,'-');
   const hasWarabiArrival = (typeof loadWarabiRecords==='function') &&
     loadWarabiRecords().some(r=>r && r.date===targetISO && (Number(r.qty)||0)>0);
   if(!hasArrival && !hasWarabiArrival){
-    if(!confirm('本日は入荷がありませんでしたか？')) return;
-    // 「はい、ありません」で、そのまま保存完了する。
-    doComplete();
+    openNoArrivalModal();
     return;
   }
   openDayReviewModal();
+}
+
+function openNoArrivalModal(){
+  const modal=document.getElementById('no-arrival-modal');
+  if(modal) modal.style.display='flex';
+}
+function closeNoArrivalModal(){
+  const modal=document.getElementById('no-arrival-modal');
+  if(modal) modal.style.display='none';
+}
+function confirmNoArrivalComplete(){
+  closeNoArrivalModal();
+  doComplete();
 }
 
 let _selectedDiffReason = '';
@@ -2025,16 +2050,19 @@ function renderSales(){
         </div>
         <div class="nyuka-chips" id="nyuka_chips_${it.id}" style="display:none;margin-top:4px;"></div>
       </div>`;
+      if(it.id==='kama-box'){
+        html+=`<div style="background:#f8f6fa;border:1px solid #d8d0e0;border-radius:12px;padding:11px 13px;margin:-2px 0 14px;box-shadow:0 2px 8px rgba(67,45,94,.05);">
+          <div style="font-size:14px;font-weight:800;color:#51465c;margin-bottom:4px;">📦 箱・単品の在庫組み替え</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:9px;">1箱＝単品6個。入荷・販売には含めず、在庫の組み替えとして記録します。</div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" onclick="applyKamaConversion('break')" style="flex:1;padding:9px 5px;border:1px solid #b7acbf;border-radius:9px;background:#eeeaf1;color:#403747;font-weight:800;">箱を崩す<br><small>箱−1・単品＋6</small></button>
+            <button type="button" onclick="applyKamaConversion('make')" style="flex:1;padding:9px 5px;border:1px solid #aaa1b4;border-radius:9px;background:#e5e0e9;color:#403747;font-weight:800;">箱を作る<br><small>単品−6・箱＋1</small></button>
+          </div>
+          <div id="kama-conversion-history" style="font-size:12px;margin-top:9px;"></div>
+        </div>`;
+      }
     }
   });
-  if(!editMode){
-    html+=`<div style="background:#fff8e1;border:1.5px solid #e0b84f;border-radius:12px;padding:12px 14px;margin:10px 0 14px;">
-      <div style="font-size:15px;font-weight:800;color:#6d4c00;margin-bottom:5px;">📦 釜揚げの箱・単品を組み替える</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:9px;">1箱＝単品6個。入荷・販売には含めず、在庫の組み替えとして記録します。</div>
-      <div style="display:flex;gap:8px;"><button type="button" onclick="applyKamaConversion('break')" style="flex:1;padding:10px 5px;border:0;border-radius:9px;background:#ef6c00;color:#fff;font-weight:800;">箱を崩す<br><small>箱−1・単品＋6</small></button><button type="button" onclick="applyKamaConversion('make')" style="flex:1;padding:10px 5px;border:0;border-radius:9px;background:#6a1b9a;color:#fff;font-weight:800;">箱を作る<br><small>単品−6・箱＋1</small></button></div>
-      <div id="kama-conversion-history" style="font-size:12px;margin-top:9px;"></div>
-    </div>`;
-  }
   if(editMode)html+=`<div class="add-row"><input type="text" id="new-sales-name" placeholder="新しい品目名"><button class="add-row-btn" onclick="addSales()">＋ 追加</button></div>`;
   wrap.innerHTML=html;
   renderConversionBox();
