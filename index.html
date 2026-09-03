@@ -353,16 +353,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
   #review-modal{padding:6px!important;}
   #review-modal>div{max-height:94vh!important;}
   #review-modal-body{padding:14px 10px!important;}
-  #review-modal .tcard-head{padding:16px 15px;}
-  #review-modal .tcard-title{font-size:20px;}
-  #review-modal .tcard-sub{font-size:14px;}
-  #review-modal .tcard-body{padding:14px 12px;}
-  #review-modal .tcard-grid{columns:1;column-gap:0;}
-  #review-modal .tcard-grid>*{margin-bottom:8px;}
-  #review-modal .tc-row{font-size:16px;padding:8px 10px;gap:9px;border-radius:9px;}
-  #review-modal .tc-row b{font-size:17px;}
-  #review-modal .tc-uber{margin-top:12px;padding:12px;font-size:16px;}
-  #review-modal .tc-uber b{font-size:17px;}
+  #review-modal .stock-review-card .tcard-head{padding:16px 15px;}
+  #review-modal .stock-review-card .tcard-title{font-size:20px;}
+  #review-modal .stock-review-card .tcard-sub{font-size:14px;}
+  #review-modal .stock-review-card .tcard-body{padding:14px 12px;}
+  #review-modal .stock-review-card .tcard-grid{columns:1;column-gap:0;}
+  #review-modal .stock-review-card .tcard-grid>*{margin-bottom:8px;}
+  #review-modal .stock-review-card .tc-row{font-size:16px;padding:8px 10px;gap:9px;border-radius:9px;}
+  #review-modal .stock-review-card .tc-row b{font-size:17px;}
+  #review-modal .stock-review-card .tc-uber{margin-top:12px;padding:12px;font-size:16px;}
+  #review-modal .stock-review-card .tc-uber b{font-size:17px;}
+  #review-modal .warabi-record-row{padding:11px 12px;gap:5px;}
+  #review-modal .warabi-record-row>div:first-child>span{font-size:14px!important;}
+  #review-modal .warabi-record-row>div:nth-child(2){font-size:13px!important;gap:8px!important;}
 }
 </style>
 
@@ -419,7 +422,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.73';
+window.APP_VERSION = 'v10.74';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -3630,7 +3633,7 @@ function _rvStockHTML(){
   }catch(e){}
   const staff = document.getElementById('staff') ? document.getElementById('staff').value.trim() : '';
   // [v10.39] 配色は「入力中」カードと同じ山吹色（tcard auto）にする
-  return `<div class="tcard auto" style="margin-bottom:0;">
+  return `<div class="tcard auto stock-review-card" style="margin-bottom:0;">
     <div class="tcard-head">
       <span class="tcard-title">📦 本日の在庫</span>
       <span class="tcard-sub">${esc(staff)}</span>
@@ -3646,7 +3649,7 @@ function openDayReviewModal(){
   const dEl  = document.getElementById('review-modal-date');
   if(!body) { doComplete(); return; }   // 画面が無い時は今まで通り保存する
   if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(dateStr) : dateStr);
-  body.innerHTML = _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
+  body.innerHTML = _rvWarabiHTML() + _rvStampLiveHTML() + _rvStockHTML();
   // ボタンの見た目を最初の状態に戻す
   const b = document.getElementById('review-save-btn');
   if(b){
@@ -3730,7 +3733,7 @@ function _rvStockHTMLFromRecord(rec){
   }
   const who = rec.completedStaff || rec.stockStaff || rec.staff || '';
   const when = rec.completedTime || rec.stockTime || '';
-  return `<div class="tcard auto" style="margin-bottom:0;">
+  return `<div class="tcard auto stock-review-card" style="margin-bottom:0;">
     <div class="tcard-head">
       <span class="tcard-title">📦 本日の在庫</span>
       <span class="tcard-sub">${esc(who)} ${esc(when)}</span>
@@ -3755,7 +3758,7 @@ function _maybeShowDoneReview(){
     const m    = document.getElementById('review-modal');
     if(!body || !m) return;
     if(dEl) dEl.textContent = (typeof fmtDate==='function' ? fmtDate(t.slash) : t.slash);
-    body.innerHTML = _rvWarabiHTML(t.iso) + _rvStockHTMLFromRecord(rec) + _rvStampRecHTML(rec);
+    body.innerHTML = _rvWarabiHTML(t.iso) + _rvStampRecHTML(rec) + _rvStockHTMLFromRecord(rec);
     _setReviewDoneButtons();
     m.style.display = 'flex';
     body.scrollTop = 0;
@@ -3844,7 +3847,7 @@ function renderTodayCard(){
   if(rec.note && rec.note.trim()){
     noteRow = `<div style="margin-top:8px;padding:8px 10px;background:var(--surface);border-radius:9px;font-size:13px;white-space:pre-wrap;color:var(--text);">📝 ${esc(rec.note.trim())}</div>`;
   }
-  const cardHtml = `<div class="${isDone ? 'tcard' : 'tcard auto'}" style="margin-bottom:0;">
+  const cardHtml = `<div class="${isDone ? 'tcard' : 'tcard auto'} stock-review-card" style="margin-bottom:0;">
     <div class="tcard-head">
       <span class="tcard-title">${title}</span>
       <span class="tcard-sub">${sub}</span>
@@ -3859,7 +3862,7 @@ function renderTodayCard(){
   el.className = '';
   // [修正 v10.50] 完了ずみでなくても、冷蔵庫温度・わらび餅入荷を常に表示する。
   // （完了後に戻って在庫を直すと、他の記録が消えてしまっていたため）
-  el.innerHTML = _rvTempHTML() + _rvWarabiHTML() + cardHtml + _rvStampLiveHTML();
+  el.innerHTML = _rvTempHTML() + _rvWarabiHTML() + _rvStampLiveHTML() + cardHtml;
   el.style.display = 'block';
   // [追加 v10.51] 確認画面を開いたままなら、その中身も最新にする
   // （他の端末で数字が変わった時に、開いている画面が古いままにならないように）
@@ -3867,7 +3870,7 @@ function renderTodayCard(){
     const rm = document.getElementById('review-modal');
     const rb = document.getElementById('review-modal-body');
     if(rm && rb && rm.style.display === 'flex'){
-      rb.innerHTML = _rvWarabiHTML() + _rvStockHTML() + _rvStampLiveHTML();
+      rb.innerHTML = _rvWarabiHTML() + _rvStampLiveHTML() + _rvStockHTML();
     }
   }catch(e){}
   // [追加 v10.47] 完了ずみの日は、タブを閉じて開き直しても「保存済み」の見た目に戻す
