@@ -9,7 +9,7 @@
 <meta property="og:description" content="仕入価格の改定履歴と新商品を安全に管理します。">
 <meta property="og:url" content="https://zaiko-app-two.vercel.app/price-management.html">
 <meta property="og:image" content="https://zaiko-app-two.vercel.app/icons/price-management-512.png">
-<link rel="manifest" href="/price-management.webmanifest?v=1.1.2">
+<link rel="manifest" href="/price-management.webmanifest?v=1.1.3">
 <link rel="icon" href="/icons/price-management-32.png">
 <link rel="apple-touch-icon" href="/icons/price-management-180.png">
 <style>
@@ -56,7 +56,7 @@ th,td{border-bottom-color:#e3e0d8}th{background:#efede7;color:#37332c}.price-box
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {getFirestore,doc,onSnapshot,runTransaction,collection,query,orderBy,limit,getDocs} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-const APP_VERSION='1.1.2';
+const APP_VERSION='1.1.3';
 const firebaseConfig={apiKey:'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',authDomain:'zaiko2017inb.firebaseapp.com',projectId:'zaiko2017inb',storageBucket:'zaiko2017inb.firebasestorage.app',messagingSenderId:'705085250436',appId:'1:705085250436:web:f369b4981119887fa25bd1'};
 const db=getFirestore(initializeApp(firebaseConfig));
 const inventoryRef=doc(db,'inventory','main');
@@ -76,6 +76,26 @@ window.addEventListener('appinstalled',()=>{$('pwaInstallBtn').classList.add('hi
 function showInstallHelp(){const ua=navigator.userAgent||'',inLine=/Line\//i.test(ua),isIOS=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);$('pwaHelpText').innerHTML=(inLine?'LINEの中では追加できません。右上または右下のメニューからSafari／Chromeで開いてください。<br><br>':'')+(isIOS?'Safari下部の共有ボタン（□に↑）から「ホーム画面に追加」を選んでください。':'Chrome右上の「︙」から「アプリをインストール」または「ホーム画面に追加」を選んでください。');$('pwaHelp').classList.remove('hidden')}
 function setStatus(t,bad=false){$('status').textContent=(bad?'● ':'● ')+t;$('status').style.color=bad?'#ff9999':'#b9dfca'}
 async function sha256(v){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function editorNamesKey(){return 'zaikoPriceEditorNames_'+fixedStore}
+function loadEditorNames(){
+  let names=[];try{names=JSON.parse(localStorage.getItem(editorNamesKey())||'[]')}catch(_){}
+  if(!Array.isArray(names))names=[];
+  const old=String(localStorage.getItem('zaikoPriceEditorName_'+fixedStore)||'').trim();
+  if(old&&old!=='店舗編集者'&&!names.includes(old))names.unshift(old);
+  return [...new Set(names.map(name=>String(name).trim()).filter(name=>name&&name!=='店舗編集者'))];
+}
+function saveEditorNames(names){localStorage.setItem(editorNamesKey(),JSON.stringify([...new Set(names)]))}
+function chooseEditorName(){return new Promise(resolve=>{
+  let names=loadEditorNames();
+  const draw=()=>{
+    const last=String(localStorage.getItem('zaikoPriceEditorName_'+fixedStore)||'').trim();
+    openModal(`<h2>編集者名を選択</h2><p style="line-height:1.7;color:#625e56">価格の変更履歴に残す実際のお名前を選んでください。</p><div class="row"><label>登録済みの名前</label><select class="field" id="savedEditorName"><option value="">選択してください</option>${names.map(name=>`<option value="${esc(name)}" ${name===last?'selected':''}>${esc(name)}</option>`).join('')}</select></div><div class="row"><label>新しい名前を登録</label><input class="field" id="newEditorName" autocomplete="name" placeholder="編集者名を入力してください"></div><div class="actions"><button class="btn danger" id="deleteEditorName" type="button" ${names.length?'':'disabled'}>選んだ名前を削除</button><button class="btn gold" id="useEditorName" type="button">この名前で進む</button></div>`);
+    $('modalBg').onclick=()=>{};
+    $('useEditorName').onclick=()=>{const entered=$('newEditorName').value.trim(),selected=$('savedEditorName').value.trim(),name=entered||selected;if(!name){alert('編集者名を入力または選択してください。');return}if(name==='店舗編集者'){alert('実際の編集者名を入力してください。');return}if(!names.includes(name)){names.push(name);saveEditorNames(names)}localStorage.setItem('zaikoPriceEditorName_'+fixedStore,name);closeModal();$('modalBg').onclick=e=>{if(e.target===$('modalBg'))closeModal()};resolve(name)};
+    $('deleteEditorName').onclick=()=>{const selected=$('savedEditorName').value.trim();if(!selected){alert('削除する名前を選択してください。');return}if(!confirm(`「${selected}」をこの端末の候補から削除しますか？\n過去の価格改定履歴は削除されません。`))return;names=names.filter(name=>name!==selected);saveEditorNames(names);if(localStorage.getItem('zaikoPriceEditorName_'+fixedStore)===selected)localStorage.removeItem('zaikoPriceEditorName_'+fixedStore);draw()};
+  };
+  draw();
+})}
 async function authenticate(){
   if(role==='admin'){
     const saved=localStorage.getItem('zaikoApp_rolePw');if(!saved)throw new Error('先に棚卸管理者画面で管理者パスワードを設定してください');
@@ -87,10 +107,9 @@ async function authenticate(){
     actor=localStorage.getItem('zaikoPriceAdminName')||'管理者1';
     if(!localStorage.getItem('zaikoPriceAdminName')){const selected=prompt('変更履歴に記録する管理者名を入力してください。',actor);if(!selected?.trim())throw new Error('管理者名を確認できません');actor=selected.trim();localStorage.setItem('zaikoPriceAdminName',actor)}
   }else{
-    if(!fixedStore)throw new Error('店舗編集者URLを確認してください');actor=localStorage.getItem('zaikoPriceEditorName_'+fixedStore)||'店舗編集者';
-    const selected=prompt('変更履歴に記録する編集者名を入力してください。',actor);if(!selected?.trim())throw new Error('編集者名を確認できません');actor=selected.trim();localStorage.setItem('zaikoPriceEditorName_'+fixedStore,actor);
+    if(!fixedStore)throw new Error('店舗編集者URLを確認してください');actor=await chooseEditorName();
   }
-  $('roleLabel').textContent=role==='admin'?'管理者：'+actor:'編集者';
+  $('roleLabel').textContent=role==='admin'?'管理者：'+actor:'編集者：'+actor;
   $('forgetAdminBtn').classList.toggle('hidden',role!=='admin');
   document.querySelectorAll('.admin-only').forEach(e=>e.classList.toggle('hidden',role!=='admin'));
 }
