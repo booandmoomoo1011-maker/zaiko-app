@@ -406,7 +406,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--purple-m
 <!-- ===== ステータス・バージョン表示ヘルパー ===== -->
 <script>
 // アプリバージョン（更新のたびにここを変更）
-window.APP_VERSION = 'v10.68';
+window.APP_VERSION = 'v10.69';
 
 // ===== パスコード =====
 const DEFAULT_PASSCODE = '1234'; // デフォルトパスコード
@@ -1611,22 +1611,9 @@ let _forceConfirmStep=0;
 function confirmComplete(){
   const missing=[];
 
-  // Uber Eats チェック：「本日取引無し」OR 金額が1件以上入力済み
-  const uberFilled = UBER.some(u => u.noTrade) || UBER.filter(u => !u._empty && u.time).length > 0;
-  if(!uberFilled) missing.push('🛵 Uber Eats（金額 または 本日取引無し）を入力してください');
-
-  // 冷蔵庫温度チェック（dateStr は YYYY/MM/DD、temp記録は YYYY-MM-DD）
-  const dateStrHyphen = dateStr.replace(/\//g, '-');
-  const tempRecs = loadTempRecords();
-  const todayTemp = tempRecs.find(r => r.date === dateStrHyphen || r.date === dateStr);
-  if(!todayTemp){
-    missing.push('🌡️ 冷蔵庫温度記録（AM・PM）を入力してください');
-  } else {
-    const hasAM = todayTemp.amRecorder && todayTemp.data && todayTemp.data.some(f => f.am && f.am.temp !== '');
-    const hasPM = todayTemp.pmRecorder && todayTemp.data && todayTemp.data.some(f => f.pm && f.pm.temp !== '');
-    if(!hasAM) missing.push('🌡️ 冷蔵庫温度記録（AM）を入力してください');
-    if(!hasPM) missing.push('🌡️ 冷蔵庫温度記録（PM）を入力してください');
-  }
+  // [v10.69] Uberを直さない過去編集では、保存済みの内容を維持して再入力を求めない。
+  // 当日もUber記録が無い日は空のまま完了できる。
+  // 温度記録も任意。記録が無い日は在庫数だけで完了できる。
 
   if(missing.length > 0){
     showMissingAlert(missing);
@@ -1750,9 +1737,24 @@ function _doConfirmComplete(){
   if(warns.length){
     openDiffModal(warns);
   } else {
-    // [変更 v10.36] すぐ保存せず、まず本日の記録確認を出す
-    openDayReviewModal();
+    confirmNoArrivalThenReview();
   }
+}
+
+// [v10.69] 入荷が1件も無い日だけ、保存直前に最終確認する。
+// キャンセル時は同じ入力画面に留まり、別の「戻って確認」画面は作らない。
+function confirmNoArrivalThenReview(){
+  const hasArrival = SALES.some(it=>(NYUKA[it.id]||[]).some(n=>(Number(n.qty)||0)>0));
+  const targetISO = (editingDate||dateStr).replace(/\//g,'-');
+  const hasWarabiArrival = (typeof loadWarabiRecords==='function') &&
+    loadWarabiRecords().some(r=>r && r.date===targetISO && (Number(r.qty)||0)>0);
+  if(!hasArrival && !hasWarabiArrival){
+    if(!confirm('本日は入荷がありませんでしたか？')) return;
+    // 「はい、ありません」で、そのまま保存完了する。
+    doComplete();
+    return;
+  }
+  openDayReviewModal();
 }
 
 let _selectedDiffReason = '';
@@ -1810,7 +1812,7 @@ function saveDiffAndComplete(){
   }
   document.getElementById('diff-modal').style.display='none';
   // [変更 v10.36] 差異の理由を入れた後も、本日の記録確認を出してから保存する
-  openDayReviewModal();
+  confirmNoArrivalThenReview();
 }
 
 let _diffWarnItems = [];
@@ -1850,6 +1852,9 @@ function editRecord(idx){
   // フォームに値を復元
   document.getElementById('staff').value=r.staff||'';
   document.getElementById('note').value=r.note||'';
+  // [v10.69] 過去日のUberは保存済み値を復元し、変更しなければそのまま維持する。
+  UBER=Array.isArray(r.uber)?r.uber.map(u=>({...u})):[];
+  renderUber();
   SIMPLE.forEach(it=>{$set('simple_'+it.id,r.simple[it.id]||0);});
   STAMP.forEach(it=>{$set('stamp_'+it.id,(r.stamp&&r.stamp[it.id])||0);});
   SALES.forEach(it=>{
@@ -2852,6 +2857,14 @@ function doSave(autoSave=false){
       diff:diffItems
     }];
     h[idx]=record;
+    // [v10.69] 過去日の在庫訂正を、入荷・販売・無料数を含めて翌日以降へ再計算する。
+    // 変更された販売管理品目だけを対象にし、月をまたぐ日付も同じ履歴内で連続計算する。
+    if(isBackEdit){
+      const changedIds=SALES
+        .filter(it=>(Number((prev.sales||{})[it.id])||0)!==(Number((record.sales||{})[it.id])||0))
+        .map(it=>it.id);
+      if(changedIds.length) recalculateFollowingStock(h,targetDate,[...new Set(changedIds)],staff,timeStr);
+    }
   } else {
     h.unshift(record);
   }
@@ -2862,6 +2875,34 @@ function doSave(autoSave=false){
   renderHistory();
   showToast('✅ 記録を保存しました！');
   btnFeedback(document.getElementById('complete-btn'), '保存完了');
+}
+
+function recalculateFollowingStock(history, fromDate, itemIds, staff, timeStr){
+  const ordered=history.filter(r=>r&&r.date).sort((a,b)=>a.date.localeCompare(b.date));
+  const start=ordered.findIndex(r=>r.date===fromDate);
+  if(start<0)return;
+  itemIds.forEach(id=>{
+    let previous=Number((ordered[start].sales||{})[id])||0;
+    for(let i=start+1;i<ordered.length;i++){
+      const rec=ordered[i];
+      if(!rec.sales)continue;
+      const before=Number(rec.sales[id])||0;
+      const arrival=((rec.nyuka&&rec.nyuka[id])||[]).reduce((s,n)=>s+(Number(n.qty)||0),0);
+      const sold=Number(rec.sales[id+'_sell'])||0;
+      const free=Number(rec.sales[id+'_free'])||0;
+      const after=Math.max(0,previous+arrival-sold-free);
+      rec.sales[id]=after;
+      if(before!==after){
+        const item=(rec.salesItems||SALES).find(it=>it.id===id)||SALES.find(it=>it.id===id);
+        rec.editLog=[...(rec.editLog||[]),{
+          editTime:timeStr,editDate:dateStr,staff,
+          note:'過去日の訂正による在庫自動再計算',
+          diff:[{name:item?item.name:id,before,after}]
+        }];
+      }
+      previous=after;
+    }
+  });
 }
 
 
@@ -3424,7 +3465,7 @@ function _rvStampCard(getQty, items){
   let rows = '';
   list.forEach(it=>{
     const q = getQty(it);
-    if(q===null || q===undefined) return;
+    if(q===null || q===undefined || Number(q)===0) return;
     rows += `<div class="tc-row"><span>${esc(it.name)}</span><b>${q}</b></div>`;
   });
   if(!rows) return '';
@@ -4742,11 +4783,16 @@ function checkTempLockState(){
   const amDone=today&&today.amRecorder&&today.amRecorder.trim()!=='';
   const pmDone=today&&today.pmRecorder&&today.pmRecorder.trim()!=='';
 
-  if(amDone) lockSection('temp-am-section','AM',today.amRecorder);
-  else unlockSection('temp-am-section');
+  // [v10.69] AM完了後はAM入力欄を隠し、未完了のPMだけを表示する。
+  // 保存済みAMは下の温度履歴で確認・編集できる。
+  const amSection=document.getElementById('temp-am-section');
+  if(amSection){ unlockSection('temp-am-section'); amSection.style.display=amDone?'none':''; }
 
-  if(pmDone) lockSection('temp-pm-section','PM',today.pmRecorder);
-  else unlockSection('temp-pm-section');
+  const pmSection=document.getElementById('temp-pm-section');
+  if(pmSection){
+    if(pmDone) lockSection('temp-pm-section','PM',today.pmRecorder);
+    else unlockSection('temp-pm-section');
+  }
 }
 
 function initTempSection(){
