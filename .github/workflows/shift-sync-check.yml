@@ -228,6 +228,18 @@ jobs:
             echo "::error file=shift/owner.html::Google owner authentication is missing."
             exit 1
           }
+          grep -Fq 'else if(user.isAnonymous) signOut(auth)' shift/owner.html || {
+            echo "::error file=shift/owner.html::Anonymous editor sessions must be cleared before owner authentication."
+            exit 1
+          }
+          grep -Fq 'window.shiftOwnerAuthError' shift/owner.html || {
+            echo "::error file=shift/owner.html::Recoverable owner authentication errors are missing."
+            exit 1
+          }
+          grep -Fq "b.textContent='もう一度確認'" shift/owner.html || {
+            echo "::error file=shift/owner.html::Owner authentication retry control is missing."
+            exit 1
+          }
           grep -Fq 'fbIssueStaffUrl' shift/owner.html || {
             echo "::error file=shift/owner.html::Dedicated staff URL issuing is missing."
             exit 1
