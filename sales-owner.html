@@ -93,29 +93,18 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
   font: 700 14px inherit; cursor: pointer; box-shadow: 0 3px 8px rgba(26,35,126,.24);
 }
 .sales-print-btn:active { transform: translateY(1px); }
+.sales-pdf-btn {
+  width: 100%; margin-top: 9px; border: 0; border-radius: 10px; padding: 13px 16px;
+  background: linear-gradient(135deg,#8d6e00,#c89b00); color: #fff;
+  font: 700 14px inherit; cursor: pointer; box-shadow: 0 3px 8px rgba(141,110,0,.22);
+}
+.sales-pdf-btn:active { transform: translateY(1px); }
 .sales-sheet-btn {
   display: block; width: 100%; margin-top: 9px; border: 1.5px solid #1a237e;
   border-radius: 10px; padding: 12px 16px; background: #fff; color: #1a237e;
   font: 700 14px inherit; cursor: pointer; text-decoration: none;
 }
 .sales-sheet-btn:active { background: #eef0ff; }
-#sales-native-print { display: none; }
-@media print {
-  @page { size: A4 landscape; margin: 5mm; }
-  body > *:not(#sales-native-print) { display: none !important; }
-  #sales-native-print { display: block !important; width: 287mm; color: #111; background: #fff; font-family: Arial, sans-serif; }
-  #sales-native-print h1 { margin: 0 0 2mm; text-align: center; font-size: 11pt; }
-  #sales-native-print table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 6.2pt; }
-  #sales-native-print th, #sales-native-print td { border: .25mm solid #444; height: 4.7mm; padding: .3mm .6mm; text-align: right; white-space: nowrap; overflow: hidden; }
-  #sales-native-print th { height: 7mm; text-align: center; white-space: normal; line-height: 1.15; font-weight: 700; }
-  #sales-native-print th:first-child, #sales-native-print td:first-child { width: 25mm; text-align: center; }
-  #sales-native-print .osu { background: #f4cccc; }
-  #sales-native-print .nagono { background: #fff2cc; }
-  #sales-native-print .teppan { background: #cfe2f3; }
-  #sales-native-print .kamakura { background: #eadcf0; }
-  #sales-native-print .weekly td { background: #fff4d6; font-weight: 700; }
-  #sales-native-print .total td { background: #eaeaea; border-top: .6mm solid #333; font-weight: 700; }
-}
 #loading { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
 #fb-status { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 4px; }
 #owner-access-gate {
@@ -264,15 +253,14 @@ body { font-family: 'M PLUS Rounded 1c', sans-serif; background: #f5f5f5; min-he
     </div>
   </div>
   <div id="sales-print-control" class="sales-print-control">
-    <p id="sales-print-help">画面で選んでいる月を、A4横1枚で直接印刷します。</p>
-    <button class="sales-print-btn" type="button" onclick="printSelectedSalesMonth()">🖨 選択中の月をA4横1枚で印刷</button>
+    <p id="sales-print-help">① 印刷月を選びます。② PDFを開くと、選んだ表だけがA4横1枚になります。</p>
+    <button class="sales-print-btn" type="button" onclick="openOfficialSalesPrintSheet()">① 印刷月を選ぶ</button>
+    <button class="sales-pdf-btn" type="button" onclick="openOfficialSalesPrintPdf()">② A4横・1枚PDFを開く</button>
     <a class="sales-sheet-btn" href="https://docs.google.com/spreadsheets/d/1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4/edit?usp=drivesdk" target="_blank" rel="noopener noreferrer">⭐ 売上まとめスプレッドシートを開く</a>
   </div>
   <div id="loading">読み込み中...</div>
   <div id="history-list"></div>
 </div>
-
-<div id="sales-native-print" aria-hidden="true"></div>
 
 <!-- 設定オーバーレイ -->
 <div id="settings-overlay" onclick="closeSettings()"></div>
@@ -347,6 +335,11 @@ let auth = null;
 let ownerAuthorized = false;
 let ownerAccessMode = 'none';
 let ownerDataStarted = false;
+let sheetsAccessToken = '';
+const SALES_SUMMARY_SPREADSHEET_ID = '1-njyvXubbMHvd_p-QhiE2l-4_lPGLwhW_f9RGBbWub4';
+const SALES_SUMMARY_PRINT_SHEET = 'A4印刷用';
+const SALES_SUMMARY_PRINT_URL = 'https://docs.google.com/spreadsheets/d/' + SALES_SUMMARY_SPREADSHEET_ID + '/edit#gid=2026082901';
+const SALES_SUMMARY_PDF_URL = 'https://docs.google.com/spreadsheets/d/' + SALES_SUMMARY_SPREADSHEET_ID + '/export?format=pdf&gid=2026082901&range=A1%3AU39&size=A4&portrait=false&scale=4&fitw=true&sheetnames=false&printtitle=false&pagenumbers=false&gridlines=false&fzr=false&top_margin=0.50&bottom_margin=0.50&left_margin=0.25&right_margin=0.25&attachment=false';
 const SALES_OWNER_SHARE_PARAM = 'ownerAccess';
 const SALES_OWNER_SHARE_STORAGE = 'zaiko_sales_owner_access_token';
 const SALES_OWNER_SHARE_SLOT = 'shared1';
@@ -640,62 +633,101 @@ window.openStore = async function(store) {
   } catch(e) { alert('店舗を開けませんでした：' + e.message); }
 };
 
-window.printSelectedSalesMonth = function() {
+function reiwaSalesSheetName(year, month) {
+  const reiwaYear = year - 2018;
+  return reiwaYear > 0 ? 'R' + reiwaYear + '/' + month : '';
+}
+
+async function requestSheetsAccessToken() {
+  const provider = new GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/spreadsheets');
+  provider.setCustomParameters({
+    prompt: 'consent',
+    login_hint: auth && auth.currentUser && auth.currentUser.email ? auth.currentUser.email : ''
+  });
+  const result = await signInWithPopup(auth, provider);
+  const admin = await get(ref(db, 'zaiko/shift/access/admins/' + result.user.uid));
+  if (admin.val() !== true) throw new Error('管理者に登録されたGoogleアカウントを選択してください。');
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  if (!credential || !credential.accessToken) throw new Error('スプレッドシートの操作権限を取得できませんでした。');
+  sheetsAccessToken = credential.accessToken;
+  return sheetsAccessToken;
+}
+
+async function sheetsApiFetch(url, options) {
+  let token = sheetsAccessToken || await requestSheetsAccessToken();
+  let response = await fetch(url, Object.assign({}, options, {
+    headers: Object.assign({}, options && options.headers, {'Authorization':'Bearer ' + token})
+  }));
+  if (response.status === 401) {
+    sheetsAccessToken = '';
+    token = await requestSheetsAccessToken();
+    response = await fetch(url, Object.assign({}, options, {
+      headers: Object.assign({}, options && options.headers, {'Authorization':'Bearer ' + token})
+    }));
+  }
+  return response;
+}
+
+window.openOfficialSalesPrintSheet = async function() {
   if (!ownerAuthorized || ownerAccessMode !== 'admin') {
     alert('売上まとめの印刷は管理者だけが利用できます。');
     return;
   }
-  const columns = [
-    ['日付',''],['大須売上','osu'],['大須人数','osu'],['大須ランチ','osu'],['ランチ人数','osu'],['大須物販','osu'],
-    ['那古野売上','nagono'],['那古野人数','nagono'],['那古野物販','nagono'],['那古野ランチ','nagono'],['ランチ人数','nagono'],
-    ['鉄板売上','teppan'],['鉄板人数','teppan'],['鉄板物販','teppan'],['鉄板Uber','teppan'],['鉄板Rocket','teppan'],
-    ['鎌倉売上','kamakura'],['鎌倉人数','kamakura'],['天気','kamakura'],['鎌倉Uber','kamakura'],['総売上','']
-  ];
-  const byStoreDate = {};
-  STORES_ORDER.forEach(store => {
-    byStoreDate[store] = {};
-    (allData[store] || []).forEach(item => { if (item.date) byStoreDate[store][item.date] = item; });
-  });
-  const number = value => Number(value) || 0;
-  const shown = value => number(value) ? number(value).toLocaleString() : '';
-  const item = (store,date) => byStoreDate[store][date] || {};
-  const merchandise = row => number(row.buhin) || (number(row.buhinCash) + number(row.buhinOther));
-  const valuesForDate = date => {
-    const o=item('大須',date), n=item('那古野',date), t=item('鉄板',date), k=item('鎌倉',date);
-    const total=number(o.netSales)+number(n.netSales)+number(t.netSales)+number(k.netSales);
-    return [
-      Number(date.slice(5,7))+'/'+Number(date.slice(-2)),
-      shown(o.netSales),shown(o.kumi),shown(o.lunchSales),shown(o.lunchGuests),shown(merchandise(o)),
-      shown(n.netSales),shown(n.kumi),shown(merchandise(n)),shown(n.lunchSales),shown(n.lunchGuests),
-      shown(t.netSales),shown(t.kumi),shown(merchandise(t)),shown(t.uber),shown(t.rocket),
-      shown(k.netSales),shown(k.kumi),k.weather || '',shown(k.uber),shown(total)
-    ];
-  };
-  const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
-  const rows = [];
-  const monthTotals = {'大須':0,'那古野':0,'鉄板':0,'鎌倉':0};
-  for (let day=1; day<=daysInMonth; day++) {
-    const date=viewYear+'-'+String(viewMonth).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-    rows.push({kind:'day',values:valuesForDate(date)});
-    STORES_ORDER.forEach(store => { monthTotals[store] += number(item(store,date).netSales); });
-    if (day===7 || day===14 || day===21 || day===28 || day===daysInMonth) {
-      const start=day<=7?1:day<=14?8:day<=21?15:day<=28?22:29;
-      const label=start===29?'29日～月末 週間売上':start+'～'+day+'日 週間売上';
-      const sums={'大須':0,'那古野':0,'鉄板':0,'鎌倉':0};
-      for(let d=start;d<=day;d++) {
-        const key=viewYear+'-'+String(viewMonth).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-        STORES_ORDER.forEach(store => { sums[store] += number(item(store,key).netSales); });
-      }
-      const total=sums['大須']+sums['那古野']+sums['鉄板']+sums['鎌倉'];
-      rows.push({kind:'weekly',values:[label,shown(sums['大須']),'','','','',shown(sums['那古野']),'','','','',shown(sums['鉄板']),'','','','',shown(sums['鎌倉']),'','','',shown(total)]});
-    }
+  const opened = window.open(SALES_SUMMARY_PRINT_URL, '_blank', 'noopener');
+  if (!opened) window.location.href = SALES_SUMMARY_PRINT_URL;
+  return;
+  const monthSheet = reiwaSalesSheetName(viewYear, viewMonth);
+  if (!monthSheet) {
+    alert('この年月はスプレッドシートの対象外です。');
+    return;
   }
-  const grand=monthTotals['大須']+monthTotals['那古野']+monthTotals['鉄板']+monthTotals['鎌倉'];
-  rows.push({kind:'total',values:['合計',shown(monthTotals['大須']),'','','','',shown(monthTotals['那古野']),'','','','',shown(monthTotals['鉄板']),'','','','',shown(monthTotals['鎌倉']),'','','',shown(grand)]});
-  const escape = value => String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const target=document.getElementById('sales-native-print');
-  target.innerHTML='<h1>'+viewYear+'年'+viewMonth+'月 売上まとめ</h1><table><thead><tr>'+columns.map(c=>'<th class="'+c[1]+'">'+escape(c[0])+'</th>').join('')+'</tr></thead><tbody>'+rows.map(row=>'<tr class="'+row.kind+'">'+row.values.map(v=>'<td>'+escape(v)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';
-  window.print();
+  const button = document.querySelector('.sales-print-btn');
+  const originalButtonText = button ? button.textContent : '';
+  if (button) {
+    button.disabled = true;
+    button.textContent = '正式PDFを準備しています…';
+  }
+
+  try {
+    const metadataUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SALES_SUMMARY_SPREADSHEET_ID + '?fields=sheets.properties(title,sheetId)';
+    const metadataResponse = await sheetsApiFetch(metadataUrl, {method:'GET'});
+    const metadata = await metadataResponse.json();
+    if (!metadataResponse.ok) throw new Error(metadata.error && metadata.error.message ? metadata.error.message : 'スプレッドシートを確認できませんでした。');
+    const sheets = (metadata.sheets || []).map(item => item.properties || {});
+    if (!sheets.some(sheet => sheet.title === monthSheet)) throw new Error('「' + monthSheet + '」の月シートがまだありません。');
+    const printSheet = sheets.find(sheet => sheet.title === SALES_SUMMARY_PRINT_SHEET);
+    if (!printSheet) throw new Error('「A4印刷用」シートが見つかりません。');
+
+    const range = encodeURIComponent("'" + SALES_SUMMARY_PRINT_SHEET + "'!B1");
+    const updateUrl = 'https://sheets.googleapis.com/v4/spreadsheets/' + SALES_SUMMARY_SPREADSHEET_ID + '/values/' + range + '?valueInputOption=USER_ENTERED';
+    const updateResponse = await sheetsApiFetch(updateUrl, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({values:[[monthSheet]]})
+    });
+    const updateResult = await updateResponse.json();
+    if (!updateResponse.ok) throw new Error(updateResult.error && updateResult.error.message ? updateResult.error.message : '印刷月を設定できませんでした。');
+
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    window.location.href = SALES_SUMMARY_PDF_URL;
+  } catch(e) {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalButtonText;
+    }
+    alert('正式PDFを開けませんでした：' + (e.message || e));
+  }
+};
+
+window.openOfficialSalesPrintPdf = function() {
+  if (!ownerAuthorized || ownerAccessMode !== 'admin') {
+    alert('売上まとめの印刷は管理者だけが利用できます。');
+    return;
+  }
+  const pdfUrl = SALES_SUMMARY_PDF_URL + '&_=' + Date.now();
+  const opened = window.open(pdfUrl, '_blank', 'noopener');
+  if (!opened) window.location.href = pdfUrl;
 };
 
 function renderHistory() {
