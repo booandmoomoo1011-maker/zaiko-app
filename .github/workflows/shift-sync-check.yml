@@ -240,6 +240,18 @@ jobs:
             echo "::error file=shift/owner.html::Owner authentication retry control is missing."
             exit 1
           }
+          grep -Fq 'window.shiftOwnerUseRedirect=true' shift/owner.html || {
+            echo "::error file=shift/owner.html::Owner login timeout fallback is missing."
+            exit 1
+          }
+          grep -Fq "loginButton.textContent='別画面でGoogleログイン'" shift/owner.html || {
+            echo "::error file=shift/owner.html::Owner redirect login control is missing."
+            exit 1
+          }
+          grep -Fq 'window.shiftOwnerLogin(useRedirect)' shift/owner.html || {
+            echo "::error file=shift/owner.html::Owner redirect fallback is not wired to the login action."
+            exit 1
+          }
           grep -Fq 'fbIssueStaffUrl' shift/owner.html || {
             echo "::error file=shift/owner.html::Dedicated staff URL issuing is missing."
             exit 1

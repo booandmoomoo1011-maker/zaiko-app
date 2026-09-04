@@ -924,15 +924,21 @@
     const storedEditorToken=editorParams.get('launch')==='pwa'?(()=>{ try{ return localStorage.getItem(EDITOR_INSTALL_TOKEN_KEY)||''; }catch(_){ return ''; } })():'';
     const editorToken=directEditorToken||(validEditorToken(storedEditorToken)?storedEditorToken:'');
     const editorTokenFromInstall=!directEditorToken&&!!editorToken;
-    window.shiftOwnerLogin=async function(){
+    window.shiftOwnerLogin=async function(useRedirect){
       if(auth.currentUser){
         if(editorToken){ await beginEditor(auth.currentUser,editorToken); return; }
         if(!auth.currentUser.isAnonymous){ await beginOwner(auth.currentUser); return; }
         await signOut(auth);
       }
       const provider=new GoogleAuthProvider();
+      if(useRedirect){ await signInWithRedirect(auth,provider); return; }
       try{ await signInWithPopup(auth,provider); }
-      catch(e){ if(e&&/popup|operation-not-supported/i.test(e.code||e.message||'')) await signInWithRedirect(auth,provider); else throw e; }
+      catch(e){
+        const code=String(e&&(e.code||e.message)||'');
+        if(/popup-blocked|operation-not-supported/i.test(code)){ await signInWithRedirect(auth,provider); return; }
+        if(/popup-closed-by-user|cancelled-popup-request/i.test(code)) return;
+        throw e;
+      }
     };
     onAuthStateChanged(auth,user=>{
       if(user){
@@ -1014,7 +1020,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.181</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.182</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1348,7 +1354,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.181"; window.APP_UPDATED="2026-09-04";
+window.APP_VERSION="v1.182"; window.APP_UPDATED="2026-09-04";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1702,7 +1708,7 @@ window.shiftOwnerAuthorized=function(uid,isEditor){
   if(b) b.style.display='none';
   if(g) g.style.display='flex';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.181</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.182</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1722,15 +1728,30 @@ window.shiftOwnerAuthError=function(error){
   if(b){ b.textContent='もう一度確認'; b.style.display='inline-block'; }
   if(g) g.style.display='flex';
 };
+window.shiftOwnerUseRedirect=false;
 document.getElementById('ownerLoginBtn').onclick=function(){
   this.disabled=true;
   var loginButton=this;
+  var useRedirect=window.shiftOwnerUseRedirect===true;
+  if(useRedirect){
+    var redirectText=document.getElementById('ownerAccessText');
+    if(redirectText) redirectText.textContent='Googleログイン画面へ移動しています…';
+  }
   var unlockTimer=setTimeout(function(){
+    window.shiftOwnerUseRedirect=true;
     loginButton.disabled=false;
+    loginButton.textContent='別画面でGoogleログイン';
     var text=document.getElementById('ownerAccessText');
-    if(text) text.textContent='Googleログイン画面が開かない場合は、もう一度押してください。';
+    if(text) text.textContent='小さいログイン画面が開かなかったため、下のボタンから別画面でログインしてください。';
   },8000);
-  Promise.resolve(window.shiftOwnerLogin&&window.shiftOwnerLogin()).catch(e=>{ appAlert('Googleログインに失敗しました。もう一度お試しください。'); console.warn(e); }).finally(()=>{ clearTimeout(unlockTimer); this.disabled=false; });
+  Promise.resolve(window.shiftOwnerLogin&&window.shiftOwnerLogin(useRedirect)).catch(e=>{
+    const code=String(e&&(e.code||e.message)||'');
+    window.shiftOwnerUseRedirect=true;
+    loginButton.textContent='別画面でGoogleログイン';
+    var text=document.getElementById('ownerAccessText');
+    if(text) text.textContent=/network-request-failed/i.test(code)?'通信状態を確認して、もう一度ログインしてください。':'Googleログインを完了できませんでした。別画面でのログインをお試しください。';
+    console.warn('Googleログインエラー',e);
+  }).finally(()=>{ clearTimeout(unlockTimer); this.disabled=false; });
 };
 function touchUpdated(){ const t=new Date(); S.updatedAt=`${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`; if(!S.decidedMonths) S.decidedMonths={}; S.decidedMonths[Y+'-'+M]=true; }
 function names(){ return Object.keys(S.staff); }
