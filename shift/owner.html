@@ -924,8 +924,6 @@
     const storedEditorToken=editorParams.get('launch')==='pwa'?(()=>{ try{ return localStorage.getItem(EDITOR_INSTALL_TOKEN_KEY)||''; }catch(_){ return ''; } })():'';
     const editorToken=directEditorToken||(validEditorToken(storedEditorToken)?storedEditorToken:'');
     const editorTokenFromInstall=!directEditorToken&&!!editorToken;
-    const useRedirectLogin=()=>/Android|iPhone|iPad|iPod|Line\//i.test(navigator.userAgent||'') ||
-      ((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true);
     window.shiftOwnerLogin=async function(){
       if(auth.currentUser){
         if(editorToken){ await beginEditor(auth.currentUser,editorToken); return; }
@@ -933,7 +931,6 @@
         await signOut(auth);
       }
       const provider=new GoogleAuthProvider();
-      if(useRedirectLogin()){ await signInWithRedirect(auth,provider); return; }
       try{ await signInWithPopup(auth,provider); }
       catch(e){ if(e&&/popup|operation-not-supported/i.test(e.code||e.message||'')) await signInWithRedirect(auth,provider); else throw e; }
     };
@@ -1017,7 +1014,7 @@
 
 
 <header>
-  <h1>シフト作成（オーナー） <span class="demoTag">v1.180</span></h1>
+  <h1>シフト作成（オーナー） <span class="demoTag">v1.181</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1351,7 +1348,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.180"; window.APP_UPDATED="2026-09-04";
+window.APP_VERSION="v1.181"; window.APP_UPDATED="2026-09-04";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1705,7 +1702,7 @@ window.shiftOwnerAuthorized=function(uid,isEditor){
   if(b) b.style.display='none';
   if(g) g.style.display='flex';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.180</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.181</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -1727,7 +1724,13 @@ window.shiftOwnerAuthError=function(error){
 };
 document.getElementById('ownerLoginBtn').onclick=function(){
   this.disabled=true;
-  Promise.resolve(window.shiftOwnerLogin&&window.shiftOwnerLogin()).catch(e=>{ appAlert('Googleログインに失敗しました。もう一度お試しください。'); console.warn(e); }).finally(()=>{ this.disabled=false; });
+  var loginButton=this;
+  var unlockTimer=setTimeout(function(){
+    loginButton.disabled=false;
+    var text=document.getElementById('ownerAccessText');
+    if(text) text.textContent='Googleログイン画面が開かない場合は、もう一度押してください。';
+  },8000);
+  Promise.resolve(window.shiftOwnerLogin&&window.shiftOwnerLogin()).catch(e=>{ appAlert('Googleログインに失敗しました。もう一度お試しください。'); console.warn(e); }).finally(()=>{ clearTimeout(unlockTimer); this.disabled=false; });
 };
 function touchUpdated(){ const t=new Date(); S.updatedAt=`${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`; if(!S.decidedMonths) S.decidedMonths={}; S.decidedMonths[Y+'-'+M]=true; }
 function names(){ return Object.keys(S.staff); }
