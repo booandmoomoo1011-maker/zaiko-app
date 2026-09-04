@@ -228,6 +228,10 @@ jobs:
             echo "::error file=shift/owner.html::Google owner authentication is missing."
             exit 1
           }
+          grep -Fq 'popupRedirectResolver:browserPopupRedirectResolver' shift/owner.html || {
+            echo "::error file=shift/owner.html::Firebase popup and redirect resolver is missing."
+            exit 1
+          }
           grep -Fq 'else if(user.isAnonymous) signOut(auth)' shift/owner.html || {
             echo "::error file=shift/owner.html::Anonymous editor sessions must be cleared before owner authentication."
             exit 1
