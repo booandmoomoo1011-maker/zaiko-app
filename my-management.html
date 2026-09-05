@@ -45,6 +45,7 @@ h2{font-size:14px;color:var(--sub);margin:0 0 9px;padding-left:3px}
 .inventory{border-left:5px solid var(--green)}
 .sales{border-left:5px solid var(--blue)}
 .shift{border-left:5px solid var(--pink)}
+.kamakura-shift{border-left:5px solid #6f3f91}
 footer{text-align:center;color:#999;font-size:11px;padding-top:8px}
 @media(max-width:560px){.grid{grid-template-columns:1fr}header{padding:18px 16px}h1{font-size:22px}.card{padding:15px}.icon{width:74px;height:74px}}
 </style>
@@ -114,9 +115,10 @@ footer{text-align:center;color:#999;font-size:11px;padding-top:8px}
 <h2>シフト管理</h2>
 <div class="grid">
 <a class="card shift" href="/shift/owner.html" target="_blank" rel="noopener"><img class="icon" src="/icons/shift-owner-192.png?v=6" alt="シフト・オーナーアイコン" width="82" height="82"><div class="name">シフト・オーナー</div><div class="desc">シフトの作成・公開画面</div></a>
+<a class="card kamakura-shift" href="/kamakura-shift/owner.html" target="_blank" rel="noopener"><img class="icon" src="/icons/kamakura-shift-owner.svg?v=1" alt="鎌倉シフトオーナーアイコン" width="82" height="82"><div class="name">鎌倉シフトオーナー</div><div class="desc">鎌倉専用のシフト作成・公開画面</div></a>
 </div>
 </section>
-<footer>My Management v2.2</footer>
+<footer>My Management v2.3</footer>
 </main>
 <script>
 document.querySelectorAll('a.card').forEach(function(link){
