@@ -380,7 +380,7 @@
   .dayruler .drow.ruler{min-height:39px; background:#fff;}
   .dayruler .drow.ruler .dname{z-index:42; background:#fff; color:#44515a; font-weight:800;}
   .dayruler .dtime{min-height:39px; background-color:#fff;}
-  .dayruler .tick{top:4px;padding:0;transform:translateX(-50%);font-size:13px;line-height:1.2;text-align:center;z-index:9;}
+  .dayruler .tick{top:4px;padding:0 3px;transform:translateX(-50%);background:#fff;font-size:13px;line-height:1.2;text-align:center;z-index:9;}
   .dayruler .tick.start{transform:none;text-align:left;}
   .dayruler .tick.end{transform:translateX(-50%);text-align:center;}
   .dayruler .day-endline{position:absolute;top:0;bottom:0;width:1px;background:#7f8b93;z-index:8;pointer-events:none;}
@@ -452,9 +452,9 @@
   .drow.haswishdec .dbar.holdbar{top:23px; height:17px;}
   .drow.haswishdec .dbar.reqpend,.drow.haswishdec .dbar.reqok,.drow.haswishdec .dbar.reqrej{top:23px; height:17px;}
   .drow.ruler .dname{background:#fbe6ec; color:var(--pink-d); flex-direction:row; align-items:center; font-weight:700;}
-  .dtime{position:relative; background-image:repeating-linear-gradient(to right, transparent 0, transparent 39px, #d8dde0 39px, #d8dde0 40px);}
-  .dtime::before{content:"";position:absolute;top:0;bottom:0;right:19px;width:1px;background:#d8dde0;z-index:0;pointer-events:none;}
-  .dtime::after{content:"";position:absolute;top:0;bottom:0;right:-1px;width:1px;background:#aeb8be;z-index:7;pointer-events:none;}
+  /* 時刻ラベル・縦線・勤務ラインを、すべて1時間56pxの同じ座標へ揃える。 */
+  .dtime{position:relative;background-image:repeating-linear-gradient(to right,transparent 0,transparent 55px,#d8dde0 55px,#d8dde0 56px);}
+  .dtime::before,.dtime::after{content:none;}
   .tick{position:absolute; top:0; font-size:13px; color:#111; font-weight:800; padding-left:2px;}
   .dbar{position:absolute; top:4px; height:19px; border-radius:5px; color:#fff; font-size:10px; font-weight:700; justify-content:space-between;
     padding:0 5px; display:flex; align-items:center; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.18);}
@@ -1026,7 +1026,7 @@
 
 
 <header>
-  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.6</span></h1>
+  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.7</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1357,7 +1357,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.0.6"; window.APP_UPDATED="2026-09-06";
+window.APP_VERSION="v1.0.7"; window.APP_UPDATED="2026-09-06";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1726,7 +1726,7 @@ window.shiftOwnerAuthorized=function(uid,isEditor){
   if(b) b.style.display='none';
   if(g) g.style.display='flex';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.6</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.7</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
