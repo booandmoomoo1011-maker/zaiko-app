@@ -380,8 +380,9 @@
   .dayruler .drow.ruler{min-height:39px; background:#fff;}
   .dayruler .drow.ruler .dname{z-index:42; background:#fff; color:#44515a; font-weight:800;}
   .dayruler .dtime{min-height:39px; background-color:#fff;}
-  .dayruler .tick{top:4px;}
-  .dayruler .tick.edge{top:4px;padding-left:0;transform:translateX(-100%);text-align:right;font-size:13px;line-height:1.2;z-index:9;}
+  .dayruler .tick{top:4px;padding:0;transform:translateX(-50%);font-size:13px;line-height:1.2;text-align:center;z-index:9;}
+  .dayruler .tick.start{transform:none;text-align:left;}
+  .dayruler .tick.end{transform:translateX(-100%);text-align:right;}
   .dayruler .day-endline{position:absolute;top:0;bottom:0;width:1px;background:#7f8b93;z-index:8;pointer-events:none;}
   .daygridframe{position:relative;}
   .storememo{position:absolute; left:728px; top:2px; z-index:6; width:4cm; height:3cm; resize:both; min-width:2.5cm; min-height:2cm; box-sizing:border-box; font-family:inherit; font-size:12px; line-height:1.4; padding:5px 7px; border:1.5px solid #e2c98a; border-radius:8px; background:#fffdf3; color:#5a4a2a;}
@@ -512,12 +513,11 @@
   #printArea{display:none;}
   .psheet{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:1.2mm 1.5mm;height:190mm;page-break-after:always;break-after:page;}
   .psheet:last-child{page-break-after:auto; break-after:auto;}
-  .pday{min-width:0;min-height:0;overflow:hidden;}
+  .pday{min-width:0;min-height:0;overflow:visible;box-sizing:border-box;padding-bottom:.4mm;}
   .pdtitle{font-weight:700; font-size:var(--fsT,11px); margin:0 0 3px; border-bottom:1.2px solid #555; color:#333;}
-  table.pgrid{border-collapse:collapse; width:100%; table-layout:fixed; margin-bottom:1mm; border:1px solid #555;}
-  table.pgrid th, table.pgrid td{border:1px solid #666; font-size:var(--fs,6px); height:var(--rowH,9px); text-align:center; padding:0; overflow:hidden; color:#777;}
-  table.pgrid tr:last-child td{border-bottom:1px solid #555 !important;box-shadow:inset 0 -1px 0 #555;}
-  table.pgrid tr> :first-child{border-left:1px solid #555 !important;}
+  table.pgrid{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;margin:0;}
+  table.pgrid th, table.pgrid td{box-sizing:border-box;border:0;border-top:1px solid #666;border-left:1px solid #666;font-size:var(--fs,6px);height:var(--rowH,9px);text-align:center;padding:0;overflow:hidden;color:#777;}
+  table.pgrid tr:last-child td{border-bottom:1px solid #555 !important;}
   table.pgrid tr> :last-child{border-right:1px solid #555 !important;}
   table.pgrid td.pn, table.pgrid th.pn{width:var(--nameW,54px); text-align:left; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; font-size:var(--fsN,8.8px); font-weight:400; line-height:1; padding:0 2px; white-space:nowrap; color:#333;}
   table.pgrid td.pn.pn-5{font-size:calc(var(--fsN,8.8px) * .86); letter-spacing:-.1px;}
@@ -1026,7 +1026,7 @@
 
 
 <header>
-  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.0</span></h1>
+  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.1</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1357,7 +1357,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.0.0"; window.APP_UPDATED="2026-09-05";
+window.APP_VERSION="v1.0.1"; window.APP_UPDATED="2026-09-05";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1717,7 +1717,7 @@ window.shiftOwnerAuthorized=function(uid,isEditor){
   if(b) b.style.display='none';
   if(g) g.style.display='flex';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.0</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.1</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2464,8 +2464,13 @@ function openDayView(d){
   $("#dayTitle").innerHTML=`${Y}年${M}月${d}日<span class="${dayDow===0||dayDow===6||isHol(d)?'weekend':''}">(${dow})</span>`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   $("#dayPrev").disabled=d<=1; $("#dayNext").disabled=d>=DAYS;
   const W=(AX_VIEW_END-AX0)*HW;
-  let ticks=""; for(let h=AX0; h<AX1; h++){ ticks+=`<div class="tick" style="left:${(h-AX0)*HW}px">${h}</div>`; }
-  ticks+=`<div class="tick edge" style="left:${(AX1-AX0)*HW}px">18:00</div>`;
+  const axisSpan=AX1-AX0;
+  let ticks="";
+  for(let h=AX0;h<=AX1;h++){
+    const position=((h-AX0)/axisSpan)*100;
+    const edgeClass=h===AX0?' start':(h===AX1?' end':'');
+    ticks+=`<div class="tick${edgeClass}" style="left:${position}%">${h===AX1?'18:00':h}</div>`;
+  }
   const rulerTrack=$("#dayRulerTrack");
   if(rulerTrack) rulerTrack.innerHTML=`<div class="drow ruler"><div class="dname">時間</div><div class="dtime" style="width:${W}px;min-width:${W}px">${ticks}<div class="day-endline" style="left:${(AX1-AX0)*HW}px"></div></div></div>`;
   let html="";

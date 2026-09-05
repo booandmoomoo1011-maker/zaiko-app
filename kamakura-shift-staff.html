@@ -400,11 +400,12 @@
   #printArea{display:none;}
   .psheet{display:flex; gap:1.5mm; page-break-after:always; break-after:page;}
   .psheet:last-child{page-break-after:auto; break-after:auto;}
-  .pday{flex:1; min-width:0;}
+  .pday{flex:1;min-width:0;overflow:visible;box-sizing:border-box;padding-bottom:.4mm;}
   .pdtitle{font-weight:700; font-size:var(--fsT,11px); margin:0 0 3px; border-bottom:1.2px solid #555; color:#333;}
-  table.pgrid{border-collapse:collapse; width:100%; table-layout:fixed; margin-bottom:1mm;}
-  table.pgrid th, table.pgrid td{border:0.7px solid #7a7a7a; font-size:var(--fs,6px); height:var(--rowH,9px); text-align:center; padding:0; overflow:hidden; color:#777;}
-  table.pgrid tr:last-child td{box-shadow:inset 0 -1px 0 #555;}
+  table.pgrid{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;margin:0;}
+  table.pgrid th, table.pgrid td{box-sizing:border-box;border:0;border-top:1px solid #7a7a7a;border-left:1px solid #7a7a7a;font-size:var(--fs,6px);height:var(--rowH,9px);text-align:center;padding:0;overflow:hidden;color:#777;}
+  table.pgrid tr:last-child td{border-bottom:1px solid #555 !important;}
+  table.pgrid tr> :last-child{border-right:1px solid #555 !important;}
   table.pgrid td.pn, table.pgrid th.pn{width:var(--nameW,54px); text-align:left; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; font-size:var(--fsN,8.8px); font-weight:400; line-height:1; padding:0 2px; white-space:nowrap; color:#333;}
   table.pgrid td.pn.pn-5{font-size:calc(var(--fsN,8.8px) * .86); letter-spacing:-.1px;}
   table.pgrid td.pn.pn-6{font-size:calc(var(--fsN,8.8px) * .73); letter-spacing:-.2px;}
@@ -703,7 +704,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト <span class="demoTag">v1.95</span></h1>
+  <h1>シフト <span class="demoTag">v1.0.1</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -926,7 +927,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.0.0"; window.APP_UPDATED="2026-09-02";
+window.APP_VERSION="v1.0.1"; window.APP_UPDATED="2026-09-05";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
