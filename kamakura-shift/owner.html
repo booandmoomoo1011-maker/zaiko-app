@@ -513,8 +513,8 @@
   #printArea{display:none;}
   .psheet{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:1.2mm 1.5mm;height:190mm;page-break-after:always;break-after:page;}
   .psheet:last-child{page-break-after:auto; break-after:auto;}
-  .pday{min-width:0;min-height:0;overflow:visible;box-sizing:border-box;padding-bottom:.4mm;}
-  .pdtitle{font-weight:700; font-size:var(--fsT,11px); margin:0 0 3px; border-bottom:1.2px solid #555; color:#333;}
+  .pday{min-width:0;min-height:0;overflow:hidden;box-sizing:border-box;padding-bottom:.4mm;}
+  .pdtitle{font-weight:700; font-size:var(--fsT,11px); line-height:1.15; margin:0 0 3px; border-bottom:1.2px solid #555; color:#333;}
   table.pgrid{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;margin:0;}
   table.pgrid th, table.pgrid td{box-sizing:border-box;border:0;border-top:1px solid #666;border-left:1px solid #666;font-size:var(--fs,6px);height:var(--rowH,9px);text-align:center;padding:0;overflow:hidden;color:#777;}
   table.pgrid tr:last-child td{border-bottom:1px solid #555 !important;}
@@ -1026,7 +1026,7 @@
 
 
 <header>
-  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.3</span></h1>
+  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.4</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1357,7 +1357,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.0.3"; window.APP_UPDATED="2026-09-06";
+window.APP_VERSION="v1.0.4"; window.APP_UPDATED="2026-09-06";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1548,7 +1548,7 @@ const isHol=d=>!!HOL[key(d)];
 function seed(){
   if(window.KAMAKURA_PREVIEW){
     const staff={};
-    const previewNames=['店長','開田','橋詰'];
+    const previewNames=['店長','開田','確認3','確認4','確認5','確認6','確認7','確認8','確認9','橋詰'];
     previewNames.forEach((nm,i)=>{
       staff[nm]={nm,store:'鎌倉',wish:{},decided:{},notes:{}};
       for(let d=1;d<=9;d++){
@@ -1726,7 +1726,7 @@ window.shiftOwnerAuthorized=function(uid,isEditor){
   if(b) b.style.display='none';
   if(g) g.style.display='flex';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.3</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.4</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -3277,10 +3277,11 @@ function printDailyNameFitClass(nm){
 }
 function applyPrintSize(days){
   const rows=printRowCount(days);
-  const availMM=180;
+  /* 3段それぞれの日付見出し分を先に確保し、10名でも次の日付へはみ出させない。 */
+  const availMM=150;
   let rowMM=availMM/rows;
   if(rowMM>13) rowMM=13;        // 大きくなりすぎ防止
-  if(rowMM<3.2) rowMM=3.2;      // 小さすぎ防止（人数が多すぎる時）
+  if(rowMM<2.2) rowMM=2.2;      // 人数増加時も9日を1枚へ収める安全下限
   const px=rowMM*3.78;          // mm→px
   const set=(el)=>{ if(!el) return; const st=el.style;
     st.setProperty('--rowH', px.toFixed(1)+'px');
