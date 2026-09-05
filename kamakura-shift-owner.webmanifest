@@ -1,0 +1,14 @@
+{
+  "name": "鎌倉シフト・オーナー",
+  "short_name": "鎌倉オーナー",
+  "start_url": "/kamakura-shift/owner.html?launch=pwa",
+  "scope": "/kamakura-shift/",
+  "display": "standalone",
+  "background_color": "#5b2c83",
+  "theme_color": "#5b2c83",
+  "icons": [
+    {"src":"/icons/kamakura-shift-owner.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ],
+  "id": "/kamakura-shift-owner",
+  "launch_handler": {"client_mode":"navigate-new"}
+}
