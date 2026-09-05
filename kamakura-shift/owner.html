@@ -382,7 +382,7 @@
   .dayruler .dtime{min-height:39px; background-color:#fff;}
   .dayruler .tick{top:4px;padding:0;transform:translateX(-50%);font-size:13px;line-height:1.2;text-align:center;z-index:9;}
   .dayruler .tick.start{transform:none;text-align:left;}
-  .dayruler .tick.end{transform:translateX(-100%);text-align:right;}
+  .dayruler .tick.end{transform:translateX(-50%);text-align:center;}
   .dayruler .day-endline{position:absolute;top:0;bottom:0;width:1px;background:#7f8b93;z-index:8;pointer-events:none;}
   .daygridframe{position:relative;}
   .storememo{position:absolute; left:728px; top:2px; z-index:6; width:4cm; height:3cm; resize:both; min-width:2.5cm; min-height:2cm; box-sizing:border-box; font-family:inherit; font-size:12px; line-height:1.4; padding:5px 7px; border:1.5px solid #e2c98a; border-radius:8px; background:#fffdf3; color:#5a4a2a;}
@@ -1026,7 +1026,7 @@
 
 
 <header>
-  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.4</span></h1>
+  <h1>鎌倉シフト作成（オーナー） <span class="demoTag">v1.0.5</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 スタッフ用</button>
   <button class="btn share" id="shareOwnerBtn" type="button" style="display:none;background:#5a6b7a;">🔗 オーナー用</button>
   <div class="toggle" style="display:none;">
@@ -1357,7 +1357,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.0.4"; window.APP_UPDATED="2026-09-06";
+window.APP_VERSION="v1.0.5"; window.APP_UPDATED="2026-09-06";
 window.shiftEditorMode=false;
 window.shiftEditorSlot="owner";
 window.shiftEditorName="オーナー";
@@ -1726,7 +1726,7 @@ window.shiftOwnerAuthorized=function(uid,isEditor){
   if(b) b.style.display='none';
   if(g) g.style.display='flex';
   if(isEditor){
-    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.4</span>';
+    var h=document.querySelector('header h1'); if(h) h.innerHTML='シフト作成（'+(window.shiftEditorName||'編集者')+'） <span class="demoTag">v1.0.5</span>';
     ['rosterBtn','editorUrlBtn','historyBtn','setBtn','shareBtn','shareOwnerBtn'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display='none'; });
   }
 };
@@ -2196,7 +2196,8 @@ $("#cmtClose").onclick=()=>$("#cmtMask").style.display="none";
 $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.display="none"; };
 
 /* ---- 日別タイムライン ---- */
-const AX0=9, AX1=18, AX_VIEW_END=18, HW=56;
+/* 18:00の中央を終了線へ置き、文字が切れない半時間ぶんだけ表示余白を確保する。 */
+const AX0=9, AX1=18, AX_VIEW_END=18.5, HW=56;
 const DAY_MIN_USER_ZOOM=.7, DAY_MAX_USER_ZOOM=2, DAY_MAX_SCALE=1.2;
 let dayViewDay=null, dayUserZoom=1, dayScale=1, dayZoomRaf=0, dayPendingZoom=null;
 let dayViewportContent='';
