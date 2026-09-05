@@ -88,7 +88,8 @@
   th,td{border-right:1px solid var(--line); border-bottom:1px solid var(--line);}
   thead th{position:sticky; top:0; background:#fff; color:#222; z-index:5; padding:3px 3px; min-width:80px; font-size:11px;}
   th.corner{left:0; z-index:7; min-width:74px;}
-  thead th.sun{color:var(--sun); background:#fbe6ec;} thead th.sat{color:var(--sat); background:#fbe6ec;} thead th.today{background:var(--today);}
+  thead th.daycol{background:#f7f1fa;}
+  thead th.sun{color:var(--sun); background:#e5d6ef;} thead th.sat{color:var(--sat); background:#e5d6ef;} thead th.today{background:var(--today);}
   td.name, th.name{position:sticky; left:0; background:#fff; z-index:4; min-width:74px; max-width:74px;
     padding:2px 4px 2px 6px; font-weight:700; font-size:12px; text-align:left; word-break:break-all;}
   td.name .nmtxt{display:inline;}
@@ -190,14 +191,14 @@
   .mcalgrid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; width:100%; min-width:0;}
   .mch{text-align:center; font-weight:700; font-size:12px; color:#666; padding:3px 0;}
   .mch.sun{color:var(--sun);} .mch.sat{color:var(--sat);}
-  .mcell{position:relative; min-width:0; overflow:hidden; min-height:52px; border:1px solid var(--line); border-radius:7px; background:#fff; padding:2px; display:flex; flex-direction:column; align-items:center; gap:2px;}
+  .mcell{position:relative; min-width:0; overflow:hidden; min-height:52px; border:1px solid var(--line); border-radius:7px; background:#f7f1fa; padding:2px; display:flex; flex-direction:column; align-items:center; gap:2px;}
   .mcell.empty{border:none; background:transparent;}
-  .mcell.sun{background:#fdf0f3;} .mcell.sat{background:#eef4fd;}
+  .mcell.sun{background:#e5d6ef;} .mcell.sat{background:#e5d6ef;}
   .mnum{font-size:11px; font-weight:700; color:#555; align-self:flex-start; padding-left:2px;}
   .mtime{font-size:9.5px; font-weight:700; color:#fff; border-radius:5px; padding:1px 3px; text-align:center; line-height:1.3; white-space:nowrap;}
   .mstore{font-size:8.5px; font-weight:800; color:#fff; border-radius:5px; padding:0 5px; line-height:1.5; white-space:nowrap; align-self:flex-start; margin-left:2px;}
   .mcell.cclick{cursor:pointer;}
-  .mcell.cclick:hover{background:#fbf7fa;}
+  .mcell.cclick:hover{background:#efe5f5;}
   .daylock-pop{position:fixed;z-index:180;max-width:280px;background:#fff8d9;color:#735f17;border:2px solid #efc53f;border-radius:14px;padding:11px 15px;box-shadow:0 5px 18px rgba(90,70,10,.22);font-size:14px;font-weight:900;line-height:1.45;text-align:center;pointer-events:none;}
   .daylock-pop::before{content:"";position:absolute;top:-8px;left:24px;border-width:0 8px 8px;border-style:solid;border-color:transparent transparent #efc53f;}
   .mcell.todaym{border:3px solid #f0b400;background:#fff8cf;box-shadow:0 0 0 2px rgba(240,180,0,.18);}
@@ -403,6 +404,7 @@
   .pdtitle{font-weight:700; font-size:var(--fsT,11px); margin:0 0 3px; border-bottom:1.2px solid #555; color:#333;}
   table.pgrid{border-collapse:collapse; width:100%; table-layout:fixed; margin-bottom:1mm;}
   table.pgrid th, table.pgrid td{border:0.7px solid #7a7a7a; font-size:var(--fs,6px); height:var(--rowH,9px); text-align:center; padding:0; overflow:hidden; color:#777;}
+  table.pgrid tr:last-child td{box-shadow:inset 0 -1px 0 #555;}
   table.pgrid td.pn, table.pgrid th.pn{width:var(--nameW,54px); text-align:left; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; font-size:var(--fsN,8.8px); font-weight:400; line-height:1; padding:0 2px; white-space:nowrap; color:#333;}
   table.pgrid td.pn.pn-5{font-size:calc(var(--fsN,8.8px) * .86); letter-spacing:-.1px;}
   table.pgrid td.pn.pn-6{font-size:calc(var(--fsN,8.8px) * .73); letter-spacing:-.2px;}
@@ -418,6 +420,7 @@
   .pmark.pshift{z-index:1;}
   .pmark.pam{background:#a9ddb2;}
   .pmark.ppm{background:#efafca;}
+  .pmark.pmanager{background:#d8c3e8 !important;}
   .pmark.phold{background:#78c6e8; z-index:2;}
   .pmark .pendpoint{position:absolute;top:50%;color:#000;font-family:"Arial Narrow",Arial,sans-serif;font-size:9px;font-weight:400;letter-spacing:.12px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;z-index:4;}
   .pmark .pendpoint.start{left:1px;transform:translateY(-50%)}.pmark .pendpoint.end{right:1px;transform:translateY(-50%)}
@@ -468,15 +471,15 @@
   #whoOk:hover{background:linear-gradient(180deg,#3a3a3a 0%,#111 55%,#000 100%);}
   .sbar select:disabled,#who:disabled{opacity:1;color:#222;-webkit-text-fill-color:#222;background:#fff;font-weight:800;border-color:#b8b8b8;}
   /* v1.64 スタッフカレンダーを淡いカード調に */
-  .mcal{background:linear-gradient(180deg,#fffafd 0%,#fff5f8 100%);border:1px solid #f2dce4;border-radius:18px;padding:10px;box-shadow:0 5px 18px rgba(190,95,125,.10);}
-  .mch{background:#fff0f5;border-radius:9px;color:#665b60;padding:5px 0;}
-  .mch.sun{background:#ffe7ec;color:#e65f73;}
-  .mch.sat{background:#e8f2ff;color:#3e87df;}
-  .mcell{border-color:#eadde2;background:linear-gradient(180deg,#fff 0%,#fffcfd 100%);box-shadow:0 2px 5px rgba(120,80,95,.07);transition:transform .12s ease,box-shadow .12s ease;}
-  .mcell.sun{background:linear-gradient(180deg,#fff5f7 0%,#ffedf1 100%);}
-  .mcell.sat{background:linear-gradient(180deg,#f5f9ff 0%,#eaf3ff 100%);}
+  .mcal{background:linear-gradient(180deg,#fbf8fd 0%,#f3ebf8 100%);border:1px solid #dfd0e9;border-radius:18px;padding:10px;box-shadow:0 5px 18px rgba(111,72,140,.10);}
+  .mch{background:#f2e9f7;border-radius:9px;color:#665b6d;padding:5px 0;}
+  .mch.sun{background:#dfcce9;color:#a64f72;}
+  .mch.sat{background:#dfcce9;color:#4d6fa8;}
+  .mcell{border-color:#dfd2e8;background:linear-gradient(180deg,#fbf8fd 0%,#f5eef9 100%);box-shadow:0 2px 5px rgba(94,62,118,.07);transition:transform .12s ease,box-shadow .12s ease;}
+  .mcell.sun{background:linear-gradient(180deg,#eadff1 0%,#dfcfea 100%);}
+  .mcell.sat{background:linear-gradient(180deg,#eadff1 0%,#dfcfea 100%);}
   .mcell.cclick:active{transform:scale(.97);box-shadow:0 1px 2px rgba(120,80,95,.10);}
-  .caltools .monthlbl{background:#fff;border:1px solid #f0dce3;box-shadow:0 2px 7px rgba(130,90,105,.08);}
+  .caltools .monthlbl{background:#faf7fc;border:1px solid #dfd0e9;box-shadow:0 2px 7px rgba(94,62,118,.08);}
   .mcell.todaym{background:linear-gradient(180deg,#fffbe4 0%,#fff2b8 100%);}
   .mcell.offday,.mcell.offday.sun,.mcell.offday.sat{border-color:#8dcbe7;background:linear-gradient(180deg,#effaff 0%,#d9f1fb 100%);}
   @media (max-width:480px){
@@ -1730,7 +1733,8 @@ function staffMiniCell(entry,store,hr){
     const sharedStart=shifts.some((other,otherIndex)=>{ const otherEnd=publicShiftHour(other.end); return otherIndex!==index&&otherEnd!=null&&Math.abs(otherEnd-s)<.001; });
     const inner=(!sharedStart&&hr<=s&&s<hr+1?`<b class="pendpoint start${s%1?' half':''}">${esc(shift.start||'')}</b>`:'')+(hr<e&&e<=hr+1?`<b class="pendpoint end${e%1?' half':''}">${esc(shift.end||'')}</b>`:'');
     if(inner) hasEndpoint=true;
-    html+=staffMiniMark(shift.start,shift.end,hr,`pshift ${s>=14||hr>=17?'ppm':'pam'}${e-s<=3?' shortline':''}`,inner);
+    const managerColor=(entry.name==='店長'||entry.name==='開田'||entry.name==='開田さん')?' pmanager':'';
+    html+=staffMiniMark(shift.start,shift.end,hr,`pshift ${s>=14||hr>=17?'ppm':'pam'}${managerColor}${e-s<=3?' shortline':''}`,inner);
     (shift.breaks||[]).forEach(br=>{ const bs=publicShiftHour(br&&br.start),be=publicShiftHour(br&&br.end); if(bs==null||be==null||be<=bs) return; const mid=(bs+be)/2,minutes=Number.isFinite(+br.minutes)?Math.round(+br.minutes):Math.round((be-bs)*60),label=hr<=mid&&mid<hr+1?`<b class="breakmins">${minutes}分</b>`:''; if(label) hasBreak=true; html+=staffMiniMark(br.start,br.end,hr,'phold',label); });
   });
   return `<td class="ptime${hasEndpoint?' hasendpoint':''}${hasBreak?' hasbreak':''}">${html}</td>`;
