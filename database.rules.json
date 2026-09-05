@@ -164,6 +164,100 @@
             }
           }
         }
+      },
+      "kamakuraShift": {
+        ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+        "access": {
+          "admins": {
+            "$uid": {
+              ".read": "auth != null && auth.uid === $uid && data.val() === true",
+              ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".validate": "newData.val() === true || newData.val() === null"
+            }
+          },
+          "tokens": {
+            "$token": {
+              ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || root.child('zaiko/kamakuraShift/sessions').child(auth.uid).val() === $token)",
+              ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".validate": "newData.val() === null || (newData.hasChildren(['active','staffKey','name','store']) && newData.child('active').isBoolean() && newData.child('staffKey').isString() && newData.child('name').isString() && newData.child('store').isString())"
+            }
+          },
+          "byStaff": {
+            ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true"
+          },
+          "editorTokens": {
+            "$token": {
+              ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).val() === $token)",
+              ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".validate": "newData.val() === null || (newData.hasChildren(['active','slot']) && newData.child('active').isBoolean() && newData.child('slot').isString())"
+            }
+          },
+          "editorSlots": {
+            "$slot": {
+              ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+              ".validate": "newData.val() === null || newData.isString()"
+            }
+          },
+          "editorSessions": {
+            "$uid": {
+              ".read": "auth != null && (auth.uid === $uid || root.child('zaiko/shift/access/admins').child(auth.uid).val() === true)",
+              ".write": "auth != null && auth.uid === $uid && newData.isString() && root.child('zaiko/kamakuraShift/access/editorTokens').child(newData.val()).child('active').val() === true"
+            }
+          }
+        },
+        "sessions": {
+          "$uid": {
+            ".read": "auth != null && (auth.uid === $uid || root.child('zaiko/shift/access/admins').child(auth.uid).val() === true)",
+            ".write": "auth != null && auth.uid === $uid && newData.isString() && root.child('zaiko/kamakuraShift/access/tokens').child(newData.val()).child('active').val() === true"
+          }
+        },
+        "meta": {
+          ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true) || (root.child('zaiko/kamakuraShift/sessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('active').val() === true))",
+          ".write": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+          "published": {
+            ".write": "auth != null && (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)"
+          },
+          "updatedAt": {
+            ".write": "auth != null && (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)"
+          },
+          "decidedMonths": {
+            ".write": "auth != null && (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)"
+          },
+          "decidedDays": {
+            ".write": "auth != null && (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)"
+          },
+          "storeMemo": {
+            ".write": "auth != null && (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)"
+          },
+          "storeOff": {
+            ".write": "auth != null && (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)"
+          }
+        },
+        "editHistory": {
+          "$entry": {
+            ".read": "auth != null && root.child('zaiko/shift/access/admins').child(auth.uid).val() === true",
+            ".write": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true))",
+            ".validate": "newData.hasChildren(['actor','actorSlot','at','summary','version']) && newData.child('actor').isString() && newData.child('actorSlot').isString() && newData.child('at').isString() && newData.child('summary').isString() && newData.child('version').isString() && ((root.child('zaiko/shift/access/admins').child(auth.uid).val() === true && newData.child('actorSlot').val() === 'owner') || ((root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true) && newData.child('actorSlot').val() === root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('slot').val()))"
+          }
+        },
+        "staff": {
+          ".read": "auth != null && (root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true)",
+          "$staffKey": {
+            ".read": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || ((root.child('zaiko/kamakuraShift/sessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('active').val() === true) && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('staffKey').val() === $staffKey))",
+            ".write": "auth != null && (root.child('zaiko/shift/access/admins').child(auth.uid).val() === true || ((root.child('zaiko/kamakuraShift/access/editorSessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/editorTokens/' + root.child('zaiko/kamakuraShift/access/editorSessions/' + auth.uid).val()).child('active').val() === true) && data.exists() && newData.exists() && newData.child('nm').val() === data.child('nm').val() && newData.child('store').val() === data.child('store').val()))",
+            "wish": {
+              ".write": "auth != null && (root.child('zaiko/kamakuraShift/sessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('active').val() === true) && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('staffKey').val() === $staffKey"
+            },
+            "notes": {
+              ".write": "auth != null && (root.child('zaiko/kamakuraShift/sessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('active').val() === true) && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('staffKey').val() === $staffKey"
+            },
+            "req": {
+              ".write": "auth != null && (root.child('zaiko/kamakuraShift/sessions').child(auth.uid).isString() && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('active').val() === true) && root.child('zaiko/kamakuraShift/access/tokens/' + root.child('zaiko/kamakuraShift/sessions/' + auth.uid).val()).child('staffKey').val() === $staffKey"
+            }
+          }
+        }
       }
     }
   }

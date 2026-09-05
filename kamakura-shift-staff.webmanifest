@@ -1,0 +1,14 @@
+{
+  "name": "鎌倉シフト・スタッフ",
+  "short_name": "鎌倉スタッフ",
+  "start_url": "/kamakura-shift/?launch=pwa",
+  "scope": "/kamakura-shift/",
+  "display": "standalone",
+  "background_color": "#eadcf5",
+  "theme_color": "#eadcf5",
+  "icons": [
+    {"src":"/icons/kamakura-shift-staff.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ],
+  "id": "/kamakura-shift-staff",
+  "launch_handler": {"client_mode":"navigate-new"}
+}
