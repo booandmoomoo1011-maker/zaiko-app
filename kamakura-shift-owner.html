@@ -382,6 +382,7 @@
   .dayruler .dtime{min-height:39px; background-color:#fff;}
   .dayruler .tick{top:4px;}
   .dayruler .tick.edge{top:21px;padding-left:0;transform:translateX(-100%);text-align:right;font-size:11px;line-height:1;}
+  .dayruler .day-endline{position:absolute;top:0;bottom:0;width:1px;background:#7f8b93;z-index:8;pointer-events:none;}
   .daygridframe{position:relative;}
   .storememo{position:absolute; left:728px; top:2px; z-index:6; width:4cm; height:3cm; resize:both; min-width:2.5cm; min-height:2cm; box-sizing:border-box; font-family:inherit; font-size:12px; line-height:1.4; padding:5px 7px; border:1.5px solid #e2c98a; border-radius:8px; background:#fffdf3; color:#5a4a2a;}
   #dayGrid{zoom:1;}
@@ -513,8 +514,11 @@
   .psheet:last-child{page-break-after:auto; break-after:auto;}
   .pday{min-width:0;min-height:0;overflow:hidden;}
   .pdtitle{font-weight:700; font-size:var(--fsT,11px); margin:0 0 3px; border-bottom:1.2px solid #555; color:#333;}
-  table.pgrid{border-collapse:collapse; width:100%; table-layout:fixed; margin-bottom:1mm;}
-  table.pgrid th, table.pgrid td{border:0.7px solid #7a7a7a; font-size:var(--fs,6px); height:var(--rowH,9px); text-align:center; padding:0; overflow:hidden; color:#777;}
+  table.pgrid{border-collapse:collapse; width:100%; table-layout:fixed; margin-bottom:1mm; border:1px solid #555;}
+  table.pgrid th, table.pgrid td{border:1px solid #666; font-size:var(--fs,6px); height:var(--rowH,9px); text-align:center; padding:0; overflow:hidden; color:#777;}
+  table.pgrid tr:last-child td{border-bottom:1px solid #555 !important;}
+  table.pgrid tr> :first-child{border-left:1px solid #555 !important;}
+  table.pgrid tr> :last-child{border-right:1px solid #555 !important;}
   table.pgrid td.pn, table.pgrid th.pn{width:var(--nameW,54px); text-align:left; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif; font-size:var(--fsN,8.8px); font-weight:400; line-height:1; padding:0 2px; white-space:nowrap; color:#333;}
   table.pgrid td.pn.pn-5{font-size:calc(var(--fsN,8.8px) * .86); letter-spacing:-.1px;}
   table.pgrid td.pn.pn-6{font-size:calc(var(--fsN,8.8px) * .73); letter-spacing:-.2px;}
@@ -2182,7 +2186,7 @@ $("#cmtClose").onclick=()=>$("#cmtMask").style.display="none";
 $("#cmtMask").onclick=e=>{ if(e.target.id==="cmtMask") $("#cmtMask").style.display="none"; };
 
 /* ---- 日別タイムライン ---- */
-const AX0=9, AX1=18, AX_VIEW_END=18, HW=56;
+const AX0=9, AX1=18, AX_VIEW_END=18, HW=56, DAY_END_GUTTER=34;
 const DAY_MIN_USER_ZOOM=.7, DAY_MAX_USER_ZOOM=2, DAY_MAX_SCALE=1.2;
 let dayViewDay=null, dayUserZoom=1, dayScale=1, dayZoomRaf=0, dayPendingZoom=null;
 let dayViewportContent='';
@@ -2458,11 +2462,11 @@ function openDayView(d){
   document.querySelector('.daydatebar')?.classList.toggle('weekendholiday',dayDow===0||dayDow===6||isHol(d));
   $("#dayTitle").innerHTML=`${Y}年${M}月${d}日<span class="${dayDow===0||dayDow===6||isHol(d)?'weekend':''}">(${dow})</span>`+(_closed?"　🔒 受付終了・閲覧のみ":"");
   $("#dayPrev").disabled=d<=1; $("#dayNext").disabled=d>=DAYS;
-  const W=(AX_VIEW_END-AX0)*HW;
+  const W=(AX_VIEW_END-AX0)*HW+DAY_END_GUTTER;
   let ticks=""; for(let h=AX0; h<AX1; h++){ ticks+=`<div class="tick" style="left:${(h-AX0)*HW}px">${h}</div>`; }
   ticks+=`<div class="tick edge" style="left:${(AX1-AX0)*HW}px">18:00</div>`;
   const rulerTrack=$("#dayRulerTrack");
-  if(rulerTrack) rulerTrack.innerHTML=`<div class="drow ruler"><div class="dname">時間</div><div class="dtime" style="width:${W}px;min-width:${W}px">${ticks}</div></div>`;
+  if(rulerTrack) rulerTrack.innerHTML=`<div class="drow ruler"><div class="dname">時間</div><div class="dtime" style="width:${W}px;min-width:${W}px">${ticks}<div class="day-endline" style="left:${(AX1-AX0)*HW}px"></div></div></div>`;
   let html="";
   STORES.forEach(st=>{
     html+=dvStoreSection(st,d,W);
@@ -2546,7 +2550,7 @@ function fitDayGrid(){
     rulerTrack.querySelectorAll('.dtime').forEach(time=>{ time.style.transform="none"; time.style.zoom="1"; });
   }
   // 名前欄は等倍の固定列として残し、9:00〜18:00の時間領域だけへ倍率を適用する。
-  const timelineWidth=(AX_VIEW_END-AX0)*HW, nameWidth=Math.max(104,g.querySelector('.dname')?.offsetWidth||104);
+  const timelineWidth=(AX_VIEW_END-AX0)*HW+DAY_END_GUTTER, nameWidth=Math.max(104,g.querySelector('.dname')?.offsetWidth||104);
   const baseWidth=Math.ceil(nameWidth+timelineWidth), availableWidth=Math.max(1,sc.clientWidth-8);
   const fit=availableWidth/baseWidth, mobile=window.matchMedia&&window.matchMedia('(max-width:600px)').matches;
   const base=mobile?Math.max(.72,Math.min(1,fit)):Math.min(1.15,fit);
