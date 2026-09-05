@@ -533,19 +533,25 @@
   </script>
   <script>
     window.fbPush=function(){}; window.fbTouch=function(){};
+    window.KAMAKURA_PREVIEW=new URLSearchParams(location.search).get('preview')==='1';
     (function(){
       var q=new URLSearchParams(location.search), token=(q.get('access')||'').trim();
       if(/^[A-Za-z0-9_-]{43,128}$/.test(token)){ try{ localStorage.setItem('shiftAccessToken_v1',token); }catch(e){} }
       else if(q.get('launch')==='pwa'){ try{ token=(localStorage.getItem('shiftAccessToken_v1')||'').trim(); }catch(e){} }
       window.SHIFT_ACCESS_TOKEN=token;
     })();
-    window.SHIFT_ACCESS_VALID=false;
+    window.SHIFT_ACCESS_VALID=window.KAMAKURA_PREVIEW;
+    if(window.KAMAKURA_PREVIEW) window.SHIFT_STAFF_IDENTITY={staffKey:'preview',name:'開田',store:'鎌倉'};
   </script>
   <script type="module">
   import { initializeApp } from 'firebase/app';
   import { getDatabase, ref, set, update, get, onValue } from 'firebase/database';
   import { getAuth, signInAnonymously } from 'firebase/auth';
-  try{
+  if(window.KAMAKURA_PREVIEW){
+    document.addEventListener('DOMContentLoaded',()=>{
+      const badge=document.createElement('div'); badge.id='fb-badge'; badge.textContent='確認用・保存されません'; badge.style.cssText='position:fixed;left:6px;bottom:6px;z-index:99999;font-size:10px;padding:2px 7px;border-radius:8px;background:#5b2c83;color:#fff;font-family:sans-serif;pointer-events:none;'; document.body.appendChild(badge);
+    });
+  }else try{
     const app = initializeApp({
       apiKey:           'AIzaSyCkkIx44FVKmQdO6kQK_uQVloJccRo2cYo',
       authDomain:       'zaiko2017inb.firebaseapp.com',
@@ -704,7 +710,7 @@
   <button onclick="doUpdate()" style="background:#e8607f;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;">今すぐ更新</button>
 </div>
 <header>
-  <h1>シフト <span class="demoTag">v1.0.1</span></h1>
+  <h1>シフト <span class="demoTag">v1.0.2</span></h1>
   <button class="btn share" id="shareBtn" type="button" style="display:none;">🔗 共有</button>
   <div class="toggle" style="display:none;">
     <button id="tbStaff" class="on" type="button">スタッフ画面</button>
@@ -927,7 +933,7 @@
 </div>
 
 <script>
-window.APP_VERSION="v1.0.1"; window.APP_UPDATED="2026-09-05";
+window.APP_VERSION="v1.0.2"; window.APP_UPDATED="2026-09-06";
 // ---- 自動バージョンチェック（起動時・5分ごと） ----
 async function checkForUpdate(){
   try{
@@ -1011,6 +1017,11 @@ const isHol=d=>!!HOL[key(d)];
 
 /* ---- 初期データ（空・本番） ---- */
 function seed(){
+  if(window.KAMAKURA_PREVIEW){
+    const wish={};
+    for(let d=1;d<=30;d++) wish[`2026-09-${pad(d)}`]=(d%7===0)?{off:true}:{all:{start:'9:00',end:'18:00'}};
+    return {published:true,staff:{'開田':{nm:'開田',store:'鎌倉',wish,decided:{},notes:{}}}};
+  }
   return { published:false, staff:{} };
 }
 let S;
@@ -2282,6 +2293,14 @@ $("#tbStaff").onclick=showStaff; $("#tbOwner").onclick=showOwner;
   initWho(); buildPalette();
   if(window.SHIFT_ACCESS_VALID) showStaff();
 })();
+
+if(window.KAMAKURA_PREVIEW){
+  addEventListener('DOMContentLoaded',()=>{
+    const gate=document.getElementById('accessStopped'); if(gate) gate.style.display='none';
+    const banner=document.createElement('div'); banner.textContent='確認用プレビュー　変更内容は保存されません'; banner.style.cssText='position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:2147483001;background:#5b2c83;color:#fff;padding:6px 14px;border-radius:18px;font:700 12px sans-serif;box-shadow:0 2px 8px #0004'; document.body.appendChild(banner);
+    showStaff();
+  });
+}
 
 (function(){
   const mask=document.getElementById('staffSettingsMask'),openBtn=document.getElementById('staffSettingsBtn'),closeBtn=document.getElementById('staffSettingsClose');
